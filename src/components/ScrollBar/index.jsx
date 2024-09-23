@@ -307,13 +307,13 @@ const ScrollBar = ({ data }) => {
     >
       <div>
         <div
-          className={`scroll-bar ${isHorizontal ? "horizontal" : "vertical"}`}
+          className={`ewc-scroll-bar ${isHorizontal ? 'horizontal' : 'vertical'}`}
           style={{ ...trackStyle }}
           onMouseDown={handleTrackClick}
           ref={trackRef}
         >
           <div
-            className="thumb"
+            className="ewc-thumb"
             style={{ ...thumbStyle }}
             ref={thumbRef}
             onMouseDown={handleThumbDrag}

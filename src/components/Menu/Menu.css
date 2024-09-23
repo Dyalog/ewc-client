@@ -1,4 +1,4 @@
-.menu-item {
+.ewc-menu-item {
   margin-left: 10px;
   padding: 5px;
   cursor: pointer;
@@ -6,11 +6,11 @@
   position: relative;
 }
 
-.menu-item:hover {
+.ewc-menu-item:hover {
   background-color: rgb(250, 250, 250); /* Slightly lighter shade */
 }
 
-.menu-item .dropdown {
+.ewc-menu-item .ewc-dropdown {
   display: none;
   position: absolute;
   top: 100%;
@@ -21,15 +21,15 @@
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
-.dropdown-item {
+.ewc-dropdown-item {
   padding-left: 5px !important;
   padding-right: 5px !important;
 }
 
-.dropdown-item:hover {
+.ewc-dropdown-item:hover {
   background-color: #e4e4e4 !important;
 }
 
-.menu-item:hover .dropdown {
+.ewc-menu-item:hover .ewc-dropdown {
   display: block;
 }

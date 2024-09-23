@@ -173,7 +173,7 @@ const TextArea = ({ data }) => {
     <div style={{ overflow: "hidden" }}>
       <textarea
         ref={textareaRef}
-        className="textArea"
+        className="ewc-text-area"
         style={updatedStyles}
         value={textString}
         onChange={handleChange}

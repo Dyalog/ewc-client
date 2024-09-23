@@ -1,4 +1,4 @@
-.scroll-bar-icon {
+.ewc-scroll-bar-icon {
   width: 20px;
   height: 20px;
   display: flex;
@@ -9,16 +9,16 @@
   transition: opacity 0.3s ease;
 }
 
-.scroll-bar-icon-vertical {
+.ewc-scroll-bar-icon-vertical {
   transform: rotate(0deg);
 }
 
-.scroll-bar-icon-horizontal {
+.ewc-scroll-bar-icon-horizontal {
   transform: rotate(90deg);
   
 }
 
-.scroll-bar {
+.ewc-scroll-bar {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -29,13 +29,13 @@
 
 
 /* Track */
-.track {
+.ewc-track {
   background-color: #ccc;
   position: relative;
 }
 
 /* Thumb */
-.thumb {
+.ewc-thumb {
   background-color: grey;
   position: absolute;
   cursor: pointer;
@@ -44,7 +44,7 @@
 /* ScrollBar.css */
 
 /* ScrollBar Container */
-.scroll-bar {
+.ewc-scroll-bar {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -52,14 +52,14 @@
 }
 
 /* Track */
-.track {
+.ewc-track {
   background-color: #ccc;
   position: relative;
   border-radius: 5px;
 }
 
 /* Thumb */
-.thumb {
+.ewc-thumb {
   background-color: grey;
   position: absolute;
   cursor: pointer;
@@ -67,23 +67,23 @@
 }
 
 /* Vertical Arrow Icons */
-.arrow-icon.up,
-.arrow-icon.down {
+.ewc-arrow-icon.up,
+.ewc-arrow-icon.down {
   width: 24px;
   height: 24px;
   cursor: pointer;
 }
 
 /* Horizontal Arrow Icons */
-.arrow-icon.left,
-.arrow-icon.right {
+.ewc-arrow-icon.left,
+.ewc-arrow-icon.right {
   width: 24px;
   height: 24px;
   cursor: pointer;
 }
 
 /* Centering Arrow Icons */
-.arrow-icon {
+.ewc-arrow-icon {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -95,16 +95,16 @@
 /* Add any additional styles as needed */
 
 /* Example: */
-.arrow-icon svg {
+.ewc-arrow-icon svg {
   fill: white;
 }
 
 /* Optional: Hover effect for arrow icons */
-.arrow-icon:hover {
+.ewc-arrow-icon:hover {
   background-color: darkgray;
 }
 
-.icon-style {
+.ewc-icon-style {
   position: absolute;
   /* width: 10px;
   height: 10px; */
@@ -120,13 +120,13 @@
   font-size: 10px;
 }
 
-.scroll-bar {
+.ewc-scroll-bar {
   background-color: lightgray;
   border: 1px solid white;
 }
 
-.scroll-bar:hover .scroll-bar-icon,
-.scroll-bar:hover + .scroll-bar-icon,
-.scroll-bar:hover .scroll-bar-icon.showButtons {
+.ewc-scroll-bar:hover .ewc-scroll-bar-icon,
+.ewc-scroll-bar:hover + .ewc-scroll-bar-icon,
+.ewc-scroll-bar:hover .ewc-scroll-bar-icon.showButtons {
   opacity: 1;
 }

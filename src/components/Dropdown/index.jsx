@@ -20,15 +20,15 @@ const Dropdown = ({ title, data }) => {
   };
 
   return (
-    <div style={{ fontSize: '12px', marginLeft: '7px', cursor: 'pointer' }} className='menu-item'>
+    <div style={{ fontSize: '12px', marginLeft: '7px', cursor: 'pointer' }} className='ewc-menu-item'>
       {title}
 
-      <div className='dropdown'>
+      <div className='ewc-dropdown'>
         {Object.keys(data).map((key) => {
           return (
             <div
               id={data[key]?.ID}
-              className='dropdown-item'
+              className='ewc-dropdown-item'
               onClick={() => handleSelectEvent(data[key]?.ID, data[key]?.Properties)}
             >
               {/* {data[key]?.Properties?.Caption?.includes('&')

@@ -1,5 +1,5 @@
 import { excludeKeys, isEmpty } from '../../utils';
-import Dropdown from '../DropDown';
+import Dropdown from '../Dropdown';
 import './Menu.css';
 
 const Menu = ({ data }) => {
@@ -18,7 +18,7 @@ const Menu = ({ data }) => {
           cursor: 'pointer',
           display: 'inline-block',
         }}
-        className='menu-item'
+        className='ewc-menu-item'
       >
         {/* {data?.Properties?.Caption?.includes('&')
           ? data?.Properties?.Caption?.substring(1)
