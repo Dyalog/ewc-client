@@ -7,10 +7,6 @@ import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, h
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
   const { Align, Type, Thumb, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, Css } = data?.Properties;
-
-  const customStyles = parseFlexStyles(Css)
-
-  // console.log("CSS", Css, customStyles, data.ID)
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(Thumb || 1);
 
@@ -27,6 +23,12 @@ const ScrollBar = ({ data }) => {
       injectCssStyles(processedStyles, Style.ID);
     }
   }, [Style]);
+
+    if (Css) {
+      const stylesArray = Css.split(",")
+      const processedStyles = processCssStyles(stylesArray);
+      injectCssStyles(processedStyles, data?.ID);
+    }
 
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
@@ -197,7 +199,6 @@ const ScrollBar = ({ data }) => {
     ...(VScroll === -1 ? {left: VScroll === -1 && defaultPosn[1] !== undefined ? defaultPosn[1]  : 0 }: {right: 0}),
     display: Visible == 0 ? 'none' : 'block',
     ...attachStyle,
-    ...customStyles
 
   };
 
@@ -209,7 +210,7 @@ const ScrollBar = ({ data }) => {
     height: defaultSize[0],
     display: Visible == 0 ? 'none' : 'block',
     ...attachStyle,
-    ...customStyles
+
   };
 
   useEffect(() => {
