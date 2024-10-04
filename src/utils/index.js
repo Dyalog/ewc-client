@@ -49,7 +49,6 @@ export const handleMouseUp = (e, socket, Event, ID) => {
   socket.send(mouseUpEvent);
 };
 
-
 export const handleMouseDoubleClick = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0);
   const rect = e.currentTarget.getBoundingClientRect();
@@ -72,7 +71,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
 };
 
 export const handleMouseEnter = (e, socket, Event, ID) => {
-  const previousObjectName = e.relatedTarget ? e.relatedTarget.id : ""; 
+  const previousObjectName = e.relatedTarget ? e.relatedTarget.id : "";
 
   const mouseEnterEvent = JSON.stringify({
     Event: {
@@ -561,31 +560,44 @@ export const getCurrentUrl = () => {
   }
 };
 
-export const injectCssStyles = (cssStyles, id = 'dynamic-css-styles') => {
+// export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
+//   console.log(cssStyles, id);
+//   if (!cssStyles || !cssStyles.length) return;
+//   // Check if the style tag with the given ID already exists
+//   const existingStyleTag = document.getElementById(id);
+//   if (existingStyleTag) {
+//     existingStyleTag.textContent = cssStyles.join("\n");
+//   } else {
+//     const styleTag = document.createElement("style");
+//     styleTag.id = id;
+//     styleTag.appendChild(document.createTextNode(cssStyles.join("\n")));
+//     document.head.appendChild(styleTag);
+//   }
+// };
+export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
   if (!cssStyles || !cssStyles.length) return;
 
   // Check if the style tag with the given ID already exists
-  if (document.getElementById(id)) {
-    console.warn(`Style tag with id "${id}" already exists. Skipping injection.`);
-    return;
+  let styleTag = document.getElementById(id);
+  if (styleTag) {
+    // Update existing styles
+    styleTag.textContent = cssStyles.join("\n");
+  } else {
+    // Create a new style tag if it doesn't exist
+    styleTag = document.createElement("style");
+    styleTag.id = id;
+    styleTag.appendChild(document.createTextNode(cssStyles.join("\n")));
+    document.head.appendChild(styleTag);
   }
-
-  const styleTag = document.createElement('style');
-  styleTag.id = id;
-
-  // Append CSS rules
-  styleTag.appendChild(document.createTextNode(cssStyles.join('\n')));
-
-  // Append the style tag to the document head
-  document.head.appendChild(styleTag);
 };
-
 
 const appendImportantToCss = (cssRule) => {
-  return cssRule.replace(/:\s*([^;]+);/g, (match, p1) => `: ${p1.trim()} !important;`);
+  return cssRule.replace(
+    /:\s*([^;]+);/g,
+    (match, p1) => `: ${p1.trim()} !important;`
+  );
 };
 
-
 export const processCssStyles = (cssStyles) => {
-  return cssStyles.map(rule => appendImportantToCss(rule));
+  return cssStyles.map((rule) => appendImportantToCss(rule));
 };
