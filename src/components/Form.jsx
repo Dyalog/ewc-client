@@ -9,6 +9,8 @@ import {
   handleMouseEnter,
   handleMouseMove,
   handleMouseLeave,
+  processCssStyles,
+  injectCssStyles,
 } from "../utils";
 import SelectComponent from "./SelectComponent";
 import { useAppData, useResizeObserver, useWindowDimensions } from "../hooks";
@@ -31,8 +33,14 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
+    Css
   } = data?.Properties;
   const styles = parseFlexStyles(CSS);
+  if (Css) {
+    const stylesArray = Css.split(",")
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
 
   console.log("form after parsing", { styles, CSS, Flex });
   const updatedData = excludeKeys(data);
@@ -151,6 +159,7 @@ const Form = ({ data }) => {
     onMouseLeave={(e) => {
       handleMouseLeave(e, socket, Event, data);
     }}
+    className={`ewc-form`}
       id={data?.ID}
       style={{
         ...formStyles,

@@ -1,22 +1,22 @@
-.ewc-textArea:focus {
+.ewc-text-area:focus {
   outline: none;
   border: none;
 }
 
-.ewc-textArea:active {
+.ewc-text-area:active {
   outline: none;
   border: none;
 }
 
-.ewc-textArea::-webkit-scrollbar-thumb {
+.ewc-text-area::-webkit-scrollbar-thumb {
   background: transparent;
 }
 
-.ewc-textArea::-webkit-scrollbar-track {
+.ewc-text-area::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.ewc-textArea {
+.ewc-text-area {
   resize: none;
   overflow: hidden;
   border: none;

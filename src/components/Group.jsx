@@ -17,7 +17,7 @@ const Group = ({ data }) => {
     Border = 1,
     Size,
     Flex = 0,
-    CSS,
+    CSS,CssClass,
     Event,
   } = data?.Properties;
   const { findDesiredData } = useAppData();

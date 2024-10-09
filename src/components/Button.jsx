@@ -8,6 +8,8 @@ import {
   handleMouseDown,
   handleMouseUp,
   parseFlexStyles,
+  processCssStyles,
+  injectCssStyles,
 } from "../utils";
 import { useAppData, useResizeObserver } from "../hooks";
 import { useEffect, useState } from "react";
@@ -32,10 +34,16 @@ const Button = ({
   const styles = setStyle(data?.Properties);
   const { socket, findDesiredData, dataRef, handleData, reRender } =
   useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size , CSS, CssClass} =
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size , CSS, CssClass, Css} =
   data?.Properties;
   const customStyles = parseFlexStyles(CSS)
   const inputRef = useRef();
+
+  if (Css) {
+    const stylesArray = Css.split(",")
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
   
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilSecondPeriod(data?.ID))
@@ -363,6 +371,7 @@ const Button = ({
           onKeyDown={(e) => handleKeyPress(e)}
           id={data?.ID}
           type="checkbox"
+          className={`ewc-checkbox ${CssClass}`}
           style={checkBoxPosition}
           checked={checkInput}
           onChange={(e) => {
@@ -459,6 +468,7 @@ const Button = ({
           name={extractStringUntilSecondPeriod(data?.ID)}
           id={data?.ID}
           checked={radioValue}
+          className={`ewc-radio ${CssClass}`}
           type="radio"
           value={Caption}
           onChange={(e) => {
@@ -480,7 +490,7 @@ const Button = ({
   return (
     <div
       id={data?.ID}
-      className={`${CssClass}`}
+      className={`ewc-button ${CssClass}`}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data);
       }}

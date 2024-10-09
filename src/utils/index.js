@@ -503,11 +503,15 @@ export const getCurrentUrl = () => {
 export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
   if (!cssStyles || !cssStyles.length) return;
 
+  console.log({ cssStyles });
+
   // Check if the style tag with the given ID already exists
   let styleTag = document.getElementById(id);
+  
   if (styleTag) {
-    // Update existing styles
-    styleTag.textContent = cssStyles.join("\n");
+    // Clear and update existing styles
+    styleTag.textContent = ""; // Clear existing styles
+    styleTag.textContent = cssStyles.join("\n"); // Inject new styles
   } else {
     // Create a new style tag if it doesn't exist
     styleTag = document.createElement("style");
@@ -517,13 +521,20 @@ export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
   }
 };
 
+
 const appendImportantToCss = (cssRule) => {
+  console.log({cssRule,processed:cssRule.replace(
+    /([\w-]+)\s*:\s*([^;]+);/g, 
+    (match, property, value) => `${property}: ${value.trim()} !important;`
+  ) })
+  
   return cssRule.replace(
-    /:\s*([^;]+);/g,
-    (match, p1) => `: ${p1.trim()} !important;`
+    /([\w-]+)\s*:\s*([^;]+);/g, 
+    (match, property, value) => `${property}: ${value.trim()} !important;`
   );
 };
 
-export const processCssStyles = (cssStyles) => {
-  return cssStyles.map((rule) => appendImportantToCss(rule));
-};
+
+  export const processCssStyles = (cssStyles) => {
+    return cssStyles.map((rule) => appendImportantToCss(rule));
+  };

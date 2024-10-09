@@ -1,11 +1,11 @@
-import { extractStringUntilSecondPeriod, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, setStyle } from '../utils';
+import { extractStringUntilSecondPeriod, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, setStyle } from '../utils';
 import { useEffect, useRef, useState } from 'react';
 import { useAppData, useResizeObserver } from '../hooks';
 
 const List = ({ data }) => {
   const {socket} = useAppData()
   const styles = setStyle(data?.Properties);
-  const { Items, SelItems, Visible, Size, Event, CSS } = data?.Properties;
+  const { Items, SelItems, Visible, Size, Event, CSS, Css,CssClass } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
   const ref = useRef();
   const [selectedItem, _] = useState(1);
@@ -43,8 +43,15 @@ const List = ({ data }) => {
     setItems(updatedArray);
   };
 
+  if (Css) {
+    const stylesArray = Css.split(",")
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
+
   return (
     <div
+    className='ewc-list'
       ref={ref}
       style={{
         ...styles,
@@ -81,6 +88,7 @@ const List = ({ data }) => {
                 padding: '1px',
                 ...customStyles,
               }}
+              className='ewc-list-item'
               
               >
               {item}
@@ -88,6 +96,7 @@ const List = ({ data }) => {
           ) : (
             <div
             onClick={() => handleClick(index)}
+            className='ewc-list-item'
             style={{
               cursor: 'pointer',
               fontSize: '12px',

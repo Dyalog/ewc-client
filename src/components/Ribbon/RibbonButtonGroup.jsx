@@ -40,8 +40,6 @@ const CustomRibbonButtonGroup = ({ data }) => {
       ImagesData = ImageListObj?.map((id) => {
         return id && JSON.parse(getObjectById(dataRef.current, id));
       });
-
-      // console.log({ ImagesData });
     } else {
       const ID = ImageListObj.split(".")[1];
       ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
@@ -49,17 +47,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
     if (ImagesData) {
       localStorage.setItem("ImagesData", JSON.stringify(ImagesData));
     }
-    // const ID = getStringafterPeriod(ImageListObj);
-    // ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
   }
-
-  // console.log({ Icons });
-
-  // console.log({ AppIcons });
-
-  console.log({ Captions, ImagesData });
-
-  console.log({ ImagesData });
 
   function getImageDataByCaption(caption) {
     if (!ImagesData || !ImagesData.length) return;
@@ -118,7 +106,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
             key={`col-${i}`}
             id={`${data?.ID}-${i}`}
             md={colSize}
-            className="d-flex align-items-center justify-content-left gap-1"
+            className="d-flex align-items-center justify-content-left gap-1 ewc-ribbon-button-group"
             style={{ cursor: "pointer" ,   ...customStyles}}
             onClick={() => handleButtonEvent(i + 1)}
           >

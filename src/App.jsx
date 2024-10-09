@@ -8,6 +8,8 @@ import {
   deleteFormAndSiblings,
   rgbColor,
   getCurrentUrl,
+  processCssStyles,
+  injectCssStyles,
 } from './utils';
 import './App.css';
 import * as _ from 'lodash';
@@ -135,6 +137,15 @@ const App = () => {
     // console.log('compare final', newValue)
     return newValue
   }
+
+  const Style = socketData.find((obj) => obj.ID == "F1.STYLE")
+
+  useEffect(() => {
+    if (Style && Style.Properties && Style.Properties.Style) {
+      const processedStyles = processCssStyles(Style.Properties.Style);  
+      injectCssStyles(processedStyles, Style.ID);
+    }
+  }, [Style]);
 
   const handleData = (data, mode) => {
 
