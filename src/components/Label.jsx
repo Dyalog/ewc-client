@@ -1,4 +1,4 @@
-import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
+import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, rgbColor, setStyle } from "../utils";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
 
@@ -11,7 +11,12 @@ const Label = ({ data, gridValue }) => {
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
-  const { Visible, FontObj, Caption, Size, BCol, Event, CSS } = data?.Properties;
+  const { Visible, FontObj, Caption, Size, BCol, Event, CSS, Css,CssClass } = data?.Properties;
+  if (Css) {
+    const stylesArray = Css.split(",")
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
 
   console.log("data Label", data)
 
@@ -63,6 +68,7 @@ const Label = ({ data, gridValue }) => {
   return (
     <div
       id={data?.ID}
+      className={`ewc-label`}
       style={{ ...styles, display: Visible == 0 ? "none" : "block" ,...customStyles}}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);

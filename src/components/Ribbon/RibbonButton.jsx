@@ -59,7 +59,7 @@ const CustomRibbonButton = ({ data }) => {
       <Col md={12}>
         <div
           id={data?.ID}
-          className="d-flex align-items-center flex-column justify-content-center"
+          className="d-flex align-items-center flex-column justify-content-center ewc-ribbon-button"
           onClick={handleButtonEvent}
           style={{ cursor: "pointer" ,   ...customStyles}}
         >

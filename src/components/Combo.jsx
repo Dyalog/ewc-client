@@ -1,14 +1,21 @@
 import { setStyle, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
+import { setStyle, extractStringUntilSecondPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, processCssStyles, injectCssStyles } from '../utils';
 
 import { useAppData, useResizeObserver } from '../hooks';
 import { useState, useRef } from 'react';
 import { useEffect } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
-  const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
-  const {CSS} = data.Properties;
+  const parentSize = JSON.parse(localStorage.getItem(extractStringUntilSecondPeriod(data?.ID)));
+  const {CSS, Css, CssClass} = data.Properties;
 
   const customStyles = parseFlexStyles(CSS)
+
+  if (Css) {
+    const stylesArray = Css.split(",")
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
 
   const inputRef = useRef();
 
@@ -320,6 +327,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         ref={inputRef}
         onKeyDown={(e) => handleKeyPress(e)}
         id={data?.ID}
+        className={`ewc-combo ${CssClass}`}
         value={value ? value : comboInput}
         style={{
           width: '100%',

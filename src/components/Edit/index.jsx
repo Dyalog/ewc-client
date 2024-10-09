@@ -68,6 +68,7 @@ const Edit = ({
     EdgeStyle,
     Border = 0,
     CSS,
+   CssClass, Css
   } = data?.Properties;
 
   const hasTextProperty = data?.Properties.hasOwnProperty("Text");
@@ -518,6 +519,8 @@ const Edit = ({
       <>
         <input
           id={data?.ID}
+          className={`${CssClass} ewc-input`}
+          
           style={{
             ...styles,
             borderRadius: "2px",
@@ -559,6 +562,7 @@ const Edit = ({
         />
         <input
           id={data?.ID}
+          className={`${CssClass} ewc-input`}
           type="date"
           ref={inputRef}
           onChange={handleDateChange}
@@ -578,11 +582,12 @@ const Edit = ({
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
     return (
       <NumericFormat
-        className="currency"
+      className={`currency ewc-input ${CssClass}`}
         allowLeadingZeros={true}
         // ref={inputRef}
         getInputRef={inputRef}
         onClick={handleInputClick}
+
         id={data?.ID}
         style={{
           ...styles,

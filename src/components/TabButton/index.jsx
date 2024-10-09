@@ -1,17 +1,25 @@
 import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
+import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, rgbColor } from '../../utils';
 
 const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, activebgColor }) => {
   const { socket } = useAppData();
-  const { Caption, Event , CSS} = data?.Properties;
+  const { Caption, Event , CSS, Css} = data?.Properties;
 
   const emitEvent = Event && Event[0];
   const customStyles = parseFlexStyles(CSS)
+
+  if (Css) {
+    const stylesArray = Css.split(",")
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
 
   
   return (
     <div
       id={data.ID}
+      className={`ewc-tab-button`}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}

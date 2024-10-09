@@ -1,4 +1,5 @@
 import { getObjectById, handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from "../../utils";
+import { getObjectById, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, rgbColor } from "../../utils";
 import { useAppData } from "../../hooks";
 import { useEffect, useState } from "react";
 
@@ -33,8 +34,15 @@ const flattenIfThreeLevels = (arr) => {
 };
 
 const Text = ({ data, fontProperties }) => {
-  const { Visible, Points, Text, FCol, BCol, Event , CSS} = data?.Properties;
+  const { Visible, Points, Text, FCol, BCol, Event , CSS, Css} = data?.Properties;
 const { socket, fontScale} = useAppData();
+
+
+if (Css) {
+  const stylesArray = Css.split(",")
+  const processedStyles = processCssStyles(stylesArray);
+  injectCssStyles(processedStyles, data?.ID);
+}
 
 const customStyles = parseFlexStyles(CSS)
 
@@ -148,6 +156,7 @@ const customStyles = parseFlexStyles(CSS)
                 />
                 <text
                   id={`${data?.ID}-t${index + 1}`}
+                  className={`ewc-text`}
                   // fill='red'
                   alignment-baseline="middle"
                   dy="0.6em"
