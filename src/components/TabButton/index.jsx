@@ -1,5 +1,4 @@
 import { useAppData } from '../../hooks';
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
 import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, rgbColor } from '../../utils';
 
 const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, activebgColor }) => {

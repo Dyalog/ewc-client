@@ -8,11 +8,14 @@ import {
   deleteFormAndSiblings,
   rgbColor,
   getCurrentUrl,
+<<<<<<< HEAD
   extractStringUntilLastPeriod,
   locateByPath,
   locateParentByPath,
   excludeKeys,
   extractStringFromLastPeriod,
+=======
+>>>>>>> d1068fc70ee079bc02fb913b400442a2d787f5de
   processCssStyles,
   injectCssStyles,
 } from './utils';
