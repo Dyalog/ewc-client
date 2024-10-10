@@ -34,6 +34,8 @@ import Image from './Image';
 import { useAppData } from '../hooks';
 import Chart from './Chart';
 import MessageBox from './MessageBox';
+import RibbonDropDownButton from './Ribbon/RibbonDropDownButton';
+import RibbonDropDownGallery from './Ribbon/RibbonDropDownGallery';
 
 const SelectComponent = ({
   data,
@@ -148,6 +150,8 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'RibbonGroupItem') return <CustomRibbonItem data={data} />;
   if (data?.Properties?.Type == 'RibbonButton') return <CustomRibbonButton data={data} />;
   if (data?.Properties?.Type == 'RibbonButtonGroup') return <CustomRibbonButtonGroup data={data} />;
+  if (data?.Properties?.Type == 'RibbonDropDownButton') return <RibbonDropDownButton data={data} />;
+  if (data?.Properties?.Type == 'RibbonGallery') return <RibbonDropDownGallery data={data} />;
 
   if (data?.Properties?.Type == 'Poly') return <Poly data={data} />;
   if (data?.Properties?.Type == 'Rect') return <Rectangle data={data} />;
