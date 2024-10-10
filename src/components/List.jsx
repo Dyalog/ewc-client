@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
-import { extractStringUntilSecondPeriod, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, setStyle } from '../utils';
-import { useEffect, useRef, useState } from 'react';
-import { useAppData, useResizeObserver } from '../hooks';
+import { extractStringUntilLastPeriod, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, injectCssStyles, parseFlexStyles, processCssStyles, setStyle } from '../utils';
+
 
 const List = ({ data }) => {
   const { socket } = useAppData();

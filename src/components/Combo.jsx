@@ -1,11 +1,11 @@
-import { setStyle, extractStringUntilSecondPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, processCssStyles, injectCssStyles } from '../utils';
+import { setStyle, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, processCssStyles, injectCssStyles } from '../utils';
 
 import { useAppData, useResizeObserver } from '../hooks';
 import { useState, useRef } from 'react';
 import { useEffect } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
-  const parentSize = JSON.parse(localStorage.getItem(extractStringUntilSecondPeriod(data?.ID)));
+  const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
   const {CSS, Css, CssClass} = data.Properties;
 
   const customStyles = parseFlexStyles(CSS)
