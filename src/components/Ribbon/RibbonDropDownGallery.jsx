@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { GoChevronUp, GoChevronDown } from "react-icons/go";
 import { BsArrowBarDown } from "react-icons/bs";
+import { useAppData } from "../../hooks";
 
 const onSelect = (item) => {
   console.log("Selected:", item);
@@ -8,6 +9,7 @@ const onSelect = (item) => {
 };
 
 const RibbonGallery = ({ data }) => {
+  const {socket} =useAppData()
   const { Cols } = data.Properties;
 
   const [startIndex, setStartIndex] = useState(0);
@@ -46,6 +48,25 @@ const RibbonGallery = ({ data }) => {
     }
   };
 
+  console.log({menuItems})
+
+
+  const handleSelectEvent = (menuItemID, Event) => {
+    const selectEvent = JSON.stringify({
+      Event: {
+        EventName: "Select",
+        ID: menuItemID,
+      },
+    });
+    const exists = Event && Event.some((item) => item[0] === "Select");
+    if (!exists) return;
+    console.log(selectEvent);
+    socket.send(selectEvent);
+
+    // Close the dropdown after selecting an item
+    setDropdownOpen(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -75,7 +96,7 @@ const RibbonGallery = ({ data }) => {
               <div
                 key={index + startIndex}
                 className="gallery-item"
-                onClick={() => handleItemClick(item)}
+                onClick={() => handleSelectEvent(item.ID, item.Properties.Event)}
                 title={item.Properties.Caption}
               >
                 <div className="item-preview">{item.Properties.Caption}</div>
@@ -124,7 +145,7 @@ const RibbonGallery = ({ data }) => {
                 <div
                   key={index}
                   className="ribbon-dropdown-item"
-                  onClick={() => handleItemClick(item)}
+                  onClick={() => handleSelectEvent(item.ID,item.Properties.Event)}
                   title={item.Properties.Caption}
                 >
                   <div className="item-preview">{item.Properties.Caption}</div>
