@@ -47,3 +47,133 @@
 .custom-dropdown-item:hover {
   background-color: #f0f0f0;
 }
+
+
+/* Container */
+.ribbon-gallery {
+  position: relative;
+  display: flex;
+  border: 1px solid #A6A6A6;
+  background-color: #F2F2F2;
+  font-family: 'Calibri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Content area */
+.gallery-content,
+.dropdown-content {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.gallery-content::-webkit-scrollbar,
+.dropdown-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual item */
+.gallery-item,
+.dropdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px;
+  cursor: pointer;
+  width: 80px;
+}
+
+/* .gallery-item:hover,
+.dropdown-item:hover {
+  background-color: #E1E1E1;
+} */
+
+.item-preview {
+  width: 100%;
+  height: 50px;
+  border: 1px solid black;
+  /* background-color: white; */
+  /* margin-bottom: 2px; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-label {
+  font-size: 11px;
+  color: #000;
+  text-align: center;
+  width: 100%;
+}
+
+/* Buttons area */
+.gallery-buttons {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 1px solid #A6A6A6;
+}
+
+.gallery-button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.gallery-button:not(:last-child) {
+  border-bottom: 1px solid #000;
+}
+
+.gallery-button:hover:not(:disabled) {
+  background-color: #C0C0C0;
+}
+
+.gallery-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gallery-button:disabled:hover {
+  background-color: #D8D8D8;
+}
+
+
+.dropdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 50px);
+  gap: 10px; /* Space between items */
+  padding: 10px;
+  width: auto;
+  background-color: #F2F2F2; /* White background for dropdown */
+  position: absolute; /* Positioning the dropdown */
+  z-index: 1000; /* Ensures dropdown appears above other content */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for better visual separation */
+  max-height: 300px; /* Optional max height if needed */
+  overflow-y: auto; /* Scroll if there are too many items */
+  top: -50px
+}
+
+/* Individual Dropdown Items */
+.ribbon-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  /* height: 80px; */
+  cursor: pointer;
+  background-color: #F2F2F2;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+.dropdown-item:hover {
+  background-color: #E1E1E1;
+}
