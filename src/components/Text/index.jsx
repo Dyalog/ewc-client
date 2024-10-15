@@ -1,6 +1,16 @@
-import { getObjectById, handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from "../../utils";
+import {
+  handleMouseDoubleClick,
+  handleMouseDown,
+  handleMouseEnter,
+  handleMouseLeave,
+  handleMouseMove,
+  handleMouseUp,
+  handleMouseWheel,
+  parseFlexStyles,
+  rgbColor,
+} from "../../utils";
 import { useAppData } from "../../hooks";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -12,31 +22,30 @@ function useForceRerender() {
 
 const getNestingLevel = (array) => {
   if (!Array.isArray(array)) {
-    return 0; // Not an array, so no nesting
+    return 0;
   }
   return 1 + Math.max(0, ...array.map(getNestingLevel));
 };
 
-// Function to flatten an array by one level
 const flattenArrayOneLevel = (array) => {
   return array.reduce((acc, val) => acc.concat(val), []);
 };
 
-
-// Function to flatten the array only if it's three levels deep
 const flattenIfThreeLevels = (arr) => {
   if (getNestingLevel(arr) === 3) {
     return flattenArrayOneLevel(arr);
   } else {
-    return arr; // Return the original array if it's not three levels deep
+    return arr;
   }
 };
 
 const Text = ({ data, fontProperties }) => {
-  const { Visible, Points, Text, FCol, BCol, Event , CSS} = data?.Properties;
-const { socket, fontScale} = useAppData();
+  const { Visible, Points, Text, FCol, BCol, Event, CSS } = data?.Properties;
 
-const customStyles = parseFlexStyles(CSS)
+  console.log("254", { data, fontProperties });
+  const { socket, fontScale } = useAppData();
+
+  const customStyles = parseFlexStyles(CSS);
 
   const { reRender } = useForceRerender();
 
@@ -47,41 +56,29 @@ const customStyles = parseFlexStyles(CSS)
   const pointsArray =
     newPoints && newPoints[0].map((y, i) => [newPoints[1][i], y]);
 
-
-  // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
-  const calculateTextDimensions = (wordsArray, fontSize = 12) => {
-    // Create a hidden div element to calculate text dimensions
-    const container = document.createElement("div");
+  const calculateTextDimensions = (text, fontSize = 12) => {
+    const container = document.createElement("span");
     container.style.visibility = "hidden";
     container.style.position = "fixed";
     container.style.top = "0";
     container.style.left = "0";
-    container.style.fontSize = fontSize + "px"; // Set font size
+    container.style.fontSize = fontSize + "px";
+    container.style.lineHeight = "1";
 
-    // Iterate through the array of words
-    wordsArray.forEach((word) => {
-      // Create a span element for each word
-      const span = document.createElement("div");
-      span.textContent = word;
-      span.style.display = "block"; // Start each word on a new line
-      container.appendChild(span);
-    });
+    const span = document.createElement("p");
+    span.textContent = text;
+    span.style.display = "block";
+    container.appendChild(span);
 
-    // Append the container to the body
     document.body.appendChild(container);
 
-    // Retrieve dimensions
-    const width = container.offsetWidth;
-    const height = container.offsetHeight - 11;
-
-    // Remove the container from the body
+    const width = span.offsetWidth;
+    const height = span.offsetHeight;
     document.body.removeChild(container);
 
     return { height, width };
   };
 
-  // Text can be the array []  so Map the Text not the Points
- 
   return (
     <>
       <div
@@ -92,7 +89,7 @@ const customStyles = parseFlexStyles(CSS)
           left: 0,
         }}
         onMouseDown={(e) => {
-          handleMouseDown(e, socket, Event,data?.ID);
+          handleMouseDown(e, socket, Event, data?.ID);
         }}
         onMouseUp={(e) => {
           handleMouseUp(e, socket, Event, data?.ID);
@@ -109,8 +106,8 @@ const customStyles = parseFlexStyles(CSS)
         onWheel={(e) => {
           handleMouseWheel(e, socket, Event, data?.ID);
         }}
-        onDoubleClick={(e)=>{
-          handleMouseDoubleClick(e, socket, Event,data?.ID);
+        onDoubleClick={(e) => {
+          handleMouseDoubleClick(e, socket, Event, data?.ID);
         }}
       >
         <svg
@@ -119,11 +116,13 @@ const customStyles = parseFlexStyles(CSS)
         >
           {Text?.map((text, index) => {
             const dimensions = calculateTextDimensions(
-              Text,
-              fontProperties?.Size ? `${fontProperties.Size * fontScale}px` : `${12 * fontScale}px`
+              text,
+              fontProperties?.Size
+                ? fontProperties.Size * fontScale
+                : 12 * fontScale
             );
-            const textWidth = dimensions?.width + 30; // replace with actual calculation
-            const textHeight = dimensions?.height + 30; // replace with actual calculation
+            const textWidth = dimensions?.width;
+            const textHeight = dimensions?.height;
 
             const points = pointsArray[index] || [
               pointsArray?.[index - 1]?.[0],
@@ -155,7 +154,9 @@ const customStyles = parseFlexStyles(CSS)
                   y={points && points[1]}
                   font-family={fontProperties?.PName}
                   font-size={
-                    fontProperties?.Size ? `${fontProperties.Size * fontScale}px` : `${12 * fontScale}px`
+                    fontProperties?.Size
+                      ? `${fontProperties.Size * fontScale}px`
+                      : `${12 * fontScale}px`
                   }
                   fill={FCol ? rgbColor(FCol[index]) : "black"}
                   font-style={
@@ -182,7 +183,7 @@ const customStyles = parseFlexStyles(CSS)
                   }) translate(${points && -points[0]}, ${
                     points && -points[1]
                   })`}
-                  style={{...customStyles}}
+                  style={{ ...customStyles }}
                 >
                   {text /*text.replace(/ /g, "\u00A0")*/}
                 </text>
