@@ -407,7 +407,6 @@ const Grid = ({ data }) => {
   useEffect(() => {
     if (localStorage.getItem(data.ID)) {
       const { Event } = JSON.parse(localStorage.getItem(data.ID));
-      console.log("250", { storageCurCell: Event.CurCell });
       if (Event.CurCell) {
          handleData(
       {
@@ -583,7 +582,7 @@ const Grid = ({ data }) => {
           await waitForProceed(localStorage.getItem(eventId));
         // console.log("waiting await proceed done")
         // console.log("issue arrow right initial", {selectedRow, selectedColumn})
-        setSelectedColumn((prev) => Math.min(prev + 1, columns));
+        setSelectedColumn((prev) => Math.min(prev + 1,ColTitles? columns: columns-1));
         // console.log("issue arrow right", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0
         //   ? selectedColumn + 1
         //   : selectedColumn + 1 })
@@ -596,7 +595,7 @@ const Grid = ({ data }) => {
                   selectedRow,
                   ColTitles?.length > 0
                     ? selectedColumn + 1
-                    : selectedColumn + 2,
+                    : selectedColumn + 1,
                 ],
               },
             })
@@ -611,7 +610,7 @@ const Grid = ({ data }) => {
                   selectedRow,
                   ColTitles?.length > 0
                     ? selectedColumn + 1
-                    : selectedColumn + 2,
+                    : selectedColumn + 1,
                 ],
               },
             })
@@ -625,7 +624,7 @@ const Grid = ({ data }) => {
                   selectedRow,
                   ColTitles?.length > 0
                     ? selectedColumn + 1
-                    : selectedColumn + 2,
+                    : selectedColumn + 1,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -640,7 +639,7 @@ const Grid = ({ data }) => {
                   selectedRow,
                   ColTitles?.length > 0
                     ? selectedColumn + 1
-                    : selectedColumn + 2,
+                    : selectedColumn + 1,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -671,7 +670,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn,
+                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
                 ],
               },
             })
@@ -684,7 +683,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn,
+                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -693,7 +692,7 @@ const Grid = ({ data }) => {
         }
         handleCellMove(
           selectedRow,
-          ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn,
+          ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
           0
         );
       } else if (event.key === "ArrowUp") {
@@ -1042,7 +1041,7 @@ const Grid = ({ data }) => {
         data?.ID,
         JSON.stringify({
           Event: {
-            CurCell: [row, RowTitles?.length > 0 ? column : column + 1],
+            CurCell: [row,  column ],
           },
         })
       );
@@ -1051,14 +1050,14 @@ const Grid = ({ data }) => {
         data?.ID,
         JSON.stringify({
           Event: {
-            CurCell: [row, RowTitles?.length > 0 ? column : column + 1],
+            CurCell: [row,  column ],
             Values: localStoragValue?.Event?.Values,
           },
         })
       );
     }
 
-    handleCellMove(row, RowTitles?.length > 0 ? column : column + 1, 1);
+    handleCellMove(row,  column , 1);
 
     // handleData(
     //   {
