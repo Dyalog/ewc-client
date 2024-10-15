@@ -275,6 +275,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   };
 
   const handleKeyPress = (e) => {
+    e.stopPropagation();
     e.preventDefault();
     handleKeyPressUtils(e, socket, Event, data?.ID)
     if (e.key == 'ArrowRight') handleRightArrow(e.target.value);
@@ -295,27 +296,33 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         left: position?.left,
       }}
       onMouseDown={(e) => {
+        e.stopPropagation();
         handleMouseDown(e, socket, Event,data?.ID);
       }}
       onMouseUp={(e) => {
+        e.stopPropagation();
         handleMouseUp(e, socket, Event, data?.ID);
       }}
       onMouseEnter={(e) => {
+        e.stopPropagation();
         handleMouseEnter(e, socket, Event, data?.ID);
       }}
       onMouseMove={(e) => {
+        e.stopPropagation();
         handleMouseMove(e, socket, Event, data?.ID);
       }}
       onMouseLeave={(e) => {
+        e.stopPropagation();
         handleMouseLeave(e, socket, Event, data?.ID);
       }}
       onWheel={(e) => {
         handleMouseWheel(e, socket, Event, data?.ID);
       }}
       onDoubleClick={(e)=>{
+        e.stopPropagation();
         handleMouseDoubleClick(e, socket, Event,data?.ID);
       }}
-    >
+      >
       <select
         ref={inputRef}
         onKeyDown={(e) => handleKeyPress(e)}
@@ -330,6 +337,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           ...customStyles
         }}
         onChange={(e) => {
+          e.stopPropagation();
           setComboInput(e.target.value);
           handleSelItemsEvent(e.target.value);
         }}
