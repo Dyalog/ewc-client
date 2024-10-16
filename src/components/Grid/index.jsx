@@ -1030,10 +1030,11 @@ const Grid = ({ data }) => {
 
   const handleCellClick = (row, column) => {
     // console.log("issue cellclick", {row, column})
-    setSelectedColumn(column);
+    const actualColumn =  RowTitles ? column : column+1
+    setSelectedColumn(actualColumn);
     setSelectedRow(row);
 
-    if (row == selectedRow && column == selectedColumn) return;
+    if (row == selectedRow && actualColumn == selectedColumn) return;
 
     let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
     if (!localStoragValue)
@@ -1041,7 +1042,7 @@ const Grid = ({ data }) => {
         data?.ID,
         JSON.stringify({
           Event: {
-            CurCell: [row,  column ],
+            CurCell: [row,  actualColumn ],
           },
         })
       );
@@ -1050,14 +1051,14 @@ const Grid = ({ data }) => {
         data?.ID,
         JSON.stringify({
           Event: {
-            CurCell: [row,  column ],
+            CurCell: [row,  actualColumn ],
             Values: localStoragValue?.Event?.Values,
           },
         })
       );
     }
 
-    handleCellMove(row,  column , 1);
+    handleCellMove(row,  actualColumn , 1);
 
     // handleData(
     //   {
@@ -1140,7 +1141,7 @@ const Grid = ({ data }) => {
               {row.map((data, columni) => {
                 //  selectedRow === rowi && console.log("issue arrow focus", selectedRow, rowi )
                 const isFocused =
-                  selectedRow === rowi && selectedColumn === columni;
+                  selectedRow === rowi && selectedColumn === (RowTitles ? columni: columni+1);
 
                 return (
                   <div
@@ -1165,7 +1166,7 @@ const Grid = ({ data }) => {
                       maxheight: `${data?.height}px`,
                       backgroundColor:
                         (selectedRow === rowi && data.type == "cell") ||
-                        (selectedColumn === columni && data.type == "header")
+                        (selectedColumn === (RowTitles ? columni: columni+1) && data.type == "header")
                           ? "lightblue"
                           : rgbColor(data?.backgroundColor),
                       textAlign: data.type == "header" ? "center" : data?.align,
