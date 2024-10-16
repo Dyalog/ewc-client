@@ -856,8 +856,7 @@ const Grid = ({ data }) => {
       updatePosition();
     }, 120);
   };
-
-  const modifyGridData = () => {
+ const modifyGridData = () => {
     let data = [];
     // Push the header Information
     if (ColTitles) {
@@ -870,8 +869,12 @@ const Grid = ({ data }) => {
         height: !TitleHeight ? 20 : TitleHeight,
       };
 
-      // push the obj when TitleWidth is present
-      !TitleWidth && !RowTitles ? null : header.push(emptyobj);
+      if (
+        !(!TitleWidth && !RowTitles) ||
+        (TitleWidth === undefined && !RowTitles)
+      ) {
+        header.push(emptyobj);
+      }
 
       for (let i = 0; i < ColTitles?.length; i++) {
         let obj = {
