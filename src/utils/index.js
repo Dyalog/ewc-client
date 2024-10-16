@@ -552,15 +552,16 @@ export const getCurrentUrl = () => {
   const currentUrl = window.location.origin;
   const path = window.location.pathname !== "/" ? window.location.pathname : "";
 
-  if (import.meta.env.VITE_APL_URL) {
-    return import.meta.env.VITE_APL_URL + path;
-  }
-
   if (import.meta.env.DEV) {
-    alert("Please set the VITE_APL_URL environment variable in .env file\n\n"+
-      "For running the APL server with the default port, the .env file need only contain:\n\n"+
+    if (import.meta.env.VITE_APL_URL) {
+      return import.meta.env.VITE_APL_URL + path;
+    }
+
+    alert("Please set the VITE_APL_URL environment variable in .env (or .env.development) file\n\n" +
+      "For running the APL server with the default port, the .env file need only contain:\n\n" +
       "VITE_APL_URL=http://localhost:22322/"
     );
   }
+
   return currentUrl + path;
 };
