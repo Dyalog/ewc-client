@@ -287,7 +287,6 @@
 // };
 
 // export default Grid;
-
 import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -315,7 +314,7 @@ import GridLabel from "./GridLabel";
 const Component = ({ key, data, row, column }) => {
   if (data?.type == "Edit") return <GridEdit data={data} />;
   else if (data?.type == "Button") return <GridButton data={data} />;
-  else if (data?.type == "cell" ||"rowTitle") return <GridCell data={data} />;
+  else if (data?.type == "cell") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
@@ -448,7 +447,7 @@ const Grid = ({ data }) => {
   }, [data]);
 
   const handleCellMove = (row, column, mouseClick) => {
-    if (column > columns || column <= 0) return;
+    if (column > columns || column == 0) return;
     // console.log("waiting handle cell move", row, column, selectedRow, selectedColumn)
     const cellChanged = JSON.parse(localStorage.getItem("isChanged"));
     const cellMoveEvent = JSON.stringify({
@@ -653,53 +652,48 @@ const Grid = ({ data }) => {
           0
         );
       } else if (event.key === "ArrowLeft") {
-        if (childExists || parentExists) {
+        if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        }
-    
-        setSelectedColumn((prev) => {
-          // Determine the minimum column index based on RowTitles
-          const minColumn = RowTitles?.length > 0 ? 1 : 0;
-          return Math.max(prev - 1, 1);
-        });
-    
+        // console.log("issue arrow left prev", {selectedRow, selectedColumn})
+        setSelectedColumn((prev) =>
+          Math.max(prev - 1, RowTitles?.length > 0 ? 1 : 0)
+        );
+        // console.log("issue arrow left", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn})
+
         if (!localStoragValue) {
-          // If RowTitles exist and we're at the first column, do nothing
-          if (RowTitles?.length > 0 && selectedColumn === 1) return;
-    
+          if (ColTitles?.length > 0 && selectedColumn == 1) return;
+
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
                   selectedRow,
-                  RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn, // Corrected ternary
+                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
                 ],
               },
             })
           );
         } else {
-          if (RowTitles?.length > 0 && selectedColumn === 1) return;
+          if (ColTitles?.length > 0 && selectedColumn == 1) return;
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
                   selectedRow,
-                  RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn, // Corrected ternary
+                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
             })
           );
         }
-    
         handleCellMove(
           selectedRow,
-          RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn, // Corrected ternary
+          ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
           0
         );
-    
       } else if (event.key === "ArrowUp") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
@@ -861,7 +855,8 @@ const Grid = ({ data }) => {
       updatePosition();
     }, 120);
   };
- const modifyGridData = () => {
+
+  const modifyGridData = () => {
     let data = [];
     // Push the header Information
     if (ColTitles) {
@@ -873,13 +868,15 @@ const Grid = ({ data }) => {
         width: !TitleWidth ? 100 : TitleWidth,
         height: !TitleHeight ? 20 : TitleHeight,
       };
-
       if (
-        !(!TitleWidth && !RowTitles) ||
-        (TitleWidth === undefined && !RowTitles)
-      ) {
-        header.push(emptyobj);
-      }
+                !(!TitleWidth && !RowTitles) ||
+                (TitleWidth === undefined && !RowTitles)
+              ) {
+                header.push(emptyobj);
+              }
+
+      // push the obj when TitleWidth is present
+      // !TitleWidth && !RowTitles ? null : header.push(emptyobj);
 
       for (let i = 0; i < ColTitles?.length; i++) {
         let obj = {
@@ -929,7 +926,7 @@ const Grid = ({ data }) => {
         const backgroundColor = BCol && BCol[cellType - 1];
         let body = [];
         let obj = {
-          type: RowTitles ? "cell" : "rowTitle",
+          type: "cell",
           value: RowTitles ? RowTitles[i] : i + 1,
           width: RowTitles ? (!TitleWidth ? 100 : TitleWidth) : 100,
           height: !CellHeights
@@ -1036,12 +1033,12 @@ const Grid = ({ data }) => {
     return data;
   };
 
-  const handleCellClick = (row, column, rowData) => {
-    const actualColumn =  Values.length < rowData.length ? column : column+1
-    setSelectedColumn(actualColumn);
+  const handleCellClick = (row, column) => {
+    // console.log("issue cellclick", {row, column})
+    setSelectedColumn(column);
     setSelectedRow(row);
 
-    if (row == selectedRow && actualColumn == selectedColumn) return;
+    if (row == selectedRow && column == selectedColumn) return;
 
     let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
     if (!localStoragValue)
@@ -1049,7 +1046,7 @@ const Grid = ({ data }) => {
         data?.ID,
         JSON.stringify({
           Event: {
-            CurCell: [row,  actualColumn ],
+            CurCell: [row,  column ],
           },
         })
       );
@@ -1058,14 +1055,14 @@ const Grid = ({ data }) => {
         data?.ID,
         JSON.stringify({
           Event: {
-            CurCell: [row,  actualColumn ],
+            CurCell: [row,  column ],
             Values: localStoragValue?.Event?.Values,
           },
         })
       );
     }
 
-    handleCellMove(row,  actualColumn , 1);
+    handleCellMove(row,  column , 1);
 
     // handleData(
     //   {
@@ -1148,12 +1145,11 @@ const Grid = ({ data }) => {
               {row.map((data, columni) => {
                 //  selectedRow === rowi && console.log("issue arrow focus", selectedRow, rowi )
                 const isFocused =
-                  selectedRow === rowi && selectedColumn === (Values.length < row.length  ? columni: columni+1);
-
+                  selectedRow === rowi && selectedColumn === (Values?.length < row.length ?columni:columni + 1);
                 return (
                   <div
                     onClick={(e) => {
-                      handleCellClick(rowi,  columni, row);
+                      handleCellClick(rowi, Values?.length < row.length ? columni : columni+1);
                       // handleCellMove(rowi, columni + 1, '');
                     }}
                     id={`${gridId}`}
@@ -1173,7 +1169,7 @@ const Grid = ({ data }) => {
                       maxheight: `${data?.height}px`,
                       backgroundColor:
                         (selectedRow === rowi && data.type == "cell") ||
-                        (selectedColumn === (Values.length < row.length  ? columni: columni+1) && data.type == "header")
+                        (selectedColumn === (Values?.length < row.length ?columni:columni+1) && data.type == "header")
                           ? "lightblue"
                           : rgbColor(data?.backgroundColor),
                       textAlign: data.type == "header" ? "center" : data?.align,
@@ -1187,7 +1183,7 @@ const Grid = ({ data }) => {
                       data={{
                         ...data,
                         row: rowi,
-                        column: columni,
+                        column: Values?.length < row.length ?columni:columni+1,
                         gridValues: Values,
                         gridEvent: Event,
                         showInput: ShowInput,
