@@ -1150,7 +1150,6 @@ const Grid = ({ data }) => {
                   <div
                     onClick={(e) => {
                       handleCellClick(rowi, Values?.length < row.length ? columni : columni+1);
-                      // handleCellMove(rowi, columni + 1, '');
                     }}
                     id={`${gridId}`}
                     style={{
