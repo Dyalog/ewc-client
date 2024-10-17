@@ -1034,7 +1034,7 @@ const Grid = ({ data }) => {
   };
 
   const handleCellClick = (row, column) => {
-    // console.log("issue cellclick", {row, column})
+    console.log("issue cellclick")
     setSelectedColumn(column);
     setSelectedRow(row);
 
@@ -1063,19 +1063,6 @@ const Grid = ({ data }) => {
     }
 
     handleCellMove(row,  column , 1);
-
-    // handleData(
-    //   {
-    //     ID: data?.ID,
-    //     Properties: {
-    //       CurCell: [row, column],
-    //     },
-    //   },
-    //   'WS'
-    // );
-
-    // reRender();
-    //  handleCellMove(row, column + 1, Values[row - 1][column]);
   };
 
   const gridData = modifyGridData();
@@ -1143,7 +1130,6 @@ const Grid = ({ data }) => {
           return (
             <div style={{ display: "flex" }} id={`row-${rowi}-cell`}>
               {row.map((data, columni) => {
-                //  selectedRow === rowi && console.log("issue arrow focus", selectedRow, rowi )
                 const isFocused =
                   selectedRow === rowi && selectedColumn === (Values?.length < row.length ?columni:columni + 1);
                 return (
