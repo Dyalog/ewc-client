@@ -656,7 +656,7 @@ const Grid = ({ data }) => {
           await waitForProceed(localStorage.getItem(eventId));
         // console.log("issue arrow left prev", {selectedRow, selectedColumn})
         setSelectedColumn((prev) =>
-          Math.max(prev - 1, RowTitles?.length > 0 ? 1 : 0)
+          Math.max(prev - 1,  1)
         );
         // console.log("issue arrow left", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn})
 
