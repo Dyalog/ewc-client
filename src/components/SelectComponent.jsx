@@ -37,9 +37,6 @@ import MessageBox from './MessageBox';
 import Link from './Link';
 import Upload from './Upload';
 
-import KendoChart from './KendoChart';
-import KendoGrid from './KendoGrid';
-
 const SelectComponent = ({
   data,
   inputValue = '',
@@ -173,8 +170,6 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Circle') return <Circle data={data} />;
   if (data?.Properties?.Type == 'ApexChart') return <Chart data={data} />;
   if (data?.Properties?.Type == 'MsgBox') return <MessageBox data= {data} />;
-  if (data?.Properties?.Type == 'KendoChart') return <KendoChart data={data} />;
-  if (data?.Properties?.Type == 'KendoGrid') return <KendoGrid data={data} />;
   if (data?.Properties?.Type == 'Link') return <Link data={data} />;
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
 
