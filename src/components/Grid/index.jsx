@@ -1135,6 +1135,7 @@ const Grid = ({ data }) => {
                 return (
                   <div
                     onClick={(e) => {
+                      if(data.type ==="rowTitle") return
                       handleCellClick(rowi, Values?.length < row.length ? columni : columni+1);
                     }}
                     id={`${gridId}`}
