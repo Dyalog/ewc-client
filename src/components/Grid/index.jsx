@@ -314,7 +314,7 @@ import GridLabel from "./GridLabel";
 const Component = ({ key, data, row, column }) => {
   if (data?.type == "Edit") return <GridEdit data={data} />;
   else if (data?.type == "Button") return <GridButton data={data} />;
-  else if (data?.type == "cell") return <GridCell data={data} />;
+  else if (data?.type == "cell" || "rowTitle") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
@@ -926,7 +926,7 @@ const Grid = ({ data }) => {
         const backgroundColor = BCol && BCol[cellType - 1];
         let body = [];
         let obj = {
-          type: "cell",
+          type: "rowTitle",
           value: RowTitles ? RowTitles[i] : i + 1,
           width: RowTitles ? (!TitleWidth ? 100 : TitleWidth) : 100,
           height: !CellHeights
@@ -972,7 +972,7 @@ const Grid = ({ data }) => {
 
         // Decide to add the RowTitles If the TitleWidth is Greater than 0
         let obj = {
-          type: "cell",
+          type: "rowTitle",
           value: RowTitles ? RowTitles[i] : i + 1,
           width: !TitleWidth ? 100 : TitleWidth,
           height: !CellHeights
@@ -1168,7 +1168,7 @@ const Grid = ({ data }) => {
                       minheight: `${data?.height}px`,
                       maxheight: `${data?.height}px`,
                       backgroundColor:
-                        (selectedRow === rowi && data.type == "cell") ||
+                        (selectedRow === rowi && data.type == "rowTitle") ||
                         (selectedColumn === (Values?.length < row.length ?columni:columni+1) && data.type == "header")
                           ? "lightblue"
                           : rgbColor(data?.backgroundColor),
