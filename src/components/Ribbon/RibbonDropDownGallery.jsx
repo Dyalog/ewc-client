@@ -20,6 +20,13 @@ const RibbonGallery = ({ data }) => {
     .filter((key) => key.startsWith("MItem"))
     .map((key) => data[key]);
 
+  let iconsUsed = false;
+  menuItems.forEach(item => {
+    if (item.Properties?.SmallImage || item.Properties?.LargeImage) {
+      iconsUsed = true;
+    }
+  });
+
   const totalItems = menuItems.length;
 
   // Calculate the number of items on the last page
@@ -99,7 +106,9 @@ const RibbonGallery = ({ data }) => {
                 onClick={() => handleSelectEvent(item.ID, item.Properties.Event)}
                 title={item.Properties.Caption}
               >
-                <div className="item-preview">{item.Properties.Caption}</div>
+                <div className="item-preview">
+                  {item.Properties.Caption}
+                </div>
               </div>
             ))}
           </div>
@@ -145,15 +154,33 @@ const RibbonGallery = ({ data }) => {
                 <div
                   key={index}
                   className="ribbon-dropdown-item"
-                  onClick={() => handleSelectEvent(item.ID,item.Properties.Event)}
+                  onClick={() => handleSelectEvent(item.ID, item.Properties.Event)}
                   title={item.Properties.Caption}
                 >
-                  <div className="item-preview">{item.Properties.Caption}</div>
+                  <div className="item-preview">
+                    <div
+                      style={{
+                        display: "inline",
+                        width: "24px",
+                        marginRight: "8px"
+                      }}
+                    >
+                      {item.Properties.SmallImage && (
+                        <img
+                          src={item.Properties.SmallImage}
+                          alt=""
+                          style={{ marginRight: "8px", width: "24px", height: "24px" }}
+                        />
+                      )}
+                      {/* TODO LargeImage */}
+                    </div>
+                    {item.Properties.Caption}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-         
+
         </>
       )}
     </div>

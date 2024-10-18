@@ -46,19 +46,19 @@ const RibbonDropDownButton = ({ data }) => {
   const ImageData = getImageFromData(data);
 
   // Handle selecting a menu item
-  const handleSelectEvent = (menuItemID) => {
+  const handleSelectEvent = (menuItem) => {
     const selectEvent = JSON.stringify({
       Event: {
         EventName: "Select",
-        ID: menuItemID,
+        ID: menuItem.ID,
       },
     });
-    const exists = Event && Event.some((item) => item[0] === "Select");
-    if (!exists) return;
-    console.log(selectEvent);
-    socket.send(selectEvent);
+    const evProp = menuItem.Properties?.Event;
+    if (evProp && evProp.some((item) => item[0] === "Select")) {
+      socket.send(selectEvent);
+    }
 
-    // Close the dropdown after selecting an item
+    // Close the dropdown after selecting an item, whether or not event fires
     setDropdownOpen(false);
   };
 
@@ -68,6 +68,13 @@ const RibbonDropDownButton = ({ data }) => {
   const menuItems = Object.keys(data)
     .filter((key) => key.startsWith("MItem"))
     .map((key) => data[key]);
+
+  let iconsUsed = false;
+  menuItems.forEach(item => {
+    if (item.Properties?.SmallImage || item.Properties?.LargeImage) {
+      iconsUsed = true;
+    }
+  });
 
   // Close dropdown when clicked outside
   useEffect(() => {
@@ -142,7 +149,7 @@ const RibbonDropDownButton = ({ data }) => {
           {/* Custom Dropdown */}
           {dropdownOpen && (
             <div
-         
+
               className="custom-dropdown-menu"
               style={{
                 position: "absolute",
@@ -163,8 +170,25 @@ const RibbonDropDownButton = ({ data }) => {
                     borderBottom:
                       index < menuItems.length - 1 ? "1px solid #ddd" : "none",
                   }}
-                  onClick={() => handleSelectEvent(item.ID)}
+                  onClick={() => handleSelectEvent(item)}
                 >
+                  {iconsUsed && (
+                    <div
+                      style={{
+                        display: "inline",
+                        width: "24px",
+                        marginRight: "8px"
+                      }}
+                    >
+                      {/* Data here is a blank 1px img - used so layout is identically applied whether or not an icon exists */}
+                      <img
+                        src={item.Properties?.SmallImage || "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="}
+                        alt=""
+                        style={{ marginRight: "8px", width: "24px", height: "24px" }}
+                      />
+                      {/* TODO LargeImage */}
+                    </div>
+                  )}
                   {item.Properties.Caption}
                 </div>
               ))}
