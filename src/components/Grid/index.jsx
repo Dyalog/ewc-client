@@ -447,6 +447,7 @@ const Grid = ({ data }) => {
   }, [data]);
 
   const handleCellMove = (row, column, mouseClick) => {
+    console.log("265 grid")
     if (column > columns || column == 0) return;
     const isKeyboard = !mouseClick ? 1 : 0;
     // console.log("waiting handle cell move", row, column, selectedRow, selectedColumn)

@@ -183,12 +183,14 @@ const Edit = ({
     };
   }
 
-  const triggerCellMoveEvent = (row, column, value) => {
+  const triggerCellMoveEvent = (row, column,mouseClick, value) => {
+    console.log("265 edit")
+    const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
         ID: extractStringUntilLastPeriod(data?.ID),
         EventName: "CellMove",
-        Info: [row, column, 0, 0, 0, value],
+        Info: [row, column, isKeyboard, 0, mouseClick, value],
       },
     });
 
@@ -204,7 +206,7 @@ const Edit = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column), emitValue);
+    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column),0, emitValue);
 
     const element = nextSibling?.querySelectorAll("input");
     if (!element) return;
@@ -228,7 +230,7 @@ const Edit = ({
 
     if (element?.length == 0) element = nextSibling?.querySelectorAll("span");
 
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1, emitValue);
+    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
     element && element[0]?.focus();
 
     element && element[0]?.select();
@@ -243,7 +245,7 @@ const Edit = ({
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
     const element = nextSibling?.querySelectorAll(querySelector);
 
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1, emitValue);
+    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
 
     // for (let i = 0; i < children.length; i++) {
     //   children[i].focus();
@@ -261,7 +263,7 @@ const Edit = ({
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
 
-    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column), emitValue);
+    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column),0, emitValue);
     const element = nextSibling?.querySelectorAll("input");
     if (!element) return;
     element &&
