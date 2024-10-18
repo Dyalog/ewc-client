@@ -448,6 +448,7 @@ const Grid = ({ data }) => {
 
   const handleCellMove = (row, column, mouseClick) => {
     if (column > columns || column == 0) return;
+    const isKeyboard = !mouseClick ? 1 : 0;
     // console.log("waiting handle cell move", row, column, selectedRow, selectedColumn)
     const cellChanged = JSON.parse(localStorage.getItem("isChanged"));
     const cellMoveEvent = JSON.stringify({
@@ -457,7 +458,7 @@ const Grid = ({ data }) => {
         Info: [
           row,
           column,
-          0,
+          isKeyboard,
           0,
           mouseClick,
           cellChanged && cellChanged.isChange ? 1 : 0,
@@ -579,12 +580,8 @@ const Grid = ({ data }) => {
       if (event.key === "ArrowRight") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        // console.log("waiting await proceed done")
-        // console.log("issue arrow right initial", {selectedRow, selectedColumn})
         setSelectedColumn((prev) => Math.min(prev + 1,ColTitles? columns: columns-1));
-        // console.log("issue arrow right", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0
-        //   ? selectedColumn + 1
-        //   : selectedColumn + 1 })
+     
         if (!localStoragValue) {
           console.log(
             "writing local storage",
@@ -699,7 +696,6 @@ const Grid = ({ data }) => {
           await waitForProceed(localStorage.getItem(eventId));
         const updatedRow =  Math.max(selectedRow - 1, 0)
         setSelectedRow((prev) => Math.max(prev - 1, 1));
-        console.log("260",selectedRow, updatedRow)
         if (!localStoragValue) {
           if (updatedRow == 0 && ColTitles?.length > 0) return;
 
