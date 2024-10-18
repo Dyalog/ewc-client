@@ -697,29 +697,31 @@ const Grid = ({ data }) => {
       } else if (event.key === "ArrowUp") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
+        const updatedRow =  Math.max(selectedRow - 1, 0)
         setSelectedRow((prev) => Math.max(prev - 1, 1));
+        console.log("260",selectedRow, updatedRow)
         if (!localStoragValue) {
-          if (selectedRow == 1 && RowTitles?.length > 0) return;
+          if (updatedRow == 0 && ColTitles?.length > 0) return;
 
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
-                  selectedRow - 1,
+                  updatedRow,
                   ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
                 ],
               },
             })
           );
         } else {
-          if (selectedRow == 1 && RowTitles?.length > 0) return;
+          if (updatedRow == 0 && ColTitles?.length > 0) return;
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
-                  selectedRow - 1,
+                  updatedRow,
                   ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
                 ],
                 Values: localStoragValue?.Event?.Values,
@@ -728,7 +730,7 @@ const Grid = ({ data }) => {
           );
         }
         handleCellMove(
-          selectedRow - 1,
+          updatedRow,
           ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
           0
         );
