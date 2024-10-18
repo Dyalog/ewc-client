@@ -1148,7 +1148,7 @@ const Grid = ({ data }) => {
                 return (
                   <div
                     onClick={(e) => {
-                      if(data.type ==="rowTitle" || "header") return
+                      if(data.type ==="rowTitle" ||  data.type === "header") return
                       handleCellClick(rowi, TitleWidth === 0 ?columni+1: columni );
                       // handleCellMove(rowi, columni + 1, '');
                     }}
