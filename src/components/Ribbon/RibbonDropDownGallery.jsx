@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { GoChevronUp, GoChevronDown } from "react-icons/go";
 import { BsArrowBarDown } from "react-icons/bs";
-import { useAppData } from "../../hooks"
+import { useAppData } from "../../hooks";
+import { getCurrentUrl } from "../../utils";
 
 const onSelect = (item) => {
   console.log("Selected:", item);
@@ -9,8 +10,10 @@ const onSelect = (item) => {
 };
 
 const RibbonGallery = ({ data }) => {
-  const {socket} =useAppData()
+  const { socket } = useAppData();
   const { Cols } = data.Properties;
+
+  console.log({ properties: data });
 
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -48,8 +51,7 @@ const RibbonGallery = ({ data }) => {
     }
   };
 
-  console.log({menuItems})
-
+  console.log({ menuItems });
 
   const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({
@@ -88,7 +90,11 @@ const RibbonGallery = ({ data }) => {
   const isDownDisabled = startIndex >= maxStartIndex;
 
   return (
-    <div className="ribbon-gallery" ref={galleryRef}>
+    <div
+      className="ribbon-gallery"
+      ref={galleryRef}
+      style={{ width: "fit-content" }}
+    >
       {!isDropdownOpen && (
         <>
           <div className="gallery-content" style={{ width: `${50 * Cols}px` }}>
@@ -96,10 +102,21 @@ const RibbonGallery = ({ data }) => {
               <div
                 key={index + startIndex}
                 className="gallery-item"
-                onClick={() => handleSelectEvent(item.ID, item.Properties.Event)}
+                onClick={() =>
+                  handleSelectEvent(item.ID, item.Properties.Event)
+                }
                 title={item.Properties.Caption}
               >
-                <div className="item-preview">{item.Properties.Caption}</div>
+                <div className="item-preview">
+                  {item.Properties.SmallImage && (
+                    <img src={getCurrentUrl() + item.Properties.SmallImage} style={{
+                      width: "16px",
+                      height: "16px",
+                      // opacity:"90%"
+                    }} />
+                  )}
+                  <div className="">{item.Properties.Caption}</div>
+                </div>
               </div>
             ))}
           </div>
@@ -145,15 +162,25 @@ const RibbonGallery = ({ data }) => {
                 <div
                   key={index}
                   className="ribbon-dropdown-item"
-                  onClick={() => handleSelectEvent(item.ID,item.Properties.Event)}
+                  onClick={() =>
+                    handleSelectEvent(item.ID, item.Properties.Event)
+                  }
                   title={item.Properties.Caption}
                 >
-                  <div className="item-preview">{item.Properties.Caption}</div>
+                  <div className="item-preview">
+                    {item.Properties.SmallImage && (
+                      <img src={getCurrentUrl() + item.Properties.SmallImage}  style={{
+                        width: "16px",
+                        height: "16px",
+                        // opacity:"90%"
+                      }} />
+                    )}
+                    <div className="">{item.Properties.Caption}</div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-         
         </>
       )}
     </div>
