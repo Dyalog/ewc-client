@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { GoChevronUp, GoChevronDown } from "react-icons/go";
 import { BsArrowBarDown } from "react-icons/bs";
-import { useAppData } from "../../hooks";
+import { useAppData } from "../../hooks"
 
 const onSelect = (item) => {
   console.log("Selected:", item);
@@ -64,7 +64,7 @@ const RibbonGallery = ({ data }) => {
     socket.send(selectEvent);
 
     // Close the dropdown after selecting an item
-    setDropdownOpen(false);
+    setIsDropdownOpen(false);
   };
 
   useEffect(() => {
