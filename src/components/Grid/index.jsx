@@ -710,7 +710,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   updatedRow,
-                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                   selectedColumn,
                 ],
               },
             })
@@ -723,7 +723,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   updatedRow,
-                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                  selectedColumn,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -732,7 +732,7 @@ const Grid = ({ data }) => {
         }
         handleCellMove(
           updatedRow,
-          ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+          selectedColumn,
           0
         );
       } else if (event.key === "ArrowDown") {
@@ -747,7 +747,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow + 1,
-                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                  selectedColumn,
                 ],
               },
             })
@@ -761,7 +761,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow + 1,
-                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                  selectedColumn,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -770,7 +770,7 @@ const Grid = ({ data }) => {
         }
         handleCellMove(
           selectedRow + 1,
-          ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+          selectedColumn,
           0
         );
       } else if (event.key === "PageDown") {
