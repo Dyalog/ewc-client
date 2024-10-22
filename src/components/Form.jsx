@@ -177,7 +177,7 @@ const Form = ({ data }) => {
         // overflow: 'hidden',
       }}
       onKeyDown={(e) => {
-        handleKeyPressUtils(e, socket, Event, data?.ID);
+        // handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
     >
       {Object.keys(updatedData).map((key, i) => {
