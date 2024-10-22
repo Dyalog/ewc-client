@@ -581,12 +581,9 @@ const Grid = ({ data }) => {
       if (event.key === "ArrowRight") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        // console.log("waiting await proceed done")
-        // console.log("issue arrow right initial", {selectedRow, selectedColumn})
-        setSelectedColumn((prev) => Math.min(prev + 1,ColTitles? columns: columns-1));
-        // console.log("issue arrow right", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0
-        //   ? selectedColumn + 1
-        //   : selectedColumn + 1 })
+        const updatedColumn = Math.min(selectedColumn + 1,columns)
+          setSelectedColumn(updatedColumn);
+
         if (!localStoragValue) {
           console.log(
             "writing local storage",
@@ -594,14 +591,12 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0
-                    ? selectedColumn + 1
-                    : selectedColumn + 1,
+                  updatedColumn,
                 ],
               },
             })
           );
-          if (ColTitles?.length > 0 && selectedColumn == columns) return;
+         
 
           localStorage.setItem(
             data?.ID,
@@ -609,23 +604,19 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0
-                    ? selectedColumn + 1
-                    : selectedColumn + 1,
+                  updatedColumn,
                 ],
               },
             })
           );
         } else {
-          if (ColTitles?.length > 0 && selectedColumn == columns) return;
+         
           console.log(
             JSON.stringify({
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0
-                    ? selectedColumn + 1
-                    : selectedColumn + 1,
+                  updatedColumn ,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -638,9 +629,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0
-                    ? selectedColumn + 1
-                    : selectedColumn + 1,
+                  updatedColumn,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -650,41 +639,37 @@ const Grid = ({ data }) => {
 
         handleCellMove(
           selectedRow,
-          ColTitles?.length > 0 ? selectedColumn + 1 : selectedColumn + 2,
+          updatedColumn,
           0
         );
       } else if (event.key === "ArrowLeft") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        // console.log("issue arrow left prev", {selectedRow, selectedColumn})
-        setSelectedColumn((prev) =>
-          Math.max(prev - 1,  1)
-        );
+        const updatedColumn = Math.max(selectedColumn - 1,  1) 
+        setSelectedColumn(updatedColumn);
         // console.log("issue arrow left", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn})
 
         if (!localStoragValue) {
-          if (ColTitles?.length > 0 && selectedColumn == 1) return;
-
+       
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
+                  updatedColumn,
                 ],
               },
             })
           );
         } else {
-          if (ColTitles?.length > 0 && selectedColumn == 1) return;
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
                   selectedRow,
-                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
+                  updatedColumn,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -693,7 +678,7 @@ const Grid = ({ data }) => {
         }
         handleCellMove(
           selectedRow,
-          ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
+          updatedColumn,
           0
         );
       } else if (event.key === "ArrowUp") {
