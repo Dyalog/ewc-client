@@ -636,7 +636,7 @@ const Grid = ({ data }) => {
             })
           );
         }
-
+if(selectedColumn === updatedColumn) return
         handleCellMove(
           selectedRow,
           updatedColumn,
@@ -676,6 +676,7 @@ const Grid = ({ data }) => {
             })
           );
         }
+        if(selectedColumn === updatedColumn) return
         handleCellMove(
           selectedRow,
           updatedColumn,
@@ -684,12 +685,10 @@ const Grid = ({ data }) => {
       } else if (event.key === "ArrowUp") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        const updatedRow =  Math.max(selectedRow - 1, 0)
-        setSelectedRow((prev) => Math.max(prev - 1, 1));
+        const updatedRow =  Math.max(selectedRow - 1, 1)
+        setSelectedRow(updatedRow);
         if (!localStoragValue) {
-          if (updatedRow == 0 && ColTitles?.length > 0) return;
-
-          localStorage.setItem(
+           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
@@ -701,8 +700,7 @@ const Grid = ({ data }) => {
             })
           );
         } else {
-          if (updatedRow == 0 && ColTitles?.length > 0) return;
-          localStorage.setItem(
+           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
@@ -715,6 +713,7 @@ const Grid = ({ data }) => {
             })
           );
         }
+        if(selectedRow === updatedRow) return
         handleCellMove(
           updatedRow,
           selectedColumn,
@@ -723,15 +722,16 @@ const Grid = ({ data }) => {
       } else if (event.key === "ArrowDown") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        setSelectedRow((prev) => Math.min(prev + 1, rows - 1));
+        const updatedRow = Math.min(selectedRow + 1, rows-1)
+        setSelectedRow(updatedRow);
         if (!localStoragValue) {
-          if (selectedRow == rows - 1) return;
+        
           localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
                 CurCell: [
-                  selectedRow + 1,
+                  updatedRow,
                   selectedColumn,
                 ],
               },
@@ -745,7 +745,7 @@ const Grid = ({ data }) => {
             JSON.stringify({
               Event: {
                 CurCell: [
-                  selectedRow + 1,
+                  updatedRow,
                   selectedColumn,
                 ],
                 Values: localStoragValue?.Event?.Values,
@@ -753,8 +753,9 @@ const Grid = ({ data }) => {
             })
           );
         }
+        if(selectedRow === updatedRow) return
         handleCellMove(
-          selectedRow + 1,
+          updatedRow,
           selectedColumn,
           0
         );
