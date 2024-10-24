@@ -574,7 +574,7 @@ const Grid = ({ data }) => {
       if (event.key === "ArrowRight") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns-1 :columns)
+        const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
         setSelectedColumn(updatedColumn);
         if (selectedColumn === updatedColumn) return
 
@@ -751,7 +751,7 @@ const Grid = ({ data }) => {
       } else if (event.key === "PageDown") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
-        const demoRow = Math.min(selectedRow + 9, 10);
+        const demoRow = Math.min(selectedRow + 9, rows - 1);
         setSelectedRow(demoRow);
         if (!localStoragValue) {
           if (selectedRow == rows - 1) return;
@@ -775,7 +775,7 @@ const Grid = ({ data }) => {
               Event: {
                 CurCell: [
                   demoRow,
-                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                  selectedColumn,
                 ],
                 Values: localStoragValue?.Event?.Values,
               },
@@ -823,7 +823,7 @@ const Grid = ({ data }) => {
         }
         handleCellMove(
           updatedRow,
-         selectedColumn,
+          selectedColumn,
           0
         );
       }
@@ -1054,7 +1054,7 @@ const Grid = ({ data }) => {
 
   const gridData = modifyGridData();
   const customStyles = parseFlexStyles(CSS);
-  console.log("260", columns)
+  console.log("260", rows)
 
   return (
     <>
