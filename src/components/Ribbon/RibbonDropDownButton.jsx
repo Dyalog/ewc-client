@@ -5,6 +5,7 @@ import { MdOutlineQuestionMark } from "react-icons/md";
 import { GoChevronDown } from "react-icons/go";
 import { useAppData } from "../../hooks";
 import { getCurrentUrl, parseFlexStyles } from "../../utils";
+import RibbonDropDownItem from "./RibbonDropDownItem";
 
 const RibbonDropDownButton = ({ data }) => {
   console.log("ribbonDropdownButton", data);
@@ -46,7 +47,7 @@ const RibbonDropDownButton = ({ data }) => {
   const ImageData = getImageFromData(data);
 
   // Handle selecting a menu item
-  const handleSelectEvent = (menuItemID) => {
+  const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({
       Event: {
         EventName: "Select",
@@ -98,9 +99,9 @@ const RibbonDropDownButton = ({ data }) => {
             className="d-flex align-items-center flex-column justify-content-center"
             style={{ cursor: "pointer", ...customStyles }}
             onClick={(e) => {
-                e.stopPropagation(); // Prevent event bubbling to prevent closing dropdown immediately
-                toggleDropdown(e);
-              }}
+              e.stopPropagation(); // Prevent event bubbling to prevent closing dropdown immediately
+              toggleDropdown(e);
+            }}
           >
             {ImageData ? (
               <img
@@ -121,9 +122,8 @@ const RibbonDropDownButton = ({ data }) => {
                     ImageList?.Properties?.Size &&
                     ImageList?.Properties?.Size[0],
                 }}
-                src={`${getCurrentUrl()}${
-                  ImageList?.Properties?.Files[ImageIndex - 1]
-                }`}
+                src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+                  }`}
                 alt="Image"
               />
             ) : (
@@ -134,7 +134,7 @@ const RibbonDropDownButton = ({ data }) => {
             </div>
             {/* Chevron Icon (Toggle Dropdown) */}
             <GoChevronDown
-              
+
               size={16}
             />
           </div>
@@ -142,7 +142,7 @@ const RibbonDropDownButton = ({ data }) => {
           {/* Custom Dropdown */}
           {dropdownOpen && (
             <div
-         
+
               className="custom-dropdown-menu"
               style={{
                 position: "absolute",
@@ -153,21 +153,12 @@ const RibbonDropDownButton = ({ data }) => {
                 zIndex: 1000,
               }}
             >
-              {menuItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="custom-dropdown-item"
-                  style={{
-                    padding: "8px 16px",
-                    cursor: "pointer",
-                    borderBottom:
-                      index < menuItems.length - 1 ? "1px solid #ddd" : "none",
-                  }}
-                  onClick={() => handleSelectEvent(item.ID)}
-                >
-                  {item.Properties.Caption}
-                </div>
-              ))}
+              {menuItems.map((item, index) => {
+                return (
+                  <RibbonDropDownItem data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} />
+                )
+
+              })}
             </div>
           )}
         </Col>
