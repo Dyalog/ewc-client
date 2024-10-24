@@ -38,6 +38,8 @@
   color: #333;
   font-size: 14px;
   text-align: left;
+  display: flex;
+  align-items: center;
 }
 
 .custom-dropdown-item:last-child {
