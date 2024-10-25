@@ -11,10 +11,7 @@ const onSelect = (item) => {
 
 const RibbonGallery = ({ data }) => {
   const { socket } = useAppData();
-  const { Cols } = data.Properties;
-
-
-
+  const {Cols, ItemHeight ,ItemWidth} = data.Properties;
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
@@ -87,6 +84,8 @@ const RibbonGallery = ({ data }) => {
   const visibleItems = menuItems.slice(startIndex, startIndex + Cols);
   const isUpDisabled = startIndex === 0;
   const isDownDisabled = startIndex >= maxStartIndex;
+  const itemWidth = ItemWidth ? ItemWidth : 50
+  const itemHeight = ItemHeight ? ItemHeight : 25
 
   return (
     <div
@@ -96,9 +95,9 @@ const RibbonGallery = ({ data }) => {
     >
       {!isDropdownOpen && (
         <>
-          <div className="gallery-content" style={{ width: `${50 * Cols}px` }}>
+          <div className="gallery-content" style={{ width: `${(itemWidth+2) * Cols}px`, height:`${itemHeight}px` }}>
             {visibleItems.map((item, index) => (
-              <RibbonGalleyItem data={item} className="gallery-item" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} />
+              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={itemWidth} ItemHeight={itemHeight} />
 
             ))}
           </div>
@@ -131,7 +130,7 @@ const RibbonGallery = ({ data }) => {
       )}
       {isDropdownOpen && (
         <>
-          <div className="dropdown-content" style={{ width: `${50 * Cols}px` }}>
+          <div className="dropdown-content" style={{ width: `${(itemWidth+2) * Cols}px`, height:`${itemHeight}px` }}>
             <div
               className="dropdown-grid"
               style={{
@@ -141,7 +140,7 @@ const RibbonGallery = ({ data }) => {
               }}
             >
               {menuItems.map((item, index) => (
-                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" />
+                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight}/>
               ))}
             </div>
           </div>

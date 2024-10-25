@@ -2,12 +2,12 @@ import React from 'react'
 import { useAppData } from '../../hooks';
 import { getCurrentUrl } from '../../utils';
 
-const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className }) => {
+const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, ItemHeight, ItemWidth }) => {
     const { findDesiredData } = useAppData();
 
     const { Caption, Event, ImageIndex, ImageListObj } = data.Properties
     const ImageData = findDesiredData(ImageListObj);
-  
+
     let imageUrl = null
     let size = null
     if (ImageData) {
@@ -24,7 +24,10 @@ const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className }) =>
             }
             title={Caption}
         >
-            <div className="item-preview">
+            <div className="item-preview" style={{
+                width: ItemWidth + "px",
+                height: ItemHeight + "px"
+            }}>
                 {imageUrl && (
                     <img src={imageUrl} style={{
                         width: size[0],
