@@ -24,7 +24,7 @@ const RibbonDropDownItem = ({ data, startIndex, menuLength, handleSelectEvent, }
                 borderBottom:
                     startIndex < menuLength - 1 ? "1px solid #ddd" : "none",
             }}
-            onClick={() => handleSelectEvent(item.ID, Event)}
+            onClick={() => handleSelectEvent(data.ID, Event)}
         >
 
             {imageUrl && (
