@@ -13,16 +13,12 @@ const RibbonDropDownButton = ({ data }) => {
   const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
   const { socket } = useAppData();
 
-  const { Icon, Caption, Event, ImageIndex, CSS } = data?.Properties;
+  const { Icon, Caption, ImageIndex, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
-  // State for dropdown toggle
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  // Reference for the wrapper container to handle clicks outside
   const wrapperRef = useRef(null);
 
-  // Function to get image data if applicable
   const getImageFromData = (data) => {
     if (data.Properties && data?.Properties.ImageListObj) {
       const imageListObj = data?.Properties.ImageListObj;
@@ -46,7 +42,6 @@ const RibbonDropDownButton = ({ data }) => {
 
   const ImageData = getImageFromData(data);
 
-  // Handle selecting a menu item
   const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({
       Event: {
@@ -58,23 +53,18 @@ const RibbonDropDownButton = ({ data }) => {
     if (!exists) return;
     console.log(selectEvent);
     socket.send(selectEvent);
-
-    // Close the dropdown after selecting an item
     setDropdownOpen(false);
   };
 
   const IconComponent = Icons[Icon] ? Icons[Icon] : MdOutlineQuestionMark;
-
-  // Extract MenuItems (MItem1, MItem2, etc.) from data
   const menuItems = Object.keys(data)
     .filter((key) => key.startsWith("MItem"))
     .map((key) => data[key]);
 
-  // Close dropdown when clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        setDropdownOpen(false); // Close dropdown if clicked outside
+        setDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -83,23 +73,21 @@ const RibbonDropDownButton = ({ data }) => {
     };
   }, []);
 
-  // Toggle dropdown function
   const toggleDropdown = (event) => {
-    event.stopPropagation(); // Prevent event bubbling to parent div
-    setDropdownOpen((prevState) => !prevState); // Toggle dropdown open/close
+    event.stopPropagation();
+    setDropdownOpen((prevState) => !prevState);
   };
 
   return (
     <div ref={wrapperRef}>
       <Row>
         <Col md={12}>
-          {/* Main Div that triggers the dropdown on click */}
           <div
             id={data?.ID}
             className="d-flex align-items-center flex-column justify-content-center"
             style={{ cursor: "pointer", ...customStyles }}
             onClick={(e) => {
-              e.stopPropagation(); // Prevent event bubbling to prevent closing dropdown immediately
+              e.stopPropagation();
               toggleDropdown(e);
             }}
           >
@@ -132,14 +120,12 @@ const RibbonDropDownButton = ({ data }) => {
             <div className="text-center" style={{ fontSize: "12px" }}>
               {Caption}
             </div>
-            {/* Chevron Icon (Toggle Dropdown) */}
             <GoChevronDown
 
               size={16}
             />
           </div>
 
-          {/* Custom Dropdown */}
           {dropdownOpen && (
             <div
 

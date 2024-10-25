@@ -4,11 +4,6 @@ import { BsArrowBarDown } from "react-icons/bs";
 import { useAppData } from "../../hooks";
 import RibbonGalleyItem from "./RibbonGalleyItem";
 
-const onSelect = (item) => {
-  console.log("Selected:", item);
-  // Handle the selection
-};
-
 const RibbonGallery = ({ data }) => {
   const { socket } = useAppData();
   const {Cols, ItemHeight ,ItemWidth} = data.Properties;
@@ -21,12 +16,8 @@ const RibbonGallery = ({ data }) => {
     .map((key) => data[key]);
 
   const totalItems = menuItems.length;
-
-  // Calculate the number of items on the last page
   const remainder = totalItems % Cols;
   const lastPageItems = remainder === 0 ? Cols : remainder;
-
-  // Calculate the maximum startIndex
   const maxStartIndex = totalItems - lastPageItems;
 
   const handleScrollLeft = () => {
@@ -41,14 +32,6 @@ const RibbonGallery = ({ data }) => {
     setIsDropdownOpen((prevState) => !prevState);
   };
 
-  const handleItemClick = (item) => {
-    onSelect(item);
-    if (isDropdownOpen) {
-      setIsDropdownOpen(false);
-    }
-  };
-
-
   const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({
       Event: {
@@ -60,8 +43,6 @@ const RibbonGallery = ({ data }) => {
     if (!exists) return;
     console.log(selectEvent);
     socket.send(selectEvent);
-
-    // Close the dropdown after selecting an item
     setIsDropdownOpen(false);
   };
 
