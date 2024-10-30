@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Icons } from "../../common";
-import "./ScrollBar.css";
 import { useAppData } from "../../hooks";
 import {
   handleKeyPressUtils,
@@ -46,7 +45,7 @@ const ScrollBar = ({ data }) => {
     const processedStyles = processCssStyles(stylesArray);
     injectCssStyles(processedStyles, data?.ID);
   }
-
+  
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;
@@ -237,6 +236,8 @@ const ScrollBar = ({ data }) => {
     width: isHorizontal ? `${trackWidth}px` : defaultSize[1] + "px",
     height: isHorizontal ? defaultSize[0] + "px" : `${trackHeight}px`,
     position: "relative",
+    backgroundColor: "lightgray",
+    border: "1px solid white",
   };
 
   const thumbPosition =
@@ -246,7 +247,7 @@ const ScrollBar = ({ data }) => {
   const thumbStyle = {
     width: isHorizontal ? "40px" : defaultSize[1] - 6 + "px",
     height: isHorizontal ? defaultSize[0] - 6 + "px" : "40px",
-    backgroundColor: "#9E9E9E",
+    backgroundColor: "gray",
     position: "absolute",
     left: isHorizontal ? `${thumbPosition}px` : "2px",
     top: isHorizontal ? "2px" : `${thumbPosition}px`,
@@ -257,6 +258,7 @@ const ScrollBar = ({ data }) => {
   const verticalPosition = {
     position: "absolute",
     top: VScroll === -1 && defaultPosn[0] !== undefined ? defaultPosn[0] : 0,
+
     ...(VScroll === -1
       ? {
           left:
@@ -312,14 +314,14 @@ const ScrollBar = ({ data }) => {
     >
       <div>
         <div
-          className={`ewc-scroll-bar ${isHorizontal ? "horizontal" : "vertical"}`}
           style={{ ...trackStyle }}
+          className={`ewc-scroll-bar ${isHorizontal ? "horizontal" : "vertical"}`}
           onMouseDown={handleTrackClick}
           ref={trackRef}
         >
           <div
-            className="ewc-thumb"
             style={{ ...thumbStyle }}
+            className="ewc-thumb"
             ref={thumbRef}
             onMouseDown={handleThumbDrag}
             onKeyDown={() => {
