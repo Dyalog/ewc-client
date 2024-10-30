@@ -6,7 +6,7 @@ export * from "./getLastTabButton";
 export * from "./locateInDataRef";
 
 
-export const  handleMouseDown = (e, socket, Event, ID) => {
+export const handleMouseDown = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
@@ -20,7 +20,7 @@ export const  handleMouseDown = (e, socket, Event, ID) => {
       Info: [y, x, button, shiftState],
     },
   });
- 
+
   const exists = Event && Event.some((item) => item[0] === "MouseDown");
   if (!exists) return;
   console.log(mousedownEvent);
@@ -70,30 +70,30 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
 };
 
 export const handleMouseEnter = (e, socket, Event, ID) => {
-  const previousObjectName = e.relatedTarget ? e.relatedTarget.id : ""; 
+  const previousObjectName = e.relatedTarget ? e.relatedTarget.id : "";
 
   const mouseEnterEvent = JSON.stringify({
     Event: {
       EventName: "MouseEnter",
       ID,
-      Info: [previousObjectName], 
+      Info: [previousObjectName],
     },
   });
 
   const exists = Event && Event.some((item) => item[0] === "MouseEnter");
   if (!exists) return;
-  console.log("mouseEnter",mouseEnterEvent);
+  console.log("mouseEnter", mouseEnterEvent);
   socket.send(mouseEnterEvent);
 };
 
 export const handleMouseLeave = (e, socket, Event, ID) => {
-  const newObjectName = e.relatedTarget ? e.relatedTarget.id : ""; 
+  const newObjectName = e.relatedTarget ? e.relatedTarget.id : "";
 
   const mouseLeaveEvent = JSON.stringify({
     Event: {
       EventName: "MouseLeave",
       ID,
-      Info: [newObjectName], 
+      Info: [newObjectName],
     },
   });
 
@@ -109,15 +109,15 @@ export const handleMouseMove = (e, socket, Event, ID) => {
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
   const button = e.buttons;
-  
+
   const mouseMoveEvent = JSON.stringify({
     Event: {
       EventName: "MouseMove",
       ID,
-      Info: [y, x, button, shiftState], 
+      Info: [y, x, button, shiftState],
     },
   });
-  
+
   // console.log("mouseMove1", mouseMoveEvent);
   const exists = Event && Event.some((item) => item[0] === "MouseMove");
   if (!exists) return;
@@ -127,14 +127,14 @@ export const handleMouseMove = (e, socket, Event, ID) => {
 };
 
 export const handleMouseWheel = (e, socket, Event, ID) => {
-  const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); 
+  const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0);
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
   const button = e.buttons;
   const delta = e.deltaY;
-  const lines = e.deltaMode === 1 ? e.deltaY : -1; 
-  const wheelDelta = Math.sign(e.deltaY); 
+  const lines = e.deltaMode === 1 ? e.deltaY : -1;
+  const wheelDelta = Math.sign(e.deltaY);
 
   const mouseWheelEvent = JSON.stringify({
     Event: {
@@ -278,7 +278,7 @@ export const extractStringFromLastPeriod = (inputString) => {
   const lastPeriodIndex = inputString.lastIndexOf(".");
 
   if (lastPeriodIndex !== -1) {
-    const result = inputString.slice(1+lastPeriodIndex);
+    const result = inputString.slice(1 + lastPeriodIndex);
     return result;
   }
 
@@ -564,4 +564,41 @@ export const getCurrentUrl = () => {
   }
 
   return currentUrl + path;
+};
+
+
+export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
+  if (!cssStyles || !cssStyles.length) return;
+  let styleTag = document.getElementById(id);
+
+  if (styleTag) {
+    styleTag.textContent = ""; 
+    styleTag.textContent = cssStyles.join("\n");
+  } else {
+    styleTag = document.createElement("style");
+    styleTag.id = id;
+    styleTag.appendChild(document.createTextNode(cssStyles.join("\n")));
+    document.head.appendChild(styleTag);
+  }
+};
+
+
+const appendImportantToCss = (cssRule) => {
+  return cssRule.replace(
+    /([\w-]+)\s*:\s*([^;]+);/g,
+    (match, property, value) => `${property}: ${value.trim()} !important;`
+  );
+};
+
+
+export const processCssStyles = (cssStyles) => {
+  return cssStyles.map((rule) => appendImportantToCss(rule));
+};
+
+
+export const removeCssStyles = (id = "dynamic-css-styles") => {
+  const styleTag = document.getElementById(id);
+  if (styleTag) {
+    styleTag.remove();
+  }
 };
