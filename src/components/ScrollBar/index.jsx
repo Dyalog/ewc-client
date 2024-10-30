@@ -14,6 +14,7 @@ import {
   parseFlexStyles,
   processCssStyles,
   removeCssStyles,
+  splitCssRules,
 } from "../../utils";
 
 const ScrollBar = ({ data }) => {
@@ -41,11 +42,12 @@ const ScrollBar = ({ data }) => {
   }, [Style]);
 
   if (Css) {
-    const stylesArray = Css.split(",").filter(Boolean); 
-    const processedStyles = processCssStyles(stylesArray);
+    const stylesArray = splitCssRules(Css);
+     const processedStyles = processCssStyles(stylesArray);
     injectCssStyles(processedStyles, data?.ID);
   }
-  
+
+
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;

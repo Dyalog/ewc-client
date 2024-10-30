@@ -572,7 +572,7 @@ export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
   let styleTag = document.getElementById(id);
 
   if (styleTag) {
-    styleTag.textContent = ""; 
+    styleTag.textContent = "";
     styleTag.textContent = cssStyles.join("\n");
   } else {
     styleTag = document.createElement("style");
@@ -583,17 +583,34 @@ export const injectCssStyles = (cssStyles, id = "dynamic-css-styles") => {
 };
 
 
-const appendImportantToCss = (cssRule) => {
+const ensureSemicolonAndAddImportant = (cssRule) => {
   return cssRule.replace(
-    /([\w-]+)\s*:\s*([^;]+);/g,
-    (match, property, value) => `${property}: ${value.trim()} !important;`
+    /{([^}]+)}/, 
+    (match, properties) => {
+         const processedProperties = properties
+        .split(",")
+        .map(prop => prop.trim().replace(/([\w-]+)\s*:\s*([^;,]+)(;?)/, "$1: $2 !important;"))
+        .join(" ");
+
+      return `{${processedProperties}}`;
+    }
   );
 };
 
 
+
 export const processCssStyles = (cssStyles) => {
-  return cssStyles.map((rule) => appendImportantToCss(rule));
+  return cssStyles.map((rule) => ensureSemicolonAndAddImportant(rule));
 };
+
+
+export const splitCssRules = (cssString) => {
+  return cssString
+    .split("}")
+    .filter(Boolean)
+    .map(rule => rule.trim() + "}");
+};
+
 
 
 export const removeCssStyles = (id = "dynamic-css-styles") => {
