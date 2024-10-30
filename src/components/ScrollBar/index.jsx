@@ -11,36 +11,41 @@ import {
   handleMouseMove,
   handleMouseUp,
   handleMouseWheel,
+  injectCssStyles,
   parseFlexStyles,
+  processCssStyles,
+  removeCssStyles,
 } from "../../utils";
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const {
-    Align,
-    Type,
-    Thumb,
-    Range,
-    Event,
-    Visible,
-    Size,
-    Posn,
-    VScroll,
-    HScroll,
-    Attach,
-    CSS,
-  } = data?.Properties;
-
-  const customStyles = parseFlexStyles(CSS);
-  const isHorizontal =
-    Type === "Scroll" && (Align === "Bottom" || HScroll === -1);
+  const { Align, Type, Thumb, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, Css } = data?.Properties;
+  const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(Thumb || 1);
 
   const parentSize = JSON.parse(localStorage.getItem("formDimension"));
   const [showButtons, setShowButtons] = useState(false);
   const emitEvent = Event && Event[0];
 
-  const { socket, handleData } = useAppData();
+  const { socket, handleData, findDesiredData } = useAppData();
+  const Style = findDesiredData("F1.STYLE")
+
+  useEffect(() => {
+    if (Style && Style.Properties && Style.Properties.Style) {
+      const processedStyles = processCssStyles(Style.Properties.Style);  
+      injectCssStyles(processedStyles, Style.ID);
+    }
+    return () => {
+      removeCssStyles(data.ID);
+      removeCssStyles(Style.ID)
+    };
+  }, [Style]);
+
+  if (Css) {
+    const stylesArray = Css.split(",").filter(Boolean); 
+    const processedStyles = processCssStyles(stylesArray);
+    injectCssStyles(processedStyles, data?.ID);
+  }
 
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
@@ -260,7 +265,7 @@ const ScrollBar = ({ data }) => {
       : { right: 0 }),
     display: Visible == 0 ? "none" : "block",
     ...attachStyle,
-    ...customStyles,
+    // ...customStyles,
   };
 
   const horizontalPosition = {
@@ -276,7 +281,7 @@ const ScrollBar = ({ data }) => {
     height: defaultSize[0],
     display: Visible == 0 ? "none" : "block",
     ...attachStyle,
-    ...customStyles,
+    // ...customStyles,
   };
 
   useEffect(() => {
@@ -307,13 +312,13 @@ const ScrollBar = ({ data }) => {
     >
       <div>
         <div
-          className={`scroll-bar ${isHorizontal ? "horizontal" : "vertical"}`}
+          className={`ewc-scroll-bar ${isHorizontal ? "horizontal" : "vertical"}`}
           style={{ ...trackStyle }}
           onMouseDown={handleTrackClick}
           ref={trackRef}
         >
           <div
-            className="thumb"
+            className="ewc-thumb"
             style={{ ...thumbStyle }}
             ref={thumbRef}
             onMouseDown={handleThumbDrag}
