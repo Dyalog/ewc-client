@@ -10,14 +10,39 @@ import {
   parseFlexStyles,
   setStyle,
 } from "../../utils";
-import "./textArea.css";
 import "../../styles/font.css";
 import { useAppData } from "../../hooks";
 
 const TextArea = ({ data }) => {
-  const { handleData, socket,dataRef } = useAppData();
+  const { handleData, socket, dataRef } = useAppData();
   const textareaRef = useRef(null);
 
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+     .ewc-text-area:focus {
+  outline: none;
+  border: none;
+}
+
+.ewc-text-area:active {
+  outline: none;
+  border: none;
+}
+
+.ewc-text-area::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.ewc-text-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Safe initialization of localText
   const initialText = () => {
@@ -69,6 +94,10 @@ const TextArea = ({ data }) => {
     scrollbarColor: "transparent transparent",
     fontFamily: Font && Font[0],
     fontSize: Font && `${Font[1]}px`,
+    resize: "none",
+    overflow: "hidden",
+    border: "none",
+    outline: "none",
     ...customStyles,
   };
 
@@ -153,9 +182,7 @@ const TextArea = ({ data }) => {
 
     const selText = [startLineCol, endLineCol];
 
-    // Debugging logs
-    console.log("Selection Start:", selectionStart, "End:", selectionEnd);
-    console.log("Selection Line/Column:", selText);
+    
 
     handleData(
       {
@@ -172,7 +199,7 @@ const TextArea = ({ data }) => {
     <div style={{ overflow: "hidden" }}>
       <textarea
         ref={textareaRef}
-        className="textArea"
+        className="ewc-text-area"
         style={updatedStyles}
         value={textString}
         onChange={handleChange}

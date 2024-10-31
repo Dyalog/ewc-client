@@ -21,7 +21,6 @@ import { useEffect, useState, useRef } from "react";
 
 import Tree from "rc-tree";
 import "rc-tree/assets/index.css";
-import "./TreeView.css";
 
 const Treeview = ({ data }) => {
   const { Depth, Items, ImageListObj, ImageIndex, Visible, Event, CSS } =
@@ -223,6 +222,22 @@ const Treeview = ({ data }) => {
     handleDoubleClickEvent(info.id, shiftState);
   };
 
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .rc-tree .rc-tree-treenode {
+        line-height: 10px !important;
+      }
+      .rc-tree .rc-tree-treenode .rc-tree-node-content-wrapper {
+        height: 0px !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   // Set the initial localstorage if no item is selected
 
   useEffect(() => {
@@ -280,6 +295,7 @@ const Treeview = ({ data }) => {
         treeData={treeData}
         showIcon={false}
         showLine={true}
+        className="ewc-tree"
         style={{ fontSize: "12px", lineHeight: "15px", margin: 0, padding: 0 }}
       />
     </div>
