@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './Dropdown.css';
 import { useAppData } from '../../hooks';
 
 const Dropdown = ({ title, data }) => {
