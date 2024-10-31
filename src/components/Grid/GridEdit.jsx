@@ -16,7 +16,34 @@ const GridEdit = ({ data }) => {
 
 
   const { FieldType, Decimal, SelText, Event } = data?.typeObj?.Properties;
-  
+
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+        input[type='number'] {
+        text-align: right;
+        }
+
+        input[type='number']:focus {
+          outline: none;
+          border-bottom: 2px solid blue !important;
+        }
+
+        input[type='date']:focus {
+          outline: none;
+        }
+
+        input[type='text']:focus {
+          outline: none;
+          border-bottom: 2px solid blue !important;
+        }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
 
   // console.log({value: data.value, focused: data.focused, datatype: data?.typeObj.ID, SelText})
 
@@ -36,13 +63,13 @@ const GridEdit = ({ data }) => {
   const findFirstNonSpaceIndex = (content) => {
     // Trim leading spaces from the string
     const trimmedContent = content.trimStart();
-    
+
     // Find the index of the trimmed substring in the original string
     const firstNonSpaceIndex = content.indexOf(trimmedContent[0]);
-  
+
     return firstNonSpaceIndex;
   };
- 
+
   useEffect(() => {
     if (!isEditable && divRef.current && SelText && SelText.length === 2 && data?.focused) {
       const [start, end] = SelText;
@@ -60,18 +87,18 @@ const GridEdit = ({ data }) => {
 
         const adjustedEnd = Math.min(end - 1, actualTextNode.length);
 
-        
+
         const parent = actualTextNode.parentNode;
         const content = parent.textContent.trim();
-        console.log("use effect", {content: data?.formattedValue})  
+        console.log("use effect", { content: data?.formattedValue })
 
-        if(data?.formattedValue){
-          console.log("content", {index: findFirstNonSpaceIndex(data?.formattedValue)})
+        if (data?.formattedValue) {
+          console.log("content", { index: findFirstNonSpaceIndex(data?.formattedValue) })
           const reqIndex = findFirstNonSpaceIndex(data?.formattedValue)
           range.setStart(actualTextNode, Math.min(start - 1 + reqIndex, actualTextNode.length));
-          range.setEnd(actualTextNode ,Math.min(end - 1 + reqIndex, actualTextNode.length));
+          range.setEnd(actualTextNode, Math.min(end - 1 + reqIndex, actualTextNode.length));
         }
-        else{
+        else {
           range.setStart(actualTextNode, Math.min(start - 1, actualTextNode.length));
           range.setEnd(actualTextNode, adjustedEnd);
         }
@@ -85,43 +112,42 @@ const GridEdit = ({ data }) => {
 
   const handleSelect = (event) => {
     console.log("select")
-    console.log({event})
+    console.log({ event })
     const input = event.target;
     const start = input.selectionStart + 1;
     const end = input.selectionEnd + 1;
     const selectedText = input.value.substring(start, end);
-    console.log({data, input, start, end})
+    console.log({ data, input, start, end })
     setSelected(!!selectedText)
 
-    console.log("select",!!selectedText);
+    console.log("select", !!selectedText);
 
-    if(!!selectedText)
-    {
+    if (!!selectedText) {
 
-      localStorage.setItem(data?.typeObj?.ID, JSON.stringify({Event: {Info: [start, end]}}))
+      localStorage.setItem(data?.typeObj?.ID, JSON.stringify({ Event: { Info: [start, end] } }))
       handleData(
-      {
-        ID: data?.typeObj?.ID,
-        Properties: {
-          SelText: [start, end],
+        {
+          ID: data?.typeObj?.ID,
+          Properties: {
+            SelText: [start, end],
+          },
         },
-      },
-      'WS'
-    );
-  }else{
-    localStorage.setItem(data?.typeObj?.ID, JSON.stringify({Event: {Info: [1, 1]}}))
-    handleData(
-      {
-        ID: data?.typeObj?.ID,
-        Properties: {
-          SelText: [1,1],
+        'WS'
+      );
+    } else {
+      localStorage.setItem(data?.typeObj?.ID, JSON.stringify({ Event: { Info: [1, 1] } }))
+      handleData(
+        {
+          ID: data?.typeObj?.ID,
+          Properties: {
+            SelText: [1, 1],
+          },
         },
-      },
-      'WS'
-    );
+        'WS'
+      );
 
-  }
-    
+    }
+
     // setSelection(selectedText);
     // setStartIndex(start);
     // setEndIndex(end);
@@ -131,29 +157,29 @@ const GridEdit = ({ data }) => {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
     const textNode = range.startContainer;
-  
+
     if (textNode.nodeType === Node.TEXT_NODE) {
-     
-  
+
+
       // If textNode is wrapped in an object
       const actualTextNode = textNode.nodeType ? textNode : textNode.textNode;
-    
+
       const parent = actualTextNode.parentNode;
       const content = parent.textContent.trim();
       // console.log({actualTextNode, parent, content, ac: actualTextNode.textContent})
 
       let start = range.startOffset;
       let end = range.endOffset;
-  
+
       // Adjust the start and end based on actual content length
       const startIndex = content.indexOf(actualTextNode.textContent);
-      console.log({startIndex})
+      console.log({ startIndex })
       start -= startIndex;
       end -= startIndex;
-  
+
       const selectedText = content.substring(start, end);
       // console.log({ data, actualTextNode, start, end, selectedText });
-  
+
       localStorage.setItem(data?.typeObj?.ID, JSON.stringify({ Event: { Info: [start + 1, end + 1] } }));
       handleData(
         {
@@ -166,15 +192,15 @@ const GridEdit = ({ data }) => {
       );
     }
   };
-  
+
 
   const triggerCellChangedEvent = () => {
     // const gridEvent = findDesiredData(data?.gridId);
 
     const values = data?.gridValues;
 
-    values[data?.row - 
-    1][data?.column] = FieldType == 'Date' ? dateFormattedValue : inputValue;
+    values[data?.row -
+      1][data?.column] = FieldType == 'Date' ? dateFormattedValue : inputValue;
     // handleData(
     //   {
     //     ID: data?.gridId,
@@ -239,21 +265,21 @@ const GridEdit = ({ data }) => {
   }, [data.focused]);
 
   useEffect(() => {
-    console.log("select useEffect",{selected})
-    if(selected) {return}
-    console.log("select useEffect 2",{selected})
-    localStorage.setItem(data?.typeObj?.ID, JSON.stringify({Event: {Info: [1, 1]}}))
+    console.log("select useEffect", { selected })
+    if (selected) { return }
+    console.log("select useEffect 2", { selected })
+    localStorage.setItem(data?.typeObj?.ID, JSON.stringify({ Event: { Info: [1, 1] } }))
     handleData(
       {
         ID: data?.typeObj?.ID,
         Properties: {
-          SelText: [1,1],
+          SelText: [1, 1],
         },
       },
       'WS'
     );
-    return () => {console.log('select unmount')};
-  }, [ data.focused]);
+    return () => { console.log('select unmount') };
+  }, [data.focused]);
 
   const handleEditEvents = () => {
     if (FieldType == 'Date') {
@@ -305,7 +331,7 @@ const GridEdit = ({ data }) => {
       setSelectedDate(event.target.value);
 
       const selectedDate = dayjs(event.target.value).format(ShortDate);
-      console.log("date picker",{input:event.target.value, ShortDate, selectedDate })
+      console.log("date picker", { input: event.target.value, ShortDate, selectedDate })
       let value = calculateDaysFromDate(event.target.value) + 1;
       setInputValue(selectedDate);
       setDateFormattedValue(value);
@@ -318,14 +344,14 @@ const GridEdit = ({ data }) => {
     const handleDatePickerClick = () => {
       inputRef.current.showPicker();
     };
-  
+
 
     const handleInputBlur = () => {
       const [day, month, year] = inputValue.split('-');
       const formattedDate = `${year}-${month}-${day}`; // Convert to standard format YYYY-MM-DD
       const newDate = new Date(formattedDate)
 
-      const parsedDate = dayjs(newDate, ShortDate , true);
+      const parsedDate = dayjs(newDate, ShortDate, true);
       if (parsedDate.isValid()) {
         const formattedDate = parsedDate.format('YYYY-MM-DD');
         setSelectedDate(formattedDate);
@@ -346,48 +372,48 @@ const GridEdit = ({ data }) => {
             onDoubleClick={(e) => {
               setIsEditable(true);
             }}
-            style={{ backgroundColor: data?.backgroundColor, outline: 0, paddingLeft: '5px',paddingRight: '5px' }}
+            style={{ backgroundColor: data?.backgroundColor, outline: 0, paddingLeft: '5px', paddingRight: '5px' }}
           >
             {!data?.formattedValue ? inputValue : data?.formattedValue}
           </div>
         ) : (
           <>
-          <div style={{ display: 'flex', alignItems: 'center'}}>
-            <input
-              ref={dateRef}
-              id={`${data?.gridId}`}
-              style={{
-                border: 0,
-                outline: 0,
-                width: '100%',
-                height: '100%',
-                paddingLeft: '5px',paddingRight: '5px'
-              }}
-              value={inputValue}
-              onChange={handleInputChange}
-              type='text'
-              // readOnly
-              onClick={(e) => {
-                // e.stopPropagation();
-                // handleTextClick();
-              }}
-              onBlur= { handleInputBlur }
-              onKeyDown={(e) => {
-                e.stopPropagation();
-              }}
-            />
-             <button
-              onClick={handleDatePickerClick}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-            📅
-          </button>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <input
+                ref={dateRef}
+                id={`${data?.gridId}`}
+                style={{
+                  border: 0,
+                  outline: 0,
+                  width: '100%',
+                  height: '100%',
+                  paddingLeft: '5px', paddingRight: '5px'
+                }}
+                value={inputValue}
+                onChange={handleInputChange}
+                type='text'
+                // readOnly
+                onClick={(e) => {
+                  // e.stopPropagation();
+                  // handleTextClick();
+                }}
+                onBlur={handleInputBlur}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                }}
+              />
+              <button
+                onClick={handleDatePickerClick}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                📅
+              </button>
+            </div>
             <input
               id={`${data?.gridId}`}
               type='date'
@@ -398,7 +424,7 @@ const GridEdit = ({ data }) => {
                 display: 'none',
               }}
             />
-           
+
           </>
         )}
       </>
@@ -456,7 +482,7 @@ const GridEdit = ({ data }) => {
                   // paddingLeft: '5px'
                 }}
                 readOnly
-                decimalScale={Decimal}  
+                decimalScale={Decimal}
                 value={data?.value}
                 decimalSeparator={decimalSeparator}
                 thousandSeparator={Thousand}
@@ -498,13 +524,13 @@ const GridEdit = ({ data }) => {
               handleKeyPress(e);
             }}
             onMouseDown={(e) => {
-              handleMouseDown(e, socket, Event,data?.typeObj?.ID);
+              handleMouseDown(e, socket, Event, data?.typeObj?.ID);
             }}
             onMouseUp={(e) => {
               handleMouseUp(e, socket, Event, data?.typeObj?.ID);
             }}
             onMouseEnter={(e) => {
-              handleMouseEnter(e, socket, Event,data?.typeObj?.ID);
+              handleMouseEnter(e, socket, Event, data?.typeObj?.ID);
             }}
             onMouseMove={(e) => {
               handleMouseMove(e, socket, Event, data?.typeObj?.ID);
@@ -515,8 +541,8 @@ const GridEdit = ({ data }) => {
             onWheel={(e) => {
               handleMouseWheel(e, socket, Event, data?.typeObj?.ID);
             }}
-            onDoubleClick={(e)=>{
-              handleMouseDoubleClick(e, socket, Event,data?.typeObj?.ID);
+            onDoubleClick={(e) => {
+              handleMouseDoubleClick(e, socket, Event, data?.typeObj?.ID);
             }}
           />
         )}
@@ -546,24 +572,24 @@ const GridEdit = ({ data }) => {
             paddingLeft: '5px',
             paddingRight: '5px'
           }}
-          // onMouseDown={(e) => {
-          //   handleMouseDown(e, socket, Event,data?.gridId);
-          // }}
-          // onMouseUp={(e) => {
-          //   handleMouseUp(e, socket, Event, data?.gridId);
-          // }}
-          // onMouseEnter={(e) => {
-          //   handleMouseEnter(e, socket, Event, data?.gridId);
-          // }}
-          // onMouseMove={(e) => {
-          //   handleMouseMove(e, socket, Event, data?.gridId);
-          // }}
-          // onMouseLeave={(e) => {
-          //   handleMouseLeave(e, socket, Event, data?.gridId);
-          // }}
-          // onWheel={(e) => {
-          //   handleMouseWheel(e, socket, Event, data?.gridId);
-          // }}
+        // onMouseDown={(e) => {
+        //   handleMouseDown(e, socket, Event,data?.gridId);
+        // }}
+        // onMouseUp={(e) => {
+        //   handleMouseUp(e, socket, Event, data?.gridId);
+        // }}
+        // onMouseEnter={(e) => {
+        //   handleMouseEnter(e, socket, Event, data?.gridId);
+        // }}
+        // onMouseMove={(e) => {
+        //   handleMouseMove(e, socket, Event, data?.gridId);
+        // }}
+        // onMouseLeave={(e) => {
+        //   handleMouseLeave(e, socket, Event, data?.gridId);
+        // }}
+        // onWheel={(e) => {
+        //   handleMouseWheel(e, socket, Event, data?.gridId);
+        // }}
         >
           {!data?.formattedValue ? data?.value : data?.formattedValue}
         </div>
@@ -579,13 +605,13 @@ const GridEdit = ({ data }) => {
             height: '100%',
             display: 'flex',
             backgroundColor: data?.backgroundColor,
-            align:data?.align,
+            align: data?.align,
             paddingLeft: '5px',
             paddingRight: '5px'
           }}
           onSelect={handleSelect}
           onDoubleClick={(e) => {
-            handleMouseDoubleClick(e, socket, Event,data?.typeObj?.ID);
+            handleMouseDoubleClick(e, socket, Event, data?.typeObj?.ID);
             e.stopPropagation();
             // setIsEditable(true);
           }}
@@ -603,25 +629,25 @@ const GridEdit = ({ data }) => {
             handleEditEvents();
           }}
           autoFocus
-            onMouseDown={(e) => {
-          handleMouseDown(e, socket, Event,data?.typeObj?.ID);
-        }}
-        onMouseUp={(e) => {
-          handleMouseUp(e, socket, Event, data?.typeObj?.ID);
-        }}
-        onMouseEnter={(e) => {
-          handleMouseEnter(e, socket, Event, data?.typeObj?.ID);
-        }}
-        onMouseMove={(e) => {
-          handleMouseMove(e, socket, Event,  data?.typeObj?.ID);
-        }}
-        onMouseLeave={(e) => {
-          handleMouseLeave(e, socket, Event, data?.typeObj?.ID);
-        }}
-        onWheel={(e) => {
-          handleMouseWheel(e, socket, Event, data?.typeObj?.ID);
-        }}
-      
+          onMouseDown={(e) => {
+            handleMouseDown(e, socket, Event, data?.typeObj?.ID);
+          }}
+          onMouseUp={(e) => {
+            handleMouseUp(e, socket, Event, data?.typeObj?.ID);
+          }}
+          onMouseEnter={(e) => {
+            handleMouseEnter(e, socket, Event, data?.typeObj?.ID);
+          }}
+          onMouseMove={(e) => {
+            handleMouseMove(e, socket, Event, data?.typeObj?.ID);
+          }}
+          onMouseLeave={(e) => {
+            handleMouseLeave(e, socket, Event, data?.typeObj?.ID);
+          }}
+          onWheel={(e) => {
+            handleMouseWheel(e, socket, Event, data?.typeObj?.ID);
+          }}
+
         />
       )}
     </>

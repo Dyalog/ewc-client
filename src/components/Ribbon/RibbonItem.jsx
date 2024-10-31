@@ -1,4 +1,3 @@
-import { RibbonGroupItem } from 'react-bootstrap-ribbon';
 import { excludeKeys, parseFlexStyles } from '../../utils';
 import SelectComponent from '../SelectComponent';
 

@@ -1,9 +1,7 @@
 import { excludeKeys, getObjectById, getStringafterPeriod, parseFlexStyles } from '../../utils';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
-import './RibbonStyles.css';
-
+// import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
 import SelectComponent from '../SelectComponent';
 import { useAppData } from '../../hooks';
 import { useEffect } from 'react';

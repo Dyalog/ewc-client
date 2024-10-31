@@ -71,6 +71,20 @@ const GridSelect = ({ data }) => {
     handleCellChangeEvent(value);
   };
 
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      select:focus-visible {
+      outline-style: dotted;
+      } 
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+
   return (
     <select
       onKeyDown={(e) => e.preventDefault()}

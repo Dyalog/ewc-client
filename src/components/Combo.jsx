@@ -198,6 +198,19 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     reRender();
   }, [dimensions]);
 
+  useEffect(() => {
+      const style = document.createElement("style");
+      style.innerHTML = `
+        select:focus-visible {
+        outline-style: dotted;
+        } 
+      `;
+      document.head.appendChild(style);
+      return () => {
+        document.head.removeChild(style);
+      };
+    }, []);
+
   const triggerCellMoveEvent = (row, column, mouseClick, value) => {
     console.log("265 combo")
     const isKeyboard = !mouseClick ? 1 : 0;
@@ -336,6 +349,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           fontSize: '12px',
           height: location === 'inGrid' ? null : '100%',
           zIndex: 1,
+          
           ...customStyles
         }}
         onChange={(e) => {
