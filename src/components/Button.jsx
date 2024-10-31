@@ -401,6 +401,7 @@ const Button = ({
           ref={inputRef}
           onKeyDown={(e) => handleKeyPress(e)}
           id={data?.ID}
+          className={`ewc-checkbox`}
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
@@ -531,6 +532,7 @@ const Button = ({
           id={data?.ID}
           checked={radioValue}
           type="radio"
+          className={`ewc-radio`}
           value={Caption}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
@@ -556,7 +558,7 @@ const Button = ({
   return (
     <div
       id={data?.ID}
-      className={`${CssClass}`}
+      className={`ewc-button ${CssClass}`}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

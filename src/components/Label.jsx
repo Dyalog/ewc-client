@@ -79,6 +79,7 @@ const Label = ({ data, gridValue }) => {
       onMouseLeave={(e) => {
         handleMouseLeave(e, socket, Event, data?.ID);
       }}
+      className={`ewc-label`}
     >
       {!Caption ? (
         <span

@@ -58,6 +58,7 @@ const List = ({ data }) => {
   return (
     <div
       ref={ref}
+      className={`ewc-list`}
       style={{
         ...styles,
         width,
@@ -102,6 +103,7 @@ const List = ({ data }) => {
                 padding: "1px",
                 ...customStyles,
               }}
+              className={`ewc-list-item`}
             >
               {item}
             </div>
@@ -117,6 +119,7 @@ const List = ({ data }) => {
                 alignItems: "center",
                 ...customStyles,
               }}
+              className={`ewc-list-item`}
             >
               {item}
             </div>

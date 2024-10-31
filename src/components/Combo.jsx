@@ -342,6 +342,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         ref={inputRef}
         onKeyDown={(e) => handleKeyPress(e)}
         id={data?.ID}
+        className={`ewc-combo`}
         value={value ? value : comboInput}
         style={{
           width: '100%',

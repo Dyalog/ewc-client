@@ -87,6 +87,7 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
 
         handleTabClick(data.ID);
       }}
+      className={`ewc-tab-button`}
     >
       {Caption}
       {/* <button
