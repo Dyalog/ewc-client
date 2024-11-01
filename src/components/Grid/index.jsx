@@ -451,6 +451,7 @@ const Grid = ({ data }) => {
       Event: {
         ID: data?.ID,
         EventName: "CellMove",
+        EventId: eventId,
         Info: [
           row,
           column,
