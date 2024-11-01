@@ -829,10 +829,10 @@ const Grid = ({ data }) => {
       }
     };
 
-    // updatePosition();
-    setTimeout(() => {
-      updatePosition();
-    }, 120);
+    updatePosition();
+    // setTimeout(() => {
+    //   updatePosition();
+    // }, 120);
   };
 
   const modifyGridData = () => {
