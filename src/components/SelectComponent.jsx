@@ -36,8 +36,6 @@ import Chart from './Chart';
 import MessageBox from './MessageBox';
 import Link from './Link';
 import Upload from './Upload';
-import KendoChart from './KendoChart';
-import KendoGrid from './KendoGrid';
 import RibbonDropDownButton from './Ribbon/RibbonDropDownButton';
 import RibbonDropDownGallery from './Ribbon/RibbonDropDownGallery';
 
