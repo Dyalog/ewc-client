@@ -98,7 +98,7 @@ const Edit = ({
       return setInputValue(value);
     }
 
-    if (hasTextProperty) {
+    if (!data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(generateAsteriskString(data?.Properties?.Text?.length)); // Custom function to generate asterisks
         setEmitValue(data?.Properties?.Text);
@@ -112,7 +112,7 @@ const Edit = ({
       }
     }
 
-    if (hasValueProperty) {
+    if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(
           generateAsteriskString(data?.Properties?.Value?.length)
@@ -184,7 +184,6 @@ const Edit = ({
   }
 
   const triggerCellMoveEvent = (row, column,mouseClick, value) => {
-    console.log("265 edit")
     const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
@@ -328,10 +327,9 @@ const Edit = ({
       {
         ID: data?.ID,
         Properties: {
-          Text:
-            (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
-              ? parseInt(emitValue)
-              : emitValue,
+          ...(FieldType === "LongNumeric" || FieldType === "Numeric"
+            ? { Value: parseInt(emitValue) }
+            : { Text: emitValue })
         },
       },
       "WS"
@@ -576,7 +574,6 @@ const Edit = ({
   }
 
 
-  console.log("Edit data", data, FieldType, Event)
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
     return (
       <NumericFormat
