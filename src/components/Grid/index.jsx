@@ -1143,8 +1143,6 @@ const Grid = ({ data }) => {
                       maxHeight: `${data?.height}px`,
                       minWidth: `${data?.width}px`,
                       maxWidth: `${data?.width}px`,
-                      minheight: `${data?.height}px`,
-                      maxheight: `${data?.height}px`,
                       backgroundColor:
                         (selectedRow === rowi && data.type == "rowTitle") ||
                           (selectedColumn === (TitleWidth === 0 ? columni + 1 : columni) && data.type == "header")
