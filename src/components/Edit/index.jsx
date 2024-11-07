@@ -98,7 +98,7 @@ const Edit = ({
       return setInputValue(value);
     }
 
-    if (hasTextProperty) {
+    if (!data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(generateAsteriskString(data?.Properties?.Text?.length)); // Custom function to generate asterisks
         setEmitValue(data?.Properties?.Text);
@@ -112,7 +112,7 @@ const Edit = ({
       }
     }
 
-    if (hasValueProperty) {
+    if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(
           generateAsteriskString(data?.Properties?.Value?.length)
@@ -183,12 +183,13 @@ const Edit = ({
     };
   }
 
-  const triggerCellMoveEvent = (row, column, value) => {
+  const triggerCellMoveEvent = (row, column,mouseClick, value) => {
+    const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
         ID: extractStringUntilLastPeriod(data?.ID),
         EventName: "CellMove",
-        Info: [row, column, 0, 0, 0, value],
+        Info: [row, column, isKeyboard, 0, mouseClick, value],
       },
     });
 
@@ -204,7 +205,7 @@ const Edit = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column), emitValue);
+    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column),0, emitValue);
 
     const element = nextSibling?.querySelectorAll("input");
     if (!element) return;
@@ -228,7 +229,7 @@ const Edit = ({
 
     if (element?.length == 0) element = nextSibling?.querySelectorAll("span");
 
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1, emitValue);
+    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
     element && element[0]?.focus();
 
     element && element[0]?.select();
@@ -243,7 +244,7 @@ const Edit = ({
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
     const element = nextSibling?.querySelectorAll(querySelector);
 
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1, emitValue);
+    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
 
     // for (let i = 0; i < children.length; i++) {
     //   children[i].focus();
@@ -261,7 +262,7 @@ const Edit = ({
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
 
-    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column), emitValue);
+    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column),0, emitValue);
     const element = nextSibling?.querySelectorAll("input");
     if (!element) return;
     element &&
@@ -326,10 +327,9 @@ const Edit = ({
       {
         ID: data?.ID,
         Properties: {
-          Text:
-            (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
-              ? parseInt(emitValue)
-              : emitValue,
+          ...(FieldType === "LongNumeric" || FieldType === "Numeric"
+            ? { Value: parseInt(emitValue) }
+            : { Text: emitValue })
         },
       },
       "WS"
@@ -574,7 +574,6 @@ const Edit = ({
   }
 
 
-  console.log("Edit data", data, FieldType, Event)
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
     return (
       <NumericFormat

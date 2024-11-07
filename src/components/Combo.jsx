@@ -198,12 +198,14 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     reRender();
   }, [dimensions]);
 
-  const triggerCellMoveEvent = (row, column, value) => {
+  const triggerCellMoveEvent = (row, column, mouseClick, value) => {
+    console.log("265 combo")
+    const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
         ID: extractStringUntilLastPeriod(data?.ID),
         EventName: 'CellMove',
-        Info: [row, column, 0, 0, 0, value],
+        Info: [row, column, isKeyboard, 0, mouseClick, value],
       },
     });
 
@@ -221,7 +223,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const nextSibling = grandParent.nextSibling;
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
 
-    triggerCellMoveEvent(row, column + 1, value);
+    triggerCellMoveEvent(row, column + 1,0, value);
     const element = nextSibling?.querySelectorAll(querySelector);
     console.log({ element });
 
@@ -236,7 +238,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column - 1, value);
+    triggerCellMoveEvent(row, column - 1,0, value);
     const element = nextSibling?.querySelectorAll(querySelector);
 
     if (querySelector == 'select') return element && element[0].focus();
@@ -250,7 +252,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
     const element = nextSibling?.querySelectorAll('select');
-    triggerCellMoveEvent(row - 1, column, value);
+    triggerCellMoveEvent(row - 1, column,0, value);
     element &&
       element.forEach((inputElement) => {
         if (inputElement.id === data?.ID) {
@@ -264,7 +266,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(row + 1, column, value);
+    triggerCellMoveEvent(row + 1, column,0, value);
     const element = nextSibling?.querySelectorAll('select');
     element &&
       element.forEach((inputElement) => {
@@ -275,6 +277,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   };
 
   const handleKeyPress = (e) => {
+    e.stopPropagation();
     e.preventDefault();
     handleKeyPressUtils(e, socket, Event, data?.ID)
     if (e.key == 'ArrowRight') handleRightArrow(e.target.value);
@@ -295,27 +298,33 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         left: position?.left,
       }}
       onMouseDown={(e) => {
+        e.stopPropagation();
         handleMouseDown(e, socket, Event,data?.ID);
       }}
       onMouseUp={(e) => {
+        e.stopPropagation();
         handleMouseUp(e, socket, Event, data?.ID);
       }}
       onMouseEnter={(e) => {
+        e.stopPropagation();
         handleMouseEnter(e, socket, Event, data?.ID);
       }}
       onMouseMove={(e) => {
+        e.stopPropagation();
         handleMouseMove(e, socket, Event, data?.ID);
       }}
       onMouseLeave={(e) => {
+        e.stopPropagation();
         handleMouseLeave(e, socket, Event, data?.ID);
       }}
       onWheel={(e) => {
         handleMouseWheel(e, socket, Event, data?.ID);
       }}
       onDoubleClick={(e)=>{
+        e.stopPropagation();
         handleMouseDoubleClick(e, socket, Event,data?.ID);
       }}
-    >
+      >
       <select
         ref={inputRef}
         onKeyDown={(e) => handleKeyPress(e)}
@@ -330,6 +339,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           ...customStyles
         }}
         onChange={(e) => {
+          e.stopPropagation();
           setComboInput(e.target.value);
           handleSelItemsEvent(e.target.value);
         }}
