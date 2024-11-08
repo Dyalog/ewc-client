@@ -30,8 +30,8 @@ const ScrollBar = ({ data }) => {
   const thumbRef = useRef(null);
   const maxValue = Range;
 
-  const trackHeight = !Size ? parentSize && parentSize[0] : Size && Size[0];
-  const trackWidth = !Size ? parentSize && parentSize[1] : Size && Size[1];
+  const trackHeight = !Size ? parentSize && parentSize[0] -arrowButtonSize : Size && Size[0];
+  const trackWidth = !Size ? parentSize && parentSize[1]-arrowButtonSize : Size && Size[1];
 
   const maxThumbPosition = isHorizontal
     ? trackWidth - arrowButtonSize * 2 - 40
