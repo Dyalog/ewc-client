@@ -866,7 +866,7 @@ const App = () => {
         }
 
         if (Type == 'Scroll') {
-          const { Thumb } = Properties;
+          const { Thumb =1 } = Properties;
           const supportedProperties = ['Thumb'];
 
           const result = checkSupportedProperties(supportedProperties, serverEvent?.Properties);
