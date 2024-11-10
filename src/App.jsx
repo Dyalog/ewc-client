@@ -46,7 +46,7 @@ const App = () => {
   const dataRef = useRef({});
   const appRef = useRef(null);
 
-  const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d))
+  const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
 
   useEffect(() => {
     dataRef.current = {};
@@ -1223,7 +1223,7 @@ const App = () => {
             webSocket.send(event);
             return;
           }
-          if (Type === "Upload") return Upload.WG(serverEvent);
+          if (Type === "Upload") return Upload.WG(wsSend, serverEvent);
           return;
         } catch (e) {
           console.error('WG Error: ', e);

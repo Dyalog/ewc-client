@@ -17,25 +17,24 @@ const notSupported = (serverEvent, component) => {
 // We should only ever return what was asked for, but it's sometimes easier to
 // create a full list of all properties we know about. In which case, just filter.
 const filterProps = (serverEvent, properties) => {
-    const ret = {};
-    serverEvent.Properties.forEach((k) => {
-        if (properties.hasOwnProperty(k)) {
-            ret[k] = properties[k];
-        }
-    });
-    return ret;
+  const ret = {};
+  serverEvent.Properties.forEach((k) => {
+    if (properties.hasOwnProperty(k)) {
+      ret[k] = properties[k];
+    }
+  });
+  return ret;
 };
 
 const wgResponse = (serverEvent, component, properties) => {
-    console.log(serverEvent, component, properties);
-    return {
-        WG: {
-          ID: serverEvent.ID,
-          WGID: serverEvent.WGID,
-          Properties: filterProps(serverEvent, {...component.Defaults, ...properties}),
-          ...notSupported(serverEvent, component),
-        },
-    };
+  return {
+    WG: {
+      ID: serverEvent.ID,
+      WGID: serverEvent.WGID,
+      Properties: filterProps(serverEvent, {...component.Defaults, ...properties}),
+      ...notSupported(serverEvent, component),
+    },
+  };
 };
 
 export default wgResponse;
