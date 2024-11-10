@@ -18,29 +18,31 @@ Upload.Defaults = {
 
 Upload.WG = (send, serverEvent) => {
   const file = document.getElementById(serverEvent.ID)?.files[0];
-  const fileAttrs = file ? {
+  if (!file) return send(wgResponse(serverEvent, Upload, {}));
+
+  // This whole function needs to use the async FileReader. The desired
+  // behaviour is that when the file is unreadable, we return the defaults, even
+  // though file.name and such exist.
+  // To do that, we read the file. If FileBytes is *not* requested, we read 1
+  // byte, otherwise the whole file.
+  const fileProps = {
     LastModified: file.lastModified,
     FileName: file.name,
     FileSize: file.size,
     FileType: file.type,
-  } : {};
+  };
 
-  // We want to avoid reading bytes and using and entering the async
-  // world, if possible
-  if (!file || !serverEvent.Properties.includes('FileBytes')) {
-    send(wgResponse(serverEvent, Upload, fileAttrs));
-  } else {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      fileAttrs.FileBytes = btoa(event.target.result)
-      send(wgResponse(serverEvent, Upload, fileAttrs));
-    };
-    reader.onerror = (_event) => {
-      // On an error reading the file, we return the defaults
-      send(wgResponse(serverEvent, Upload, Upload.Defaults));
-    };
-    reader.readAsBinaryString(file); // TODO deprecated function
-  }
+  if (!serverEvent.Properties.includes('FileBytes')) file = file.slice(0, 1);
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    fileProps.FileBytes = btoa(event.target.result)
+    send(wgResponse(serverEvent, Upload, fileProps));
+  };
+  reader.onerror = (_event) => {
+    send(wgResponse(serverEvent, Upload, {}));
+  };
+  reader.readAsArrayBuffer(file);
 };
 
 export default Upload;
