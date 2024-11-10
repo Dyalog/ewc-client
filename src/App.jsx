@@ -1226,13 +1226,11 @@ const App = () => {
           if (Type === "Upload") return Upload.WG(wsSend, serverEvent);
           return;
         } catch (e) {
+          // There should be a proper error response here, but for now, we just log.
+          // This is because we know something failed, but APL doesn't and
+          // just waits 3s to mark the WG as failed.
           console.error('WG Error: ', e);
-          wsSend({
-            WG: {
-              ID: serverEvent?.ID,
-              Error: { Code: 1, Message: 'Not found', WGID: serverEvent?.WGID },
-            },
-          });
+          // wsSend({...});
         }
       } else if (keys[0] == 'NQ') {
         const nqEvent = JSON.parse(event.data).NQ;
