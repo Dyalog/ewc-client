@@ -42,7 +42,7 @@ Upload.WG = (send, serverEvent) => {
   reader.onerror = (_event) => {
     send(wgResponse(serverEvent, Upload, {}));
   };
-  reader.readAsArrayBuffer(file);
+  reader.readAsBinaryString(file);
 };
 
 export default Upload;
