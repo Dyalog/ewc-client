@@ -82,6 +82,36 @@ const Button = ({
     setPosition({ top: Posn && Posn[0], left: Posn && Posn[1] });
   }, [data]);
 
+  const shortcutKey = Caption?.includes("&")
+    ? Caption?.charAt(Caption.indexOf("&") + 1).toLowerCase()
+    : null;
+
+  useEffect(() => {
+    const handleShortcut = (event) => {
+      if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
+            handleButtonClick(); 
+      }
+    };
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, [shortcutKey]);
+
+
+  const handleButtonClick = () => {
+    console.log("Button clicked:", data?.ID);
+    if (buttonEvent) {
+      socket.send(
+        JSON.stringify({
+          Event: {
+            EventName: buttonEvent[0],
+            ID: data?.ID,
+          },
+        })
+      );
+    }
+  };
+
+
   useEffect(() => {
     if (!position) return;
     if (!parentOldDimensions) return;
@@ -235,7 +265,7 @@ const Button = ({
   };
 
   const triggerCellMoveEvent = (row, column, mouseClick) => {
-  
+
     console.log("265 button")
     const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
@@ -257,7 +287,7 @@ const Button = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(row + 1, column,0);
+    triggerCellMoveEvent(row + 1, column, 0);
     const element = nextSibling?.querySelectorAll("input");
     element &&
       element.forEach((inputElement) => {
@@ -300,7 +330,7 @@ const Button = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
-    triggerCellMoveEvent(row - 1, column,0);
+    triggerCellMoveEvent(row - 1, column, 0);
     const element = nextSibling?.querySelectorAll("input");
     element &&
       element.forEach((inputElement) => {
@@ -613,18 +643,23 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
-        // left: position?.left,
       }}
     >
       {ImageData ? (
         <div style={{ ...imageStyles, width: "100%", height: "100%" }}></div>
       ) : null}
 
-      {hasCaption
-        ? data?.Properties?.Caption?.includes("&")
-          ? data?.Properties?.Caption?.substring(1)
-          : data?.Properties?.Caption
-        : null}
+      {hasCaption ? (
+        data?.Properties?.Caption?.includes("&") ? (
+          <span
+            dangerouslySetInnerHTML={{
+              __html: data?.Properties?.Caption.replace(/&(\w)/, "<u>$1</u>")
+            }}
+          ></span>
+        ) : (
+          <span>{data?.Properties?.Caption}</span>
+        )
+      ) : null}
     </div>
   );
 };

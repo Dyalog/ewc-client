@@ -1,9 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Dropdown.css';
 import { useAppData } from '../../hooks';
 
 const Dropdown = ({ title, data }) => {
   const { socket } = useAppData();
+
+  useEffect(() => {
+    const handleShortcut = (event) => {
+      Object.keys(data).forEach((key) => {
+        const itemCaption = data[key]?.Properties?.Caption;
+        const shortcutKey = itemCaption?.includes("&")
+          ? itemCaption.charAt(itemCaption.indexOf("&") + 1).toLowerCase()
+          : null;
+
+        if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
+          handleSelectEvent(data[key]?.ID, data[key]?.Properties);
+        }
+      });
+    };
+
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, [data]);
+
 
   const handleSelectEvent = (id, Properties) => {
     const { Event } = Properties;
@@ -22,22 +41,17 @@ const Dropdown = ({ title, data }) => {
   return (
     <div style={{ fontSize: '12px', marginLeft: '7px', cursor: 'pointer' }} className='menu-item'>
       {title}
-
       <div className='dropdown'>
-        {Object.keys(data).map((key) => {
-          return (
-            <div
-              id={data[key]?.ID}
-              className='dropdown-item'
-              onClick={() => handleSelectEvent(data[key]?.ID, data[key]?.Properties)}
-            >
-              {/* {data[key]?.Properties?.Caption?.includes('&')
-                ? data[key]?.Properties?.Caption?.substring(1)
-                : data[key]?.Properties?.Caption} */}
-              {data[key]?.Properties?.Caption?.replace('&', '')}
-            </div>
-          );
-        })}
+        {Object.keys(data).map((key) => (
+          <div
+            key={data[key]?.ID}
+            id={data[key]?.ID}
+            className='dropdown-item'
+            onClick={() => handleSelectEvent(data[key]?.ID, data[key]?.Properties)}
+          >
+            {data[key]?.Properties?.Caption?.replace('&', '')}
+          </div>
+        ))}
       </div>
     </div>
   );
