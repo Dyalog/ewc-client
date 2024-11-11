@@ -41,6 +41,7 @@ const Button = ({
 
   const customStyles = parseFlexStyles(CSS);
   const inputRef = useRef();
+  const buttonRef = useRef();
 
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
@@ -89,6 +90,7 @@ const Button = ({
   useEffect(() => {
     const handleShortcut = (event) => {
       if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
+       
             handleButtonClick(); 
       }
     };
@@ -96,10 +98,55 @@ const Button = ({
     return () => document.removeEventListener("keydown", handleShortcut);
   }, [shortcutKey]);
 
+  useEffect(() => {
+    if (data?.Properties?.Default === 1) {
+      const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+          handleButtonClick();
+        }
+      };
+      document.addEventListener("keydown", handleKeyPress);
+      return () => document.removeEventListener("keydown", handleKeyPress);
+    }
+  }, [data, buttonEvent]);
+
 
   const handleButtonClick = () => {
-    console.log("Button clicked:", data?.ID);
+    document.getElementById(localStorage.getItem("current-focus"))?.blur();
     if (buttonEvent) {
+      console.log(
+        JSON.stringify({
+          Event: {
+            EventName: buttonEvent[0],
+            ID: data?.ID,
+          },
+        })
+      );
+      if (
+        localStorage.getItem("current-focus") &&
+        localStorage.getItem("shouldChangeEvent") === "true"
+      ) {
+        console.log( 
+          JSON.stringify({
+            Event: {
+              EventName: "Change",
+              ID: localStorage.getItem("current-focus"),
+              Info: [data?.ID],
+            },
+          })
+        );
+
+        socket.send(
+          JSON.stringify({
+            Event: {
+              EventName: "Change",
+              ID: localStorage.getItem("current-focus"),
+              Info: [data?.ID],
+            },
+          })
+        );
+      }
+
       socket.send(
         JSON.stringify({
           Event: {
@@ -108,6 +155,8 @@ const Button = ({
           },
         })
       );
+
+      handleGotFocus();
     }
   };
 
@@ -265,8 +314,6 @@ const Button = ({
   };
 
   const triggerCellMoveEvent = (row, column, mouseClick) => {
-
-    console.log("265 button")
     const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
@@ -577,50 +624,52 @@ const Button = ({
       onDoubleClick={(e) => {
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
+      ref={buttonRef}
       onClick={() => {
-        console.log(
-          JSON.stringify({
-            Event: {
-              EventName: buttonEvent[0],
-              ID: data?.ID,
-            },
-          })
-        );
-        if (
-          localStorage.getItem("current-focus") &&
-          localStorage.getItem("shouldChangeEvent") === "true"
-        ) {
-          console.log(
-            JSON.stringify({
-              Event: {
-                EventName: "Change",
-                ID: localStorage.getItem("current-focus"),
-                Info: [data?.ID],
-              },
-            })
-          );
+        handleButtonClick()
+        // console.log(
+        //   JSON.stringify({
+        //     Event: {
+        //       EventName: buttonEvent[0],
+        //       ID: data?.ID,
+        //     },
+        //   })
+        // );
+        // if (
+        //   localStorage.getItem("current-focus") &&
+        //   localStorage.getItem("shouldChangeEvent") === "true"
+        // ) {
+        //   console.log(
+        //     JSON.stringify({
+        //       Event: {
+        //         EventName: "Change",
+        //         ID: localStorage.getItem("current-focus"),
+        //         Info: [data?.ID],
+        //       },
+        //     })
+        //   );
 
-          socket.send(
-            JSON.stringify({
-              Event: {
-                EventName: "Change",
-                ID: localStorage.getItem("current-focus"),
-                Info: [data?.ID],
-              },
-            })
-          );
-        }
+        //   socket.send(
+        //     JSON.stringify({
+        //       Event: {
+        //         EventName: "Change",
+        //         ID: localStorage.getItem("current-focus"),
+        //         Info: [data?.ID],
+        //       },
+        //     })
+        //   );
+        // }
 
-        socket.send(
-          JSON.stringify({
-            Event: {
-              EventName: buttonEvent[0],
-              ID: data?.ID,
-            },
-          })
-        );
+        // socket.send(
+        //   JSON.stringify({
+        //     Event: {
+        //       EventName: buttonEvent[0],
+        //       ID: data?.ID,
+        //     },
+        //   })
+        // );
 
-        handleGotFocus();
+        // handleGotFocus();
       }}
       style={{
         ...styles,
