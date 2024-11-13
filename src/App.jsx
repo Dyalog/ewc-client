@@ -1347,7 +1347,7 @@ const App = () => {
         const { EventID, Proceed } = serverEvent
         setProceedEventArray((prev) => ({...prev, [EventID]: Proceed}));
         setProceed(Proceed)
-        localStorage.setItem(EventID, Proceed);
+        localStorage.setItem(EventID, Proceed);  
       }
       else if (keys[0] == 'EX') {
         const serverEvent = JSON.parse(event.data).EX;
