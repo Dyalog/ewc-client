@@ -333,7 +333,6 @@ const Grid = ({ data }) => {
     findAggregatedPropertiesData,
     handleData
   } = useAppData();
-  // console.log("284 waiting", proceed, Object.keys(proceedEventArray));
 
   const [eventId, setEventId] = useState(null);
 
@@ -379,6 +378,10 @@ const Grid = ({ data }) => {
           })
         );
       }
+      // if(localStorage.getItem("tempColumn"))
+      setSelectedColumn(tempColumn)
+      // if(localStorage.getItem("tempRow"))
+      //   setSelectedRow(localStorage.getItem("tempRow"))
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "CellMove"]: 0 }));
     }
   }, [Object.keys(proceedEventArray).length])
@@ -422,14 +425,24 @@ const Grid = ({ data }) => {
   const [selectedColumn, setSelectedColumn] = useState(
     !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
   );
+  const [tempRow, setTempRow] = useState(
+    !CurCell ? (ColTitles?.length > 0 ? 1 : 0) : CurCell[0]
+  );
+  const [tempColumn, setTempColum] = useState(
+    !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
+  );
 
+  console.log("284 waiting", proceed, proceedEventArray, selectedRow, selectedColumn);
   useEffect(() => {
     if (CurCell) {
+      console.log("284 curcell useEffect")
 
       let defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
       let defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
       setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
       setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
+      setTempRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
+      setTempColum((prev) => (prev !== CurCell[1] ? defaultCol : prev));
       localStorage.setItem(
         data?.ID,
         JSON.stringify({
@@ -442,23 +455,68 @@ const Grid = ({ data }) => {
   }, [CurCell]);
 
   useEffect(() => {
-    if (localStorage.getItem(data.ID)) {
-      const { Event } = JSON.parse(localStorage.getItem(data.ID));
-      if (Event.CurCell) {
-        handleData(
-          {
-            ID: data?.ID,
-            Properties: {
-              CurCell: [Event.CurCell[0], Event.CurCell[1]],
-            },
-          },
-          'WS'
-        );
-
-      }
+    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "KeyPress"] == 1) {
+      const event = JSON.parse(localStorage.getItem("event"))
+      updatePosition(event)
+      setProceed(false);
+      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
     }
+    else if (
+      (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
+    ) {
+      let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
-  }, [localStorage.getItem(data.ID)]);
+      if (!localStoragValue) {
+        localStorage.setItem(
+          data?.ID,
+          JSON.stringify({
+            Event: {
+              CurCell: [
+                selectedRow,
+                selectedColumn,
+              ],
+            },
+          })
+        );
+      } else {
+        localStorage.setItem(
+          data?.ID,
+          JSON.stringify({
+            Event: {
+              CurCell: [
+                selectedRow,
+                selectedColumn,
+              ],
+              Values: localStoragValue?.Event?.Values,
+            },
+          })
+        );
+      }
+      const event = JSON.parse(localStorage.getItem("event"))
+      updateRowColumn(event)
+      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "CellMove"]: 0 }));
+    }
+  }, [Object.keys(proceedEventArray).length])
+
+
+  // useEffect(() => {
+  //   if (localStorage.getItem(data.ID)) {
+  //     const { Event } = JSON.parse(localStorage.getItem(data.ID));
+  //     if (Event.CurCell) {
+  //       handleData(
+  //         {
+  //           ID: data?.ID,
+  //           Properties: {
+  //             CurCell: [Event.CurCell[0], Event.CurCell[1]],
+  //           },
+  //         },
+  //         'WS'
+  //       );
+
+  //     }
+  //   }
+
+  // }, [localStorage.getItem(data.ID)]);
 
   // useEffect(()=>{
   //   let defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0]
@@ -912,7 +970,7 @@ const Grid = ({ data }) => {
 
     if (key === "ArrowRight") {
       const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
-      setSelectedColumn(updatedColumn);
+      // setSelectedColumn(updatedColumn);
       if (selectedColumn === updatedColumn) return
 
       handleCellMove(
@@ -1101,6 +1159,82 @@ const Grid = ({ data }) => {
         0
       );
     }
+  };
+  const updateRowColumn = (key) => {
+    if (key === "ArrowRight") {
+      const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
+      setSelectedColumn(updatedColumn);
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            CurCell: [selectedRow, updatedColumn],
+          },
+        },
+        'WS'
+      );
+    } else if (key === "ArrowLeft") {
+      const updatedColumn = Math.max(selectedColumn - 1, 1)
+      setSelectedColumn(updatedColumn);
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            CurCell: [selectedRow, updatedColumn],
+          },
+        },
+        'WS'
+      );
+    } else if (key === "ArrowUp") {
+      const updatedRow = Math.max(selectedRow - 1, 1)
+      setSelectedRow(updatedRow);
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            CurCell: [updatedRow, selectedColumn],
+          },
+        },
+        'WS'
+      );
+    } else if (key === "ArrowDown") {
+      const updatedRow = Math.min(selectedRow + 1, rows - 1)
+      setSelectedRow(updatedRow);
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            CurCell: [updatedRow, selectedColumn],
+          },
+        },
+        'WS'
+      );
+    } else if (key === "PageDown") {
+      const demoRow = Math.min(selectedRow + 9, rows - 1);
+      setSelectedRow(demoRow);
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            CurCell: [demoRow, selectedColumn],
+          },
+        },
+        'WS'
+      );
+    } else if (key === "PageUp") {
+      const updatedRow = Math.max(selectedRow - 9, 1)
+      setSelectedRow(updatedRow);
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            CurCell: [updatedRow, selectedColumn],
+          },
+        },
+        'WS'
+      );
+    }
+   
   };
 
   const modifyGridData = () => {
