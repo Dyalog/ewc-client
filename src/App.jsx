@@ -1349,7 +1349,7 @@ const App = () => {
           const hasEventID = Object.keys(prev).some(key => key.includes(EventID));
           return {
             ...prev,
-            [`${EventID}${hasEventID ? 'CellMove' : 'KeyPress'}`]:
+            [`${EventID}${localStorage.getItem("current-event")}`]:
               Proceed
           };
         });

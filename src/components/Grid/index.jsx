@@ -381,8 +381,10 @@ const Grid = ({ data }) => {
     !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
   );
 
+  const [clickData, setClickData] = useState({isClicked: false, row: selectedRow, column: selectedColumn})
 
-  console.log("284 waiting", proceed, proceedEventArray, selectedRow, selectedColumn);
+
+  console.log("284 waiting", proceed, proceedEventArray, selectedRow, selectedColumn,clickData);
   useEffect(() => {
     if (CurCell) {
       console.log("284 curcell useEffect")
@@ -413,6 +415,15 @@ const Grid = ({ data }) => {
     else if (
       (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
     ) {
+      
+      console.log("284 in cellmove", clickData,localStorage.getItem("keyPressEventId"),proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"])
+      if(clickData.isClicked)
+      {
+        handleCellClickUpdate(clickData.row, clickData.column)
+        setClickData({isClicked: false})
+        return
+      }
+      
       let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
       if (!localStoragValue) {
@@ -443,7 +454,7 @@ const Grid = ({ data }) => {
       }
       const event = JSON.parse(localStorage.getItem("event"))
       updateRowColumn(event)
-      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "CellMove"]: 0 }));
+      // setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "CellMove"]: 0 }));
     }
   }, [Object.keys(proceedEventArray).length])
 
@@ -492,8 +503,12 @@ const Grid = ({ data }) => {
   }, [data]);
 
   const handleCellMove = (row, column, mouseClick) => {
+    localStorage.setItem("current-event", "CellMove")
     if (column > columns || column <= 0) return;
     const isKeyboard = !mouseClick ? 1 : 0;
+    const eventId = uuidv4();
+    setEventId(eventId);
+    localStorage.setItem("keyPressEventId", eventId)
     // console.log("286 waiting handle cell move", row, column, selectedRow, selectedColumn)
     const cellChanged = JSON.parse(localStorage.getItem("isChanged"));
     const cellMoveEvent = JSON.stringify({
@@ -837,6 +852,7 @@ const Grid = ({ data }) => {
 
   const handleKeyDown = (event) => {
     localStorage.setItem("event", JSON.stringify(event.key))
+    localStorage.setItem("current-event", "KeyPress")
     const isAltPressed = event.altKey ? 4 : 0;
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
@@ -1360,6 +1376,51 @@ const Grid = ({ data }) => {
 
   const handleCellClick = (row, column) => {
     // console.log("issue cellclick", {row, column})
+    // setSelectedColumn(column);
+    // setSelectedRow(row);
+    setClickData({isClicked: true, row, column})
+
+    if (row == selectedRow && column == selectedColumn) return;
+
+    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+    // if (!localStoragValue)
+    //   localStorage.setItem(
+    //     data?.ID,
+    //     JSON.stringify({
+    //       Event: {
+    //         CurCell: [row, column],
+    //       },
+    //     })
+    //   );
+    // else {
+    //   localStorage.setItem(
+    //     data?.ID,
+    //     JSON.stringify({
+    //       Event: {
+    //         CurCell: [row, column],
+    //         Values: localStoragValue?.Event?.Values,
+    //       },
+    //     })
+    //   );
+    // }
+
+    handleCellMove(row, column, 1);
+
+    // handleData(
+    //   {
+    //     ID: data?.ID,
+    //     Properties: {
+    //       CurCell: [row, column],
+    //     },
+    //   },
+    //   'WS'
+    // );
+
+    // reRender();
+    //  handleCellMove(row, column + 1, Values[row - 1][column]);
+  };
+  const handleCellClickUpdate = (row, column) => {
+    // console.log("issue cellclick", {row, column})
     setSelectedColumn(column);
     setSelectedRow(row);
 
@@ -1387,7 +1448,15 @@ const Grid = ({ data }) => {
       );
     }
 
-    handleCellMove(row, column, 1);
+    handleData(
+      {
+        ID: data?.ID,
+        Properties: {
+          CurCell: [row, column],
+        },
+      },
+      'WS'
+    );
 
     // handleData(
     //   {
