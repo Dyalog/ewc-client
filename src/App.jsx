@@ -1345,8 +1345,16 @@ const App = () => {
       else if (keys[0] == "EC"){
         const serverEvent = JSON.parse(event.data).EC;
         const { EventID, Proceed } = serverEvent
-        setProceedEventArray((prev) => ({...prev, [EventID]: Proceed}));
-        setProceed(Proceed)
+        setProceedEventArray((prev) => {
+          const hasEventID = Object.keys(prev).some(key => key.includes(EventID));
+          return {
+            ...prev,
+            [`${EventID}${hasEventID ? 'CellMove' : 'KeyPress'}`]:
+              Proceed
+          };
+        });
+        // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
+          setProceed(Proceed)
         localStorage.setItem(EventID, Proceed);  
       }
       else if (keys[0] == 'EX') {

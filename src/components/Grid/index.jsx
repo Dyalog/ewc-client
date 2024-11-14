@@ -333,7 +333,7 @@ const Grid = ({ data }) => {
     findAggregatedPropertiesData,
     handleData
   } = useAppData();
-  // console.log("286 waiting", proceed,Object.keys(proceedEventArray) );
+  // console.log("284 waiting", proceed, Object.keys(proceedEventArray));
 
   const [eventId, setEventId] = useState(null);
 
@@ -342,10 +342,44 @@ const Grid = ({ data }) => {
   );
 
   useEffect(() => {
-    if (proceedEventArray[localStorage.getItem("keyPressEventId")] == 1) {
-      const event =JSON.parse(localStorage.getItem("event")) 
+    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "KeyPress"] == 1) {
+      const event = JSON.parse(localStorage.getItem("event"))
       updatePosition(event)
       setProceed(false);
+      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
+    }
+    else if (
+      (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
+    ) {
+      let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+
+      if (!localStoragValue) {
+        localStorage.setItem(
+          data?.ID,
+          JSON.stringify({
+            Event: {
+              CurCell: [
+                selectedRow,
+                selectedColumn,
+              ],
+            },
+          })
+        );
+      } else {
+        localStorage.setItem(
+          data?.ID,
+          JSON.stringify({
+            Event: {
+              CurCell: [
+                selectedRow,
+                selectedColumn,
+              ],
+              Values: localStoragValue?.Event?.Values,
+            },
+          })
+        );
+      }
+      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "CellMove"]: 0 }));
     }
   }, [Object.keys(proceedEventArray).length])
 
@@ -475,6 +509,35 @@ const Grid = ({ data }) => {
     const exists = Event && Event?.some((item) => item[0] === "CellMove");
     if (!exists) return;
     socket.send(cellMoveEvent);
+    let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+
+    // if (!localStoragValue) {
+    //   localStorage.setItem(
+    //     data?.ID,
+    //     JSON.stringify({
+    //       Event: {
+    //         CurCell: [
+    //           row,
+    //           column,
+    //         ],
+    //       },
+    //     })
+    //   );
+    // } else {
+    //   localStorage.setItem(
+    //     data?.ID,
+    //     JSON.stringify({
+    //       Event: {
+    //         CurCell: [
+    //           row,
+    //           column,
+    //         ],
+    //         Values: localStoragValue?.Event?.Values,
+    //       },
+    //     })
+    //   );
+    // }
+
     localStorage.setItem(
       "isChanged",
       JSON.stringify({
@@ -498,7 +561,7 @@ const Grid = ({ data }) => {
   //         }
   //       }
   //     };
-      
+
   //     checkProceed();
   //     // setTimeout(() => {
   //       //   checkProceed();
@@ -506,266 +569,266 @@ const Grid = ({ data }) => {
   //     });
   //   };
 
-    // const updatePosition = async () => {
-    //   if (event.key === "ArrowRight") {
-    //     if (childExists || parentExists)
-    //       await waitForProceed(localStorage.getItem(eventId));
-    //     const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
-    //     setSelectedColumn(updatedColumn);
-    //     if (selectedColumn === updatedColumn) return
+  // const updatePosition = async () => {
+  //   if (event.key === "ArrowRight") {
+  //     if (childExists || parentExists)
+  //       await waitForProceed(localStorage.getItem(eventId));
+  //     const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
+  //     setSelectedColumn(updatedColumn);
+  //     if (selectedColumn === updatedColumn) return
 
-    //     if (!localStoragValue) {
-    //       console.log(
-    //         "writing local storage",
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               selectedRow,
-    //               updatedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
+  //     if (!localStoragValue) {
+  //       console.log(
+  //         "writing local storage",
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               selectedRow,
+  //               updatedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
 
 
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               selectedRow,
-    //               updatedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
-    //     } else {
-    //       console.log(
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               selectedRow,
-    //               updatedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               selectedRow,
+  //               updatedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
+  //     } else {
+  //       console.log(
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               selectedRow,
+  //               updatedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
 
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               selectedRow,
-    //               updatedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
-    //     }
-    //     handleCellMove(
-    //       selectedRow,
-    //       updatedColumn,
-    //       0
-    //     );
-    //   } else if (event.key === "ArrowLeft") {
-    //     if (childExists || parentExists)
-    //       await waitForProceed(localStorage.getItem(eventId));
-    //     const updatedColumn = Math.max(selectedColumn - 1, 1)
-    //     setSelectedColumn(updatedColumn);
-    //     if (selectedColumn === updatedColumn) return
-    //     if (!localStoragValue) {
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               selectedRow,
-    //               updatedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
-    //     } else {
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               selectedRow,
-    //               updatedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
-    //     }
-    //     handleCellMove(
-    //       selectedRow,
-    //       updatedColumn,
-    //       0
-    //     );
-    //   } else if (event.key === "ArrowUp") {
-    //     if (childExists || parentExists)
-    //       await waitForProceed(localStorage.getItem(eventId));
-    //     const updatedRow = Math.max(selectedRow - 1, 1)
-    //     setSelectedRow(updatedRow);
-    //     if (selectedRow === updatedRow) return
-    //     if (!localStoragValue) {
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               updatedRow,
-    //               selectedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
-    //     } else {
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               updatedRow,
-    //               selectedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
-    //     }
-    //     handleCellMove(
-    //       updatedRow,
-    //       selectedColumn,
-    //       0
-    //     );
-    //   } else if (event.key === "ArrowDown") {
-    //     if (childExists || parentExists)
-    //       await waitForProceed(localStorage.getItem(eventId));
-    //     const updatedRow = Math.min(selectedRow + 1, rows - 1)
-    //     setSelectedRow(updatedRow);
-    //     if (selectedRow == rows - 1) return;
-    //     if (!localStoragValue) {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               selectedRow,
+  //               updatedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
+  //     }
+  //     handleCellMove(
+  //       selectedRow,
+  //       updatedColumn,
+  //       0
+  //     );
+  //   } else if (event.key === "ArrowLeft") {
+  //     if (childExists || parentExists)
+  //       await waitForProceed(localStorage.getItem(eventId));
+  //     const updatedColumn = Math.max(selectedColumn - 1, 1)
+  //     setSelectedColumn(updatedColumn);
+  //     if (selectedColumn === updatedColumn) return
+  //     if (!localStoragValue) {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               selectedRow,
+  //               updatedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
+  //     } else {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               selectedRow,
+  //               updatedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
+  //     }
+  //     handleCellMove(
+  //       selectedRow,
+  //       updatedColumn,
+  //       0
+  //     );
+  //   } else if (event.key === "ArrowUp") {
+  //     if (childExists || parentExists)
+  //       await waitForProceed(localStorage.getItem(eventId));
+  //     const updatedRow = Math.max(selectedRow - 1, 1)
+  //     setSelectedRow(updatedRow);
+  //     if (selectedRow === updatedRow) return
+  //     if (!localStoragValue) {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               updatedRow,
+  //               selectedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
+  //     } else {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               updatedRow,
+  //               selectedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
+  //     }
+  //     handleCellMove(
+  //       updatedRow,
+  //       selectedColumn,
+  //       0
+  //     );
+  //   } else if (event.key === "ArrowDown") {
+  //     if (childExists || parentExists)
+  //       await waitForProceed(localStorage.getItem(eventId));
+  //     const updatedRow = Math.min(selectedRow + 1, rows - 1)
+  //     setSelectedRow(updatedRow);
+  //     if (selectedRow == rows - 1) return;
+  //     if (!localStoragValue) {
 
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               updatedRow,
-    //               selectedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
-    //     } else {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               updatedRow,
+  //               selectedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
+  //     } else {
 
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               updatedRow,
-    //               selectedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
-    //     }
-    //     if (selectedRow === updatedRow) return
-    //     handleCellMove(
-    //       updatedRow,
-    //       selectedColumn,
-    //       0
-    //     );
-    //   } else if (event.key === "PageDown") {
-    //     if (childExists || parentExists)
-    //       await waitForProceed(localStorage.getItem(eventId));
-    //     const demoRow = Math.min(selectedRow + 9, rows - 1);
-    //     setSelectedRow(demoRow);
-    //     if (!localStoragValue) {
-    //       if (selectedRow == rows - 1) return;
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               demoRow,
-    //               selectedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
-    //     } else {
-    //       if (selectedRow == rows - 1) return;
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               updatedRow,
+  //               selectedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
+  //     }
+  //     if (selectedRow === updatedRow) return
+  //     handleCellMove(
+  //       updatedRow,
+  //       selectedColumn,
+  //       0
+  //     );
+  //   } else if (event.key === "PageDown") {
+  //     if (childExists || parentExists)
+  //       await waitForProceed(localStorage.getItem(eventId));
+  //     const demoRow = Math.min(selectedRow + 9, rows - 1);
+  //     setSelectedRow(demoRow);
+  //     if (!localStoragValue) {
+  //       if (selectedRow == rows - 1) return;
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               demoRow,
+  //               selectedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
+  //     } else {
+  //       if (selectedRow == rows - 1) return;
 
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               demoRow,
-    //               selectedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
-    //     }
-    //     handleCellMove(
-    //       demoRow,
-    //       selectedColumn,
-    //       0
-    //     );
-    //   } else if (event.key === "PageUp") {
-    //     if (childExists || parentExists)
-    //       await waitForProceed(localStorage.getItem(eventId));
-    //     const updatedRow = Math.max(selectedRow - 9, 1)
-    //     setSelectedRow(updatedRow);
-    //     if (!localStoragValue) {
-    //       if (selectedRow == updatedRow) return;
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               demoRow,
+  //               selectedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
+  //     }
+  //     handleCellMove(
+  //       demoRow,
+  //       selectedColumn,
+  //       0
+  //     );
+  //   } else if (event.key === "PageUp") {
+  //     if (childExists || parentExists)
+  //       await waitForProceed(localStorage.getItem(eventId));
+  //     const updatedRow = Math.max(selectedRow - 9, 1)
+  //     setSelectedRow(updatedRow);
+  //     if (!localStoragValue) {
+  //       if (selectedRow == updatedRow) return;
 
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               updatedRow,
-    //               selectedColumn,
-    //             ],
-    //           },
-    //         })
-    //       );
-    //     } else {
-    //       if (selectedRow == updatedRow) return;
-    //       localStorage.setItem(
-    //         data?.ID,
-    //         JSON.stringify({
-    //           Event: {
-    //             CurCell: [
-    //               updatedRow,
-    //               selectedColumn,
-    //             ],
-    //             Values: localStoragValue?.Event?.Values,
-    //           },
-    //         })
-    //       );
-    //     }
-    //     handleCellMove(
-    //       updatedRow,
-    //       selectedColumn,
-    //       0
-    //     );
-    //   }
-    // };
-    
-    const handleKeyDown = (event) => {
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               updatedRow,
+  //               selectedColumn,
+  //             ],
+  //           },
+  //         })
+  //       );
+  //     } else {
+  //       if (selectedRow == updatedRow) return;
+  //       localStorage.setItem(
+  //         data?.ID,
+  //         JSON.stringify({
+  //           Event: {
+  //             CurCell: [
+  //               updatedRow,
+  //               selectedColumn,
+  //             ],
+  //             Values: localStoragValue?.Event?.Values,
+  //           },
+  //         })
+  //       );
+  //     }
+  //     handleCellMove(
+  //       updatedRow,
+  //       selectedColumn,
+  //       0
+  //     );
+  //   }
+  // };
+
+  const handleKeyDown = (event) => {
     localStorage.setItem("event", JSON.stringify(event.key))
     const isAltPressed = event.altKey ? 4 : 0;
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
@@ -844,7 +907,7 @@ const Grid = ({ data }) => {
     // }, 120);
   };
 
-  const updatePosition =  (key) => {
+  const updatePosition = (key) => {
     let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
     if (key === "ArrowRight") {
@@ -852,55 +915,6 @@ const Grid = ({ data }) => {
       setSelectedColumn(updatedColumn);
       if (selectedColumn === updatedColumn) return
 
-      if (!localStoragValue) {
-        console.log(
-          "writing local storage",
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                updatedColumn,
-              ],
-            },
-          })
-        );
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                updatedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        console.log(
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                updatedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                updatedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
       handleCellMove(
         selectedRow,
         updatedColumn,
@@ -910,32 +924,32 @@ const Grid = ({ data }) => {
       const updatedColumn = Math.max(selectedColumn - 1, 1)
       setSelectedColumn(updatedColumn);
       if (selectedColumn === updatedColumn) return
-      if (!localStoragValue) {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                updatedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                updatedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
+      // if (!localStoragValue) {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           selectedRow,
+      //           updatedColumn,
+      //         ],
+      //       },
+      //     })
+      //   );
+      // } else {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           selectedRow,
+      //           updatedColumn,
+      //         ],
+      //         Values: localStoragValue?.Event?.Values,
+      //       },
+      //     })
+      //   );
+      // }
       handleCellMove(
         selectedRow,
         updatedColumn,
@@ -945,32 +959,32 @@ const Grid = ({ data }) => {
       const updatedRow = Math.max(selectedRow - 1, 1)
       setSelectedRow(updatedRow);
       if (selectedRow === updatedRow) return
-      if (!localStoragValue) {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                updatedRow,
-                selectedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                updatedRow,
-                selectedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
+      // if (!localStoragValue) {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           updatedRow,
+      //           selectedColumn,
+      //         ],
+      //       },
+      //     })
+      //   );
+      // } else {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           updatedRow,
+      //           selectedColumn,
+      //         ],
+      //         Values: localStoragValue?.Event?.Values,
+      //       },
+      //     })
+      //   );
+      // }
       handleCellMove(
         updatedRow,
         selectedColumn,
@@ -980,33 +994,33 @@ const Grid = ({ data }) => {
       const updatedRow = Math.min(selectedRow + 1, rows - 1)
       setSelectedRow(updatedRow);
       if (selectedRow == rows - 1) return;
-      if (!localStoragValue) {
+      // if (!localStoragValue) {
 
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                updatedRow,
-                selectedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                updatedRow,
-                selectedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           updatedRow,
+      //           selectedColumn,
+      //         ],
+      //       },
+      //     })
+      //   );
+      // } else {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           updatedRow,
+      //           selectedColumn,
+      //         ],
+      //         Values: localStoragValue?.Event?.Values,
+      //       },
+      //     })
+      //   );
+      // }
       if (selectedRow === updatedRow) return
       handleCellMove(
         updatedRow,
@@ -1016,34 +1030,34 @@ const Grid = ({ data }) => {
     } else if (key === "PageDown") {
       const demoRow = Math.min(selectedRow + 9, rows - 1);
       setSelectedRow(demoRow);
-      if (!localStoragValue) {
-        if (selectedRow == rows - 1) return;
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                demoRow,
-                selectedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        if (selectedRow == rows - 1) return;
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                demoRow,
-                selectedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
+      // if (!localStoragValue) {
+      //   if (selectedRow == rows - 1) return;
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           demoRow,
+      //           selectedColumn,
+      //         ],
+      //       },
+      //     })
+      //   );
+      // } else {
+      //   if (selectedRow == rows - 1) return;
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           demoRow,
+      //           selectedColumn,
+      //         ],
+      //         Values: localStoragValue?.Event?.Values,
+      //       },
+      //     })
+      //   );
+      // }
       handleCellMove(
         demoRow,
         selectedColumn,
@@ -1052,35 +1066,35 @@ const Grid = ({ data }) => {
     } else if (key === "PageUp") {
       const updatedRow = Math.max(selectedRow - 9, 1)
       setSelectedRow(updatedRow);
-      if (!localStoragValue) {
-        if (selectedRow == updatedRow) return;
+      if (selectedRow == updatedRow) return;
+      // if (!localStoragValue) {
 
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                updatedRow,
-                selectedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        if (selectedRow == updatedRow) return;
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                updatedRow,
-                selectedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           updatedRow,
+      //           selectedColumn,
+      //         ],
+      //       },
+      //     })
+      //   );
+      // } else {
+      //   if (selectedRow == updatedRow) return;
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           updatedRow,
+      //           selectedColumn,
+      //         ],
+      //         Values: localStoragValue?.Event?.Values,
+      //       },
+      //     })
+      //   );
+      // }
       handleCellMove(
         updatedRow,
         selectedColumn,
