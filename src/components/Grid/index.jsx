@@ -340,51 +340,6 @@ const Grid = ({ data }) => {
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
-  useEffect(() => {
-    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "KeyPress"] == 1) {
-      const event = JSON.parse(localStorage.getItem("event"))
-      updatePosition(event)
-      setProceed(false);
-      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
-    }
-    else if (
-      (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
-    ) {
-      let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-
-      if (!localStoragValue) {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                selectedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                selectedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
-      // if(localStorage.getItem("tempColumn"))
-      setSelectedColumn(tempColumn)
-      // if(localStorage.getItem("tempRow"))
-      //   setSelectedRow(localStorage.getItem("tempRow"))
-      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "CellMove"]: 0 }));
-    }
-  }, [Object.keys(proceedEventArray).length])
 
   const gridRef = useRef(null);
 
@@ -425,12 +380,7 @@ const Grid = ({ data }) => {
   const [selectedColumn, setSelectedColumn] = useState(
     !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
   );
-  const [tempRow, setTempRow] = useState(
-    !CurCell ? (ColTitles?.length > 0 ? 1 : 0) : CurCell[0]
-  );
-  const [tempColumn, setTempColum] = useState(
-    !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
-  );
+
 
   console.log("284 waiting", proceed, proceedEventArray, selectedRow, selectedColumn);
   useEffect(() => {
@@ -441,8 +391,7 @@ const Grid = ({ data }) => {
       let defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
       setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
       setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
-      setTempRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
-      setTempColum((prev) => (prev !== CurCell[1] ? defaultCol : prev));
+
       localStorage.setItem(
         data?.ID,
         JSON.stringify({
@@ -980,7 +929,7 @@ const Grid = ({ data }) => {
       );
     } else if (key === "ArrowLeft") {
       const updatedColumn = Math.max(selectedColumn - 1, 1)
-      setSelectedColumn(updatedColumn);
+      // setSelectedColumn(updatedColumn);
       if (selectedColumn === updatedColumn) return
       // if (!localStoragValue) {
       //   localStorage.setItem(
@@ -1015,7 +964,7 @@ const Grid = ({ data }) => {
       );
     } else if (key === "ArrowUp") {
       const updatedRow = Math.max(selectedRow - 1, 1)
-      setSelectedRow(updatedRow);
+      // setSelectedRow(updatedRow);
       if (selectedRow === updatedRow) return
       // if (!localStoragValue) {
       //   localStorage.setItem(
@@ -1050,7 +999,7 @@ const Grid = ({ data }) => {
       );
     } else if (key === "ArrowDown") {
       const updatedRow = Math.min(selectedRow + 1, rows - 1)
-      setSelectedRow(updatedRow);
+      // setSelectedRow(updatedRow);
       if (selectedRow == rows - 1) return;
       // if (!localStoragValue) {
 
@@ -1087,7 +1036,7 @@ const Grid = ({ data }) => {
       );
     } else if (key === "PageDown") {
       const demoRow = Math.min(selectedRow + 9, rows - 1);
-      setSelectedRow(demoRow);
+      // setSelectedRow(demoRow);
       // if (!localStoragValue) {
       //   if (selectedRow == rows - 1) return;
       //   localStorage.setItem(
@@ -1123,7 +1072,7 @@ const Grid = ({ data }) => {
       );
     } else if (key === "PageUp") {
       const updatedRow = Math.max(selectedRow - 9, 1)
-      setSelectedRow(updatedRow);
+      // setSelectedRow(updatedRow);
       if (selectedRow == updatedRow) return;
       // if (!localStoragValue) {
 
