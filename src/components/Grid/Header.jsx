@@ -15,7 +15,7 @@ const Header = ({ data }) => {
         }}
       >
         {data?.value.map((th, index) => {
-          if (th === '') return <br key={index} />;
+          // if (th === '') return <br key={index} />;
           return <div key={index} style={{ lineHeight: '96%' }}>{th}</div>;
         })}
       </div>

@@ -315,7 +315,7 @@ import GridLabel from "./GridLabel";
 const Component = ({ data }) => {
   if (data?.type == "Edit") return <GridEdit data={data} />;
   else if (data?.type == "Button") return <GridButton data={data} />;
-  else if (data?.type == "cell" || "rowTitle") return <GridCell data={data} />;
+  else if (data?.type == "cell" || data?.type == "rowTitle") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
