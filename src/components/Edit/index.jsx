@@ -56,6 +56,8 @@ const Edit = ({
   const [prevFocused, setprevFocused] = useState("⌈");
   const dateInputRef = useRef();
 
+
+  
   const {
     FieldType,
     MaxLength,
@@ -77,7 +79,8 @@ const Edit = ({
   const font = findDesiredData(FontObj && FontObj);
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS)
-
+  
+  console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
     if (location === "inGrid") {
       if (FieldType === "Date") {
@@ -607,7 +610,7 @@ const Edit = ({
         decimalScale={Decimal}
         value={inputValue}
         decimalSeparator={decimalSeparator}
-        thousandSeparator={Thousand}
+        thousandSeparator={FieldType == "LongNumeric" && Thousand}
         onBlur={() => handleEditEvents()}
         onKeyDown={(e) => handleKeyPress(e)}
         onFocus={handleGotFocus}
