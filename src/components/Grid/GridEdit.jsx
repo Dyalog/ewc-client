@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useAppData } from '../../hooks';
-import { calculateDateAfterDays, getObjectById, calculateDaysFromDate, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, handleMouseWheel, handleMouseDoubleClick } from '../../utils';
+import { calculateDateAfterDays, getObjectById, calculateDaysFromDate, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, handleMouseWheel, handleMouseDoubleClick, checkNumericType } from '../../utils';
 import dayjs from 'dayjs';
 
 const GridEdit = ({ data }) => {
@@ -11,38 +11,38 @@ const GridEdit = ({ data }) => {
   const divRef = useRef(null);
   const [isEditable, setIsEditable] = useState(false);
   const [selected, setSelected] = useState(false);
-
+  
   const [dateFormattedValue, setDateFormattedValue] = useState(data?.value);
 
 
   const { FieldType, Decimal, SelText, Event } = data?.typeObj?.Properties;
   
-
+  
   // console.log({value: data.value, focused: data.focused, datatype: data?.typeObj.ID, SelText})
-
+  
   const { dataRef, findDesiredData, handleData, socket, socketData } = useAppData();
   // data?.typeObj?.ID === "F1.Holdings.TEXT" && console.log("edit data", {data, dataRef, socketData, property: findDesiredData(data?.typeObj?.ID)})
   const dateFormat = JSON.parse(getObjectById(dataRef.current, 'Locale'));
   const { ShortDate, Thousand, Decimal: decimalSeparator } = dateFormat?.Properties;
   const [inputValue, setInputValue] = useState(
     FieldType == 'Date'
-      ? dayjs(calculateDateAfterDays(data?.value)).format(ShortDate && ShortDate)
-      : data?.value
+    ? dayjs(calculateDateAfterDays(data?.value)).format(ShortDate && ShortDate)
+    : data?.value
   );
   const [selectedDate, setSelectedDate] = useState(
     FieldType == 'Date' ? dayjs(calculateDateAfterDays(data?.value)) : new Date()
   );
-
+  
   const findFirstNonSpaceIndex = (content) => {
     // Trim leading spaces from the string
     const trimmedContent = content.trimStart();
     
     // Find the index of the trimmed substring in the original string
     const firstNonSpaceIndex = content.indexOf(trimmedContent[0]);
-  
+    
     return firstNonSpaceIndex;
   };
- 
+  
   useEffect(() => {
     if (!isEditable && divRef.current && SelText && SelText.length === 2 && data?.focused) {
       const [start, end] = SelText;
@@ -459,7 +459,7 @@ const GridEdit = ({ data }) => {
                 decimalScale={Decimal}  
                 value={data?.value}
                 decimalSeparator={decimalSeparator}
-                thousandSeparator={Thousand}
+                thousandSeparator={checkNumericType("LongNumeric", data?.value) && Thousand}
               />
             ) : (
               data?.formattedValue
@@ -488,7 +488,7 @@ const GridEdit = ({ data }) => {
             value={inputValue}
             onSelect={handleSelect}
             decimalSeparator={decimalSeparator}
-            thousandSeparator={Thousand}
+            thousandSeparator={checkNumericType("LongNumeric", inputValue) && Thousand}
             onBlur={(e) => {
               setIsEditable(false);
               handleEditEvents();

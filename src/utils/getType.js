@@ -36,3 +36,14 @@ export const getObjectTypeById = (jsonData, targetId) => {
   if (result?.Properties?.Type == 'Edit' || result?.Properties?.Type == 'Button') return 'input';
   return 'span';
 };
+
+
+export function checkNumericType(value, type) {
+  if (type === "Numeric") {
+      return typeof value === 'number' && !isNaN(value);
+  } else if (type === "LongNumeric") {
+      return typeof value === 'string' && /^[0-9]+$/.test(value);
+  } else {
+      return false;
+  }
+}
