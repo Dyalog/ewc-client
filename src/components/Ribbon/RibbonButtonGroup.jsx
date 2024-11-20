@@ -1,7 +1,7 @@
 import * as AppIcons from "./RibbonIcons";
 import { Col } from "reactstrap";
 import { useAppData } from "../../hooks";
-import { getCurrentUrl, getObjectById, parseFlexStyles } from "../../utils";
+import { getCurrentUrl, getObjectById, parseFlexStyles, setStyle } from "../../utils";
 import { MdOutlineQuestionMark } from "react-icons/md";
 
 const CustomRibbonButtonGroup = ({ data }) => {
@@ -12,6 +12,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
 
   const customStyles = parseFlexStyles(CSS)
+  const style = setStyle(data.Properties)
 
   const colSize = Captions?.length == 4 ? 6 : 12;
 
@@ -119,7 +120,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
             id={`${data?.ID}-${i}`}
             md={colSize}
             className="d-flex align-items-center justify-content-left gap-1"
-            style={{ cursor: "pointer" ,   ...customStyles}}
+            style={{ cursor: "pointer" ,...style,   ...customStyles}}
             onClick={() => handleButtonEvent(i + 1)}
           >
             {result && result?.imgUrl ? (

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 const Upload = ({ data }) => {
 
+  const style = setStyle(data.Properties)
   useEffect(() => {
     const fileInput = document.getElementById(data.ID);
     if (fileInput) {
@@ -12,6 +13,9 @@ const Upload = ({ data }) => {
   return (
     <div>
       <input
+        style={{
+          ...style
+        }}
         id={data.ID}
         type="file"
       />

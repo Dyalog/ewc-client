@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppData, useResizeObserver } from '../../hooks';
-import { extractStringUntilLastPeriod, parseFlexStyles } from '../../utils';
+import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
 
 const HorizontalSplitter = ({ data }) => {
   const { Size: SubformSize, Posn: SubFormPosn } = JSON.parse(
@@ -9,6 +9,7 @@ const HorizontalSplitter = ({ data }) => {
 
 
   const { Posn, SplitObj1, SplitObj2, Event, Size, CSS } = data?.Properties;
+  const style = setStyle(data.Properties)
   
   const customStyles = parseFlexStyles(CSS)
 
@@ -191,6 +192,7 @@ const HorizontalSplitter = ({ data }) => {
     position: 'absolute',
     top: position?.top,
     left: 0,
+    ...style,
     ...customStyles
   };
 

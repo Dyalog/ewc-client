@@ -4,6 +4,7 @@ import './Menu.css';
 
 const Menu = ({ data }) => {
   const updatedData = excludeKeys(data);
+  const style = setStyle(data.Properties)
 
   const empty = isEmpty(updatedData);
 
@@ -17,6 +18,7 @@ const Menu = ({ data }) => {
           marginLeft: '7px',
           cursor: 'pointer',
           display: 'inline-block',
+          ...style,
         }}
         className='menu-item'
       >
