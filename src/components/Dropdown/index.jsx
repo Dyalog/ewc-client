@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './Dropdown.css';
 import { useAppData } from '../../hooks';
+import { setStyle } from '../../utils';
 
 const Dropdown = ({ title, data }) => {
   const { socket } = useAppData();
