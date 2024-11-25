@@ -331,7 +331,7 @@ const ScrollBar = ({ data }) => {
       Event: {
         EventName: 'Scroll',
         ID: data?.ID,
-        Info: [0, Thumb],
+        Info: [0, Thumb || 1],
       },
     });
 
