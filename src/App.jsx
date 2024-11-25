@@ -18,6 +18,7 @@ import './App.css';
 import * as _ from 'lodash';
 import MsgBox from './components/MessageBox';
 import version from "../version.json"
+import { v4 as uuidv4 } from "uuid";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -1305,6 +1306,7 @@ const App = () => {
           return;
         } else if (Event == 'CellMove') {
           console.log("296",nqEvent)
+          const eventId = uuidv4();
           handleData(
             {
               ID: ID,
@@ -1318,8 +1320,9 @@ const App = () => {
             JSON.stringify({
               Event: {
                 EventName: 'CellMove',
+                EventID: eventId,
                 ID,
-                Info
+                Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
               },
             })
           );
