@@ -29,6 +29,26 @@ const ScrollBar = ({ data }) => {
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;
+  useEffect(()=>{
+    setScaledValue(Thumb)
+    if(Thumb!==scaledValue)
+    {
+      const scrollEvent = JSON.stringify({
+        Event: {
+          EventName: 'Scroll',
+          ID: data?.ID,
+          Info: [0, Thumb || 1],
+        },
+      });
+  
+      localStorage.setItem(data.ID, scrollEvent);
+      const exists = Event && Event.some((item) => item[0] === 'Scroll');
+      if (exists) {
+        socket.send(scrollEvent);
+      }
+
+    }
+  },[Thumb])
 
 
   console.log("296", data, Thumb)
@@ -338,7 +358,7 @@ const ScrollBar = ({ data }) => {
     localStorage.setItem(data.ID, scrollEvent);
     const exists = Event && Event.some((item) => item[0] === 'Scroll');
     if (exists) {
-      socket.send(scrollEvent);
+      // socket.send(scrollEvent);
     }
   }, [Thumb]);
 
