@@ -23,32 +23,35 @@ const ScrollBar = ({ data }) => {
   const [scaledValue, setScaledValue] = useState(Thumb || 1);
   const customStyles = parseFlexStyles(CSS);
   const [showButtons, setShowButtons] = useState(false);
+  const [thumbMovement, setThumbMovement] = useState(null);
   const emitEvent = Event && Event[0];
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
   const { socket, handleData } = useAppData();
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;
-  useEffect(()=>{
-    setScaledValue(Thumb)
-    if(Thumb!==scaledValue)
-    {
-      const scrollEvent = JSON.stringify({
-        Event: {
-          EventName: 'Scroll',
-          ID: data?.ID,
-          Info: [0, Thumb || 1],
-        },
-      });
   
-      localStorage.setItem(data.ID, scrollEvent);
-      const exists = Event && Event.some((item) => item[0] === 'Scroll');
-      if (exists) {
-        socket.send(scrollEvent);
-      }
+  // useEffect(()=>{
+  //   setScaledValue(Thumb)
+    
+  //   if(Thumb!==scaledValue && Thumb !=="arrow")
+  //   {
+  //     const scrollEvent = JSON.stringify({
+  //       Event: {
+  //         EventName: 'Scroll',
+  //         ID: data?.ID,
+  //         Info: [0, Thumb || 1],
+  //       },
+  //     });
+  
+  //     localStorage.setItem(data.ID, scrollEvent);
+  //     const exists = Event && Event.some((item) => item[0] === 'Scroll');
+  //     if (exists) {
+  //       socket.send(scrollEvent);
+  //     }
 
-    }
-  },[Thumb])
+  //   }
+  // },[Thumb])
 
 
   console.log("296", data, Thumb)
@@ -197,6 +200,7 @@ const ScrollBar = ({ data }) => {
   };
 
   const incrementScale = () => {
+    setThumbMovement("arrow")
     const newScaledValue = scaledValue + 1;
     if (newScaledValue <= maxValue) {
       setScaledValue(newScaledValue);
@@ -260,6 +264,7 @@ const ScrollBar = ({ data }) => {
   };
 
   const decrementScale = () => {
+    setThumbMovement("arrow")
     const newScaledValue = scaledValue - 1;
     if (newScaledValue >= 1) {
       setScaledValue(newScaledValue);
