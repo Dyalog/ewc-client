@@ -340,7 +340,7 @@ const ScrollBar = ({ data }) => {
     if (exists) {
       socket.send(scrollEvent);
     }
-  }, []);
+  }, [Thumb]);
 
   const calculateAttachStyle = () => {
     let attachStyle = {};
