@@ -1304,6 +1304,7 @@ const App = () => {
           if (NoCallback == 0) webSocket.send(event);
           return;
         } else if (Event == 'CellMove') {
+          console.log("296",nqEvent)
           handleData(
             {
               ID: ID,
@@ -1312,6 +1313,15 @@ const App = () => {
               },
             },
             'WS'
+          );
+          webSocket.send(
+            JSON.stringify({
+              Event: {
+                EventName: 'CellMove',
+                ID,
+                Info
+              },
+            })
           );
           localStorage.setItem(
             ID,

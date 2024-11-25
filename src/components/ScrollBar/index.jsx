@@ -30,6 +30,8 @@ const ScrollBar = ({ data }) => {
   const thumbRef = useRef(null);
   const maxValue = Range;
 
+
+  console.log("296", data, Thumb)
   const trackHeight = !Size ? parentSize && parentSize[0] -arrowButtonSize : Size && Size[0];
   const trackWidth = !Size ? parentSize && parentSize[1]-arrowButtonSize : Size && Size[1];
 
@@ -308,9 +310,37 @@ const ScrollBar = ({ data }) => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   setScaledValue((prevValue) => Math.min(Thumb, maxValue));
+  //   handleData(
+  //     { ID: data?.ID, Properties: { Thumb: Thumb || 1 } },
+  //     'WS'
+  //   );
+
+  // }, [Thumb]);
   useEffect(() => {
-    setScaledValue((prevValue) => Math.min(Thumb, maxValue));
-  }, [Thumb]);
+    const newPosition = calculateThumbPosition(Thumb || 1);
+    setThumbPosition(newPosition); // Update thumb position state
+    updateThumbPosition(newPosition); // Update thumb position in UI
+    setScaledValue(Math.min(Thumb, maxValue)); // Sync scaled value with Thumb
+    handleData(
+      { ID: data?.ID, Properties: { Thumb: Thumb || 1 } },
+      'WS'
+    );
+    const scrollEvent = JSON.stringify({
+      Event: {
+        EventName: 'Scroll',
+        ID: data?.ID,
+        Info: [0, Thumb],
+      },
+    });
+
+    localStorage.setItem(data.ID, scrollEvent);
+    const exists = Event && Event.some((item) => item[0] === 'Scroll');
+    if (exists) {
+      socket.send(scrollEvent);
+    }
+  }, []);
 
   const calculateAttachStyle = () => {
     let attachStyle = {};
