@@ -13,6 +13,7 @@ import {
   handleMouseWheel,
   parseFlexStyles
 } from '../../utils';
+import { v4 as uuidv4 } from "uuid";
 
 const arrowButtonSize = 20;
 
@@ -23,40 +24,42 @@ const ScrollBar = ({ data }) => {
   const [scaledValue, setScaledValue] = useState(Thumb || 1);
   const customStyles = parseFlexStyles(CSS);
   const [showButtons, setShowButtons] = useState(false);
-  const [thumbMovement, setThumbMovement] = useState(null);
   const emitEvent = Event && Event[0];
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
-  const { socket, handleData } = useAppData();
+  const { socket, handleData, proceed,
+    setProceed,
+    proceedEventArray,
+    setProceedEventArray, } = useAppData();
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;
-  
-  // useEffect(()=>{
-  //   setScaledValue(Thumb)
-    
-  //   if(Thumb!==scaledValue && Thumb !=="arrow")
-  //   {
-  //     const scrollEvent = JSON.stringify({
-  //       Event: {
-  //         EventName: 'Scroll',
-  //         ID: data?.ID,
-  //         Info: [0, Thumb || 1],
-  //       },
-  //     });
-  
-  //     localStorage.setItem(data.ID, scrollEvent);
-  //     const exists = Event && Event.some((item) => item[0] === 'Scroll');
-  //     if (exists) {
-  //       socket.send(scrollEvent);
-  //     }
 
-  //   }
-  // },[Thumb])
+  useEffect(() => {
+    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 1) {
+      const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+      console.log("300 curcell", { curCell, data: data.ID })
+
+      const { CurCell } = curCell.Event
+      handleData(
+        {
+          ID: curCell.ID,
+          Properties: {
+            CurCell,
+          },
+        },
+        'WS'
+
+      );
+
+      setProceed(false);
+      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
+    }
+  }, [Object.keys(proceedEventArray).length])
 
 
   console.log("296", data, Thumb)
-  const trackHeight = !Size ? parentSize && parentSize[0] -arrowButtonSize : Size && Size[0];
-  const trackWidth = !Size ? parentSize && parentSize[1]-arrowButtonSize : Size && Size[1];
+  const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
+  const trackWidth = !Size ? parentSize && parentSize[1] - arrowButtonSize : Size && Size[1];
 
   const maxThumbPosition = isHorizontal
     ? trackWidth - arrowButtonSize * 2 - 40
@@ -114,10 +117,12 @@ const ScrollBar = ({ data }) => {
         'WS'
       );
 
+      const eventId = uuidv4();
       const scrollEvent = JSON.stringify({
         Event: {
           EventName: 'Scroll',
           ID: data?.ID,
+          EventID: eventId,
           Info: [0, roundedScaledValue],
         },
       });
@@ -168,11 +173,12 @@ const ScrollBar = ({ data }) => {
             isHorizontal ? "left" : "top"
           ] = `${newThumbPosition}px`;
         }
-
+        const eventId = uuidv4();
         const scrollEvent = JSON.stringify({
           Event: {
             EventName: emitEvent && emitEvent[0],
             ID: data?.ID,
+            EventID: eventId,
             Info: [
               Math.round(scaledValue) < Math.round(newScaledValue) ? 2 : -2,
               Math.round(newScaledValue),
@@ -200,10 +206,10 @@ const ScrollBar = ({ data }) => {
   };
 
   const incrementScale = () => {
-    setThumbMovement("arrow")
     const newScaledValue = scaledValue + 1;
     if (newScaledValue <= maxValue) {
       setScaledValue(newScaledValue);
+      const eventId = uuidv4();
       console.log(
         'Event',
         JSON.stringify({
@@ -247,6 +253,8 @@ const ScrollBar = ({ data }) => {
           })
         );
       }
+      localStorage.setItem("current-event", "ArrowClick")
+      localStorage.setItem("keyPressEventId", eventId)
 
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
@@ -255,6 +263,7 @@ const ScrollBar = ({ data }) => {
         JSON.stringify({
           Event: {
             EventName: 'Scroll',
+            EventID: eventId,
             ID: data?.ID,
             Info: [1, Math.round(newScaledValue)],
           },
@@ -264,7 +273,6 @@ const ScrollBar = ({ data }) => {
   };
 
   const decrementScale = () => {
-    setThumbMovement("arrow")
     const newScaledValue = scaledValue - 1;
     if (newScaledValue >= 1) {
       setScaledValue(newScaledValue);
@@ -308,11 +316,12 @@ const ScrollBar = ({ data }) => {
       }
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
-
+      const eventId = uuidv4();
       socket.send(
         JSON.stringify({
           Event: {
             EventName: 'Scroll',
+            EventID: eventId,
             ID: data?.ID,
             Info: [-1, Math.round(newScaledValue)],
           },

@@ -870,6 +870,8 @@ const App = () => {
           const { Thumb =1 } = Properties;
           const supportedProperties = ['Thumb'];
 
+          console.log("300", Thumb)
+
           const result = checkSupportedProperties(supportedProperties, serverEvent?.Properties);
 
           if (!localStorage.getItem(serverEvent.ID)) {
@@ -1264,6 +1266,7 @@ const App = () => {
         return;
       } else if (keys[0] == 'NQ') {
         const nqEvent = JSON.parse(event.data).NQ;
+        console.log("300", nqEvent)
         const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
         const appElement = getObjectById(dataRef.current, ID);
@@ -1305,30 +1308,59 @@ const App = () => {
           if (NoCallback == 0) webSocket.send(event);
           return;
         } else if (Event == 'CellMove') {
-          console.log("296",nqEvent)
+          console.log("296",{nqEvent})
           const eventId = uuidv4();
-          handleData(
-            {
-              ID: ID,
-              Properties: {
-                CurCell: [Info[0], Info[1]],
-              },
-            },
-            'WS'
-          );
-          webSocket.send(
+             // handleData(
+            //   {
+            //     ID: ID,
+            //     Properties: {
+            //       CurCell: [Info[0], Info[1]],
+            //     },
+            //   },
+            //   'WS'
+            // );
+            webSocket.send(
+              JSON.stringify({
+                Event: {
+                  EventName: 'CellMove',
+                  EventID: eventId,
+                  ID,
+                  Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+                },
+              })
+            );
+           
+          // handleData(
+          //   {
+          //     ID: ID,
+          //     Properties: {
+          //       CurCell: [Info[0], Info[1]],
+          //     },
+          //   },
+          //   'WS'
+          // );
+          // webSocket.send(
+          //   JSON.stringify({
+          //     Event: {
+          //       EventName: 'CellMove',
+          //       EventID: eventId,
+          //       ID,
+          //       Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+          //     },
+          //   })
+          // );
+          localStorage.setItem(
+            ID,
             JSON.stringify({
               Event: {
-                EventName: 'CellMove',
-                EventID: eventId,
-                ID,
-                Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+                CurCell: [Info[0], Info[1]],
               },
             })
           );
           localStorage.setItem(
-            ID,
+            "nqCurCell",
             JSON.stringify({
+              ID,
               Event: {
                 CurCell: [Info[0], Info[1]],
               },
@@ -1359,6 +1391,7 @@ const App = () => {
           );
         }
         const thumbValue = Info[1]
+        console.log("300",{thumbValue})
         handleData({ID: ID, Properties: {Thumb: thumbValue  }}, 'WS')
         const element = document.getElementById(nqEvent.ID);
         element && element.focus();
