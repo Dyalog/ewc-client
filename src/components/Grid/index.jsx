@@ -411,12 +411,14 @@ const Grid = ({ data }) => {
       updatePosition(event)
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
+      localStorage.removeItem("current-event")
     }
     else if (
       (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
     ) {
       
       console.log("284 in cellmove", clickData,localStorage.getItem("keyPressEventId"),proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"])
+      localStorage.removeItem("current-event")
       if(clickData.isClicked)
       {
         handleCellClickUpdate(clickData.row, clickData.column)
@@ -425,7 +427,7 @@ const Grid = ({ data }) => {
       }
       
       let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-
+      
       if (!localStoragValue) {
         localStorage.setItem(
           data?.ID,

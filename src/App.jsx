@@ -1319,6 +1319,17 @@ const App = () => {
             //   },
             //   'WS'
             // );
+
+          if (!localStorage.getItem("current-event")) {
+              handleData(
+              {
+                ID: ID,
+                Properties: {
+                  CurCell: [Info[0], Info[1]],
+                },
+              },
+              'WS'
+            );
             webSocket.send(
               JSON.stringify({
                 Event: {
@@ -1329,6 +1340,8 @@ const App = () => {
                 },
               })
             );
+          }
+           
            
           // handleData(
           //   {
@@ -1361,9 +1374,9 @@ const App = () => {
             "nqCurCell",
             JSON.stringify({
               ID,
-              Event: {
-                CurCell: [Info[0], Info[1]],
-              },
+            
+                Info
+            
             })
           );
           // reRender();

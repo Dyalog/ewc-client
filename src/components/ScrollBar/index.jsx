@@ -34,23 +34,36 @@ const ScrollBar = ({ data }) => {
   const thumbRef = useRef(null);
   const maxValue = Range;
 
+
+console.log("300 here", proceedEventArray)
   useEffect(() => {
     if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 1) {
       const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
       console.log("300 curcell", { curCell, data: data.ID })
 
-      const { CurCell } = curCell.Event
+      const { Info, ID } = curCell
       handleData(
         {
           ID: curCell.ID,
           Properties: {
-            CurCell,
+            CurCell:[Info[0], Info[1]],
           },
         },
         'WS'
 
       );
-
+      const eventId = uuidv4();
+      socket.send(
+        JSON.stringify({
+          Event: {
+            EventName: 'CellMove',
+            EventID: eventId,
+            ID,
+            Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+          },
+        })
+      );
+      localStorage.removeItem("current-event")
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
     }
@@ -112,10 +125,10 @@ const ScrollBar = ({ data }) => {
       const roundedScaledValue = Math.round(finalScaledValue) || 1;
       setThumbPosition(newThumbPosition);
 
-      handleData(
-        { ID: data?.ID, Properties: { Thumb: roundedScaledValue } },
-        'WS'
-      );
+      // handleData(
+      //   { ID: data?.ID, Properties: { Thumb: roundedScaledValue } },
+      //   'WS'
+      // );
 
       const eventId = uuidv4();
       const scrollEvent = JSON.stringify({
@@ -189,13 +202,13 @@ const ScrollBar = ({ data }) => {
         console.log("Event", scrollEvent);
         localStorage.setItem(data.ID, scrollEvent);
 
-        handleData(
-          {
-            ID: data?.ID,
-            Properties: { Thumb: Math.round(newScaledValue) || 1 },
-          },
-          "WS"
-        );
+        // handleData(
+        //   {
+        //     ID: data?.ID,
+        //     Properties: { Thumb: Math.round(newScaledValue) || 1 },
+        //   },
+        //   "WS"
+        // );
 
         const exists = Event && Event.some((item) => item[0] === "Scroll");
         if (exists) {
@@ -222,7 +235,7 @@ const ScrollBar = ({ data }) => {
       );
 
       // console.log("horizontal increment")
-      handleData({ ID: data?.ID, Properties: { Thumb: Math.round(newScaledValue) } }, 'WS')
+      // handleData({ ID: data?.ID, Properties: { Thumb: Math.round(newScaledValue) } }, 'WS')
 
       localStorage.setItem(
         data.ID,
@@ -314,9 +327,11 @@ const ScrollBar = ({ data }) => {
           })
         );
       }
+      const eventId = uuidv4();
+      localStorage.setItem("current-event", "ArrowClick")
+      localStorage.setItem("keyPressEventId", eventId)
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
-      const eventId = uuidv4();
       socket.send(
         JSON.stringify({
           Event: {
@@ -355,7 +370,7 @@ const ScrollBar = ({ data }) => {
   useEffect(() => {
     const newPosition = calculateThumbPosition(Thumb || 1);
     setThumbPosition(newPosition); // Update thumb position state
-    updateThumbPosition(newPosition); // Update thumb position in UI
+    updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
     setScaledValue(Math.min(Thumb, maxValue)); // Sync scaled value with Thumb
     handleData(
       { ID: data?.ID, Properties: { Thumb: Thumb || 1 } },
