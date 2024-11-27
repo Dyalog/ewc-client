@@ -28,6 +28,7 @@ const ScrollBar = ({ data }) => {
   const rangedThumb = thumbValueInRange(Thumb, Range)
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(rangedThumb);
+  const [tempScaledValue, setTempScaledValue] = useState(rangedThumb);
   const customStyles = parseFlexStyles(CSS);
   const [showButtons, setShowButtons] = useState(false);
   const emitEvent = Event && Event[0];
@@ -63,15 +64,16 @@ const ScrollBar = ({ data }) => {
         JSON.stringify({
           Event: {
             EventName: 'CellMove',
-            EventID: eventId,
+            EventID: localStorage.getItem("keyPressEventId"),
             ID,
             Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
           },
         })
       );
-      localStorage.removeItem("current-event")
+      setScaledValue(tempScaledValue)
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
+      // localStorage.removeItem("current-event")
     }
   }, [Object.keys(proceedEventArray).length])
 
@@ -120,7 +122,8 @@ const ScrollBar = ({ data }) => {
 
       updateThumbPosition(newThumbPosition);
       const newScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
-      setScaledValue(newScaledValue);
+      // setScaledValue(newScaledValue);
+      setTempScaledValue(newScaledValue)
     };
 
     const handleMouseUpEvent = () => {
@@ -137,6 +140,8 @@ const ScrollBar = ({ data }) => {
       // );
 
       const eventId = uuidv4();
+      localStorage.setItem("current-event", "ArrowClick")
+      localStorage.setItem("keyPressEventId", eventId)
       const scrollEvent = JSON.stringify({
         Event: {
           EventName: 'Scroll',
@@ -186,13 +191,16 @@ const ScrollBar = ({ data }) => {
       const newScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
 
       if (newScaledValue >= 1 && newScaledValue <= maxValue) {
-        setScaledValue(newScaledValue);
+        // setScaledValue(newScaledValue);
+        setTempScaledValue(newScaledValue)
         if (thumbRef.current) {
           thumbRef.current.style[
             isHorizontal ? "left" : "top"
           ] = `${newThumbPosition}px`;
         }
         const eventId = uuidv4();
+        localStorage.setItem("current-event", "ArrowClick")
+        localStorage.setItem("keyPressEventId", eventId)
         const scrollEvent = JSON.stringify({
           Event: {
             EventName: emitEvent && emitEvent[0],
@@ -227,7 +235,8 @@ const ScrollBar = ({ data }) => {
   const incrementScale = () => {
     const newScaledValue = scaledValue + 1;
     if (newScaledValue <= maxValue) {
-      setScaledValue(newScaledValue);
+      setTempScaledValue(newScaledValue)
+      // setScaledValue(newScaledValue);
       const eventId = uuidv4();
       console.log(
         'Event',
@@ -243,16 +252,16 @@ const ScrollBar = ({ data }) => {
       // console.log("horizontal increment")
       // handleData({ ID: data?.ID, Properties: { Thumb: Math.round(newScaledValue) } }, 'WS')
 
-      localStorage.setItem(
-        data.ID,
-        JSON.stringify({
-          Event: {
-            EventName: emitEvent && emitEvent[0],
-            ID: data?.ID,
-            Info: [1, Math.round(newScaledValue)],
-          },
-        })
-      );
+      // localStorage.setItem(
+      //   data.ID,
+      //   JSON.stringify({
+      //     Event: {
+      //       EventName: emitEvent && emitEvent[0],
+      //       ID: data?.ID,
+      //       Info: [1, Math.round(newScaledValue)],
+      //     },
+      //   })
+      // );
 
 
       if (isHorizontal) {
@@ -294,7 +303,8 @@ const ScrollBar = ({ data }) => {
   const decrementScale = () => {
     const newScaledValue = scaledValue - 1;
     if (newScaledValue >= 1) {
-      setScaledValue(newScaledValue);
+      // setScaledValue(newScaledValue);
+      setTempScaledValue(newScaledValue)
       console.log(
         JSON.stringify({
           Event: {
@@ -377,7 +387,7 @@ const ScrollBar = ({ data }) => {
     const newPosition = calculateThumbPosition(rangedThumb);
     setThumbPosition(newPosition); // Update thumb position state
     updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
-    setScaledValue(Math.min(Thumb, maxValue)); // Sync scaled value with Thumb
+    // setScaledValue(Math.min(Thumb, maxValue));
     handleData(
       { ID: data?.ID, Properties: { Thumb: rangedThumb } },
       'WS'

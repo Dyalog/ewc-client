@@ -1320,27 +1320,27 @@ const App = () => {
             //   'WS'
             // );
 
-          if (!localStorage.getItem("current-event")) {
-              handleData(
-              {
-                ID: ID,
-                Properties: {
-                  CurCell: [Info[0], Info[1]],
-                },
-              },
-              'WS'
-            );
+        
+            //   handleData(
+            //   {
+            //     ID: ID,
+            //     Properties: {
+            //       CurCell: [Info[0], Info[1]],
+            //     },
+            //   },
+            //   'WS'
+            // );
             webSocket.send(
               JSON.stringify({
                 Event: {
                   EventName: 'CellMove',
-                  EventID: eventId,
+                  EventID: localStorage.getItem("keyPressEventId"),
                   ID,
                   Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
                 },
               })
             );
-          }
+          
            
            
           // handleData(

@@ -384,7 +384,7 @@ const Grid = ({ data }) => {
   const [clickData, setClickData] = useState({isClicked: false, row: selectedRow, column: selectedColumn})
 
 
-  console.log("284 waiting", proceed, proceedEventArray, selectedRow, selectedColumn,clickData);
+  console.log("300 here⌈", proceed, proceedEventArray, selectedRow, selectedColumn,clickData);
   useEffect(() => {
     if (CurCell) {
       console.log("284 curcell useEffect")
@@ -411,14 +411,14 @@ const Grid = ({ data }) => {
       updatePosition(event)
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
-      localStorage.removeItem("current-event")
+      // localStorage.removeItem("current-event")
     }
     else if (
       (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
     ) {
       
       console.log("284 in cellmove", clickData,localStorage.getItem("keyPressEventId"),proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"])
-      localStorage.removeItem("current-event")
+      // localStorage.removeItem("current-event")
       if(clickData.isClicked)
       {
         handleCellClickUpdate(clickData.row, clickData.column)
