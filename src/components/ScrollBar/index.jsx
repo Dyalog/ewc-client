@@ -17,11 +17,17 @@ import { v4 as uuidv4 } from "uuid";
 
 const arrowButtonSize = 20;
 
+export const thumbValueInRange = (thumb, range) => {
+  if (!thumb) return 1
+  return thumb < 1 ? 1 : thumb > range ? range : thumb
+}
+
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const { Align, Type, Thumb, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS } = data?.Properties;
+  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS,Thumb } = data?.Properties;
+  const rangedThumb = thumbValueInRange(Thumb, Range)
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
-  const [scaledValue, setScaledValue] = useState(Thumb || 1);
+  const [scaledValue, setScaledValue] = useState(rangedThumb);
   const customStyles = parseFlexStyles(CSS);
   const [showButtons, setShowButtons] = useState(false);
   const emitEvent = Event && Event[0];
@@ -35,7 +41,7 @@ const ScrollBar = ({ data }) => {
   const maxValue = Range;
 
 
-console.log("300 here", proceedEventArray)
+  console.log("300 here", proceedEventArray)
   useEffect(() => {
     if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 1) {
       const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
@@ -46,7 +52,7 @@ console.log("300 here", proceedEventArray)
         {
           ID: curCell.ID,
           Properties: {
-            CurCell:[Info[0], Info[1]],
+            CurCell: [Info[0], Info[1]],
           },
         },
         'WS'
@@ -349,12 +355,12 @@ console.log("300 here", proceedEventArray)
     if (isHorizontal) {
       localStorage.setItem(
         'horizontalScroll',
-        JSON.stringify({ oldValue: Thumb || 1, newValue: Thumb || 1 })
+        JSON.stringify({ oldValue: rangedThumb, newValue: rangedThumb })
       );
     } else {
       localStorage.setItem(
         'verticalScroll',
-        JSON.stringify({ oldValue: Thumb || 1, newValue: Thumb || 1 })
+        JSON.stringify({ oldValue: rangedThumb, newValue: rangedThumb })
       );
     }
   }, []);
@@ -362,33 +368,20 @@ console.log("300 here", proceedEventArray)
   // useEffect(() => {
   //   setScaledValue((prevValue) => Math.min(Thumb, maxValue));
   //   handleData(
-  //     { ID: data?.ID, Properties: { Thumb: Thumb || 1 } },
+  //     { ID: data?.ID, Properties: { Thumb: rangedThumb } },
   //     'WS'
   //   );
 
   // }, [Thumb]);
   useEffect(() => {
-    const newPosition = calculateThumbPosition(Thumb || 1);
+    const newPosition = calculateThumbPosition(rangedThumb);
     setThumbPosition(newPosition); // Update thumb position state
     updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
     setScaledValue(Math.min(Thumb, maxValue)); // Sync scaled value with Thumb
     handleData(
-      { ID: data?.ID, Properties: { Thumb: Thumb || 1 } },
+      { ID: data?.ID, Properties: { Thumb: rangedThumb } },
       'WS'
     );
-    const scrollEvent = JSON.stringify({
-      Event: {
-        EventName: 'Scroll',
-        ID: data?.ID,
-        Info: [0, Thumb || 1],
-      },
-    });
-
-    localStorage.setItem(data.ID, scrollEvent);
-    const exists = Event && Event.some((item) => item[0] === 'Scroll');
-    if (exists) {
-      // socket.send(scrollEvent);
-    }
   }, [Thumb]);
 
   const calculateAttachStyle = () => {
