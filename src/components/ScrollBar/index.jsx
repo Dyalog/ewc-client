@@ -152,8 +152,9 @@ useEffect(() => {
   if (proceedEventArray[key] || proceedEventArray[key] === 0) {
     const curCell = JSON.parse(localStorage.getItem("nqCurCell"));
     const eventId = uuidv4();
-    if (curCell) {
-      const { Info, ID } = curCell;
+    
+    if (nqEvents.length) {
+      const { Info, ID } = nqEvents.shift();
       handleData(
         {
           ID: curCell.ID,
@@ -174,7 +175,6 @@ useEffect(() => {
         })
       );
     }
-    nqEvents.shift();
     setScaledValue(tempScaledValue);
     const newPosition = calculateThumbPosition(rangedThumb);
     setThumbPosition(newPosition);
