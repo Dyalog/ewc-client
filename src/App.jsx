@@ -1418,12 +1418,12 @@ const App = () => {
           return {
             ...prev,
             [`${EventID}${localStorage.getItem("current-event")}`]:
-              0
+              Proceed
           };
         });
         // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
-          setProceed(Proceed)
-        localStorage.setItem(EventID, Proceed);  
+        setProceed(Proceed)
+        localStorage.setItem(EventID, 0);  
       }
       else if (keys[0] == 'EX') {
         const serverEvent = JSON.parse(event.data).EX;
