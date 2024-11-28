@@ -33,6 +33,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
+  const [nqEvents, setNqEvents] = useState([])
   const [layout, setLayout] = useState('Initialise');
   const webSocketRef = useRef(null);
   const [focusedElement, setFocusedElement] = useState(null);
@@ -1309,7 +1310,7 @@ const App = () => {
           return;
         } else if (Event == 'CellMove') {
           console.log("296",{nqEvent})
-          const eventId = uuidv4();
+          setNqEvents([...nqEvents, nqEvent])
              // handleData(
             //   {
             //     ID: ID,
@@ -1330,16 +1331,16 @@ const App = () => {
             //   },
             //   'WS'
             // );
-            webSocket.send(
-              JSON.stringify({
-                Event: {
-                  EventName: 'CellMove',
-                  EventID: localStorage.getItem("keyPressEventId"),
-                  ID,
-                  Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-                },
-              })
-            );
+            // webSocket.send(
+            //   JSON.stringify({
+            //     Event: {
+            //       EventName: 'CellMove',
+            //       EventID: localStorage.getItem("keyPressEventId"),
+            //       ID,
+            //       Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+            //     },
+            //   })
+            // );
           
            
            
@@ -1417,7 +1418,7 @@ const App = () => {
           return {
             ...prev,
             [`${EventID}${localStorage.getItem("current-event")}`]:
-              Proceed
+              0
           };
         });
         // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
@@ -1597,7 +1598,9 @@ const App = () => {
           proceedEventArray,
           setProceedEventArray,
           colors,
-          fontScale
+          fontScale,
+          nqEvents,
+          setNqEvents,
         }}
       >
         {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />}

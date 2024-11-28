@@ -24,7 +24,7 @@ export const thumbValueInRange = (thumb, range) => {
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS,Thumb } = data?.Properties;
+  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS, Thumb } = data?.Properties;
   const rangedThumb = thumbValueInRange(Thumb, Range)
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(rangedThumb);
@@ -36,7 +36,7 @@ const ScrollBar = ({ data }) => {
   const { socket, handleData, proceed,
     setProceed,
     proceedEventArray,
-    setProceedEventArray, } = useAppData();
+    setProceedEventArray, nqEvents, setNqEvents } = useAppData();
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;
@@ -48,18 +48,41 @@ const ScrollBar = ({ data }) => {
       const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
       console.log("300 curcell", { curCell, data: data.ID })
 
-      const { Info, ID } = curCell
-      handleData(
-        {
-          ID: curCell.ID,
-          Properties: {
-            CurCell: [Info[0], Info[1]],
-          },
-        },
-        'WS'
+      if (curCell) {
 
-      );
-      const eventId = uuidv4();
+        const { Info, ID } = curCell
+        handleData(
+          {
+            ID: curCell.ID,
+            Properties: {
+              CurCell: [Info[0], Info[1]],
+            },
+          },
+          'WS'
+
+        );
+        socket.send(
+          JSON.stringify({
+            Event: {
+              EventName: 'CellMove',
+              EventID: localStorage.getItem("keyPressEventId"),
+              ID,
+              Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+            },
+          })
+        );
+      }
+      nqEvents.shift()
+      setScaledValue(tempScaledValue)
+      const newPosition = calculateThumbPosition(rangedThumb);
+      setThumbPosition(newPosition);
+      updateThumbPosition(newPosition + arrowButtonSize);
+      setProceed(false);
+      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
+    }
+    else {
+      if (!nqEvents.length) return
+      const { ID, Info } = nqEvents.shift()
       socket.send(
         JSON.stringify({
           Event: {
@@ -69,11 +92,7 @@ const ScrollBar = ({ data }) => {
             Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
           },
         })
-      );
-      setScaledValue(tempScaledValue)
-      setProceed(false);
-      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
-      // localStorage.removeItem("current-event")
+      );      
     }
   }, [Object.keys(proceedEventArray).length])
 
