@@ -175,7 +175,7 @@ useEffect(() => {
         })
       );
     }
-    setScaledValue(tempScaledValue);
+    setScaledValue(rangedThumb);
     const newPosition = calculateThumbPosition(rangedThumb);
     setThumbPosition(newPosition);
     updateThumbPosition(newPosition + arrowButtonSize);
