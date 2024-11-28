@@ -45,8 +45,9 @@ const ScrollBar = ({ data }) => {
   console.log("300 thumb", data, Thumb, scaledValue)
   console.log("300 here", proceedEventArray, nqEvents)
   useEffect(() => {
-    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 1) {
+    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]) {
       const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+      const eventId = uuidv4()
       if (curCell) {
         const { Info, ID } = curCell
         handleData(
@@ -63,7 +64,7 @@ const ScrollBar = ({ data }) => {
           JSON.stringify({
             Event: {
               EventName: 'CellMove',
-              EventID: localStorage.getItem("keyPressEventId"),
+              EventID: eventId,
               ID,
               Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
             },
@@ -78,35 +79,70 @@ const ScrollBar = ({ data }) => {
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
     }
-    else if(proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 0) {
-      console.log("300 proceed",nqEvents, scaledValue )
-      // socket.send(
-      //   JSON.stringify({
-      //     Event: {
-      //       EventName: 'Scroll',
-      //       ID: data?.ID,
-      //       Info: [ -2,
-      //         Math.round(scaledValue)],
-      //       },
-      //     })
-      //   );
-      //   handleData(
-      //     { ID: "F1.LEFTRIGHT", Properties: { Thumb: scaledValue-1} },
-      //     'WS'
-      //   );
-      if (!nqEvents.length) return
-      const { ID, Info } = nqEvents.shift()
-      socket.send(
-        JSON.stringify({
-          Event: {
-            EventName: 'CellMove',
-            EventID: localStorage.getItem("keyPressEventId"),
-            ID,
-            Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-          },
-        })
-      );      
-    }
+    // else 
+    // if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]) {
+    //   const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+    //   const eventId = uuidv4()
+    //   // if (curCell) {
+    //   //   const { Info, ID } = curCell
+    //   //   handleData(
+    //   //     {
+    //   //       ID: curCell.ID,
+    //   //       Properties: {
+    //   //         CurCell: [Info[0], Info[1]],
+    //   //       },
+    //   //     },
+    //   //     'WS'
+
+    //   //   );
+    //   //   socket.send(
+    //   //     JSON.stringify({
+    //   //       Event: {
+    //   //         EventName: 'CellMove',
+    //   //         EventID: eventId,
+    //   //         ID,
+    //   //         Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+    //   //       },
+    //   //     })
+    //   //   );
+    //   // }
+    //   nqEvents.shift()
+    //   setScaledValue(tempScaledValue)
+    //   const newPosition = calculateThumbPosition(rangedThumb);
+    //   setThumbPosition(newPosition);
+    //   updateThumbPosition(newPosition + arrowButtonSize);
+    //   setProceed(false);
+    //   // setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
+    // }
+    // else if(proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 0) {
+    //   console.log("300 proceed",nqEvents, scaledValue )
+    //   // socket.send(
+    //   //   JSON.stringify({
+    //   //     Event: {
+    //   //       EventName: 'Scroll',
+    //   //       ID: data?.ID,
+    //   //       Info: [ -2,
+    //   //         Math.round(scaledValue)],
+    //   //       },
+    //   //     })
+    //   //   );
+    //   //   handleData(
+    //   //     { ID: "F1.LEFTRIGHT", Properties: { Thumb: scaledValue-1} },
+    //   //     'WS'
+    //   //   );
+    //   if (!nqEvents.length) return
+    //   const { ID, Info } = nqEvents.shift()
+    //   socket.send(
+    //     JSON.stringify({
+    //       Event: {
+    //         EventName: 'CellMove',
+    //         EventID: eventId,
+    //         ID,
+    //         Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+    //       },
+    //     })
+    //   );      
+    // }
   }, [Object.keys(proceedEventArray).length])
 
 
@@ -418,7 +454,7 @@ const ScrollBar = ({ data }) => {
     const newPosition = calculateThumbPosition(rangedThumb);
     // setThumbPosition(newPosition); // Update thumb position state
     // updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
-    // setScaledValue(Math.min(Thumb, maxValue));
+    setScaledValue(Math.min(Thumb, maxValue));
     // handleData(
     //   { ID: data?.ID, Properties: { Thumb: rangedThumb } },
     //   'WS'
