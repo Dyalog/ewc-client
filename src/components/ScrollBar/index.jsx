@@ -40,137 +40,31 @@ const ScrollBar = ({ data }) => {
     const trackRef = useRef(null);
     const thumbRef = useRef(null);
     const maxValue = Range;
-    
-    
-  console.log("300 thumb", data, Thumb, scaledValue)
-  console.log("300 here", proceedEventArray, nqEvents)
-  // useEffect(() => {
-  //   if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]  || proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]==0 ) {
-  //     const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  //     const eventId = uuidv4()
-  //     if (curCell) {
-  //       const { Info, ID } = curCell
-  //       handleData(
-  //         {
-  //           ID: curCell.ID,
-  //           Properties: {
-  //             CurCell: [Info[0], Info[1]],
-  //           },
-  //         },
-  //         'WS'
 
-  //       );
-  //       socket.send(
-  //         JSON.stringify({
-  //           Event: {
-  //             EventName: 'CellMove',
-  //             EventID: eventId,
-  //             ID,
-  //             Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-  //           },
-  //         })
-  //       );
-  //     }
-  //     nqEvents.shift()
-  //     setScaledValue(tempScaledValue)
-  //     const newPosition = calculateThumbPosition(rangedThumb);
-  //     setThumbPosition(newPosition);
-  //     updateThumbPosition(newPosition + arrowButtonSize);
-  //     setProceed(false);
-  //     setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
-  //   }
-  //   // else 
-  //   // if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]) {
-  //   //   const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  //   //   const eventId = uuidv4()
-  //   //   // if (curCell) {
-  //   //   //   const { Info, ID } = curCell
-  //   //   //   handleData(
-  //   //   //     {
-  //   //   //       ID: curCell.ID,
-  //   //   //       Properties: {
-  //   //   //         CurCell: [Info[0], Info[1]],
-  //   //   //       },
-  //   //   //     },
-  //   //   //     'WS'
-
-  //   //   //   );
-  //   //   //   socket.send(
-  //   //   //     JSON.stringify({
-  //   //   //       Event: {
-  //   //   //         EventName: 'CellMove',
-  //   //   //         EventID: eventId,
-  //   //   //         ID,
-  //   //   //         Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-  //   //   //       },
-  //   //   //     })
-  //   //   //   );
-  //   //   // }
-  //   //   nqEvents.shift()
-  //   //   setScaledValue(tempScaledValue)
-  //   //   const newPosition = calculateThumbPosition(rangedThumb);
-  //   //   setThumbPosition(newPosition);
-  //   //   updateThumbPosition(newPosition + arrowButtonSize);
-  //   //   setProceed(false);
-  //   //   // setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
-  //   // }
-  //   // else if(proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 0) {
-  //   //   console.log("300 proceed",nqEvents, scaledValue )
-  //   //   // socket.send(
-  //   //   //   JSON.stringify({
-  //   //   //     Event: {
-  //   //   //       EventName: 'Scroll',
-  //   //   //       ID: data?.ID,
-  //   //   //       Info: [ -2,
-  //   //   //         Math.round(scaledValue)],
-  //   //   //       },
-  //   //   //     })
-  //   //   //   );
-  //   //   //   handleData(
-  //   //   //     { ID: "F1.LEFTRIGHT", Properties: { Thumb: scaledValue-1} },
-  //   //   //     'WS'
-  //   //   //   );
-  //   //   if (!nqEvents.length) return
-  //   //   const { ID, Info } = nqEvents.shift()
-  //   //   socket.send(
-  //   //     JSON.stringify({
-  //   //       Event: {
-  //   //         EventName: 'CellMove',
-  //   //         EventID: eventId,
-  //   //         ID,
-  //   //         Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-  //   //       },
-  //   //     })
-  //   //   );      
-  //   // }
-  // }, [Object.keys(proceedEventArray).length])
-
+    console.log("300 thumb", data, Thumb, scaledValue)
+    console.log("300 here", proceedEventArray, nqEvents)
 const keyPressEventId = localStorage.getItem("keyPressEventId");
+const [curCell, setCurCell] = useState(JSON.parse(localStorage.getItem("nqCurCell")) || null);
 
 useEffect(() => {
   const key = keyPressEventId + "ArrowClick";
   if (proceedEventArray[key] || proceedEventArray[key] === 0) {
-    const curCell = JSON.parse(localStorage.getItem("nqCurCell"));
     const eventId = uuidv4();
-    
     if (nqEvents.length) {
       const { Info, ID } = nqEvents.shift();
-      handleData(
-        {
-          ID: curCell.ID,
-          Properties: {
-            CurCell: [Info[0], Info[1]],
-          },
-        },
-        'WS'
-      );
+      const newCurCell = { Info, ID };
+      localStorage.setItem("nqCurCell", JSON.stringify(newCurCell));
+      // setCurCell(newCurCell);
+
+      localStorage.setItem("current-event", "CellMove");
+      localStorage.setItem("keyPressEventId", eventId);
       socket.send(
         JSON.stringify({
           Event: {
-            EventName: 'CellMove',
+            EventName: "CellMove",
             EventID: eventId,
             ID,
-            Info: Info
+            Info: Info,
           },
         })
       );
@@ -183,6 +77,26 @@ useEffect(() => {
     setProceedEventArray((prev) => ({ ...prev, [key]: 0 }));
   }
 }, [proceedEventArray[keyPressEventId + "ArrowClick"]]);
+
+useEffect(() => {
+  const key = keyPressEventId + "CellMove";
+  if (proceedEventArray[key] || proceedEventArray[key] === 0) {
+    const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+    if (curCell) {
+      console.log("Inside curCell", key);
+      const { Info, ID } = curCell;
+      handleData(
+        {
+          ID: ID,
+          Properties: {
+            CurCell: [Info[0], Info[1]],
+          },
+        },
+        "WS"
+      );
+    }
+  }
+}, [proceedEventArray[keyPressEventId + "CellMove"]]);
 
 
   const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
