@@ -1375,8 +1375,7 @@ const App = () => {
             "nqCurCell",
             JSON.stringify({
               ID,
-            
-                Info
+              Info
             
             })
           );

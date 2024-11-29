@@ -331,7 +331,7 @@ const Grid = ({ data }) => {
     proceedEventArray,
     setProceedEventArray,
     findAggregatedPropertiesData,
-    handleData
+    handleData, dataRef,
   } = useAppData();
 
   const [eventId, setEventId] = useState(null);
@@ -340,6 +340,22 @@ const Grid = ({ data }) => {
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
+  // function getProperties(data, path) {
+  //   const keys = path.split("."); // Split the path into keys
+  //   let current = data;
+  
+  //   for (let key of keys) {
+  //     if (current[key]) {
+  //       current = current[key];
+  //     } else {
+  //       // If the key is not found, return null or undefined
+  //       return null;
+  //     }
+  //   }
+  
+  //   // If we reach a node with Properties, return it
+  //   return current.Properties || null;
+  // }
 
   const gridRef = useRef(null);
 
@@ -369,6 +385,10 @@ const Grid = ({ data }) => {
     Event,
     CSS,
   } = data?.Properties;
+  // console.log);
+  
+  // const properties = getProperties(dataRef.current, "F1.VGRID");
+  // const {CurCell} = properties
 
   const [height, setHeight] = useState(Size[0]);
   const [width, setWidth] = useState(Size[1]);
@@ -384,15 +404,27 @@ const Grid = ({ data }) => {
   const [clickData, setClickData] = useState({isClicked: false, row: selectedRow, column: selectedColumn})
 
 
-  console.log("300 here⌈", proceed, proceedEventArray, selectedRow, selectedColumn,clickData);
+ 
+  // console.log("300 here curcell", CurCell, dataRef.current, properties, localStorage.getItem("nqCurCell"), selectedColumn, selectedRow);
+  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
   useEffect(() => {
     if (CurCell) {
       console.log("284 curcell useEffect")
-
-      let defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
-      let defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
-      setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
-      setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
+      let defaultRow
+      let defaultCol
+      if (curCell) {
+        const {Info} = curCell
+        defaultRow = !curCell ? (RowTitles?.length > 0 ? 1 : 0) : Info[0];
+        defaultCol = !curCell ? (TitleWidth === 0 ? 1 : 0) : Info[1];
+        setSelectedRow((prev) => (prev !== Info[0] ? defaultRow : prev));
+        setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
+      }
+      else {
+        defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
+        defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
+        setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
+        setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
+      }
 
       localStorage.setItem(
         data?.ID,
@@ -403,7 +435,9 @@ const Grid = ({ data }) => {
         })
       );
     }
-  }, [CurCell]);
+  }, [CurCell, curCell]);
+
+  
 
   useEffect(() => {
     if (proceedEventArray[localStorage.getItem("keyPressEventId") + "KeyPress"] == 1) {
