@@ -17,7 +17,7 @@ Upload.Defaults = {
 };
 
 Upload.WG = (send, serverEvent) => {
-  const file = document.getElementById(serverEvent.ID)?.files[0];
+  let file = document.getElementById(serverEvent.ID)?.files[0];
   if (!file) return send(wgResponse(serverEvent, Upload, {}));
 
   // This whole function needs to use the async FileReader. The desired

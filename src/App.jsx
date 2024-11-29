@@ -6,21 +6,16 @@ import {
   checkSupportedProperties,
   findFormParentID,
   deleteFormAndSiblings,
-  rgbColor,
   getCurrentUrl,
-  extractStringUntilLastPeriod,
-  locateByPath,
   locateParentByPath,
   excludeKeys,
   extractStringFromLastPeriod,
 } from './utils';
 import './App.css';
 import * as _ from 'lodash';
-import MsgBox from './components/MessageBox';
+import Text from './components/Text';
 import version from "../version.json"
 import Upload from './components/Upload';
-import wgResponse from './utils/wgResponse';
-import { v4 as uuidv4 } from "uuid";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -1404,44 +1399,12 @@ const App = () => {
         const serverEvent = JSON.parse(event.data).WX;
         const { Method, Info, WGID, ID } = serverEvent;
         // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
-        const calculateTextDimensions = (wordsArray, fontSize = 12) => {
-          // Create a hidden div element to calculate text dimensions
-          const scale =localStorage.getItem("fontscale")
-          console.log("fontScale dimension: " ,scale)
-          const container = document.createElement('div');
-          container.style.visibility = 'hidden';
-          container.style.position = 'fixed';
-          container.style.top = '0';
-          container.style.left = '0';
-          container.style.fontSize = (fontSize * scale) + 'px'; 
-
-          // Iterate through the array of words
-          wordsArray.forEach((word) => {
-            // Create a span element for each word
-            const span = document.createElement('div');
-            span.textContent = word;
-            span.style.display = 'block'; // Start each word on a new line
-            container.appendChild(span);
-          });
-
-          // Append the container to the body
-          document.body.appendChild(container);
-
-          // Retrieve dimensions
-          const width = container.offsetWidth;
-          const height = container.offsetHeight - 11;
-
-          // Remove the container from the body
-          document.body.removeChild(container);
-
-          return [height, width];
-        };
 
         if (Method == 'GetTextSize') {
           const joinedString = Info && Info[0];
           const font = JSON.parse(getObjectById(dataRef.current, Info && Info[1]));
           const fontProperties = font && font?.Properties;
-          const textDimensions = calculateTextDimensions(joinedString, fontProperties?.Size);
+          const textDimensions = Text.calculateTextDimensions(joinedString, fontProperties?.Size);
           // console.log({textDimensions: textDimensions})
           const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
           console.log(event);
