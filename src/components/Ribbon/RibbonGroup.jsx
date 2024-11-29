@@ -1,5 +1,4 @@
 import { excludeKeys, parseFlexStyles, rgbColor, setStyle } from '../../utils';
-import { RibbonGroup } from 'react-bootstrap-ribbon';
 import SelectComponent from '../SelectComponent';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
@@ -13,7 +12,7 @@ const CustomRibbonGroup = ({ data }) => {
   const size = Size || 1;
 
   return (
-    <div id={data?.ID} className={`col-${size}`}>
+    <div id={data?.ID} className={`col-${size === 3 ? 6 : size}`}>
       <div
         style={{
           border: `1px solid ${rgbColor(BorderCol)}`,
