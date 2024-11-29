@@ -170,7 +170,7 @@ useEffect(() => {
             EventName: 'CellMove',
             EventID: eventId,
             ID,
-            Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+            Info: Info
           },
         })
       );
