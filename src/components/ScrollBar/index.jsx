@@ -548,10 +548,10 @@ useEffect(() => {
     // setThumbPosition(newPosition); // Update thumb position state
     // updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
     setScaledValue(Math.min(Thumb, maxValue));
-    // handleData(
-    //   { ID: data?.ID, Properties: { Thumb: rangedThumb } },
-    //   'WS'
-    // );
+    handleData(
+      { ID: data?.ID, Properties: { Thumb: rangedThumb } },
+      'WS'
+    );
   }, [Thumb]);
 
   const calculateAttachStyle = () => {
