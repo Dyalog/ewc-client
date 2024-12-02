@@ -12,7 +12,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
 
   const customStyles = parseFlexStyles(CSS)
-  const style = setStyle(data.Properties)
+  // const style = setStyle(data.Properties)
 
   const colSize = Captions?.length == 4 ? 6 : 12;
 
@@ -120,7 +120,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
             id={`${data?.ID}-${i}`}
             md={colSize}
             className="d-flex align-items-center justify-content-left gap-1"
-            style={{ cursor: "pointer" ,...style,   ...customStyles}}
+            style={{ cursor: "pointer" ,   ...customStyles}}
             onClick={() => handleButtonEvent(i + 1)}
           >
             {result && result?.imgUrl ? (

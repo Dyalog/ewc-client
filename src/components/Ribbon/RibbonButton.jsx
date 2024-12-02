@@ -11,7 +11,7 @@ const CustomRibbonButton = ({ data }) => {
 
   const { Icon, Caption, Event, ImageIndex, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
-  const style = setStyle(data.Properties)
+
 
   const getImageFromData = (data) => {
     if (data.Properties && data?.Properties.ImageListObj) {
@@ -62,7 +62,7 @@ const CustomRibbonButton = ({ data }) => {
           id={data?.ID}
           className="d-flex align-items-center flex-column justify-content-center"
           onClick={handleButtonEvent}
-          style={{ cursor: "pointer" ,...style,   ...customStyles}}
+          style={{ cursor: "pointer" ,   ...customStyles}}
         >
           {ImageData ? (
             <img
