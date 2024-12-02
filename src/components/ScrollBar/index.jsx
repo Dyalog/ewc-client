@@ -147,30 +147,64 @@ const ScrollBar = ({ data }) => {
 
 const keyPressEventId = localStorage.getItem("keyPressEventId");
 
+// useEffect(() => {
+//   const key = keyPressEventId + "ArrowClick";
+//   if (proceedEventArray[key] || proceedEventArray[key] === 0) {
+//     const curCell = JSON.parse(localStorage.getItem("nqCurCell"));
+//     const eventId = uuidv4();
+    
+//     if (nqEvents.length) {
+//       const { Info, ID } = nqEvents.shift();
+//       handleData(
+//         {
+//           ID: curCell.ID,
+//           Properties: {
+//             CurCell: [Info[0], Info[1]],
+//           },
+//         },
+//         'WS'
+//       );
+//       socket.send(
+//         JSON.stringify({
+//           Event: {
+//             EventName: 'CellMove',
+//             EventID: eventId,
+//             ID,
+//             Info: Info
+//           },
+//         })
+//       );
+//     }
+//     setScaledValue(rangedThumb);
+//     const newPosition = calculateThumbPosition(rangedThumb);
+//     setThumbPosition(newPosition);
+//     updateThumbPosition(newPosition + arrowButtonSize);
+//     setProceed(false);
+//     setProceedEventArray((prev) => ({ ...prev, [key]: 0 }));
+//   }
+// }, [proceedEventArray[keyPressEventId + "ArrowClick"]]);
+
+
+
 useEffect(() => {
   const key = keyPressEventId + "ArrowClick";
   if (proceedEventArray[key] || proceedEventArray[key] === 0) {
-    const curCell = JSON.parse(localStorage.getItem("nqCurCell"));
     const eventId = uuidv4();
-    
     if (nqEvents.length) {
       const { Info, ID } = nqEvents.shift();
-      handleData(
-        {
-          ID: curCell.ID,
-          Properties: {
-            CurCell: [Info[0], Info[1]],
-          },
-        },
-        'WS'
-      );
+      // const newCurCell = { Info, ID };
+      // localStorage.setItem("nqCurCell", JSON.stringify(newCurCell));
+      // setCurCell(newCurCell);
+
+      localStorage.setItem("current-event", "CellMove");
+      localStorage.setItem("keyPressEventId", eventId);
       socket.send(
         JSON.stringify({
           Event: {
-            EventName: 'CellMove',
+            EventName: "CellMove",
             EventID: eventId,
             ID,
-            Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+            Info: Info,
           },
         })
       );
@@ -183,6 +217,26 @@ useEffect(() => {
     setProceedEventArray((prev) => ({ ...prev, [key]: 0 }));
   }
 }, [proceedEventArray[keyPressEventId + "ArrowClick"]]);
+
+const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+useEffect(() => {
+  const key = keyPressEventId + "CellMove";
+  if (proceedEventArray[key] || proceedEventArray[key] === 0) {
+    if (curCell) {
+      console.log("Inside curCell", key);
+      const { Info, ID } = curCell;
+      handleData(
+        {
+          ID: ID,
+          Properties: {
+            CurCell: [Info[0], Info[1]],
+          },
+        },
+        "WS"
+      );
+    }
+  }
+}, [proceedEventArray[keyPressEventId + "CellMove"],rangedThumb]);
 
 
   const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
@@ -494,10 +548,10 @@ useEffect(() => {
     // setThumbPosition(newPosition); // Update thumb position state
     // updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
     setScaledValue(Math.min(Thumb, maxValue));
-    // handleData(
-    //   { ID: data?.ID, Properties: { Thumb: rangedThumb } },
-    //   'WS'
-    // );
+    handleData(
+      { ID: data?.ID, Properties: { Thumb: rangedThumb } },
+      'WS'
+    );
   }, [Thumb]);
 
   const calculateAttachStyle = () => {
