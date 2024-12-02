@@ -41,7 +41,7 @@ const Grid = ({ data }) => {
     proceedEventArray,
     setProceedEventArray,
     findAggregatedPropertiesData,
-    handleData, dataRef,
+    handleData, dataRef,nqEvents
   } = useAppData();
 
   const [eventId, setEventId] = useState(null);
@@ -94,7 +94,7 @@ const Grid = ({ data }) => {
   const [clickData, setClickData] = useState({isClicked: false, row: selectedRow, column: selectedColumn})
 
 
- 
+ console.log("300", {nqEvents})
   const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
   useEffect(() => {
     if (CurCell) {
@@ -115,14 +115,14 @@ const Grid = ({ data }) => {
         setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
       }
 
-      localStorage.setItem(
-        data?.ID,
-        JSON.stringify({
-          Event: {
-            CurCell: [defaultRow, defaultCol],
-          },
-        })
-      );
+      // localStorage.setItem(
+      //   data?.ID,
+      //   JSON.stringify({
+      //     Event: {
+      //       CurCell: [defaultRow, defaultCol],
+      //     },
+      //   })
+      // );
     }
   }, [CurCell, curCell]);
 
@@ -146,34 +146,34 @@ const Grid = ({ data }) => {
         return
       }
       
-      let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+      // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
       
-      if (!localStoragValue) {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                selectedColumn,
-              ],
-            },
-          })
-        );
-      } else {
-        localStorage.setItem(
-          data?.ID,
-          JSON.stringify({
-            Event: {
-              CurCell: [
-                selectedRow,
-                selectedColumn,
-              ],
-              Values: localStoragValue?.Event?.Values,
-            },
-          })
-        );
-      }
+      // if (!localStoragValue) {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           selectedRow,
+      //           selectedColumn,
+      //         ],
+      //       },
+      //     })
+      //   );
+      // } else {
+      //   localStorage.setItem(
+      //     data?.ID,
+      //     JSON.stringify({
+      //       Event: {
+      //         CurCell: [
+      //           selectedRow,
+      //           selectedColumn,
+      //         ],
+      //         Values: localStoragValue?.Event?.Values,
+      //       },
+      //     })
+      //   );
+      // }
       const event = JSON.parse(localStorage.getItem("event"))
       updateRowColumn(event)
     }
@@ -223,16 +223,16 @@ const Grid = ({ data }) => {
     const exists = Event && Event?.some((item) => item[0] === "CellMove");
     if (!exists) return;
     socket.send(cellMoveEvent);
-    let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
 
-    localStorage.setItem(
-      "isChanged",
-      JSON.stringify({
-        isChange: false,
-        value: "",
-      })
-    );
+    // localStorage.setItem(
+    //   "isChanged",
+    //   JSON.stringify({
+    //     isChange: false,
+    //     value: "",
+    //   })
+    // );
   };
 
 
@@ -309,7 +309,7 @@ const Grid = ({ data }) => {
   };
 
   const updatePosition = (key) => {
-    let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
     if (key === "ArrowRight") {
       const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
@@ -613,27 +613,27 @@ const Grid = ({ data }) => {
 
     if (row == selectedRow && column == selectedColumn) return;
 
-    let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-    if (!localStoragValue)
-      localStorage.setItem(
-        data?.ID,
-        JSON.stringify({
-          Event: {
-            CurCell: [row, column],
-          },
-        })
-      );
-    else {
-      localStorage.setItem(
-        data?.ID,
-        JSON.stringify({
-          Event: {
-            CurCell: [row, column],
-            Values: localStoragValue?.Event?.Values,
-          },
-        })
-      );
-    }
+    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+    // if (!localStoragValue)
+    //   localStorage.setItem(
+    //     data?.ID,
+    //     JSON.stringify({
+    //       Event: {
+    //         CurCell: [row, column],
+    //       },
+    //     })
+    //   );
+    // else {
+    //   localStorage.setItem(
+    //     data?.ID,
+    //     JSON.stringify({
+    //       Event: {
+    //         CurCell: [row, column],
+    //         Values: localStoragValue?.Event?.Values,
+    //       },
+    //     })
+    //   );
+    // }
 
     handleData(
       {
