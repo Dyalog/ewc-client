@@ -7,7 +7,7 @@ const CustomRibbonGroup = ({ data }) => {
   const updatedData = excludeKeys(data);
   const { Size, Title, BorderCol, CSS } = data?.Properties;
   const customStyle = parseFlexStyles(CSS)
-  const style = setStyle(data.Properties)
+  // const style = setStyle(data.Properties)
 
   const size = Size || 1;
 
@@ -20,7 +20,6 @@ const CustomRibbonGroup = ({ data }) => {
           position: 'relative',
           height: '100%',
           alignItems: 'center',
-          ...style,
           ...customStyle
         }}
         className='row'
