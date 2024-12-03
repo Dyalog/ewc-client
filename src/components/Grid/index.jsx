@@ -94,26 +94,28 @@ const Grid = ({ data }) => {
   const [clickData, setClickData] = useState({isClicked: false, row: selectedRow, column: selectedColumn})
 
 
- console.log("300", {nqEvents})
-  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+//  console.log("300", {nqEvents})
+//  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+ console.log("navigation focus", gridRef)
   useEffect(() => {
+    gridRef.current.focus();
     if (CurCell) {
       console.log("284 curcell useEffect")
       let defaultRow
       let defaultCol
-      if (curCell) {
-        const {Info} = curCell
-        defaultRow = !curCell ? (RowTitles?.length > 0 ? 1 : 0) : Info[0];
-        defaultCol = !curCell ? (TitleWidth === 0 ? 1 : 0) : Info[1];
-        setSelectedRow((prev) => (prev !== Info[0] ? defaultRow : prev));
-        setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
-      }
-      else {
+      // if (curCell) {
+      //   const {Info} = curCell
+      //   defaultRow = !curCell ? (RowTitles?.length > 0 ? 1 : 0) : Info[0];
+      //   defaultCol = !curCell ? (TitleWidth === 0 ? 1 : 0) : Info[1];
+      //   setSelectedRow((prev) => (prev !== Info[0] ? defaultRow : prev));
+      //   setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
+      // }
+      // else {
         defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
         defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
         setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
         setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
-      }
+      // }
 
       // localStorage.setItem(
       //   data?.ID,
@@ -124,7 +126,7 @@ const Grid = ({ data }) => {
       //   })
       // );
     }
-  }, [CurCell, curCell]);
+  }, [CurCell]);
 
   
 
@@ -237,6 +239,7 @@ const Grid = ({ data }) => {
 
 
   const handleKeyDown = (event) => {
+    console.log("navigation")
     localStorage.setItem("event", JSON.stringify(event.key))
     localStorage.setItem("current-event", "KeyPress")
     const isAltPressed = event.altKey ? 4 : 0;
@@ -301,6 +304,8 @@ const Grid = ({ data }) => {
       "ArrowDown",
     ].some((key) => event.key === key);
 
+
+    console.log("navigation Key", event.key)
     if (isNavigationKeys) {
       gridRef.current.focus();
     }
