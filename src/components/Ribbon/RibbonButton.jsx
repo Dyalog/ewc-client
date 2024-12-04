@@ -56,45 +56,46 @@ const CustomRibbonButton = ({ data }) => {
   const IconComponent = Icons[Icon] ? Icons[Icon] : MdOutlineQuestionMark;
 
   return (
-    <Row>
-      <Col md={12}>
-        <div
-          id={data?.ID}
-          className="d-flex align-items-center flex-column justify-content-center"
-          onClick={handleButtonEvent}
-          style={{ cursor: "pointer" ,   ...customStyles}}
-        >
-          {ImageData ? (
-            <img
-              style={{
-                width: ImageData.imageSize[1],
-                height: ImageData.imageSize[0],
-              }}
-              src={`${getCurrentUrl()}${ImageData.imageUrl}`}
-              alt="Image"
-            />
-          ) : ImageIndex ? (
-            <img
-              style={{
-                width:
-                  ImageList?.Properties?.Size && ImageList?.Properties?.Size[1],
-                height:
-                  ImageList?.Properties?.Size && ImageList?.Properties?.Size[0],
-              }}
-              src={`${getCurrentUrl()}${
-                ImageList?.Properties?.Files[ImageIndex - 1]
-              }`}
-              alt="Image"
-            />
-          ) : (
-            <IconComponent size={35} />
-          )}
-          <div className="text-center" style={{ fontSize: "12px" }}>
-            {Caption}
+    <div style={{display:"flex", alignItems: "flex-start", height: "100%", marginTop: "5px" }}>
+      <Row>
+        <Col md={12}>
+          <div
+            id={data?.ID}
+            className="d-flex align-items-center flex-column justify-content-center"
+            onClick={handleButtonEvent}
+            style={{ cursor: "pointer", ...customStyles }}
+          >
+            {ImageData ? (
+              <img
+                style={{
+                  width: ImageData.imageSize[1],
+                  height: ImageData.imageSize[0],
+                }}
+                src={`${getCurrentUrl()}${ImageData.imageUrl}`}
+                alt="Image"
+              />
+            ) : ImageIndex ? (
+              <img
+                style={{
+                  width:
+                    ImageList?.Properties?.Size && ImageList?.Properties?.Size[1],
+                  height:
+                    ImageList?.Properties?.Size && ImageList?.Properties?.Size[0],
+                }}
+                src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+                  }`}
+                alt="Image"
+              />
+            ) : (
+              <IconComponent size={35} />
+            )}
+            <div className="text-center" style={{ fontSize: "12px" }}>
+              {Caption}
+            </div>
           </div>
-        </div>
-      </Col>
-    </Row>
+        </Col>
+      </Row>
+    </div>
   );
 };
 
