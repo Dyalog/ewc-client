@@ -72,16 +72,16 @@ const RibbonGallery = ({ data }) => {
     <div
       className="ribbon-gallery"
       ref={galleryRef}
-      style={{ width: "inherit", height: `${itemHeight+8}px`, justifyContent:"start", margin:"5px" }}
+      style={{ width: "inherit", height: `${itemHeight + 8}px`, justifyContent: "start", margin: "5px" }}
     >
       {!isDropdownOpen && (
-        <div className="d-flex" style={{width: "calc(100% - 15px)"}} >
+        <div className="d-flex" style={{ width: "calc(100% - 14px)", justifyContent: `${visibleItems.length < Cols ? "start" : "center"}`, marginLeft: `${visibleItems.length < Cols ? "10px" : ""}` }} >
           <div className="gallery-content" >
             {visibleItems.map((item, index) => (
-              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={(itemWidth)} ItemHeight={itemHeight-4} />
+              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={(itemWidth)} ItemHeight={itemHeight - 4} />
             ))}
           </div>
-          <div className="gallery-buttons" style={{ position: "absolute", right:0 }}>
+          <div className="gallery-buttons" style={{ position: "absolute", right: 0 }}>
             <button
               className="gallery-button"
               onClick={handleScrollLeft}
@@ -120,7 +120,7 @@ const RibbonGallery = ({ data }) => {
               }}
             >
               {menuItems.map((item, index) => (
-                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight-4} />
+                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight - 4} />
               ))}
             </div>
           </div>
