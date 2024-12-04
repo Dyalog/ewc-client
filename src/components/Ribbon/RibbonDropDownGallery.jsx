@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
-import { GoChevronUp, GoChevronDown } from "react-icons/go";
+import React, { useEffect, useRef, useState } from "react";
 import { BsArrowBarDown } from "react-icons/bs";
+import { GoChevronDown, GoChevronUp } from "react-icons/go";
 import { useAppData } from "../../hooks";
 import RibbonGalleyItem from "./RibbonGalleyItem";
 
 const RibbonGallery = ({ data }) => {
   const { socket } = useAppData();
-  const {Cols, ItemHeight ,ItemWidth} = data.Properties;
+  const { Cols, ItemHeight, ItemWidth } = data.Properties;
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
@@ -66,23 +66,22 @@ const RibbonGallery = ({ data }) => {
   const isUpDisabled = startIndex === 0;
   const isDownDisabled = startIndex >= maxStartIndex;
   const itemWidth = ItemWidth ? ItemWidth : 50
-  const itemHeight = ItemHeight ? ItemHeight : 25
+  const itemHeight = ItemHeight ? ItemHeight : 40
 
   return (
     <div
       className="ribbon-gallery"
       ref={galleryRef}
-      style={{ width: "fit-content" }}
+      style={{ width: "inherit", height: `${itemHeight+8}px`, justifyContent:"start", margin:"5px" }}
     >
       {!isDropdownOpen && (
-        <>
-          <div className="gallery-content" style={{ width: `${(itemWidth+2) * Cols}px`, height:`${itemHeight}px` }}>
+        <div className="d-flex" style={{width: "calc(100% - 15px)"}} >
+          <div className="gallery-content" >
             {visibleItems.map((item, index) => (
-              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={itemWidth} ItemHeight={itemHeight} />
-
+              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={(itemWidth)} ItemHeight={itemHeight-4} />
             ))}
           </div>
-          <div className="gallery-buttons">
+          <div className="gallery-buttons" style={{ position: "absolute", right:0 }}>
             <button
               className="gallery-button"
               onClick={handleScrollLeft}
@@ -107,11 +106,11 @@ const RibbonGallery = ({ data }) => {
               <BsArrowBarDown size={12} />
             </button>
           </div>
-        </>
+        </div>
       )}
       {isDropdownOpen && (
         <>
-          <div className="dropdown-content" style={{ width: `${(itemWidth+2) * Cols}px`, height:`${itemHeight}px` }}>
+          <div className="dropdown-content" style={{ width: `${(itemWidth) * Cols}px`, height: `${itemHeight}px` }}>
             <div
               className="dropdown-grid"
               style={{
@@ -121,7 +120,7 @@ const RibbonGallery = ({ data }) => {
               }}
             >
               {menuItems.map((item, index) => (
-                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight}/>
+                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight-4} />
               ))}
             </div>
           </div>
