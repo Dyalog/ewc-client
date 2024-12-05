@@ -65,10 +65,15 @@ const SelectComponent = ({
     return (
       <div
         style={{
-          translate: '0% -100%',
-          position: 'relative',
-          zIndex: '2',
+          top:0,
+          left:0,
+          position: 'absolute',
+          // zIndex: '2',
           width: '100%',
+          // translate: '0% -100%',
+          // position: 'relative',
+          // zIndex: '2',
+          // width: '100%',
         }}
       >
         <MenuBar data={data} />

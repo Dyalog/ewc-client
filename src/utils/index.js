@@ -230,10 +230,8 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
       ? { position: "absolute" }
       : { position: "relative" }),
     // position: Properties?.Posn ? 'absolute' : 'relative',
-    height: Properties?.Size && Properties?.Size[0],
-    width: Properties?.Size && Properties?.Size[1],
-    top: Properties?.Posn && Properties?.Posn[0],
-    left: Properties?.Posn && Properties?.Posn[1],
+    ...(Properties?.Size && { height: Properties?.Size && Properties?.Size[0], width: Properties?.Size && Properties?.Size[1] }),
+    ...(Properties?.Posn && { top: Properties?.Posn && Properties?.Posn[0], left: Properties?.Posn && Properties?.Posn[1] }),
   };
 };
 

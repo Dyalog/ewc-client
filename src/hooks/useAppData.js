@@ -3,7 +3,7 @@ import { useContext } from 'react';
 
 const useAppData = () => {
           
-          const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors,   fontScale} = 
+          const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors,   fontScale, nqEvents, setNqEvents} = 
   useContext(AppDataContext);
 
   const findDesiredData = (ID) => {
@@ -46,7 +46,9 @@ const useAppData = () => {
     setProceedEventArray,
     colors,
     findAggregatedPropertiesData,
-    fontScale
+    fontScale,
+    nqEvents,
+    setNqEvents
     
   };
 };

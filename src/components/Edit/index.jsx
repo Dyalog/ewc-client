@@ -16,6 +16,7 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
 } from "../../utils";
+import { v4 as uuidv4 } from "uuid";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
@@ -54,8 +55,11 @@ const Edit = ({
   const [emitValue, setEmitValue] = useState("");
   const [initialValue, setInitialValue] = useState("");
   const [prevFocused, setprevFocused] = useState("⌈");
+  const [eventId, setEventId] = useState(null);
   const dateInputRef = useRef();
 
+
+  
   const {
     FieldType,
     MaxLength,
@@ -77,7 +81,8 @@ const Edit = ({
   const font = findDesiredData(FontObj && FontObj);
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS)
-
+  
+  console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
     if (location === "inGrid") {
       if (FieldType === "Date") {
@@ -281,7 +286,8 @@ const Edit = ({
     else if (e.key == "ArrowUp") handleUpArrow();
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
-
+    const eventId = uuidv4();
+    setEventId(eventId);
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;
@@ -293,6 +299,7 @@ const Edit = ({
         Event: {
           EventName: "KeyPress",
           ID: data?.ID,
+          EventID: eventId,
           Info: [e.key, charCode, e.keyCode, shiftState],
         },
       })
@@ -303,6 +310,7 @@ const Edit = ({
         Event: {
           EventName: "KeyPress",
           ID: data?.ID,
+          EventID: eventId,
           Info: [e.key, charCode, e.keyCode, shiftState],
         },
       })
@@ -607,7 +615,7 @@ const Edit = ({
         decimalScale={Decimal}
         value={inputValue}
         decimalSeparator={decimalSeparator}
-        thousandSeparator={Thousand}
+        thousandSeparator={FieldType == "LongNumeric" && Thousand}
         onBlur={() => handleEditEvents()}
         onKeyDown={(e) => handleKeyPress(e)}
         onFocus={handleGotFocus}
