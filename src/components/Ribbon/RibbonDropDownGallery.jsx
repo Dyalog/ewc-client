@@ -5,11 +5,14 @@ import { useAppData } from "../../hooks";
 import RibbonGalleyItem from "./RibbonGalleyItem";
 
 const RibbonGallery = ({ data }) => {
-  const { socket } = useAppData();
+  const { socket, findDesiredData } = useAppData();
   const {Cols, ItemHeight ,ItemWidth} = data.Properties;
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
+  const font = findDesiredData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
+  
 
   const menuItems = Object.keys(data)
     .filter((key) => key.startsWith("MItem"))
@@ -78,7 +81,7 @@ const RibbonGallery = ({ data }) => {
         <>
           <div className="gallery-content" style={{ width: `${(itemWidth+2) * Cols}px`, height:`${itemHeight}px` }}>
             {visibleItems.map((item, index) => (
-              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={itemWidth} ItemHeight={itemHeight} />
+              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={itemWidth} ItemHeight={itemHeight} fontProperties={fontProperties} />
 
             ))}
           </div>

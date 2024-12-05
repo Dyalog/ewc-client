@@ -8,10 +8,11 @@ import { getCurrentUrl, parseFlexStyles } from "../../utils";
 import RibbonDropDownItem from "./RibbonDropDownItem";
 
 const RibbonDropDownButton = ({ data }) => {
-  console.log("ribbonDropdownButton", data);
   const ImageList = JSON.parse(localStorage.getItem("ImageList"));
   const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket } = useAppData();
+  const { socket, findDesiredData } = useAppData();
+  const font = findDesiredData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
 
   const { Icon, Caption, ImageIndex, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
@@ -141,7 +142,7 @@ const RibbonDropDownButton = ({ data }) => {
             >
               {menuItems.map((item, index) => {
                 return (
-                  <RibbonDropDownItem data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} />
+                  <RibbonDropDownItem data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} fontProperties={fontProperties} />
                 )
 
               })}

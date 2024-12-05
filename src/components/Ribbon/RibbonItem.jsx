@@ -16,7 +16,7 @@ const CustomRibbonItem = ({ data }) => {
       className={`col-${size}`}
     >
       {Object.keys(updatedData).map((key) => {
-        return <SelectComponent data={updatedData[key]} />;
+        return <SelectComponent data={{...updatedData[key], FontObj: data.FontObj}} />;
       })}
     </div>
   );

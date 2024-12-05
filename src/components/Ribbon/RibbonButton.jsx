@@ -7,10 +7,12 @@ import { getCurrentUrl, parseFlexStyles, setStyle } from "../../utils";
 const CustomRibbonButton = ({ data }) => {
   const ImageList = JSON.parse(localStorage.getItem("ImageList"));
   const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket } = useAppData();
+  const { socket, findDesiredData, fontScale } = useAppData();
 
   const { Icon, Caption, Event, ImageIndex, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
+  const font = findDesiredData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
 
 
   const getImageFromData = (data) => {
@@ -62,7 +64,7 @@ const CustomRibbonButton = ({ data }) => {
           id={data?.ID}
           className="d-flex align-items-center flex-column justify-content-center"
           onClick={handleButtonEvent}
-          style={{ cursor: "pointer" ,   ...customStyles}}
+          style={{ cursor: "pointer", ...customStyles }}
         >
           {ImageData ? (
             <img
@@ -81,15 +83,19 @@ const CustomRibbonButton = ({ data }) => {
                 height:
                   ImageList?.Properties?.Size && ImageList?.Properties?.Size[0],
               }}
-              src={`${getCurrentUrl()}${
-                ImageList?.Properties?.Files[ImageIndex - 1]
-              }`}
+              src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+                }`}
               alt="Image"
             />
           ) : (
             <IconComponent size={35} />
           )}
-          <div className="text-center" style={{ fontSize: "12px" }}>
+          <div className="text-center" style={{
+            fontFamily: fontProperties?.PName,
+            fontSize: fontProperties?.Size
+              ? `${fontProperties.Size * fontScale}px`
+              : `${12 * fontScale}px`,
+          }}>
             {Caption}
           </div>
         </div>
