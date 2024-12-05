@@ -41,7 +41,7 @@ const Grid = ({ data }) => {
     proceedEventArray,
     setProceedEventArray,
     findAggregatedPropertiesData,
-    handleData, dataRef,nqEvents
+    handleData, dataRef, nqEvents
   } = useAppData();
 
   const [eventId, setEventId] = useState(null);
@@ -79,7 +79,7 @@ const Grid = ({ data }) => {
     Event,
     CSS,
   } = data?.Properties;
- 
+
   const [height, setHeight] = useState(Size[0]);
   const [width, setWidth] = useState(Size[1]);
   const [rows, setRows] = useState(0);
@@ -91,14 +91,14 @@ const Grid = ({ data }) => {
     !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
   );
 
-  const [clickData, setClickData] = useState({isClicked: false, row: selectedRow, column: selectedColumn})
+  const [clickData, setClickData] = useState({ isClicked: false, row: selectedRow, column: selectedColumn })
 
 
-//  console.log("300", {nqEvents})
-//  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
- console.log("navigation focus", gridRef)
+  //  console.log("300", {nqEvents})
+  //  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+  console.log("navigation focus", gridRef)
   useEffect(() => {
-    gridRef.current.focus();
+    // gridRef.current.focus();
     if (CurCell) {
       console.log("284 curcell useEffect")
       let defaultRow
@@ -111,10 +111,10 @@ const Grid = ({ data }) => {
       //   setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
       // }
       // else {
-        defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
-        defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
-        setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
-        setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
+      defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
+      defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
+      setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
+      setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
       // }
 
       // localStorage.setItem(
@@ -128,7 +128,7 @@ const Grid = ({ data }) => {
     }
   }, [CurCell]);
 
-  
+
 
   useEffect(() => {
     if (proceedEventArray[localStorage.getItem("keyPressEventId") + "KeyPress"] == 1) {
@@ -136,20 +136,21 @@ const Grid = ({ data }) => {
       updatePosition(event)
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
+      // updateRowColumn(event)
     }
     else if (
       (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
     ) {
-      
-      if(clickData.isClicked)
-      {
+
+      if (clickData.isClicked) {
         handleCellClickUpdate(clickData.row, clickData.column)
-        setClickData({isClicked: false})
+
+        setClickData({ isClicked: false })
         return
       }
-      
+
       // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-      
+
       // if (!localStoragValue) {
       //   localStorage.setItem(
       //     data?.ID,
@@ -223,8 +224,21 @@ const Grid = ({ data }) => {
     });
 
     const exists = Event && Event?.some((item) => item[0] === "CellMove");
-    if (!exists) return;
-    socket.send(cellMoveEvent);
+    if (!exists) { handleData(
+      {
+        ID: data?.ID,
+        Properties: {
+          CurCell: [row, column],
+        },
+      },
+      'WS'
+    );
+   }
+    else {
+      
+
+      socket.send(cellMoveEvent);
+    }
     // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
 
@@ -310,7 +324,7 @@ const Grid = ({ data }) => {
       gridRef.current.focus();
     }
 
-  
+
   };
 
   const updatePosition = (key) => {
@@ -441,7 +455,7 @@ const Grid = ({ data }) => {
         'WS'
       );
     }
-   
+
   };
 
   const modifyGridData = () => {
@@ -604,10 +618,9 @@ const Grid = ({ data }) => {
   };
 
   const handleCellClick = (row, column) => {
-    setClickData({isClicked: true, row, column})
+    setClickData({ isClicked: true, row, column })
 
     if (row == selectedRow && column == selectedColumn) return;
-
 
     handleCellMove(row, column, 1);
 
@@ -743,7 +756,7 @@ const Grid = ({ data }) => {
                       textAlign: data.type == "header" ? "center" : data?.align,
                       overflow: "hidden",
                       ...((data?.type !== "header" && !Array.isArray(data?.value)) && { lineHeight: `${data?.height}px` }),
-                    paddingLeft: data?.paddingLeft,
+                      paddingLeft: data?.paddingLeft,
                     }}
                   >
                     <Component
