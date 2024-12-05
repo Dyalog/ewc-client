@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import './Dropdown.css';
 import { useAppData } from '../../hooks';
+import { setStyle } from '../../utils';
 
 const Dropdown = ({ title, data }) => {
   const { socket } = useAppData();
+  const style = setStyle(data.Properties)
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -39,7 +41,7 @@ const Dropdown = ({ title, data }) => {
   };
 
   return (
-    <div style={{ fontSize: '12px', marginLeft: '7px', cursor: 'pointer' }} className='menu-item'>
+    <div style={{ fontSize: '12px', marginLeft: '7px', cursor: 'pointer', ...style, }} className='menu-item'>
       {title}
       <div className='dropdown'>
         {Object.keys(data).map((key) => (

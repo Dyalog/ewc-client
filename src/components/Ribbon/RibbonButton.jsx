@@ -2,7 +2,7 @@ import * as Icons from "./RibbonIcons";
 import { Row, Col } from "reactstrap";
 import { useAppData } from "../../hooks";
 import { MdOutlineQuestionMark } from "react-icons/md";
-import { getCurrentUrl, parseFlexStyles } from "../../utils";
+import { getCurrentUrl, parseFlexStyles, setStyle } from "../../utils";
 
 const CustomRibbonButton = ({ data }) => {
   const ImageList = JSON.parse(localStorage.getItem("ImageList"));
@@ -11,6 +11,7 @@ const CustomRibbonButton = ({ data }) => {
 
   const { Icon, Caption, Event, ImageIndex, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
+
 
   const getImageFromData = (data) => {
     if (data.Properties && data?.Properties.ImageListObj) {

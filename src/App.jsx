@@ -6,20 +6,16 @@ import {
   checkSupportedProperties,
   findFormParentID,
   deleteFormAndSiblings,
-  rgbColor,
   getCurrentUrl,
-  extractStringUntilLastPeriod,
-  locateByPath,
   locateParentByPath,
   excludeKeys,
   extractStringFromLastPeriod,
 } from './utils';
 import './App.css';
 import * as _ from 'lodash';
-import MsgBox from './components/MessageBox';
+import Text from './components/Text';
 import version from "../version.json"
 import Upload from './components/Upload';
-import wgResponse from './utils/wgResponse';
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -34,6 +30,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
+  const [nqEvents, setNqEvents] = useState([])
   const [layout, setLayout] = useState('Initialise');
   const webSocketRef = useRef(null);
   const [focusedElement, setFocusedElement] = useState(null);
@@ -874,6 +871,8 @@ const App = () => {
           const { Thumb =1 } = Properties;
           const supportedProperties = ['Thumb'];
 
+          console.log("300", Thumb)
+
             const result = checkSupportedProperties(supportedProperties, serverEvent?.Properties);
 
             if (!localStorage.getItem(serverEvent.ID)) {
@@ -1234,6 +1233,7 @@ const App = () => {
         }
       } else if (keys[0] == 'NQ') {
         const nqEvent = JSON.parse(event.data).NQ;
+        console.log("300", nqEvent)
         const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
         const appElement = getObjectById(dataRef.current, ID);
@@ -1275,15 +1275,60 @@ const App = () => {
           if (NoCallback == 0) webSocket.send(event);
           return;
         } else if (Event == 'CellMove') {
-          handleData(
-            {
-              ID: ID,
-              Properties: {
-                CurCell: [Info[0], Info[1]],
-              },
-            },
-            'WS'
-          );
+          console.log("296",{nqEvent})
+          setNqEvents([...nqEvents, nqEvent])
+             // handleData(
+            //   {
+            //     ID: ID,
+            //     Properties: {
+            //       CurCell: [Info[0], Info[1]],
+            //     },
+            //   },
+            //   'WS'
+            // );
+
+        
+            //   handleData(
+            //   {
+            //     ID: ID,
+            //     Properties: {
+            //       CurCell: [Info[0], Info[1]],
+            //     },
+            //   },
+            //   'WS'
+            // );
+            // webSocket.send(
+            //   JSON.stringify({
+            //     Event: {
+            //       EventName: 'CellMove',
+            //       EventID: localStorage.getItem("keyPressEventId"),
+            //       ID,
+            //       Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+            //     },
+            //   })
+            // );
+          
+           
+           
+          // handleData(
+          //   {
+          //     ID: ID,
+          //     Properties: {
+          //       CurCell: [Info[0], Info[1]],
+          //     },
+          //   },
+          //   'WS'
+          // );
+          // webSocket.send(
+          //   JSON.stringify({
+          //     Event: {
+          //       EventName: 'CellMove',
+          //       EventID: eventId,
+          //       ID,
+          //       Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
+          //     },
+          //   })
+          // );
           localStorage.setItem(
             ID,
             JSON.stringify({
@@ -1292,11 +1337,27 @@ const App = () => {
               },
             })
           );
+          localStorage.setItem(
+            "nqCurCell",
+            JSON.stringify({
+              ID,
+              Info
+            
+            })
+          );
           // reRender();
           return;
         } else if (Event == 'Select'){
           const element = document.getElementById(nqEvent.ID)
           if(element) element.click()
+            webSocket.send(
+              JSON.stringify({
+                Event: {
+                  EventName: 'Select',
+                  ID: ID
+                },
+              })
+            );
         } else if (Event == 'Scroll'){
           webSocket.send(
             JSON.stringify({
@@ -1309,6 +1370,7 @@ const App = () => {
           );
         }
         const thumbValue = Info[1]
+        console.log("300",{thumbValue})
         handleData({ID: ID, Properties: {Thumb: thumbValue  }}, 'WS')
         const element = document.getElementById(nqEvent.ID);
         element && element.focus();
@@ -1316,9 +1378,17 @@ const App = () => {
       else if (keys[0] == "EC"){
         const serverEvent = JSON.parse(event.data).EC;
         const { EventID, Proceed } = serverEvent
-        setProceedEventArray((prev) => ({...prev, [EventID]: Proceed}));
+        setProceedEventArray((prev) => {
+          const hasEventID = Object.keys(prev).some(key => key.includes(EventID));
+          return {
+            ...prev,
+            [`${EventID}${localStorage.getItem("current-event")}`]:
+              Proceed
+          };
+        });
+        // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
         setProceed(Proceed)
-        localStorage.setItem(EventID, Proceed);
+        localStorage.setItem(EventID, 0);  
       }
       else if (keys[0] == 'EX') {
         const serverEvent = JSON.parse(event.data).EX;
@@ -1328,44 +1398,12 @@ const App = () => {
         const serverEvent = JSON.parse(event.data).WX;
         const { Method, Info, WGID, ID } = serverEvent;
         // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
-        const calculateTextDimensions = (wordsArray, fontSize = 12) => {
-          // Create a hidden div element to calculate text dimensions
-          const scale =localStorage.getItem("fontscale")
-          console.log("fontScale dimension: " ,scale)
-          const container = document.createElement('div');
-          container.style.visibility = 'hidden';
-          container.style.position = 'fixed';
-          container.style.top = '0';
-          container.style.left = '0';
-          container.style.fontSize = (fontSize * scale) + 'px'; 
-
-          // Iterate through the array of words
-          wordsArray.forEach((word) => {
-            // Create a span element for each word
-            const span = document.createElement('div');
-            span.textContent = word;
-            span.style.display = 'block'; // Start each word on a new line
-            container.appendChild(span);
-          });
-
-          // Append the container to the body
-          document.body.appendChild(container);
-
-          // Retrieve dimensions
-          const width = container.offsetWidth;
-          const height = container.offsetHeight - 11;
-
-          // Remove the container from the body
-          document.body.removeChild(container);
-
-          return [height, width];
-        };
 
         if (Method == 'GetTextSize') {
           const joinedString = Info && Info[0];
           const font = JSON.parse(getObjectById(dataRef.current, Info && Info[1]));
           const fontProperties = font && font?.Properties;
-          const textDimensions = calculateTextDimensions(joinedString, fontProperties?.Size);
+          const textDimensions = Text.calculateTextDimensions(joinedString, fontProperties?.Size);
           // console.log({textDimensions: textDimensions})
           const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
           console.log(event);
@@ -1493,7 +1531,9 @@ const App = () => {
           proceedEventArray,
           setProceedEventArray,
           colors,
-          fontScale
+          fontScale,
+          nqEvents,
+          setNqEvents,
         }}
       >
         {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />}
