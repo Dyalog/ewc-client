@@ -460,9 +460,9 @@ const Grid = ({ data }) => {
         return
       }
       
-      let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+      let localStorageValue = JSON.parse(localStorage.getItem(data?.ID));
       
-      if (!localStoragValue) {
+      if (!localStorageValue) {
         localStorage.setItem(
           data?.ID,
           JSON.stringify({
@@ -483,7 +483,7 @@ const Grid = ({ data }) => {
                 selectedRow,
                 selectedColumn,
               ],
-              Values: localStoragValue?.Event?.Values,
+              Values: localStorageValue?.Event?.Values,
             },
           })
         );
@@ -896,6 +896,7 @@ const Grid = ({ data }) => {
     const eventId = uuidv4();
     setEventId(eventId);
     let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+    let knownKeyPress = true;
 
     const parentExists =
       Event && Event?.some((item) => item[0].toLowerCase() === "keypress");
@@ -964,6 +965,9 @@ const Grid = ({ data }) => {
     // setTimeout(() => {
     //   updatePosition();
     // }, 120);
+
+    // Don't propagate the event if we handled it
+    if (knownKeyPress) event.preventDefault();
   };
 
   const updatePosition = (key) => {
