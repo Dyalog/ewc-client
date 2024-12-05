@@ -178,6 +178,7 @@ const Grid = ({ data }) => {
       //     })
       //   );
       // }
+
       const event = JSON.parse(localStorage.getItem("event"))
       updateRowColumn(event)
     }
@@ -264,7 +265,9 @@ const Grid = ({ data }) => {
     const eventId = uuidv4();
     setEventId(eventId);
     let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
-    
+
+    let knownKeyPress = true;
+
     const parentExists =
       Event && Event?.some((item) => item[0].toLowerCase() === "keypress");
 
@@ -328,7 +331,8 @@ const Grid = ({ data }) => {
       gridRef.current.focus();
     }
 
-
+    // Don't propagate the event if we handled it
+    if (knownKeyPress) event.preventDefault();
   };
 
   const updatePosition = (key) => {
