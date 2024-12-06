@@ -347,6 +347,28 @@ export const getObjectById = (jsonData, targetId) => {
   return result ? JSON.stringify(result, null, 2) : null;
 };
 
+export function flattenJsonToArray(obj) {
+  let result = [];
+
+  function recurse(currentObj) {
+    if (currentObj && currentObj.ID && currentObj.Properties) {
+      result.push({
+        ID: currentObj.ID,
+        Properties: currentObj.Properties
+      });
+    }
+
+    for (let key in currentObj) {
+      if (typeof currentObj[key] === 'object' && currentObj[key] !== null) {
+        recurse(currentObj[key]); 
+      }
+    }
+  }
+
+  recurse(obj);
+  return result;
+}
+
 export const generateAsteriskString = (length) => {
   if (length <= 0) {
     return "*"; // Return an empty string if length is zero or negative.
