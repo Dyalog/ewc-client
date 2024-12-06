@@ -39,8 +39,8 @@ const CustomRibbon = ({ data }) => {
         ...customStyles
       }}
     >
-      {Object.keys(updatedData).map((key) => {
-        return <SelectComponent data={{...updatedData[key],FontObj}} />;
+      {Object.keys(updatedData).map((key, index) => {
+        return <SelectComponent key={index} data={{...updatedData[key],FontObj}} />;
       })}
     </div>
   );

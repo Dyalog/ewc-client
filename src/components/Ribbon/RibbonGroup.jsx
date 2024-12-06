@@ -28,8 +28,8 @@ const CustomRibbonGroup = ({ data }) => {
         }}
         className='row'
       >
-        {Object.keys(updatedData).map((key) => {
-          return <SelectComponent data={{...updatedData[key], FontObj: data.FontObj}} />;
+        {Object.keys(updatedData).map((key, index) => {
+          return <SelectComponent key={index} data={{...updatedData[key], FontObj: data.FontObj}} />;
         })}
 
         <div

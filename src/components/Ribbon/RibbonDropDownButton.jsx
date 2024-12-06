@@ -142,7 +142,7 @@ const RibbonDropDownButton = ({ data }) => {
             >
               {menuItems.map((item, index) => {
                 return (
-                  <RibbonDropDownItem data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} fontProperties={fontProperties} />
+                  <RibbonDropDownItem key={index} data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} fontProperties={fontProperties} />
                 )
 
               })}
