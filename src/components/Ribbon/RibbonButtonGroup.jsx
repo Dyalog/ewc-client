@@ -5,14 +5,15 @@ import { getCurrentUrl, getObjectById, parseFlexStyles, setStyle } from "../../u
 import { MdOutlineQuestionMark } from "react-icons/md";
 
 const CustomRibbonButtonGroup = ({ data }) => {
-  const { socket, dataRef } = useAppData();
+  const { socket, dataRef , findCurrentData, fontScale} = useAppData();
 
   let ImageList = JSON.parse(localStorage.getItem("ImageList"));
 
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
 
   const customStyles = parseFlexStyles(CSS)
-  // const style = setStyle(data.Properties)
+  const font = findCurrentData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
 
   const colSize =  12;
 
@@ -55,13 +56,6 @@ const CustomRibbonButtonGroup = ({ data }) => {
     // ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
   }
 
-  // console.log({ Icons });
-
-  // console.log({ AppIcons });
-
-  console.log({ Captions, ImagesData });
-
-  console.log({ ImagesData });
 
   function getImageDataByCaption(caption) {
     if (!ImagesData || !ImagesData.length) return;
@@ -99,14 +93,8 @@ const CustomRibbonButtonGroup = ({ data }) => {
   return (
     <div className="d-flex flex-column alig-items-center justify-content-center " style={{ width: "fit-content" }}>
       {Captions.map((title, i) => {
-        // i = 0
-        console.log("imgData", title);
-        // if(ImagesData)
-        // {
 
         const result = getImageDataByCaption(title);
-        console.log("imgData", { result });
-        // }
         const imageIndex = i;
         const image =
           result && result.imgUrl
@@ -147,9 +135,12 @@ const CustomRibbonButtonGroup = ({ data }) => {
             )}
             <div
               style={{
-                fontSize: "12px",
                 textAlign: "center",
                 textOverflow: "ellipsis",
+                fontFamily: fontProperties?.PName,
+                fontSize: fontProperties?.Size
+                  ? `${fontProperties.Size * fontScale}px`
+                  : `${12 * fontScale}px`,
               }}
             >
               {title}

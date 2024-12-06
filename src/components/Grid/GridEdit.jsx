@@ -200,13 +200,13 @@ const GridEdit = ({ data }) => {
       Event: {
         EventName: 'CellChanged',
         Values: values,
-        CurCell: [data?.row, data?.column + 1],
+        CurCell: [data?.row, data?.column],
       },
     });
 
     const formatCellEvent = JSON.stringify({
       FormatCell: {
-        Cell: [data?.row, data?.column + 1],
+        Cell: [data?.row, data?.column],
         ID: data?.gridId,
         Value: FieldType == 'Date' ? dateFormattedValue : inputValue,
       },

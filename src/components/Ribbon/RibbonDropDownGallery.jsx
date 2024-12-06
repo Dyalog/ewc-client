@@ -5,11 +5,14 @@ import { useAppData } from "../../hooks";
 import RibbonGalleyItem from "./RibbonGalleyItem";
 
 const RibbonGallery = ({ data }) => {
-  const { socket } = useAppData();
-  const { Cols, ItemHeight, ItemWidth } = data.Properties;
+  const { socket, findCurrentData } = useAppData();
+  const {Cols, ItemHeight ,ItemWidth} = data.Properties;
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
+  const font = findCurrentData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
+  
 
   const menuItems = Object.keys(data)
     .filter((key) => key.startsWith("MItem"))
@@ -78,7 +81,7 @@ const RibbonGallery = ({ data }) => {
         <div className="d-flex" style={{ width: "calc(100% - 14px)", justifyContent: `${visibleItems.length < Cols ? "start" : "center"}`, marginLeft: `${visibleItems.length < Cols ? "10px" : ""}` }} >
           <div className="gallery-content" >
             {visibleItems.map((item, index) => (
-              <RibbonGalleyItem data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={(itemWidth)} ItemHeight={itemHeight - 4} />
+              <RibbonGalleyItem key={index} data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={itemWidth} ItemHeight={itemHeight} fontProperties={fontProperties} />
             ))}
           </div>
           <div className="gallery-buttons" style={{ position: "absolute", right: 0 }}>
@@ -120,7 +123,7 @@ const RibbonGallery = ({ data }) => {
               }}
             >
               {menuItems.map((item, index) => (
-                <RibbonGalleyItem data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight - 4} />
+                <RibbonGalleyItem key={index} data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight}/>
               ))}
             </div>
           </div>

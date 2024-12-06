@@ -1,14 +1,18 @@
+import { useAppData } from '../../hooks';
 import { excludeKeys, parseFlexStyles, rgbColor, setStyle } from '../../utils';
 import SelectComponent from '../SelectComponent';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
 
 const CustomRibbonGroup = ({ data }) => {
+  const { findCurrentData, fontScale } = useAppData()
   const updatedData = excludeKeys(data);
   const { Size, Title, BorderCol, CSS } = data?.Properties;
   const customStyle = parseFlexStyles(CSS)
-  // const style = setStyle(data.Properties)
+  const font = findCurrentData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
 
+ 
   const size = Size || 1;
 
   return (
@@ -24,8 +28,8 @@ const CustomRibbonGroup = ({ data }) => {
         }}
         className='row'
       >
-        {Object.keys(updatedData).map((key) => {
-          return <SelectComponent data={updatedData[key]} />;
+        {Object.keys(updatedData).map((key, index) => {
+          return <SelectComponent key={index} data={{...updatedData[key], FontObj: data.FontObj}} />;
         })}
 
         <div
@@ -34,9 +38,15 @@ const CustomRibbonGroup = ({ data }) => {
             position: 'absolute',
             bottom: 0,
             width: '100%',
+
           }}
         >
-          <p id={data.ID-"title"} style={{ margin: 0, fontSize: '12px', fontWeight: 'bolder' }} className='text-center'>
+          <p id={data.ID-"title"} style={{
+            margin: 0, fontWeight: 'bolder', fontFamily: fontProperties?.PName,
+            fontSize: fontProperties?.Size
+              ? `${fontProperties.Size * fontScale}px`
+              : `${12 * fontScale}px`,
+          }} className='text-center'>
             {Title}
           </p>
         </div>
