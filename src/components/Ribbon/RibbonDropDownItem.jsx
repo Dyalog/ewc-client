@@ -2,8 +2,8 @@ import React from 'react'
 import { useAppData } from '../../hooks';
 import { getCurrentUrl } from '../../utils';
 
-const RibbonDropDownItem = ({ data, startIndex, menuLength, handleSelectEvent, }) => {
-    const { findDesiredData } = useAppData();
+const RibbonDropDownItem = ({ data, startIndex, menuLength, handleSelectEvent, fontProperties }) => {
+    const { findDesiredData, fontScale } = useAppData();
     const { Caption, Event, ImageIndex, ImageListObj } = data.Properties
     const ImageData = findDesiredData(ImageListObj);
 
@@ -33,7 +33,12 @@ const RibbonDropDownItem = ({ data, startIndex, menuLength, handleSelectEvent, }
                     height: size[1],
                 }} />
             )}
-            <div className="">{Caption}</div>
+            <div style={{
+                fontFamily: fontProperties?.PName,
+                fontSize: fontProperties?.Size
+                    ? `${fontProperties.Size * fontScale}px`
+                    : `${12 * fontScale}px`,
+            }}>{Caption}</div>
 
         </div>
     )

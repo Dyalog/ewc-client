@@ -2,8 +2,8 @@ import React from 'react'
 import { useAppData } from '../../hooks';
 import { getCurrentUrl } from '../../utils';
 
-const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, ItemHeight, ItemWidth }) => {
-    const { findDesiredData } = useAppData();
+const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, ItemHeight, ItemWidth, fontProperties }) => {
+    const { findDesiredData, fontScale } = useAppData();
 
     const { Caption, Event, ImageIndex, ImageListObj } = data.Properties
     const ImageData = findDesiredData(ImageListObj);
@@ -34,7 +34,12 @@ const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, Item
                         height: size[1],
                     }} />
                 )}
-                <div className="">{Caption}</div>
+                <div style={{
+                    fontFamily: fontProperties?.PName,
+                    fontSize: fontProperties?.Size
+                        ? `${fontProperties.Size * fontScale}px`
+                        : `${12 * fontScale}px`,
+                }}>{Caption}</div>
             </div>
         </div>
     )
