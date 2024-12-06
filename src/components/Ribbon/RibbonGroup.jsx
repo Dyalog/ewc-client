@@ -5,14 +5,14 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
 
 const CustomRibbonGroup = ({ data }) => {
-  const { findDesiredData, fontScale } = useAppData()
+  const { findCurrentData, fontScale } = useAppData()
   const updatedData = excludeKeys(data);
   const { Size, Title, BorderCol, CSS } = data?.Properties;
   const customStyle = parseFlexStyles(CSS)
-  const font = findDesiredData(data.FontObj && data.FontObj);
+  const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
- 
 
+ 
   const size = Size || 1;
 
   return (

@@ -5,14 +5,14 @@ import { getCurrentUrl, getObjectById, parseFlexStyles, setStyle } from "../../u
 import { MdOutlineQuestionMark } from "react-icons/md";
 
 const CustomRibbonButtonGroup = ({ data }) => {
-  const { socket, dataRef , findDesiredData, fontScale} = useAppData();
+  const { socket, dataRef , findCurrentData, fontScale} = useAppData();
 
   let ImageList = JSON.parse(localStorage.getItem("ImageList"));
 
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
 
   const customStyles = parseFlexStyles(CSS)
-  const font = findDesiredData(data.FontObj && data.FontObj);
+  const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
 
   const colSize = Captions?.length == 4 ? 6 : 12;

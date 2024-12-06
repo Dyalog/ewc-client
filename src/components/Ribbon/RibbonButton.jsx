@@ -7,11 +7,11 @@ import { getCurrentUrl, parseFlexStyles, setStyle } from "../../utils";
 const CustomRibbonButton = ({ data }) => {
   const ImageList = JSON.parse(localStorage.getItem("ImageList"));
   const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket, findDesiredData, fontScale } = useAppData();
+  const { socket, fontScale, findCurrentData } = useAppData();
 
   const { Icon, Caption, Event, ImageIndex, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
-  const font = findDesiredData(data.FontObj && data.FontObj);
+  const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
 
 

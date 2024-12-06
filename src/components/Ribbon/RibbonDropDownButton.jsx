@@ -10,8 +10,8 @@ import RibbonDropDownItem from "./RibbonDropDownItem";
 const RibbonDropDownButton = ({ data }) => {
   const ImageList = JSON.parse(localStorage.getItem("ImageList"));
   const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket, findDesiredData } = useAppData();
-  const font = findDesiredData(data.FontObj && data.FontObj);
+  const { socket, findCurrentData } = useAppData();
+  const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
 
   const { Icon, Caption, ImageIndex, CSS } = data?.Properties;

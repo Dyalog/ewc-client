@@ -5,12 +5,12 @@ import { useAppData } from "../../hooks";
 import RibbonGalleyItem from "./RibbonGalleyItem";
 
 const RibbonGallery = ({ data }) => {
-  const { socket, findDesiredData } = useAppData();
+  const { socket, findCurrentData } = useAppData();
   const {Cols, ItemHeight ,ItemWidth} = data.Properties;
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
-  const font = findDesiredData(data.FontObj && data.FontObj);
+  const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
   
 
