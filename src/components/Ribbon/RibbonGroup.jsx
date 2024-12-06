@@ -16,14 +16,14 @@ const CustomRibbonGroup = ({ data }) => {
   const size = Size || 1;
 
   return (
-    <div id={data?.ID} className={`col-${size === 3 ? 6 : size}`}>
+    <div id={data?.ID} className={`col-${size}`}>
       <div
         style={{
           border: `1px solid ${rgbColor(BorderCol)}`,
           borderTop: 0,
           position: 'relative',
           height: '100%',
-          alignItems: 'center',
+          alignItems: 'start',
           ...customStyle
         }}
         className='row'
@@ -41,7 +41,7 @@ const CustomRibbonGroup = ({ data }) => {
 
           }}
         >
-          <p style={{
+          <p id={data.ID-"title"} style={{
             margin: 0, fontWeight: 'bolder', fontFamily: fontProperties?.PName,
             fontSize: fontProperties?.Size
               ? `${fontProperties.Size * fontScale}px`

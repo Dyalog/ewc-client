@@ -15,6 +15,7 @@ const CustomRibbon = ({ data }) => {
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
 
   const customStyles = parseFlexStyles(CSS)
+  console.log("303",{customStyles})
 
   useEffect(() => {
     const ID = getStringafterPeriod(ImageListObj);

@@ -15,7 +15,8 @@ const CustomRibbonButtonGroup = ({ data }) => {
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
 
-  const colSize = Captions?.length == 4 ? 6 : 12;
+  const colSize =  12;
+
 
   const handleSelectEvent = (info) => {
     const selectEvent = JSON.stringify({
@@ -88,9 +89,9 @@ const CustomRibbonButtonGroup = ({ data }) => {
       imgSize,
     };
   }
-
+  
   return (
-    <div className="" style={{width:"fit-content"}}>
+    <div className="d-flex flex-column alig-items-center justify-content-center " style={{ width: "fit-content" }}>
       {Captions.map((title, i) => {
 
         const result = getImageDataByCaption(title);
@@ -108,7 +109,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
             id={`${data?.ID}-${i}`}
             md={colSize}
             className="d-flex align-items-center justify-content-left gap-1"
-            style={{ cursor: "pointer" ,   ...customStyles}}
+            style={{ cursor: "pointer", ...customStyles }}
             onClick={() => handleButtonEvent(i + 1)}
           >
             {result && result?.imgUrl ? (
@@ -119,9 +120,9 @@ const CustomRibbonButtonGroup = ({ data }) => {
                 }}
                 src={`${getCurrentUrl()}${result.imgUrl}`}
                 alt={title}
-                />
-              ) : image ? (
-                <img
+              />
+            ) : image ? (
+              <img
                 style={{
                   width: ImageList?.Properties?.Size?.[1],
                   height: ImageList?.Properties?.Size?.[0],
@@ -130,7 +131,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
                 alt={title}
               />
             ) : (
-              <IconComponent size={35} />
+              <IconComponent size={25} />
             )}
             <div
               style={{
