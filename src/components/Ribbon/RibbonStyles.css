@@ -57,7 +57,7 @@
 .ribbon-gallery {
   position: relative;
   display: flex;
-  /* border: 1px solid black; */
+  /* border: 1px solid #dcdcdc; */
   background-color: #dcdcdc;
   font-family: 'Calibri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -91,8 +91,6 @@
 }
 
 .item-preview {
-  width: 46px;
-  height: 48px;
   border: 1px solid rgba(0, 0, 0, 0.5);
   background-color: #eee;
   font-size: 12px;

@@ -38,12 +38,30 @@ const App = () => {
   const [messageBoxData, setMessageBoxData] = useState(null);
   const [options, setOptions] = useState(null)
   const [fontScale, setFontScale] = useState(null);
-  let colors = {}
+  let colors = {};
 
   const dataRef = useRef({});
   const appRef = useRef(null);
 
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
+
+  // Container for global EWC we want to be able to inspect
+  if (!window.EWC) window.EWC = {};
+  
+  // ping only gets set up once. It's a simple Ping to the server but
+  // requires no response. This is to keep the connection alive when faced with
+  // a proxy or gateway that closes connections with no traffic. In our
+  // experience, this happens at 1min.
+  if (!window.EWC?.ping) {
+    window.EWC.pingMS = 0;
+    window.EWC.ping = () => {
+      window.setTimeout(() => {
+        if (window.EWC.pingMS > 0) webSocketRef.current.send('{"Event":{"EventName":"Ping","ID":""}}');
+        window.EWC.ping();
+      }, window.EWC.pingMS == 0 ? 1000 : window.EWC.pingMS);
+    };
+    window.EWC.ping();
+  }
 
   useEffect(() => {
     dataRef.current = {};
@@ -1251,6 +1269,9 @@ const App = () => {
             'WS'
           );
 
+          return;
+        } else if (Event == 'SetPing') {
+          window.EWC.pingMS = Info[0]*1000;
           return;
         } else if ((Event && Event == 'ItemDown') || (Event && Event == 'GotFocus')) {
           if (Event && Event == 'GotFocus') localStorage.setItem('current-focus', ID);

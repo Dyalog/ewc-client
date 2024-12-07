@@ -11,10 +11,11 @@ import { useEffect } from 'react';
 const CustomRibbon = ({ data }) => {
   const updatedData = excludeKeys(data);
   const { dataRef } = useAppData();
-  const { Visible, Size, ImageListObj, CSS } = data?.Properties;
+  const { Visible, Size, ImageListObj, CSS, FontObj } = data?.Properties;
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
 
   const customStyles = parseFlexStyles(CSS)
+  console.log("303",{customStyles})
 
   useEffect(() => {
     const ID = getStringafterPeriod(ImageListObj);
@@ -39,8 +40,8 @@ const CustomRibbon = ({ data }) => {
         ...customStyles
       }}
     >
-      {Object.keys(updatedData).map((key) => {
-        return <SelectComponent data={updatedData[key]} />;
+      {Object.keys(updatedData).map((key, index) => {
+        return <SelectComponent key={index} data={{...updatedData[key],FontObj}} />;
       })}
     </div>
   );
