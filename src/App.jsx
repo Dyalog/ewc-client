@@ -25,6 +25,9 @@ function useForceRerender() {
   return { reRender };
 }
 
+let heartbeat;
+let heartbeatActive = false;
+
 const App = () => {
   const [socketData, setSocketData] = useState([]);
   const [socket, setSocket] = useState(null);
@@ -38,12 +41,26 @@ const App = () => {
   const [messageBoxData, setMessageBoxData] = useState(null);
   const [options, setOptions] = useState(null)
   const [fontScale, setFontScale] = useState(null);
-  let colors = {}
+  let colors = {};
 
   const dataRef = useRef({});
   const appRef = useRef(null);
 
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
+  
+  // Heartbeat only gets set up once. It's a simple Ping to the server but
+  // requires no response. This is to keep the connection alive when faced with
+  // a proxy or gateway that closes connections with no traffic. In our
+  // experience, this happens at 1min.
+  if (!heartbeat) {
+    heartbeat = () => {
+      window.setTimeout(() => {
+        if (heartbeatActive) webSocketRef.current.send('{"Event":{"EventName":"Ping","ID":""}}');
+        heartbeat();
+      }, 50000);
+    }
+    heartbeat();
+  }
 
   useEffect(() => {
     dataRef.current = {};
@@ -1251,6 +1268,9 @@ const App = () => {
             'WS'
           );
 
+          return;
+        } else if (Event == 'Heartbeat') {
+          heartbeatActive = (Info[0] == 1);
           return;
         } else if ((Event && Event == 'ItemDown') || (Event && Event == 'GotFocus')) {
           if (Event && Event == 'GotFocus') localStorage.setItem('current-focus', ID);

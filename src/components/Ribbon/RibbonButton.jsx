@@ -99,6 +99,7 @@ const CustomRibbonButton = ({ data }) => {
           }}>
             {Caption}
           </div>
+          </div>
         </Col>
       </Row>
     </div>
