@@ -25,9 +25,6 @@ function useForceRerender() {
   return { reRender };
 }
 
-let heartbeat;
-let heartbeatActive = false;
-
 const App = () => {
   const [socketData, setSocketData] = useState([]);
   const [socket, setSocket] = useState(null);
@@ -47,19 +44,23 @@ const App = () => {
   const appRef = useRef(null);
 
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
+
+  // Container for global EWC we want to be able to inspect
+  if (!window.EWC) window.EWC = {};
   
-  // Heartbeat only gets set up once. It's a simple Ping to the server but
+  // ping only gets set up once. It's a simple Ping to the server but
   // requires no response. This is to keep the connection alive when faced with
   // a proxy or gateway that closes connections with no traffic. In our
   // experience, this happens at 1min.
-  if (!heartbeat) {
-    heartbeat = () => {
+  if (!window.EWC?.ping) {
+    window.EWC.pingMS = 0;
+    window.EWC.ping = () => {
       window.setTimeout(() => {
-        if (heartbeatActive) webSocketRef.current.send('{"Event":{"EventName":"Ping","ID":""}}');
-        heartbeat();
-      }, 50000);
-    }
-    heartbeat();
+        if (window.EWC.pingMS > 0) webSocketRef.current.send('{"Event":{"EventName":"Ping","ID":""}}');
+        window.EWC.ping();
+      }, window.EWC.pingMS == 0 ? 1000 : window.EWC.pingMS);
+    };
+    window.EWC.ping();
   }
 
   useEffect(() => {
@@ -1269,8 +1270,8 @@ const App = () => {
           );
 
           return;
-        } else if (Event == 'Heartbeat') {
-          heartbeatActive = (Info[0] == 1);
+        } else if (Event == 'SetPing') {
+          window.EWC.pingMS = Info[0]*1000;
           return;
         } else if ((Event && Event == 'ItemDown') || (Event && Event == 'GotFocus')) {
           if (Event && Event == 'GotFocus') localStorage.setItem('current-focus', ID);
