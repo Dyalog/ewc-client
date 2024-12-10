@@ -34,7 +34,7 @@ const CustomRibbon = ({ data }) => {
       id={data?.ID}
       className='row'
       style={{
-        height: !Size ? '8rem' : Size[0],
+        // height: !Size ? '9rem' : Size[0],
         width: !Size ? parentSize && parentSize[1] : Size && Size[1],
         display: Visible == 0 ? 'none' : 'flex',
         ...customStyles

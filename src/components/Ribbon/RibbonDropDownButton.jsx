@@ -10,7 +10,7 @@ import RibbonDropDownItem from "./RibbonDropDownItem";
 const RibbonDropDownButton = ({ data }) => {
   const ImageList = JSON.parse(localStorage.getItem("ImageList"));
   const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket, findCurrentData } = useAppData();
+  const { socket, findCurrentData, fontScale } = useAppData();
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
 
@@ -118,12 +118,17 @@ const RibbonDropDownButton = ({ data }) => {
             ) : (
               <IconComponent size={35} />
             )}
-            <div className="text-center" style={{ fontSize: "12px" }}>
+            <div className="text-center" style={{ fontFamily: fontProperties?.PName,
+                fontSize: fontProperties?.Size
+                    ? `${fontProperties.Size * fontScale}px`
+                    : `${12 * fontScale}px`,}}>
               {Caption}
             </div>
             <GoChevronDown
 
-              size={16}
+              size={fontProperties?.Size
+                ? `${fontProperties.Size * fontScale}`
+                : `${12 * fontScale}`}
             />
           </div>
 

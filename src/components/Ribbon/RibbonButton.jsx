@@ -60,7 +60,7 @@ const CustomRibbonButton = ({ data }) => {
   return (
     <div style={{display:"flex", alignItems: "flex-start", height: "100%", marginTop: "5px" }}>
     <Row>
-      <Col md={12}>
+      <Col>
         <div
           id={data?.ID}
           className="d-flex align-items-center flex-column justify-content-center"
