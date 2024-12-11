@@ -21,7 +21,15 @@ const CustomRibbonGroup = ({ data }) => {
       setTimeout(() => {
         const titleElement = document.getElementById(data.ID + "-title");
         const ribbonElement = document.getElementById(`ribbon-height-${data.id}`);
+        const ribbonElements = document.querySelectorAll('[id^="ribbon-height-"]')
+        let maxRibbonHeight = 0; // Track the maximum height
 
+        ribbonElements.forEach((element) => {
+          const elementHeight = element.getBoundingClientRect().height || 0;
+          maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
+        });
+        console.log("ribbon Elements", ribbonElements,maxRibbonHeight)
+console.log(maxRibbonHeight)
         const titleDivWidth = titleElement?.getBoundingClientRect().width || 0;
         const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
         const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
@@ -30,8 +38,8 @@ const CustomRibbonGroup = ({ data }) => {
         console.log({ ribbonDivHeight, titleDivHeight });
 
         setTempDivWidth(`${Math.max(ribbonDivWidth, titleDivWidth)}px`);
-        setDivHeight(`${ribbonDivHeight + titleDivHeight + 10}px`);
-      }, 100);
+        setDivHeight(`${maxRibbonHeight + titleDivHeight + 10}px`); 
+      }, 200);
     };
 
     updateDimensions();
@@ -41,6 +49,36 @@ const CustomRibbonGroup = ({ data }) => {
   }, [data.ID, data.id]); 
   const size = Size || 2;
 
+  useEffect(() => {
+    const updateDimensions = () => {
+      setTimeout(() => {
+        // Query all ribbon elements with the ID prefix "ribbon-height-"
+        const ribbonElements = document.querySelectorAll('[id^="ribbon-height-"]');
+  
+        let maxRibbonHeight = 0;
+  
+        // Calculate the maximum height across all ribbons
+        ribbonElements.forEach((element) => {
+          const elementHeight = element.getBoundingClientRect().height || 0;
+          maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
+        });
+  
+        console.log("Max Ribbon Height:", maxRibbonHeight);
+  
+        // Apply the max height to all ribbon elements
+        ribbonElements.forEach((element) => {
+          element.style.height = `${maxRibbonHeight}px`;
+        });
+      }, 200);
+    };
+  
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+  
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+  
+
   return (
     <div id={data?.ID} style={{ width: tempDivWidth }}>
       <div
@@ -48,12 +86,12 @@ const CustomRibbonGroup = ({ data }) => {
           border: `1px solid ${rgbColor(BorderCol)}`,
           borderTop: 0,
           position: 'relative',
-          width: tempDivWidth,
+          // width: tempDivWidth,
           alignItems: 'start',
           ...customStyle,
           height: divHeight,
         }}
-        id={`ribbon-height-${data.id}`}
+        id={`ribbon-height`}
         className="row"
       >
         {Object.keys(updatedData).map((key, index) => {

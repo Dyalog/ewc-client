@@ -135,7 +135,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
             )}
             <div
               style={{
-                textAlign: "center",
+                textAlign: "left",
                 textOverflow: "ellipsis",
                 fontFamily: fontProperties?.PName,
                 fontSize: fontProperties?.Size
