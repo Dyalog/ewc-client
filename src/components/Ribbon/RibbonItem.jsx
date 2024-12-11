@@ -22,7 +22,7 @@ const CustomRibbonItem = ({ data }) => {
   return (
     <div
      data-alt-id={data?.ID}
-      id="ribbon-height"
+      id={`ribbon-height-${data.id}`}
       style={{ display: 'flex', justifyContent: 'center', ...customStyles, }}
       // className={`col-${size}`}
     >
