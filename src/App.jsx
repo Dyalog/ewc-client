@@ -16,6 +16,7 @@ import * as _ from 'lodash';
 import Text from './components/Text';
 import version from "../version.json"
 import Upload from './components/Upload';
+import MsgBox from './components/MessageBox';
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
