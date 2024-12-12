@@ -606,7 +606,7 @@ export function findLongestID(obj) {
 }
 
 
-export const getImageFromData = (data) => {
+export const getImageFromData = (data, ImageIndex) => {
   if (data?.Properties?.Files) {
     const imageListData = data.Properties.Files;
 

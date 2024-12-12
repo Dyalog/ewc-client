@@ -17,7 +17,7 @@ const RibbonDropDownButton = ({ data }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const wrapperRef = useRef(null);
   const ImageListObjCurrent = findCurrentData(ImageListObj)
-  const ImageData = getImageFromData(ImageListObjCurrent); 
+  const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex); 
 
   const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({

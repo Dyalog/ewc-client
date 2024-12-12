@@ -14,7 +14,7 @@ const CustomRibbonButton = ({ data }) => {
   const ImageListObjCurrent = findCurrentData(ImageListObj)
 
   
-  const ImageData = getImageFromData(ImageListObjCurrent);
+  const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex);
 
 
   const handleSelectEvent = () => {
