@@ -7,7 +7,7 @@ import { MdOutlineQuestionMark } from "react-icons/md";
 const CustomRibbonButtonGroup = ({ data }) => {
   const { socket, dataRef , findCurrentData, fontScale} = useAppData();
 
-  let ImageList = JSON.parse(localStorage.getItem("ImageList"));
+  let ImageList = data.ImageList
 
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
 
@@ -43,43 +43,29 @@ const CustomRibbonButtonGroup = ({ data }) => {
       ImagesData = ImageListObj?.map((id) => {
         return id && JSON.parse(getObjectById(dataRef.current, id));
       });
-
-      // console.log({ ImagesData });
     } else {
       const ID = ImageListObj.split(".")[1];
       ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
     }
-    if (ImagesData) {
-      localStorage.setItem("ImagesData", JSON.stringify(ImagesData));
     }
-    // const ID = getStringafterPeriod(ImageListObj);
-    // ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
-  }
 
 
   function getImageDataByCaption(caption) {
     if (!ImagesData || !ImagesData.length) return;
-
-    // Find the index of the caption in the Captions array
     const captionIndex = data?.Properties?.Captions?.indexOf(caption);
 
     if (captionIndex === -1) {
-      return null; // Caption not found
+      return null; 
     }
-
-    // Get the corresponding ImageListObj and ImageIndex
     const imageListId = data?.Properties?.ImageListObj[captionIndex];
     const imageIndex = data?.Properties?.ImageIndex[captionIndex];
-
-    // Find the corresponding ImageList in ImagesData
     const imageList = ImagesData?.find((image) => image?.ID === imageListId);
 
     if (!imageList) {
-      return null; // ImageListObj not found
+      return null; 
     }
 
-    // Get the image URL and size
-    const img = imageList?.Properties?.Files[imageIndex - 1]; // ImageIndex is 1-based, array is 0-based
+    const img = imageList?.Properties?.Files[imageIndex - 1];
     const imgSize = imageList?.Properties?.Size;
 
     return {

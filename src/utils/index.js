@@ -604,3 +604,21 @@ export function findLongestID(obj) {
   traverse(obj);
   return longestID;
 }
+
+
+export const getImageFromData = (data) => {
+  if (data?.Properties?.Files) {
+    const imageListData = data.Properties.Files;
+
+    if (imageListData) {
+      const imageUrl = imageListData[ImageIndex - 1];
+      const imageSize = data.Properties.Size;
+      return {
+        imageUrl: imageUrl,
+        imageSize: imageSize,
+      };
+
+    }
+  }
+  return null;
+};
