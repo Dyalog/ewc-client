@@ -4,6 +4,7 @@
   cursor: pointer;
   font-size: 12px;
   position: relative;
+  z-index: 1000;
 }
 
 .menu-item:hover {
