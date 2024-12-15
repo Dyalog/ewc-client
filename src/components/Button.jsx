@@ -684,6 +684,8 @@ const Button = ({
         // fontSize: '11px',
         cursor: "pointer",
         zIndex: 1,
+        paddingLeft: '3px',
+        paddingRight: '3px',
         display: Visible == 0 ? "none" : "flex",
         ...(data?.Properties?.hasOwnProperty("Posn")
           ? { top: position?.top }
