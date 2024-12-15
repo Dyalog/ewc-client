@@ -34,7 +34,7 @@ const Button = ({
   const styles = setStyle(data?.Properties);
   const { socket, findDesiredData, dataRef, handleData, reRender } =
     useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS } =
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } =
     data?.Properties;
 
   console.log("data Button", data);
@@ -91,7 +91,7 @@ const Button = ({
     const handleShortcut = (event) => {
       if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
        
-            handleButtonClick(); 
+            handleButtonClick(e); 
       }
     };
     document.addEventListener("keydown", handleShortcut);
@@ -102,7 +102,7 @@ const Button = ({
     if (data?.Properties?.Default === 1) {
       const handleKeyPress = (e) => {
         if (e.key === "Enter") {
-          handleButtonClick();
+          handleButtonClick(e);
         }
       };
       document.addEventListener("keydown", handleKeyPress);
@@ -111,7 +111,11 @@ const Button = ({
   }, [data, buttonEvent]);
 
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (e) => {
+    if (!Active) {
+      e.preventDefault();
+      return;
+    }
     document.getElementById(localStorage.getItem("current-focus"))?.blur();
     if (buttonEvent) {
       console.log(
@@ -451,6 +455,7 @@ const Button = ({
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
+          disabled={!Active}
           onChange={(e) => {
             setCheckInput(e.target.checked);
             handleCheckBoxEvent(e.target.checked);
@@ -579,6 +584,7 @@ const Button = ({
           checked={radioValue}
           type="radio"
           value={Caption}
+          disabled={!Active}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
           }}
@@ -625,51 +631,8 @@ const Button = ({
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
       ref={buttonRef}
-      onClick={() => {
-        handleButtonClick()
-        // console.log(
-        //   JSON.stringify({
-        //     Event: {
-        //       EventName: buttonEvent[0],
-        //       ID: data?.ID,
-        //     },
-        //   })
-        // );
-        // if (
-        //   localStorage.getItem("current-focus") &&
-        //   localStorage.getItem("shouldChangeEvent") === "true"
-        // ) {
-        //   console.log(
-        //     JSON.stringify({
-        //       Event: {
-        //         EventName: "Change",
-        //         ID: localStorage.getItem("current-focus"),
-        //         Info: [data?.ID],
-        //       },
-        //     })
-        //   );
-
-        //   socket.send(
-        //     JSON.stringify({
-        //       Event: {
-        //         EventName: "Change",
-        //         ID: localStorage.getItem("current-focus"),
-        //         Info: [data?.ID],
-        //       },
-        //     })
-        //   );
-        // }
-
-        // socket.send(
-        //   JSON.stringify({
-        //     Event: {
-        //       EventName: buttonEvent[0],
-        //       ID: data?.ID,
-        //     },
-        //   })
-        // );
-
-        // handleGotFocus();
+      onClick={(e) => {
+        handleButtonClick(e)
       }}
       style={{
         ...styles,
@@ -681,6 +644,7 @@ const Button = ({
         borderRadius: "4px",
         borderColor: "#ccc",
         fontSize: "12px",
+        color: Active === 0 ? "#838383" : "black",
         // fontSize: '11px',
         cursor: "pointer",
         zIndex: 1,
