@@ -112,7 +112,7 @@ const Button = ({
 
 
   const handleButtonClick = (e) => {
-    if (!Active) {
+    if (Active === 0) {
       e.preventDefault();
       return;
     }
@@ -455,7 +455,7 @@ const Button = ({
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
-          disabled={!Active}
+          disabled={Active === 0}
           onChange={(e) => {
             setCheckInput(e.target.checked);
             handleCheckBoxEvent(e.target.checked);
@@ -584,7 +584,7 @@ const Button = ({
           checked={radioValue}
           type="radio"
           value={Caption}
-          disabled={!Active}
+          disabled={Active === 0}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
           }}

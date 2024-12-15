@@ -160,7 +160,7 @@ export const handleKeyPressUtils = (e, socket, Event, ID) => {
   const charCode = e?.key?.charCodeAt(0);
   let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
-  const exists = Event.some((item) => item[0] === 'KeyPress');
+  const exists = Event && Event.some((item) => item[0] === 'KeyPress');
   if (!exists) return;
 
   console.log(
