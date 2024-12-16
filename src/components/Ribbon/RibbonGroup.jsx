@@ -15,13 +15,15 @@ const CustomRibbonGroup = ({ data }) => {
 
   const [tempDivWidth, setTempDivWidth] = useState("auto");
   const [divHeight, setDivHeight] = useState("auto");
+  const [maxHeight, setMaxHeight] = useState(100)
 
   useEffect(() => {
     const updateDimensions = () => {
       setTimeout(() => {
         const titleElement = document.getElementById(data.ID + "-title");
-        const ribbonElement = document.getElementById(`ribbon-height-${data.id}`);
-        const ribbonElements = document.querySelectorAll(`[id^="ribbon-height-${data.id}"]`);
+        const ribbonElement = document.getElementById(`ribbon-item-height-${data.id}`);
+        const ribbonElements = document.querySelectorAll(`[id^="ribbon-item-height-${data.id}"]`);
+        const ribbonElementsWithoutId = document.querySelectorAll(`[id^="ribbon-height"]`);
         let maxRibbonHeight = 0;
         let sumRibbonDivWidth = 0;
         let sumRibbonDivHeight = 0;
@@ -30,6 +32,9 @@ const CustomRibbonGroup = ({ data }) => {
           const elementHeight = element.getBoundingClientRect().height || 0;
           maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
         });
+
+        setMaxHeight((prev)=>{Math.max(prev,maxRibbonHeight)})
+     
 
         ribbonElements.forEach((element) => {
           const elementWidth = element.getBoundingClientRect().width || 0;
@@ -45,16 +50,20 @@ const CustomRibbonGroup = ({ data }) => {
         const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
         const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
         // const ribbonDivHeight = ribbonElement?.getBoundingClientRect().height || 0;
-      
+
+        console.log("314",{maxRibbonHeight, titleDivHeight, })
+
         if (ribbonElements.length > 1) {
           setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)}px`);
         } else {
           setTempDivWidth(`${Math.max(tempWidth, titleDivWidth)}px`);
 
         }
-
-        setDivHeight(`${maxRibbonHeight + titleDivHeight + 10}px`);
-      }, 200);
+        ribbonElementsWithoutId.forEach((element) => {
+          element.style.height = `${maxHeight+titleDivHeight+20}px`;
+        });
+        // setDivHeight(`${maxRibbonHeight}px`);
+      }, 300);
     };
 
     updateDimensions();
@@ -64,28 +73,28 @@ const CustomRibbonGroup = ({ data }) => {
   }, [data.ID, data.id]);
   const size = Size || 2;
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      setTimeout(() => {
-        const ribbonElements = document.querySelectorAll('[id^="ribbon-height"]');
-        let maxRibbonHeight = 0;
-     
-        ribbonElements.forEach((element) => {
-          const elementHeight = element.getBoundingClientRect().height || 0;
-          maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
-        });
+  // useEffect(() => {
+  //   const updateDimensions = () => {
+  //     setTimeout(() => {
+  //       const ribbonElements = document.querySelectorAll('[id^="ribbon-height"]');
+  //       let maxRibbonHeight = 0;
 
-        ribbonElements.forEach((element) => {
-          element.style.height = `${maxRibbonHeight}px`;
-        });
-      }, 200);
-    };
+  //       ribbonElements.forEach((element) => {
+  //         const elementHeight = element.getBoundingClientRect().height || 0;
+  //         maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
+  //       });
 
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
+  //       ribbonElements.forEach((element) => {
+  //         element.style.height = `${maxRibbonHeight+5}px`;
+  //       });
+  //     }, 600);
+  //   };
 
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
+  //   updateDimensions();
+  //   window.addEventListener("resize", updateDimensions);
+
+  //   return () => window.removeEventListener("resize", updateDimensions);
+  // }, []);
 
 
   return (
@@ -97,7 +106,7 @@ const CustomRibbonGroup = ({ data }) => {
           position: 'relative',
           alignItems: 'start',
           ...customStyle,
-          height: divHeight,
+          height: divHeight+18,
           justifyContent: "space-around",
           alignItems: "center"
         }}
