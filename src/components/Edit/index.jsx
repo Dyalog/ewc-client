@@ -72,6 +72,7 @@ const Edit = ({
     EdgeStyle,
     Border = 0,
     CSS,
+    Active,
   } = data?.Properties;
 
   const hasTextProperty = data?.Properties.hasOwnProperty("Text");
@@ -286,6 +287,7 @@ const Edit = ({
     else if (e.key == "ArrowUp") handleUpArrow();
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
+
     const eventId = uuidv4();
     setEventId(eventId);
     const isAltPressed = e.altKey ? 4 : 0;
@@ -570,6 +572,7 @@ const Edit = ({
           type="date"
           ref={inputRef}
           onChange={handleDateChange}
+          disabled={Active === 0}
           style={{
             ...styles,
             position: "absolute",
@@ -591,6 +594,7 @@ const Edit = ({
         getInputRef={inputRef}
         onClick={handleInputClick}
         id={data?.ID}
+        disabled={Active === 0}
         style={{
           ...styles,
           width: !Size ? "100%" : Size[1],
@@ -651,6 +655,7 @@ const Edit = ({
       value={inputValue}
       onClick={handleInputClick}
       type={inputType}
+      disabled={Active === 0}
       onChange={(e) => {
         if (FieldType == "Char") {
           setEmitValue(e.target.value);
@@ -676,7 +681,11 @@ const Edit = ({
           (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
             ? "1px solid #6A6A6A"
             : "none",
-        ...customStyles
+        ...(Active === 0 ? {
+          backgroundColor: "field",
+          color: "#838383",
+        } : {}),
+        ...customStyles,
       }}
       maxLength={MaxLength}
       onFocus={handleGotFocus}

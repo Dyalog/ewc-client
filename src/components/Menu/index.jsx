@@ -1,10 +1,12 @@
-import { excludeKeys, isEmpty, setStyle } from '../../utils';
+import { excludeKeys, isEmpty, setStyle, parseFlexStyles } from '../../utils';
 import Dropdown from '../DropDown';
 import './Menu.css';
 
 const Menu = ({ data }) => {
   const updatedData = excludeKeys(data);
-  const style = setStyle(data.Properties)
+  const style = setStyle(data.Properties);
+  const { CSS } = data.Properties;
+  const customStyles = parseFlexStyles(CSS);
 
   const empty = isEmpty(updatedData);
 
@@ -18,7 +20,9 @@ const Menu = ({ data }) => {
           marginLeft: '7px',
           cursor: 'pointer',
           display: 'inline-block',
+          zIndex: '1000',
           ...style,
+          ...customStyles,
         }}
         className='menu-item'
       >
@@ -31,9 +35,12 @@ const Menu = ({ data }) => {
   }
 
   // Render the DropDown if the Object have Menu Items
+  // style and customStyles are passed on as-is
   return (
     <Dropdown
       data={updatedData}
+      style={style}
+      customStyles={customStyles}
       title={
         // data?.Properties?.Caption?.includes('&')
         //   ? data?.Properties?.Caption?.substring(1)
