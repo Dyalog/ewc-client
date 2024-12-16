@@ -6,13 +6,15 @@ import RibbonGalleyItem from "./RibbonGalleyItem";
 
 const RibbonGallery = ({ data }) => {
   const { socket, findCurrentData } = useAppData();
-  const {Cols, ItemHeight ,ItemWidth} = data.Properties;
+  const { Cols, ItemHeight, ItemWidth } = data.Properties;
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
+  const galleryRef2 = useRef(null);
+  const [maxWidth, setMaxWidth] = useState(0);
+
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
-  
 
   const menuItems = Object.keys(data)
     .filter((key) => key.startsWith("MItem"))
@@ -50,6 +52,36 @@ const RibbonGallery = ({ data }) => {
   };
 
   useEffect(() => {
+    const calculateMaxWidth = () => {
+      if (galleryRef2.current) {
+        const childElements = galleryRef2.current.children;
+        let widestWidth = 0;
+
+        // Debugging: Log child elements
+        console.log("Child elements for maxWidth calculation:", childElements);
+
+        // Find the maximum width of all child items
+        Array.from(childElements).forEach((child, index) => {
+          const childWidth = child.getBoundingClientRect().width;
+
+          // Debugging: Log each child's width
+          console.log(`Child ${index} width:`, childWidth);
+
+          widestWidth = Math.max(widestWidth, childWidth);
+        });
+
+        // Debugging: Log the calculated maxWidth
+        console.log("Calculated widest width:", widestWidth);
+
+        setMaxWidth(widestWidth);
+      }
+    };
+
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(calculateMaxWidth, 100);
+  }, [menuItems]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         isDropdownOpen &&
@@ -68,20 +100,45 @@ const RibbonGallery = ({ data }) => {
   const visibleItems = menuItems.slice(startIndex, startIndex + Cols);
   const isUpDisabled = startIndex === 0;
   const isDownDisabled = startIndex >= maxStartIndex;
-  const itemWidth = ItemWidth ? ItemWidth : 50
-  const itemHeight = ItemHeight ? ItemHeight : 40
+  const itemWidth = maxWidth || ItemWidth || 50;
+  const itemHeight = ItemHeight || 40;
+
+  console.log("Final maxWidth value:", maxWidth, maxWidth * Cols + Cols * 5 + 22);
 
   return (
     <div
       className="ribbon-gallery"
       ref={galleryRef}
-      style={{ width: "inherit", height: `${itemHeight + 8}px`, justifyContent: "start", margin: "5px" }}
+      style={{
+        minWidth:"max-content",
+        width: maxWidth * Cols + Cols * 5 + 22,
+        height: `${itemHeight + 8}px`,
+        justifyContent: "start",
+        margin: "5px",
+      }}
     >
       {!isDropdownOpen && (
-        <div className="d-flex" style={{ width: "calc(100% - 14px)", justifyContent: `${visibleItems.length < Cols ? "start" : "center"}`, marginLeft: `${visibleItems.length < Cols ? "10px" : ""}` }} >
-          <div className="gallery-content" >
+        <div
+          className="d-flex"
+          style={{
+            justifyContent: `${
+              visibleItems.length < Cols ? "start" : "center"
+            }`,
+            marginLeft: `${visibleItems.length < Cols ? "10px" : ""}`,
+          }}
+        >
+          <div className="gallery-content" ref={galleryRef2}>
             {visibleItems.map((item, index) => (
-              <RibbonGalleyItem key={index} data={item} className="" startIndex={index + startIndex} handleSelectEvent={handleSelectEvent} ItemWidth={itemWidth} ItemHeight={itemHeight} fontProperties={fontProperties} />
+              <RibbonGalleyItem
+                key={index}
+                data={item}
+                className=""
+                startIndex={index + startIndex}
+                handleSelectEvent={handleSelectEvent}
+                ItemWidth={maxWidth}
+                ItemHeight={itemHeight-2}
+                fontProperties={fontProperties}
+              />
             ))}
           </div>
           <div className="gallery-buttons" style={{ position: "absolute", right: 0 }}>
@@ -113,7 +170,13 @@ const RibbonGallery = ({ data }) => {
       )}
       {isDropdownOpen && (
         <>
-          <div className="dropdown-content" style={{ width: `${(itemWidth) * Cols}px`, height: `${itemHeight}px` }}>
+          <div
+            className="dropdown-content"
+            style={{
+              width: `${itemWidth * Cols}px`,
+              height: `${itemHeight}px`,
+            }}
+          >
             <div
               className="dropdown-grid"
               style={{
@@ -123,7 +186,15 @@ const RibbonGallery = ({ data }) => {
               }}
             >
               {menuItems.map((item, index) => (
-                <RibbonGalleyItem key={index} data={item} handleSelectEvent={handleSelectEvent} startIndex={index} className="ribbon-dropdown-item" ItemWidth={itemWidth} ItemHeight={itemHeight}/>
+                <RibbonGalleyItem
+                  key={index}
+                  data={item}
+                  handleSelectEvent={handleSelectEvent}
+                  startIndex={index}
+                  className="ribbon-dropdown-item"
+                  ItemWidth={itemWidth}
+                  ItemHeight={itemHeight}
+                />
               ))}
             </div>
           </div>

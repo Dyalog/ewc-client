@@ -7,6 +7,27 @@ const Dropdown = ({ title, data, style, customStyles }) => {
   const { socket } = useAppData();
 
   useEffect(() => {
+    const style = document.createElement("style");
+
+    style.innerHTML = `
+.dropdown-item {
+  display: flex;
+  flex-direction: co⌈lumn;
+  align-items: start;
+  cursor: pointer;
+  width: 'fit-content';
+  height: auto;
+
+}
+      `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, [data]);
+
+
+  useEffect(() => {
     const handleShortcut = (event) => {
       Object.keys(data).forEach((key) => {
         const itemCaption = data[key]?.Properties?.Caption;

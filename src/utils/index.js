@@ -585,3 +585,40 @@ export const getCurrentUrl = () => {
 
   return currentUrl + path;
 };
+
+
+export function findLongestID(obj) {
+  let longestID = "";
+
+  function traverse(item) {
+      if (typeof item === "object" && item !== null) {
+          for (let key in item) {
+              if (key === "ID" && typeof item[key] === "string" && item[key].length > longestID.length) {
+                  longestID = item[key];
+              }
+              traverse(item[key]);
+          }
+      }
+  }
+
+  traverse(obj);
+  return longestID;
+}
+
+
+export const getImageFromData = (data, ImageIndex) => {
+  if (data?.Properties?.Files) {
+    const imageListData = data.Properties.Files;
+
+    if (imageListData) {
+      const imageUrl = imageListData[ImageIndex - 1];
+      const imageSize = data.Properties.Size;
+      return {
+        imageUrl: imageUrl,
+        imageSize: imageSize,
+      };
+
+    }
+  }
+  return null;
+};

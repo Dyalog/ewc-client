@@ -79,8 +79,7 @@
 }
 
 /* Individual item */
-.gallery-item,
-.dropdown-item {
+.gallery-item{
   display: flex;
   flex-direction: column;
   align-items: center;
