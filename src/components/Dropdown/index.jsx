@@ -61,7 +61,15 @@ const Dropdown = ({ title, data, style, customStyles }) => {
   };
 
   return (
-    <div style={{ fontSize: '12px', marginLeft: '7px', cursor: 'pointer', ...style, ...customStyles}} className='menu-item'>
+    <div style={{
+        fontSize: '12px',
+        marginLeft: '7px',
+        cursor: 'pointer',
+        zIndex: '1000',
+        ...style,
+        ...customStyles
+      }}
+      className='menu-item'>
       {title}
       <div className='dropdown'>
         {Object.keys(data).map((key) => (
