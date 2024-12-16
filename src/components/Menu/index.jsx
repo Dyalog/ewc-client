@@ -20,6 +20,7 @@ const Menu = ({ data }) => {
           marginLeft: '7px',
           cursor: 'pointer',
           display: 'inline-block',
+          zIndex: '1000',
           ...style,
           ...customStyles,
         }}
