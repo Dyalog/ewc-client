@@ -12,7 +12,7 @@ const CustomRibbonItem = ({ data }) => {
     <div
       data-alt-id={data?.ID}
       id={`ribbon-height-${data.id}`}
-      style={{ display: 'flex', justifyContent: 'center', ...customStyles, height: "100%" }}
+      style={{ display: 'flex', justifyContent: 'center', ...customStyles, height: "100%", width:"max-content"}}
     >
       {Object.keys(updatedData).map((key, index) => {
         return <SelectComponent key={index} data={{ ...updatedData[key], FontObj: data.FontObj, ImageList: data.ImageList }} />;
