@@ -39,7 +39,7 @@ const MsgBox = ({ data, onClose, isDesktop, options }) => {
           )}
           <span>{Text}</span>
         </div>
-        <div className={`msgbox-footer with-border`}>
+        <div className={`msgbox-footer ${renderCheck ? 'with-border': ''}`}>
           {Array.isArray(Btns) ? (
             Btns.map((btn, index) => (
               <button
