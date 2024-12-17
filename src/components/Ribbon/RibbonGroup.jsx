@@ -104,11 +104,11 @@ const CustomRibbonGroup = ({ data }) => {
           border: `1px solid ${rgbColor(BorderCol)}`,
           borderTop: 0,
           position: 'relative',
-          alignItems: 'start',
-          ...customStyle,
           height: divHeight+18,
           justifyContent: "space-around",
-          alignItems: "center"
+          alignItems: 'center',
+          paddingTop: "3px",
+          ...customStyle,
         }}
         id={`ribbon-height`}
         className="row"
