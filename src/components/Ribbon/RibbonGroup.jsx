@@ -106,7 +106,6 @@ const CustomRibbonGroup = ({ data }) => {
           position: 'relative',
           height: divHeight+18,
           justifyContent: "space-around",
-          alignItems: 'center',
           paddingTop: "3px",
           ...customStyle,
         }}
