@@ -4,43 +4,20 @@ import { Row, Col } from "reactstrap"; // Remove if you're not using reactstrap 
 import { MdOutlineQuestionMark } from "react-icons/md";
 import { GoChevronDown } from "react-icons/go";
 import { useAppData } from "../../hooks";
-import { getCurrentUrl, parseFlexStyles } from "../../utils";
+import { getCurrentUrl, getImageFromData, parseFlexStyles } from "../../utils";
 import RibbonDropDownItem from "./RibbonDropDownItem";
 
 const RibbonDropDownButton = ({ data }) => {
-  console.log("ribbonDropdownButton", data);
-  const ImageList = JSON.parse(localStorage.getItem("ImageList"));
-  const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket } = useAppData();
-
-  const { Icon, Caption, ImageIndex, CSS } = data?.Properties;
+  const ImageList = data.ImageList
+  const { socket, findCurrentData, fontScale } = useAppData();
+  const font = findCurrentData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
+  const { Icon, Caption, ImageIndex, CSS,ImageListObj } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
-
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const wrapperRef = useRef(null);
-
-  const getImageFromData = (data) => {
-    if (data.Properties && data?.Properties.ImageListObj) {
-      const imageListObj = data?.Properties.ImageListObj;
-      const imageListData = ImagesData?.find(
-        (imageData) => imageData.ID === imageListObj
-      );
-
-      if (imageListData) {
-        const imageIndex = data?.Properties.ImageIndex;
-        const imageUrl = imageListData?.Properties.Files[imageIndex - 1];
-        const imageSize = imageListData.Properties.Size;
-
-        return {
-          imageUrl: imageUrl,
-          imageSize: imageSize,
-        };
-      }
-    }
-    return null;
-  };
-
-  const ImageData = getImageFromData(data);
+  const ImageListObjCurrent = findCurrentData(ImageListObj)
+  const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex); 
 
   const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({
@@ -117,12 +94,17 @@ const RibbonDropDownButton = ({ data }) => {
             ) : (
               <IconComponent size={35} />
             )}
-            <div className="text-center" style={{ fontSize: "12px" }}>
+            <div className="text-center" style={{ fontFamily: fontProperties?.PName,
+                fontSize: fontProperties?.Size
+                    ? `${fontProperties.Size * fontScale}px`
+                    : `${12 * fontScale}px`,}}>
               {Caption}
             </div>
             <GoChevronDown
 
-              size={16}
+              size={fontProperties?.Size
+                ? `${fontProperties.Size * fontScale}`
+                : `${12 * fontScale}`}
             />
           </div>
 
@@ -141,7 +123,7 @@ const RibbonDropDownButton = ({ data }) => {
             >
               {menuItems.map((item, index) => {
                 return (
-                  <RibbonDropDownItem data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} />
+                  <RibbonDropDownItem key={index} data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} fontProperties={fontProperties} />
                 )
 
               })}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppDataContext } from './context';
 import { SelectComponent } from './components';
 import {
@@ -16,6 +16,7 @@ import * as _ from 'lodash';
 import Text from './components/Text';
 import version from "../version.json"
 import Upload from './components/Upload';
+import MsgBox from './components/MessageBox';
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -45,11 +46,57 @@ const App = () => {
     currentEventRef.current = { ...currentEventRef.current, ...newEvent };
   };
 
-
   const dataRef = useRef({});
   const appRef = useRef(null);
+  const debounceDelay = 200; 
+  const [isWebSocketActive, setIsWebSocketActive] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+  const renderTimeout = useRef(null);
+  
 
+
+  useEffect(() => {
+    if (!isWebSocketActive) {
+      setShouldRender(true); // Allow rendering when WebSocket is inactive
+    }
+  }, [isWebSocketActive]);
+  
+  useEffect(() => {
+    if (shouldRender) {
+      reRender(); // Trigger your re-render logic
+      setShouldRender(false); // Reset render flag
+    }
+  }, [shouldRender]);
+  let debounceTimer = null;
+
+  const renderTimer = useRef(null);
+  
+  const triggerRender = () => {
+     if (renderTimer.current) clearTimeout(renderTimer.current);
+  
+    renderTimer.current = setTimeout(() => {
+      setShouldRender(true);
+    }, 5000); 
+  };
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
+
+  // Container for global EWC we want to be able to inspect
+  if (!window.EWC) window.EWC = {};
+  
+  // ping only gets set up once. It's a simple Ping to the server but
+  // requires no response. This is to keep the connection alive when faced with
+  // a proxy or gateway that closes connections with no traffic. In our
+  // experience, this happens at 1min.
+  if (!window.EWC?.ping) {
+    window.EWC.pingMS = 0;
+    window.EWC.ping = () => {
+      window.setTimeout(() => {
+        if (window.EWC.pingMS > 0) webSocketRef.current.send('{"Event":{"EventName":"Ping","ID":""}}');
+        window.EWC.ping();
+      }, window.EWC.pingMS == 0 ? 1000 : window.EWC.pingMS);
+    };
+    window.EWC.ping();
+  }
 
   useEffect(() => {
     dataRef.current = {};
@@ -227,7 +274,7 @@ const App = () => {
       // console.log('compare', {data, newData})
     }
 
-    reRender();
+    triggerRender();
   };
 
   // const deleteObjectsById = (data, idsToDelete) => {
@@ -324,6 +371,9 @@ const App = () => {
     };
     webSocket.onmessage = (event) => {
       const keys = Object.keys(JSON.parse(event.data));
+      if (renderTimeout.current) clearTimeout(renderTimeout.current);
+
+  setIsWebSocketActive(true);
       if (keys[0] == 'WC') {
         let windowCreationEvent = JSON.parse(event.data).WC;
         // console.log({windowCreationEvent})
@@ -333,6 +383,7 @@ const App = () => {
           dataRef.current = {};
           dataRef.current = updatedData;
           handleData(JSON.parse(event.data).WC, 'WC');
+          triggerRender()
           return;
         }
 
@@ -346,6 +397,7 @@ const App = () => {
         // console.log('event from server WC', JSON.parse(event.data).WC);
         setSocketData((prevData) => [...prevData, JSON.parse(event.data).WC]);
         handleData(JSON.parse(event.data).WC, 'WC');
+        triggerRender()
 
       } else if (keys[0] == 'WS') {
         const serverEvent = JSON.parse(event.data).WS;
@@ -1258,6 +1310,9 @@ const App = () => {
           );
 
           return;
+        } else if (Event == 'SetPing') {
+          window.EWC.pingMS = Info[0]*1000;
+          return;
         } else if ((Event && Event == 'ItemDown') || (Event && Event == 'GotFocus')) {
           if (Event && Event == 'GotFocus') localStorage.setItem('current-focus', ID);
 
@@ -1486,6 +1541,9 @@ const App = () => {
           'WS'
         );
       } 
+      renderTimeout.current = setTimeout(() => {
+        setIsWebSocketActive(false);
+      }, 200)
     };
   };
 
@@ -1505,7 +1563,7 @@ const App = () => {
     }
   };
 
-  // const updatedData = _.cloneDeep(dataRef.current);
+
   console.log('App', dataRef.current);
 
   const setColorFunc = (colorStandardArray)=>{
@@ -1518,12 +1576,32 @@ const App = () => {
   const formParentID = findFormParentID(dataRef.current);
   
   const handleMsgBoxClose = (button, ID) => {
-    // console.log(`Button pressed: ${button}`);
     setMessageBoxData(null);
-    // Send event back to server via WebSocket
     socket.send(JSON.stringify({Event: { EventName: button, ID: ID }}));
   };
+  const [renderTrigger, setRenderTrigger] = useState(0); 
+  const debounceTimeout = useRef(null);
 
+  const handleDataUpdate = () => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+   debounceTimeout.current = setTimeout(() => {
+      setRenderTrigger((prev) => prev + 1);
+    }, 300); 
+  };
+
+  useEffect(() => {
+     handleDataUpdate();
+
+    return () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
+  }, [dataRef.current])
+
+  const memoizedData = useMemo(() => {
+    const parentData = formParentID ? dataRef.current[formParentID] : null;
+
+    return parentData;
+  }, [renderTrigger])
 
   return (
     <div>
@@ -1547,7 +1625,8 @@ const App = () => {
           updateCurrentEvent
         }}
       >
-        {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />}
+        {memoizedData && <SelectComponent data={memoizedData} />}
+        {/* {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />} */}
       </AppDataContext.Provider>
       {messageBoxData && (
         <MsgBox data = { messageBoxData } options = {options} onClose = { handleMsgBoxClose } isDesktop = { dataRef?.current?.Mode?.Properties?.Desktop} />

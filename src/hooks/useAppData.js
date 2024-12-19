@@ -5,6 +5,7 @@ import { flattenJsonToArray } from './../utils/index';
 const useAppData = () => {
 
   const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef} =
+
     useContext(AppDataContext);
 
   const findDesiredData = (ID) => {
@@ -17,8 +18,13 @@ const useAppData = () => {
     return findData;
   };
 
+  const findCurrentData = (ID) => {
+    const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
+    return findData;
+  }
+
   const findAggregatedPropertiesData = (ID) => {
-    const findAllData = socketData.filter((obj)=> obj.ID === ID)
+    const findAllData = socketData.filter((obj) => obj.ID === ID)
     const reqObj = {
       ID: ID,
       Properties: {}
@@ -57,8 +63,7 @@ const useAppData = () => {
     setNqEvents,
     findCurrentData,
     updateCurrentEvent,currentEventRef
-    
-
+    findCurrentData
   };
 };
 export default useAppData;
