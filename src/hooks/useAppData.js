@@ -1,5 +1,6 @@
 import { AppDataContext } from '../context';
 import { useContext } from 'react';
+import { flattenJsonToArray } from './../utils/index';
 
 const useAppData = () => {
 
@@ -8,6 +9,11 @@ const useAppData = () => {
 
   const findDesiredData = (ID) => {
     const findData = socketData?.find((obj) => obj.ID == ID);
+    return findData;
+  };
+  
+  const findCurrentData = (ID) => {
+    const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
     return findData;
   };
 
