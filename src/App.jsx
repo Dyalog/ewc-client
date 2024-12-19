@@ -39,6 +39,12 @@ const App = () => {
   const [options, setOptions] = useState(null)
   const [fontScale, setFontScale] = useState(null);
   let colors = {}
+  const currentEventRef = useRef({ curEvent: "", eventID: "", keyEvent: "" });
+
+  const updateCurrentEvent = (newEvent) => {
+    currentEventRef.current = { ...currentEventRef.current, ...newEvent };
+  };
+
 
   const dataRef = useRef({});
   const appRef = useRef(null);
@@ -1377,18 +1383,21 @@ const App = () => {
       } 
       else if (keys[0] == "EC"){
         const serverEvent = JSON.parse(event.data).EC;
+
         const { EventID, Proceed } = serverEvent
-        setProceedEventArray((prev) => {
+        setProceedEventArray((prev) => { 
+          console.log("use effect", currentEventRef.current)
+          // console.log("hello 1", currentEvent.curEvent)
           const hasEventID = Object.keys(prev).some(key => key.includes(EventID));
           return {
             ...prev,
-            [`${EventID}${localStorage.getItem("current-event")}`]:
+            [`${EventID}${currentEventRef.current.curEvent}`]:
               Proceed
           };
         });
         // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
         setProceed(Proceed)
-        localStorage.setItem(EventID, 0);  
+        // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);  
       }
       else if (keys[0] == 'EX') {
         const serverEvent = JSON.parse(event.data).EX;
@@ -1534,6 +1543,8 @@ const App = () => {
           fontScale,
           nqEvents,
           setNqEvents,
+          currentEventRef: currentEventRef.current,
+          updateCurrentEvent
         }}
       >
         {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />}
