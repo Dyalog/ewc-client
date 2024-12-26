@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppDataContext } from './context';
 import { SelectComponent } from './components';
 import {
@@ -43,36 +43,7 @@ const App = () => {
 
   const dataRef = useRef({});
   const appRef = useRef(null);
-  const debounceDelay = 200; 
-  const [isWebSocketActive, setIsWebSocketActive] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
-  const renderTimeout = useRef(null);
-  
 
-
-  useEffect(() => {
-    if (!isWebSocketActive) {
-      setShouldRender(true); // Allow rendering when WebSocket is inactive
-    }
-  }, [isWebSocketActive]);
-  
-  useEffect(() => {
-    if (shouldRender) {
-      reRender(); // Trigger your re-render logic
-      setShouldRender(false); // Reset render flag
-    }
-  }, [shouldRender]);
-  let debounceTimer = null;
-
-  const renderTimer = useRef(null);
-  
-  const triggerRender = () => {
-     if (renderTimer.current) clearTimeout(renderTimer.current);
-  
-    renderTimer.current = setTimeout(() => {
-      setShouldRender(true);
-    }, 5000); 
-  };
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
 
   // Container for global EWC we want to be able to inspect
@@ -269,7 +240,7 @@ const App = () => {
       // console.log('compare', {data, newData})
     }
 
-    triggerRender();
+    reRender();
   };
 
   // const deleteObjectsById = (data, idsToDelete) => {
@@ -366,9 +337,6 @@ const App = () => {
     };
     webSocket.onmessage = (event) => {
       const keys = Object.keys(JSON.parse(event.data));
-      if (renderTimeout.current) clearTimeout(renderTimeout.current);
-
-  setIsWebSocketActive(true);
       if (keys[0] == 'WC') {
         let windowCreationEvent = JSON.parse(event.data).WC;
         // console.log({windowCreationEvent})
@@ -378,7 +346,6 @@ const App = () => {
           dataRef.current = {};
           dataRef.current = updatedData;
           handleData(JSON.parse(event.data).WC, 'WC');
-          triggerRender()
           return;
         }
 
@@ -392,7 +359,6 @@ const App = () => {
         // console.log('event from server WC', JSON.parse(event.data).WC);
         setSocketData((prevData) => [...prevData, JSON.parse(event.data).WC]);
         handleData(JSON.parse(event.data).WC, 'WC');
-        triggerRender()
 
       } else if (keys[0] == 'WS') {
         const serverEvent = JSON.parse(event.data).WS;
@@ -1533,9 +1499,6 @@ const App = () => {
           'WS'
         );
       } 
-      renderTimeout.current = setTimeout(() => {
-        setIsWebSocketActive(false);
-      }, 200)
     };
   };
 
@@ -1555,7 +1518,7 @@ const App = () => {
     }
   };
 
-
+  // const updatedData = _.cloneDeep(dataRef.current);
   console.log('App', dataRef.current);
 
   const setColorFunc = (colorStandardArray)=>{
@@ -1568,32 +1531,12 @@ const App = () => {
   const formParentID = findFormParentID(dataRef.current);
   
   const handleMsgBoxClose = (button, ID) => {
+    // console.log(`Button pressed: ${button}`);
     setMessageBoxData(null);
+    // Send event back to server via WebSocket
     socket.send(JSON.stringify({Event: { EventName: button, ID: ID }}));
   };
-  const [renderTrigger, setRenderTrigger] = useState(0); 
-  const debounceTimeout = useRef(null);
 
-  const handleDataUpdate = () => {
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-   debounceTimeout.current = setTimeout(() => {
-      setRenderTrigger((prev) => prev + 1);
-    }, 300); 
-  };
-
-  useEffect(() => {
-     handleDataUpdate();
-
-    return () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, [dataRef.current])
-
-  const memoizedData = useMemo(() => {
-    const parentData = formParentID ? dataRef.current[formParentID] : null;
-
-    return parentData;
-  }, [renderTrigger])
 
   return (
     <div>
@@ -1615,8 +1558,7 @@ const App = () => {
           setNqEvents,
         }}
       >
-        {memoizedData && <SelectComponent data={memoizedData} />}
-        {/* {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />} */}
+        {dataRef && formParentID && <SelectComponent data={dataRef.current[formParentID]} />}
       </AppDataContext.Provider>
       {messageBoxData && (
         <MsgBox data = { messageBoxData } options = {options} onClose = { handleMsgBoxClose } isDesktop = { dataRef?.current?.Mode?.Properties?.Desktop} />
