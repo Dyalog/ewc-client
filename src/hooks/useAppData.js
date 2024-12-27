@@ -18,11 +18,6 @@ const useAppData = () => {
     return findData;
   };
 
-  const findCurrentData = (ID) => {
-    const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
-    return findData;
-  }
-
   const findAggregatedPropertiesData = (ID) => {
     const findAllData = socketData.filter((obj) => obj.ID === ID)
     const reqObj = {
@@ -63,7 +58,6 @@ const useAppData = () => {
     setNqEvents,
     findCurrentData,
     updateCurrentEvent,currentEventRef
-    findCurrentData
   };
 };
 export default useAppData;
