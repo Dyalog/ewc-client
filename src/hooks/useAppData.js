@@ -1,14 +1,20 @@
 import { AppDataContext } from '../context';
 import { useContext } from 'react';
-import { flattenJsonToArray } from '../utils';
+import { flattenJsonToArray } from './../utils/index';
 
 const useAppData = () => {
 
-  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors, fontScale, nqEvents, setNqEvents } =
+  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef} =
+
     useContext(AppDataContext);
 
   const findDesiredData = (ID) => {
     const findData = socketData?.find((obj) => obj.ID == ID);
+    return findData;
+  };
+  
+  const findCurrentData = (ID) => {
+    const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
     return findData;
   };
 
@@ -55,8 +61,9 @@ const useAppData = () => {
     fontScale,
     nqEvents,
     setNqEvents,
+    findCurrentData,
+    updateCurrentEvent,currentEventRef
     findCurrentData
-
   };
 };
 export default useAppData;
