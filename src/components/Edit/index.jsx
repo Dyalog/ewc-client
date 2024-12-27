@@ -320,30 +320,53 @@ const Edit = ({
   };
 
   const triggerChangeEvent = () => {
-    const focusedId = localStorage.getItem("current-focus");
+    // TODO as far as I can tell, this is how we are storing the last value, so
+    // we can fetch it again for WG.
+    // *Not* setting this value in localStorage causes problems.
+    let event2;
 
-    const event2 = JSON.stringify({
-      Event: {
-        EventName: "Change",
-        ID: data?.ID,
-        Info:
-          (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
-            ? parseInt(emitValue)
-            : emitValue,
-      },
-    });
-    // console.log({event2})
-    handleData(
-      {
-        ID: data?.ID,
-        Properties: {
-          ...(FieldType === "LongNumeric" || FieldType === "Numeric"
-            ? { Value: parseInt(emitValue) }
-            : { Text: emitValue })
+    if (FieldType === "Date") {
+      event2 = JSON.stringify({
+        Event: {
+          EventName: "Change",
+          ID: data?.ID,
+          Info: emitValue,
         },
-      },
-      "WS"
-    );
+      });
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            Value: emitValue,
+            Text: inputValue,
+          },
+        },
+        "WS"
+      )
+    } else {
+      event2 = JSON.stringify({
+        Event: {
+          EventName: "Change",
+          ID: data?.ID,
+          Info:
+            (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
+              ? parseInt(emitValue)
+              : emitValue,
+        },
+      });
+      // console.log({event2})
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            ...(FieldType === "LongNumeric" || FieldType === "Numeric"
+              ? { Value: parseInt(emitValue) }
+              : { Text: emitValue })
+          },
+        },
+        "WS"
+      );
+    }
     localStorage.setItem(data?.ID, event2);
     localStorage.setItem(
       "shouldChangeEvent",
@@ -568,7 +591,7 @@ const Edit = ({
           }}
         />
         <input
-          id={data?.ID}
+          id={data?.ID + '.Picker'}
           type="date"
           ref={inputRef}
           onChange={handleDateChange}
