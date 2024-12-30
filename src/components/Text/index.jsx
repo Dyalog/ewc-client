@@ -39,6 +39,41 @@ const flattenIfThreeLevels = (arr) => {
   }
 };
 
+const calculateTextDimensions = (lines, fontSize = 12) => {
+  // Create a hidden div element to calculate text dimensions
+  const scale = localStorage.getItem("fontscale")
+  const container = document.createElement('div');
+  container.style.visibility = 'hidden';
+  container.style.display = 'inline-block';
+  container.style.position = 'fixed';
+  container.style.fontSize = fontSize;
+  container.style.lineHeight = fontSize + 'px';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.fontSize = (fontSize * scale) + 'px';
+
+  // Iterate through the array of words
+  lines.forEach(line => {
+    // Create a span element for each word
+    const lineDiv = document.createElement('div');
+    lineDiv.style.margin = '0';
+    lineDiv.style.padding = '0';
+    lineDiv.textContent = line;
+    lineDiv.style.display = 'block'; // Start each word on a new line
+    container.appendChild(lineDiv);
+  });
+
+  // Append the container to the body
+  document.body.appendChild(container);
+  // Retrieve dimensions
+  const width = container.offsetWidth;
+  const height = container.offsetHeight;
+
+  document.body.removeChild(container);
+
+  return [height, width];
+};
+
 const Text = ({ data, fontProperties }) => {
   const { Visible, Points, Text, FCol, BCol, Event, CSS } = data?.Properties;
 
@@ -55,29 +90,6 @@ const Text = ({ data, fontProperties }) => {
 
   const pointsArray =
     newPoints && newPoints[0].map((y, i) => [newPoints[1][i], y]);
-
-  const calculateTextDimensions = (text, fontSize = 12) => {
-    const container = document.createElement("span");
-    container.style.visibility = "hidden";
-    container.style.position = "fixed";
-    container.style.top = "0";
-    container.style.left = "0";
-    container.style.fontSize = fontSize + "px";
-    container.style.lineHeight = "1";
-
-    const span = document.createElement("p");
-    span.textContent = text;
-    span.style.display = "block";
-    container.appendChild(span);
-
-    document.body.appendChild(container);
-
-    const width = span.offsetWidth;
-    const height = span.offsetHeight;
-    document.body.removeChild(container);
-
-    return { height, width };
-  };
 
   return (
     <>
@@ -116,7 +128,7 @@ const Text = ({ data, fontProperties }) => {
         >
           {Text?.map((text, index) => {
             const dimensions = calculateTextDimensions(
-              text,
+              [text],
               fontProperties?.Size
                 ? fontProperties.Size * fontScale
                 : 12 * fontScale
@@ -147,29 +159,28 @@ const Text = ({ data, fontProperties }) => {
                 />
                 <text
                   id={`${data?.ID}-t${index + 1}`}
-                  // fill='red'
-                  alignment-baseline="middle"
-                  dy="0.6em"
+                  dominantBaseline="hanging"
+                  dy="0em"
                   x={points && points[0]}
                   y={points && points[1]}
-                  font-family={fontProperties?.PName}
-                  font-size={
+                  fontFamily={fontProperties?.PName}
+                  fontSize={
                     fontProperties?.Size
                       ? `${fontProperties.Size * fontScale}px`
                       : `${12 * fontScale}px`
                   }
                   fill={FCol ? rgbColor(FCol[index]) : "black"}
-                  font-style={
+                  fontStyle={
                     !fontProperties?.Italic
                       ? "none"
                       : fontProperties?.Italic == 1
                       ? "italic"
                       : "none"
                   }
-                  font-weight={
+                  fontWeight={
                     !fontProperties?.Weight ? 0 : fontProperties?.Weight
                   }
-                  text-decoration={
+                  textDecoration={
                     !fontProperties?.Underline
                       ? "none"
                       : fontProperties?.Underline == 1
@@ -195,4 +206,7 @@ const Text = ({ data, fontProperties }) => {
     </>
   );
 };
+
+Text.calculateTextDimensions = calculateTextDimensions;
+
 export default Text;

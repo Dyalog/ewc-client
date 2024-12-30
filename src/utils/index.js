@@ -160,7 +160,7 @@ export const handleKeyPressUtils = (e, socket, Event, ID) => {
   const charCode = e?.key?.charCodeAt(0);
   let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
-  const exists = Event.some((item) => item[0] === 'KeyPress');
+  const exists = Event && Event.some((item) => item[0] === 'KeyPress');
   if (!exists) return;
 
   console.log(
@@ -230,10 +230,8 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
       ? { position: "absolute" }
       : { position: "relative" }),
     // position: Properties?.Posn ? 'absolute' : 'relative',
-    height: Properties?.Size && Properties?.Size[0],
-    width: Properties?.Size && Properties?.Size[1],
-    top: Properties?.Posn && Properties?.Posn[0],
-    left: Properties?.Posn && Properties?.Posn[1],
+    ...(Properties?.Size && { height: Properties?.Size && Properties?.Size[0], width: Properties?.Size && Properties?.Size[1] }),
+    ...(Properties?.Posn && { top: Properties?.Posn && Properties?.Posn[0], left: Properties?.Posn && Properties?.Posn[1] }),
   };
 };
 
@@ -348,6 +346,28 @@ export const getObjectById = (jsonData, targetId) => {
   const result = searchObject(data, targetId);
   return result ? JSON.stringify(result, null, 2) : null;
 };
+
+export function flattenJsonToArray(obj) {
+  let result = [];
+
+  function recurse(currentObj) {
+    if (currentObj && currentObj.ID && currentObj.Properties) {
+      result.push({
+        ID: currentObj.ID,
+        Properties: currentObj.Properties
+      });
+    }
+
+    for (let key in currentObj) {
+      if (typeof currentObj[key] === 'object' && currentObj[key] !== null) {
+        recurse(currentObj[key]); 
+      }
+    }
+  }
+
+  recurse(obj);
+  return result;
+}
 
 export const generateAsteriskString = (length) => {
   if (length <= 0) {
@@ -552,15 +572,53 @@ export const getCurrentUrl = () => {
   const currentUrl = window.location.origin;
   const path = window.location.pathname !== "/" ? window.location.pathname : "";
 
-  if (import.meta.env.VITE_APL_URL) {
-    return import.meta.env.VITE_APL_URL + path;
-  }
-
   if (import.meta.env.DEV) {
-    alert("Please set the VITE_APL_URL environment variable in .env file\n\n"+
-      "For running the APL server with the default port, the .env file need only contain:\n\n"+
+    if (import.meta.env.VITE_APL_URL) {
+      return import.meta.env.VITE_APL_URL + path;
+    }
+
+    alert("Please set the VITE_APL_URL environment variable in .env (or .env.development) file\n\n" +
+      "For running the APL server with the default port, the .env file need only contain:\n\n" +
       "VITE_APL_URL=http://localhost:22322/"
     );
   }
+
   return currentUrl + path;
+};
+
+
+export function findLongestID(obj) {
+  let longestID = "";
+
+  function traverse(item) {
+      if (typeof item === "object" && item !== null) {
+          for (let key in item) {
+              if (key === "ID" && typeof item[key] === "string" && item[key].length > longestID.length) {
+                  longestID = item[key];
+              }
+              traverse(item[key]);
+          }
+      }
+  }
+
+  traverse(obj);
+  return longestID;
+}
+
+
+export const getImageFromData = (data, ImageIndex) => {
+  if (data?.Properties?.Files) {
+    const imageListData = data.Properties.Files;
+
+    if (imageListData) {
+      const imageUrl = imageListData[ImageIndex - 1];
+      const imageSize = data.Properties.Size;
+      return {
+        imageUrl: imageUrl,
+        imageSize: imageSize,
+      };
+
+    }
+  }
+  return null;
 };
