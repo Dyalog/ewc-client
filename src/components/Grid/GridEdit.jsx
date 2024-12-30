@@ -4,7 +4,7 @@ import { useAppData } from '../../hooks';
 import { calculateDateAfterDays, getObjectById, calculateDaysFromDate, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, handleMouseWheel, handleMouseDoubleClick } from '../../utils';
 import dayjs from 'dayjs';
 
-const GridEdit = ({ data }) => {
+const GridEdit = ({ data,onKeyDown1 }) => {
   // console.log("grid data", {data})
   const inputRef = useRef(null);
   const dateRef = useRef(null);
@@ -126,6 +126,26 @@ const GridEdit = ({ data }) => {
     // setStartIndex(start);
     // setEndIndex(end);
   };
+  const handleKeyDown = (event) => {
+    event.stopPropagation();
+    // console.log("Key down event triggered:", event.target, { event });
+
+    const input = event.target; 
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+
+    if (start !== end) {
+        const selectedText = input.value.substring(start, end);
+        console.log("Selected text is:", selectedText);
+        if(onKeyDown1)
+              {
+                onKeyDown1(event);
+              }
+    } else {
+        handleKeyPress(event);
+    }
+};
+
 
   const handleDivSelect = () => {
     const selection = window.getSelection();
@@ -590,10 +610,11 @@ const GridEdit = ({ data }) => {
             // setIsEditable(true);
           }}
           value={inputValue}
-          onKeyDown={(e) => {
-            e.stopPropagation();
-            handleKeyPress(e);
-          }}
+          // onKeyDown={(e) => {
+          //   e.stopPropagation();
+          //   handleKeyPress(e);
+          // }}
+          onKeyDown={handleKeyDown}
           onChange={(e) => {
             e.stopPropagation();
             setInputValue(e.target.value);

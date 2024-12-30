@@ -511,7 +511,8 @@ const Edit = ({
       const selectedDate = dayjs(event.target.value).format(ShortDate);
       let value = calculateDaysFromDate(event.target.value) + 1;
       setInputValue(selectedDate);
-      setEmitValue(value);
+      // setEmitValue(value);
+      setEmitValue(selectedDate);
     };
 
     return (
