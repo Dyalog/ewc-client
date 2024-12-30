@@ -312,8 +312,8 @@ import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
 
-const Component = ({ key, data, row, column }) => {
-  if (data?.type == "Edit") return <GridEdit data={data} />;
+const Component = ({ data, onKeyDown1 }) => {
+  if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
   else if (data?.type == "Button") return <GridButton data={data} />;
   else if (data?.type == "cell") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
@@ -1187,6 +1187,8 @@ const Grid = ({ data }) => {
                         focused: isFocused,
                         backgroundColor: data?.backgroundColor,
                       }}
+                      onKeyDown1={handleKeyDown} 
+
                     />
                   </div>
                 );
