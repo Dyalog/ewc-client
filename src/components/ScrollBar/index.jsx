@@ -304,6 +304,9 @@ const ScrollBar = ({ data }) => {
       onDoubleClick={(e) => {
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
+      onKeyDown={(e) => {
+        handleKeyPressUtils(e, socket, Event, data?.ID);
+      }}
     >
       <div>
         <div
