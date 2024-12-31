@@ -39,6 +39,8 @@ import Upload from './Upload';
 
 import KendoChart from './KendoChart';
 import KendoGrid from './KendoGrid';
+import RibbonDropDownButton from './Ribbon/RibbonDropDownButton';
+import RibbonDropDownGallery from './Ribbon/RibbonDropDownGallery';
 
 const SelectComponent = ({
   data,
@@ -63,10 +65,15 @@ const SelectComponent = ({
     return (
       <div
         style={{
-          translate: '0% -100%',
-          position: 'relative',
-          zIndex: '2',
+          top:0,
+          left:0,
+          position: 'absolute',
+          // zIndex: '2',
           width: '100%',
+          // translate: '0% -100%',
+          // position: 'relative',
+          // zIndex: '2',
+          // width: '100%',
         }}
       >
         <MenuBar data={data} />
@@ -153,6 +160,8 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'RibbonGroupItem') return <CustomRibbonItem data={data} />;
   if (data?.Properties?.Type == 'RibbonButton') return <CustomRibbonButton data={data} />;
   if (data?.Properties?.Type == 'RibbonButtonGroup') return <CustomRibbonButtonGroup data={data} />;
+  if (data?.Properties?.Type == 'RibbonDropDownButton') return <RibbonDropDownButton data={data} />;
+  if (data?.Properties?.Type == 'RibbonGallery') return <RibbonDropDownGallery data={data} />;
 
   if (data?.Properties?.Type == 'Poly') return <Poly data={data} />;
   if (data?.Properties?.Type == 'Rect') return <Rectangle data={data} />;

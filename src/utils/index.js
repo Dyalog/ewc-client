@@ -158,7 +158,9 @@ export const handleKeyPressUtils = (e, socket, Event, ID) => {
   const charCode = e?.key?.charCodeAt(0);
   let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
+
   const exists = Event && Event.some((item) => item[0] === "KeyPress");
+
   if (!exists) return;
 
   console.log(
@@ -229,6 +231,7 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
       ? { position: "absolute" }
       : { position: "relative" }),
     // position: Properties?.Posn ? 'absolute' : 'relative',
+
     ...(Properties?.Size && {
       height: Properties?.Size && Properties?.Size[0],
       width: Properties?.Size && Properties?.Size[1],
@@ -237,6 +240,7 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
       top: Properties?.Posn && Properties?.Posn[0],
       left: Properties?.Posn && Properties?.Posn[1],
     }),
+
   };
 };
 
@@ -359,13 +363,17 @@ export function flattenJsonToArray(obj) {
     if (currentObj && currentObj.ID && currentObj.Properties) {
       result.push({
         ID: currentObj.ID,
+
         Properties: currentObj.Properties,
+
       });
     }
 
     for (let key in currentObj) {
+
       if (typeof currentObj[key] === "object" && currentObj[key] !== null) {
         recurse(currentObj[key]);
+
       }
     }
   }
@@ -582,10 +590,12 @@ export const getCurrentUrl = () => {
       return import.meta.env.VITE_APL_URL + path;
     }
 
+
     alert(
       "Please set the VITE_APL_URL environment variable in .env (or .env.development) file\n\n" +
         "For running the APL server with the default port, the .env file need only contain:\n\n" +
         "VITE_APL_URL=http://localhost:22322/"
+
     );
   }
 
@@ -596,6 +606,7 @@ export function findLongestID(obj) {
   let longestID = "";
 
   function traverse(item) {
+
     if (typeof item === "object" && item !== null) {
       for (let key in item) {
         if (
@@ -608,6 +619,8 @@ export function findLongestID(obj) {
         traverse(item[key]);
       }
     }
+
+
   }
 
   traverse(obj);
@@ -625,6 +638,7 @@ export const getImageFromData = (data, ImageIndex) => {
         imageUrl: imageUrl,
         imageSize: imageSize,
       };
+
     }
   }
   return null;
