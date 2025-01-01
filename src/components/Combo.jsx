@@ -19,6 +19,8 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
+
+  console.log("this event",{Event})
   const [comboInput, setComboInput] = useState('+');
   const [position, setPosition] = useState({ top: Posn && Posn[0], left: Posn && Posn[1] });
 
@@ -324,6 +326,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         e.stopPropagation();
         handleMouseDoubleClick(e, socket, Event,data?.ID);
       }}
+      onKeyDown={(e)=>{ handleKeyPressUtils(e, socket, Event, data?.ID);}}
       >
       <select
         ref={inputRef}

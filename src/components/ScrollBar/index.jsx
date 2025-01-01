@@ -638,8 +638,13 @@ useEffect(() => {
       }}
       onDoubleClick={(e) => {
         handleMouseDoubleClick(e, socket, Event, data?.ID);
+     
+      onKeyDown={(e) => {
+        handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
+=
       style={isHorizontal ? horizontalPosition : verticalPosition}
+
     >
       <div>
         {isHorizontal && showButtons ? (
