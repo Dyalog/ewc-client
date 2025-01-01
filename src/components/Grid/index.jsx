@@ -502,6 +502,7 @@ const Grid = ({ data }) => {
   };
 
   const handleKeyDown = (event) => {
+    console.log("Evenet is as")
     const isAltPressed = event.altKey ? 4 : 0;
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
@@ -530,8 +531,17 @@ const Grid = ({ data }) => {
       ];
     }, []);
     const childExists = checkArray.some((item) => item === true);
+    console.log("Evenet key is jajaj",event.key)
+    if(event.key==="Enter")
+    {
+
+    }
 
     // const childExists = data?.E1?.Properties?.Event?.some((item) => item[0].toLowerCase() === "keypress")
+    // if(event.key==="Enter")
+    // {
+    //   console.log("ENTER IS PRESSSED")
+    // }
 
     const parentKeyPressEvent = JSON.stringify({
       Event: {
@@ -552,10 +562,13 @@ const Grid = ({ data }) => {
     });
 
     if (parentExists && !!!childExists) {
+      console.log("Sending here from parent")
       socket.send(parentKeyPressEvent);
     }
 
     if (childExists) {
+      console.log("Sending here from child")
+
       socket.send(keyPressEvent);
     }
 
@@ -733,7 +746,7 @@ const Grid = ({ data }) => {
           ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
           0
         );
-      } else if (event.key === "ArrowDown") {
+      } else if (event.key === "ArrowDown" || event.key==="Enter") {
         if (childExists || parentExists)
           await waitForProceed(localStorage.getItem(eventId));
         setSelectedRow((prev) => Math.min(prev + 1, rows - 1));
