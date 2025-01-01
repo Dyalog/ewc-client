@@ -17,21 +17,26 @@ import dayjs from "dayjs";
 import { values } from "lodash";
 
 const GridEdit = ({ data, onKeyDown1 }) => {
+
   // console.log("grid data", {data})
   const inputRef = useRef(null);
   const dateRef = useRef(null);
   const divRef = useRef(null);
   const [isEditable, setIsEditable] = useState(false);
   const [selected, setSelected] = useState(false);
-
+  
   const [dateFormattedValue, setDateFormattedValue] = useState(data?.value);
 
   const { FieldType, Decimal, SelText, Event } = data?.typeObj?.Properties;
+
 
   // console.log({value: data.value, focused: data.focused, datatype: data?.typeObj.ID, SelText})
 
   const { dataRef, findDesiredData, handleData, socket, socketData } =
     useAppData();
+
+  
+  
   // data?.typeObj?.ID === "F1.Holdings.TEXT" && console.log("edit data", {data, dataRef, socketData, property: findDesiredData(data?.typeObj?.ID)})
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
   const {
@@ -40,11 +45,13 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     Decimal: decimalSeparator,
   } = dateFormat?.Properties;
   const [inputValue, setInputValue] = useState(
+
     FieldType == "Date"
       ? dayjs(calculateDateAfterDays(data?.value)).format(
           ShortDate && ShortDate
         )
       : data?.value
+
   );
 
   const [selectedDate, setSelectedDate] = useState(
@@ -52,7 +59,9 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       ? dayjs(calculateDateAfterDays(data?.value))
       : new Date()
   );
+
   const [valueState, setValueState] = useState(false);
+
 
   const findFirstNonSpaceIndex = (content) => {
     // Trim leading spaces from the string
@@ -63,6 +72,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
 
     return firstNonSpaceIndex;
   };
+
 
   useEffect(() => {
     if (
@@ -274,13 +284,13 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       Event: {
         EventName: "CellChanged",
         Values: values,
-        CurCell: [data?.row, data?.column + 1],
+        CurCell: [data?.row, data?.column],
       },
     });
 
     const formatCellEvent = JSON.stringify({
       FormatCell: {
-        Cell: [data?.row, data?.column + 1],
+        Cell: [data?.row, data?.column],
         ID: data?.gridId,
         Value: FieldType == "Date" ? dateFormattedValue : inputValue,
       },
@@ -560,7 +570,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
                 decimalScale={Decimal}
                 value={data?.value}
                 decimalSeparator={decimalSeparator}
-                thousandSeparator={Thousand}
+                thousandSeparator={checkNumericType("LongNumeric", data?.value) && Thousand}
               />
             ) : (
               data?.formattedValue
@@ -589,7 +599,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
             value={inputValue}
             onSelect={handleSelect}
             decimalSeparator={decimalSeparator}
-            thousandSeparator={Thousand}
+            thousandSeparator={checkNumericType("LongNumeric", inputValue) && Thousand}
             onBlur={(e) => {
               setIsEditable(false);
               handleEditEvents();

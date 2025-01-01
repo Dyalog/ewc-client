@@ -4,9 +4,9 @@ export * from "./flexStyles";
 export * from "./getType";
 export * from "./getLastTabButton";
 export * from "./locateInDataRef";
+import { v4 as uuidv4 } from "uuid";
 
-
-export const  handleMouseDown = (e, socket, Event, ID) => {
+export const handleMouseDown = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
@@ -20,7 +20,7 @@ export const  handleMouseDown = (e, socket, Event, ID) => {
       Info: [y, x, button, shiftState],
     },
   });
- 
+
   const exists = Event && Event.some((item) => item[0] === "MouseDown");
   if (!exists) return;
   console.log(mousedownEvent);
@@ -70,30 +70,30 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
 };
 
 export const handleMouseEnter = (e, socket, Event, ID) => {
-  const previousObjectName = e.relatedTarget ? e.relatedTarget.id : ""; 
+  const previousObjectName = e.relatedTarget ? e.relatedTarget.id : "";
 
   const mouseEnterEvent = JSON.stringify({
     Event: {
       EventName: "MouseEnter",
       ID,
-      Info: [previousObjectName], 
+      Info: [previousObjectName],
     },
   });
 
   const exists = Event && Event.some((item) => item[0] === "MouseEnter");
   if (!exists) return;
-  console.log("mouseEnter",mouseEnterEvent);
+  console.log("mouseEnter", mouseEnterEvent);
   socket.send(mouseEnterEvent);
 };
 
 export const handleMouseLeave = (e, socket, Event, ID) => {
-  const newObjectName = e.relatedTarget ? e.relatedTarget.id : ""; 
+  const newObjectName = e.relatedTarget ? e.relatedTarget.id : "";
 
   const mouseLeaveEvent = JSON.stringify({
     Event: {
       EventName: "MouseLeave",
       ID,
-      Info: [newObjectName], 
+      Info: [newObjectName],
     },
   });
 
@@ -109,15 +109,15 @@ export const handleMouseMove = (e, socket, Event, ID) => {
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
   const button = e.buttons;
-  
+
   const mouseMoveEvent = JSON.stringify({
     Event: {
       EventName: "MouseMove",
       ID,
-      Info: [y, x, button, shiftState], 
+      Info: [y, x, button, shiftState],
     },
   });
-  
+
   // console.log("mouseMove1", mouseMoveEvent);
   const exists = Event && Event.some((item) => item[0] === "MouseMove");
   if (!exists) return;
@@ -127,14 +127,14 @@ export const handleMouseMove = (e, socket, Event, ID) => {
 };
 
 export const handleMouseWheel = (e, socket, Event, ID) => {
-  const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); 
+  const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0);
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
   const button = e.buttons;
   const delta = e.deltaY;
-  const lines = e.deltaMode === 1 ? e.deltaY : -1; 
-  const wheelDelta = Math.sign(e.deltaY); 
+  const lines = e.deltaMode === 1 ? e.deltaY : -1;
+  const wheelDelta = Math.sign(e.deltaY);
 
   const mouseWheelEvent = JSON.stringify({
     Event: {
@@ -144,30 +144,31 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
     },
   });
 
-
   const exists = Event && Event.some((item) => item[0] === "MouseWheel");
   if (!exists) return;
   console.log(mouseWheelEvent);
   socket.send(mouseWheelEvent);
 };
 
-
-
 export const handleKeyPressUtils = (e, socket, Event, ID) => {
+   const eventId = uuidv4();
   const isAltPressed = e?.altKey ? 4 : 0;
   const isCtrlPressed = e?.ctrlKey ? 2 : 0;
   const isShiftPressed = e?.shiftKey ? 1 : 0;
   const charCode = e?.key?.charCodeAt(0);
   let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
-  const exists = Event.some((item) => item[0] === 'KeyPress');
+
+  const exists = Event && Event.some((item) => item[0] === "KeyPress");
+
   if (!exists) return;
 
   console.log(
     JSON.stringify({
       Event: {
-        EventName: 'KeyPress',
+        EventName: "KeyPress",
         ID: ID,
+        EventID: eventId,
         Info: [e.key, charCode, e.keyCode, shiftState],
       },
     })
@@ -176,14 +177,14 @@ export const handleKeyPressUtils = (e, socket, Event, ID) => {
   socket.send(
     JSON.stringify({
       Event: {
-        EventName: 'KeyPress',
-        ID: data?.typeObj?.ID,
+        EventName: "KeyPress",
+        ID: ID,
+        EventID: eventId,
         Info: [e.key, charCode, e.keyCode, shiftState],
       },
     })
   );
 };
-
 
 export const setStyle = (Properties, position = "absolute", Flex = 0) => {
   if (Flex == 2) {
@@ -230,10 +231,16 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
       ? { position: "absolute" }
       : { position: "relative" }),
     // position: Properties?.Posn ? 'absolute' : 'relative',
-    height: Properties?.Size && Properties?.Size[0],
-    width: Properties?.Size && Properties?.Size[1],
-    top: Properties?.Posn && Properties?.Posn[0],
-    left: Properties?.Posn && Properties?.Posn[1],
+
+    ...(Properties?.Size && {
+      height: Properties?.Size && Properties?.Size[0],
+      width: Properties?.Size && Properties?.Size[1],
+    }),
+    ...(Properties?.Posn && {
+      top: Properties?.Posn && Properties?.Posn[0],
+      left: Properties?.Posn && Properties?.Posn[1],
+    }),
+
   };
 };
 
@@ -278,7 +285,7 @@ export const extractStringFromLastPeriod = (inputString) => {
   const lastPeriodIndex = inputString.lastIndexOf(".");
 
   if (lastPeriodIndex !== -1) {
-    const result = inputString.slice(1+lastPeriodIndex);
+    const result = inputString.slice(1 + lastPeriodIndex);
     return result;
   }
 
@@ -348,6 +355,32 @@ export const getObjectById = (jsonData, targetId) => {
   const result = searchObject(data, targetId);
   return result ? JSON.stringify(result, null, 2) : null;
 };
+
+export function flattenJsonToArray(obj) {
+  let result = [];
+
+  function recurse(currentObj) {
+    if (currentObj && currentObj.ID && currentObj.Properties) {
+      result.push({
+        ID: currentObj.ID,
+
+        Properties: currentObj.Properties,
+
+      });
+    }
+
+    for (let key in currentObj) {
+
+      if (typeof currentObj[key] === "object" && currentObj[key] !== null) {
+        recurse(currentObj[key]);
+
+      }
+    }
+  }
+
+  recurse(obj);
+  return result;
+}
 
 export const generateAsteriskString = (length) => {
   if (length <= 0) {
@@ -552,15 +585,73 @@ export const getCurrentUrl = () => {
   const currentUrl = window.location.origin;
   const path = window.location.pathname !== "/" ? window.location.pathname : "";
 
-  if (import.meta.env.VITE_APL_URL) {
-    return import.meta.env.VITE_APL_URL + path;
-  }
-
   if (import.meta.env.DEV) {
-    alert("Please set the VITE_APL_URL environment variable in .env file\n\n"+
-      "For running the APL server with the default port, the .env file need only contain:\n\n"+
-      "VITE_APL_URL=http://localhost:22322/"
+    if (import.meta.env.VITE_APL_URL) {
+      return import.meta.env.VITE_APL_URL + path;
+    }
+
+
+    alert(
+      "Please set the VITE_APL_URL environment variable in .env (or .env.development) file\n\n" +
+        "For running the APL server with the default port, the .env file need only contain:\n\n" +
+        "VITE_APL_URL=http://localhost:22322/"
+
     );
   }
+
   return currentUrl + path;
 };
+
+export function findLongestID(obj) {
+  let longestID = "";
+
+  function traverse(item) {
+
+    if (typeof item === "object" && item !== null) {
+      for (let key in item) {
+        if (
+          key === "ID" &&
+          typeof item[key] === "string" &&
+          item[key].length > longestID.length
+        ) {
+          longestID = item[key];
+        }
+        traverse(item[key]);
+      }
+    }
+
+
+  }
+
+  traverse(obj);
+  return longestID;
+}
+
+export const getImageFromData = (data, ImageIndex) => {
+  if (data?.Properties?.Files) {
+    const imageListData = data.Properties.Files;
+
+    if (imageListData) {
+      const imageUrl = imageListData[ImageIndex - 1];
+      const imageSize = data.Properties.Size;
+      return {
+        imageUrl: imageUrl,
+        imageSize: imageSize,
+      };
+
+    }
+  }
+  return null;
+};
+
+export function containsRibbonButton(data) {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  if (data.Type === "RibbonButton") {
+    return true;
+  }
+
+  return Object.values(data).some((value) => containsRibbonButton(value));
+}

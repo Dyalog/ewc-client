@@ -34,13 +34,14 @@ const Button = ({
   const styles = setStyle(data?.Properties);
   const { socket, findDesiredData, dataRef, handleData, reRender } =
     useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS } =
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } =
     data?.Properties;
 
   console.log("data Button", data);
 
   const customStyles = parseFlexStyles(CSS);
   const inputRef = useRef();
+  const buttonRef = useRef();
 
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
@@ -81,6 +82,88 @@ const Button = ({
     decideInput();
     setPosition({ top: Posn && Posn[0], left: Posn && Posn[1] });
   }, [data]);
+
+  const shortcutKey = Caption?.includes("&")
+    ? Caption?.charAt(Caption.indexOf("&") + 1).toLowerCase()
+    : null;
+
+  useEffect(() => {
+    const handleShortcut = (event) => {
+      if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
+       
+            handleButtonClick(e); 
+      }
+    };
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, [shortcutKey]);
+
+  useEffect(() => {
+    if (data?.Properties?.Default === 1) {
+      const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+          handleButtonClick(e);
+        }
+      };
+      document.addEventListener("keydown", handleKeyPress);
+      return () => document.removeEventListener("keydown", handleKeyPress);
+    }
+  }, [data, buttonEvent]);
+
+
+  const handleButtonClick = (e) => {
+    if (Active === 0) {
+      e.preventDefault();
+      return;
+    }
+    document.getElementById(localStorage.getItem("current-focus"))?.blur();
+    if (buttonEvent) {
+      console.log(
+        JSON.stringify({
+          Event: {
+            EventName: buttonEvent[0],
+            ID: data?.ID,
+          },
+        })
+      );
+      if (
+        localStorage.getItem("current-focus") &&
+        localStorage.getItem("shouldChangeEvent") === "true"
+      ) {
+        console.log( 
+          JSON.stringify({
+            Event: {
+              EventName: "Change",
+              ID: localStorage.getItem("current-focus"),
+              Info: [data?.ID],
+            },
+          })
+        );
+
+        socket.send(
+          JSON.stringify({
+            Event: {
+              EventName: "Change",
+              ID: localStorage.getItem("current-focus"),
+              Info: [data?.ID],
+            },
+          })
+        );
+      }
+
+      socket.send(
+        JSON.stringify({
+          Event: {
+            EventName: buttonEvent[0],
+            ID: data?.ID,
+          },
+        })
+      );
+
+      handleGotFocus();
+    }
+  };
+
 
   useEffect(() => {
     if (!position) return;
@@ -234,12 +317,13 @@ const Button = ({
     }
   };
 
-  const triggerCellMoveEvent = (row, column) => {
+  const triggerCellMoveEvent = (row, column, mouseClick) => {
+    const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
         ID: extractStringUntilLastPeriod(data?.ID),
         EventName: "CellMove",
-        Info: [row, column, 0, 0, 0, checkInput ? 1 : 0],
+        Info: [row, column, isKeyboard, 0, mouseClick, checkInput ? 1 : 0],
       },
     });
     const exists = event && event.some((item) => item[0] === "CellMove");
@@ -254,7 +338,7 @@ const Button = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(row + 1, column);
+    triggerCellMoveEvent(row + 1, column, 0);
     const element = nextSibling?.querySelectorAll("input");
     element &&
       element.forEach((inputElement) => {
@@ -270,7 +354,7 @@ const Button = ({
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.nextSibling;
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column + 1);
+    triggerCellMoveEvent(row, column + 1, 0);
     const element = nextSibling?.querySelectorAll(querySelector);
 
     if (querySelector == "select") return element && element[0].focus();
@@ -284,7 +368,7 @@ const Button = ({
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column - 1);
+    triggerCellMoveEvent(row, column - 1, 0);
     const element = nextSibling?.querySelectorAll(querySelector);
 
     element && element[0]?.focus();
@@ -297,7 +381,7 @@ const Button = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
-    triggerCellMoveEvent(row - 1, column);
+    triggerCellMoveEvent(row - 1, column, 0);
     const element = nextSibling?.querySelectorAll("input");
     element &&
       element.forEach((inputElement) => {
@@ -371,6 +455,7 @@ const Button = ({
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
+          disabled={Active === 0}
           onChange={(e) => {
             setCheckInput(e.target.checked);
             handleCheckBoxEvent(e.target.checked);
@@ -499,6 +584,7 @@ const Button = ({
           checked={radioValue}
           type="radio"
           value={Caption}
+          disabled={Active === 0}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
           }}
@@ -544,50 +630,9 @@ const Button = ({
       onDoubleClick={(e) => {
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
-      onClick={() => {
-        console.log(
-          JSON.stringify({
-            Event: {
-              EventName: buttonEvent[0],
-              ID: data?.ID,
-            },
-          })
-        );
-        if (
-          localStorage.getItem("current-focus") &&
-          localStorage.getItem("shouldChangeEvent") === "true"
-        ) {
-          console.log(
-            JSON.stringify({
-              Event: {
-                EventName: "Change",
-                ID: localStorage.getItem("current-focus"),
-                Info: [data?.ID],
-              },
-            })
-          );
-
-          socket.send(
-            JSON.stringify({
-              Event: {
-                EventName: "Change",
-                ID: localStorage.getItem("current-focus"),
-                Info: [data?.ID],
-              },
-            })
-          );
-        }
-
-        socket.send(
-          JSON.stringify({
-            Event: {
-              EventName: buttonEvent[0],
-              ID: data?.ID,
-            },
-          })
-        );
-
-        handleGotFocus();
+      ref={buttonRef}
+      onClick={(e) => {
+        handleButtonClick(e)
       }}
       style={{
         ...styles,
@@ -599,9 +644,12 @@ const Button = ({
         borderRadius: "4px",
         borderColor: "#ccc",
         fontSize: "12px",
+        color: Active === 0 ? "#838383" : "black",
         // fontSize: '11px',
         cursor: "pointer",
         zIndex: 1,
+        paddingLeft: '3px',
+        paddingRight: '3px',
         display: Visible == 0 ? "none" : "flex",
         ...(data?.Properties?.hasOwnProperty("Posn")
           ? { top: position?.top }
@@ -610,18 +658,23 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
-        // left: position?.left,
       }}
     >
       {ImageData ? (
         <div style={{ ...imageStyles, width: "100%", height: "100%" }}></div>
       ) : null}
 
-      {hasCaption
-        ? data?.Properties?.Caption?.includes("&")
-          ? data?.Properties?.Caption?.substring(1)
-          : data?.Properties?.Caption
-        : null}
+      {hasCaption ? (
+        data?.Properties?.Caption?.includes("&") ? (
+          <span
+            dangerouslySetInnerHTML={{
+              __html: data?.Properties?.Caption.replace(/&(\w)/, "<u>$1</u>")
+            }}
+          ></span>
+        ) : (
+          <span>{data?.Properties?.Caption}</span>
+        )
+      ) : null}
     </div>
   );
 };

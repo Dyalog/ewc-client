@@ -16,6 +16,7 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
 } from "../../utils";
+import { v4 as uuidv4 } from "uuid";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
@@ -54,8 +55,11 @@ const Edit = ({
   const [emitValue, setEmitValue] = useState("");
   const [initialValue, setInitialValue] = useState("");
   const [prevFocused, setprevFocused] = useState("⌈");
+  const [eventId, setEventId] = useState(null);
   const dateInputRef = useRef();
 
+
+  
   const {
     FieldType,
     MaxLength,
@@ -68,6 +72,7 @@ const Edit = ({
     EdgeStyle,
     Border = 0,
     CSS,
+    Active,
   } = data?.Properties;
 
   const hasTextProperty = data?.Properties.hasOwnProperty("Text");
@@ -77,7 +82,8 @@ const Edit = ({
   const font = findDesiredData(FontObj && FontObj);
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS)
-
+  
+  console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
     if (location === "inGrid") {
       if (FieldType === "Date") {
@@ -98,7 +104,7 @@ const Edit = ({
       return setInputValue(value);
     }
 
-    if (hasTextProperty) {
+    if (!data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(generateAsteriskString(data?.Properties?.Text?.length)); // Custom function to generate asterisks
         setEmitValue(data?.Properties?.Text);
@@ -112,7 +118,7 @@ const Edit = ({
       }
     }
 
-    if (hasValueProperty) {
+    if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(
           generateAsteriskString(data?.Properties?.Value?.length)
@@ -183,12 +189,13 @@ const Edit = ({
     };
   }
 
-  const triggerCellMoveEvent = (row, column, value) => {
+  const triggerCellMoveEvent = (row, column,mouseClick, value) => {
+    const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
         ID: extractStringUntilLastPeriod(data?.ID),
         EventName: "CellMove",
-        Info: [row, column, 0, 0, 0, value],
+        Info: [row, column, isKeyboard, 0, mouseClick, value],
       },
     });
 
@@ -204,7 +211,7 @@ const Edit = ({
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column), emitValue);
+    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column),0, emitValue);
 
     const element = nextSibling?.querySelectorAll("input");
     if (!element) return;
@@ -228,7 +235,7 @@ const Edit = ({
 
     if (element?.length == 0) element = nextSibling?.querySelectorAll("span");
 
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1, emitValue);
+    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
     element && element[0]?.focus();
 
     element && element[0]?.select();
@@ -243,7 +250,7 @@ const Edit = ({
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
     const element = nextSibling?.querySelectorAll(querySelector);
 
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1, emitValue);
+    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
 
     // for (let i = 0; i < children.length; i++) {
     //   children[i].focus();
@@ -261,7 +268,7 @@ const Edit = ({
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
 
-    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column), emitValue);
+    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column),0, emitValue);
     const element = nextSibling?.querySelectorAll("input");
     if (!element) return;
     element &&
@@ -281,6 +288,8 @@ const Edit = ({
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
 
+    const eventId = uuidv4();
+    setEventId(eventId);
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;
@@ -292,6 +301,7 @@ const Edit = ({
         Event: {
           EventName: "KeyPress",
           ID: data?.ID,
+          EventID: eventId,
           Info: [e.key, charCode, e.keyCode, shiftState],
         },
       })
@@ -302,6 +312,7 @@ const Edit = ({
         Event: {
           EventName: "KeyPress",
           ID: data?.ID,
+          EventID: eventId,
           Info: [e.key, charCode, e.keyCode, shiftState],
         },
       })
@@ -309,31 +320,53 @@ const Edit = ({
   };
 
   const triggerChangeEvent = () => {
-    const focusedId = localStorage.getItem("current-focus");
+    // TODO as far as I can tell, this is how we are storing the last value, so
+    // we can fetch it again for WG.
+    // *Not* setting this value in localStorage causes problems.
+    let event2;
 
-    const event2 = JSON.stringify({
-      Event: {
-        EventName: "Change",
-        ID: data?.ID,
-        Info:
-          (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
-            ? parseInt(emitValue)
-            : emitValue,
-      },
-    });
-    // console.log({event2})
-    handleData(
-      {
-        ID: data?.ID,
-        Properties: {
-          Text:
+    if (FieldType === "Date") {
+      event2 = JSON.stringify({
+        Event: {
+          EventName: "Change",
+          ID: data?.ID,
+          Info: emitValue,
+        },
+      });
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            Value: emitValue,
+            Text: inputValue,
+          },
+        },
+        "WS"
+      )
+    } else {
+      event2 = JSON.stringify({
+        Event: {
+          EventName: "Change",
+          ID: data?.ID,
+          Info:
             (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
               ? parseInt(emitValue)
               : emitValue,
         },
-      },
-      "WS"
-    );
+      });
+      // console.log({event2})
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            ...(FieldType === "LongNumeric" || FieldType === "Numeric"
+              ? { Value: parseInt(emitValue) }
+              : { Text: emitValue })
+          },
+        },
+        "WS"
+      );
+    }
     localStorage.setItem(data?.ID, event2);
     localStorage.setItem(
       "shouldChangeEvent",
@@ -559,10 +592,11 @@ const Edit = ({
           }}
         />
         <input
-          id={data?.ID}
+          id={data?.ID + '.Picker'}
           type="date"
           ref={inputRef}
           onChange={handleDateChange}
+          disabled={Active === 0}
           style={{
             ...styles,
             position: "absolute",
@@ -575,7 +609,6 @@ const Edit = ({
   }
 
 
-  console.log("Edit data", data, FieldType, Event)
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
     return (
       <NumericFormat
@@ -585,6 +618,7 @@ const Edit = ({
         getInputRef={inputRef}
         onClick={handleInputClick}
         id={data?.ID}
+        disabled={Active === 0}
         style={{
           ...styles,
           width: !Size ? "100%" : Size[1],
@@ -609,7 +643,7 @@ const Edit = ({
         decimalScale={Decimal}
         value={inputValue}
         decimalSeparator={decimalSeparator}
-        thousandSeparator={Thousand}
+        thousandSeparator={FieldType == "LongNumeric" && Thousand}
         onBlur={() => handleEditEvents()}
         onKeyDown={(e) => handleKeyPress(e)}
         onFocus={handleGotFocus}
@@ -645,6 +679,7 @@ const Edit = ({
       value={inputValue}
       onClick={handleInputClick}
       type={inputType}
+      disabled={Active === 0}
       onChange={(e) => {
         if (FieldType == "Char") {
           setEmitValue(e.target.value);
@@ -670,7 +705,11 @@ const Edit = ({
           (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
             ? "1px solid #6A6A6A"
             : "none",
-        ...customStyles
+        ...(Active === 0 ? {
+          backgroundColor: "field",
+          color: "#838383",
+        } : {}),
+        ...customStyles,
       }}
       maxLength={MaxLength}
       onFocus={handleGotFocus}
