@@ -22,8 +22,10 @@ import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
 
-const Component = ({ data }) => {
-  if (data?.type == "Edit") return <GridEdit data={data} />;
+
+const Component = ({ data, onKeyDown1 }) => {
+  if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
+
   else if (data?.type == "Button") return <GridButton data={data} />;
   else if (data?.type == "cell" || data?.type == "rowTitle") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
@@ -215,8 +217,9 @@ const Grid = ({ data }) => {
 
 
   const handleKeyDown = (event) => {
-    // localStorage.setItem("event", JSON.stringify(event.key))
-    // localStorage.setItem("current-event", "KeyPress")
+
+    console.log("Evenet is as")
+
     const isAltPressed = event.altKey ? 4 : 0;
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
@@ -252,6 +255,19 @@ const Grid = ({ data }) => {
       ];
     }, []);
     const childExists = checkArray.some((item) => item === true);
+    console.log("Evenet key is jajaj",event.key)
+    if(event.key==="Enter")
+    {
+
+    }
+
+
+    // const childExists = data?.E1?.Properties?.Event?.some((item) => item[0].toLowerCase() === "keypress")
+    // if(event.key==="Enter")
+    // {
+    //   console.log("ENTER IS PRESSSED")
+    // }
+
 
     const parentKeyPressEvent = JSON.stringify({
       Event: {
@@ -272,10 +288,13 @@ const Grid = ({ data }) => {
     });
 
     if (parentExists && !!!childExists) {
+      console.log("Sending here from parent")
       socket.send(parentKeyPressEvent);
     }
 
     if (childExists) {
+      console.log("Sending here from child")
+
       socket.send(keyPressEvent);
     }
     const isNavigationKeys = [
@@ -294,9 +313,226 @@ const Grid = ({ data }) => {
       gridRef.current.focus();
     }
 
-    // Don't propagate the event if we handled it
-    if (knownKeyPress) event.preventDefault();
-  };
+
+    let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
+    // console.log("waiting initial local storage", localStoragValue)
+
+    const updatePosition = async () => {
+      if (event.key === "ArrowRight") {
+        if (childExists || parentExists)
+          await waitForProceed(localStorage.getItem(eventId));
+        // console.log("waiting await proceed done")
+        // console.log("issue arrow right initial", {selectedRow, selectedColumn})
+        setSelectedColumn((prev) => Math.min(prev + 1,ColTitles? columns: columns-1));
+        // console.log("issue arrow right", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0
+        //   ? selectedColumn + 1
+        //   : selectedColumn + 1 })
+        if (!localStoragValue) {
+          console.log(
+            "writing local storage",
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow,
+                  ColTitles?.length > 0
+                    ? selectedColumn + 1
+                    : selectedColumn + 1,
+                ],
+              },
+            })
+          );
+          if (ColTitles?.length > 0 && selectedColumn == columns) return;
+
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow,
+                  ColTitles?.length > 0
+                    ? selectedColumn + 1
+                    : selectedColumn + 1,
+                ],
+              },
+            })
+          );
+        } else {
+          if (ColTitles?.length > 0 && selectedColumn == columns) return;
+          console.log(
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow,
+                  ColTitles?.length > 0
+                    ? selectedColumn + 1
+                    : selectedColumn + 1,
+                ],
+                Values: localStoragValue?.Event?.Values,
+              },
+            })
+          );
+
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow,
+                  ColTitles?.length > 0
+                    ? selectedColumn + 1
+                    : selectedColumn + 1,
+                ],
+                Values: localStoragValue?.Event?.Values,
+              },
+            })
+          );
+        }
+
+        handleCellMove(
+          selectedRow,
+          ColTitles?.length > 0 ? selectedColumn + 1 : selectedColumn + 2,
+          0
+        );
+      } else if (event.key === "ArrowLeft") {
+        if (childExists || parentExists)
+          await waitForProceed(localStorage.getItem(eventId));
+        // console.log("issue arrow left prev", {selectedRow, selectedColumn})
+        setSelectedColumn((prev) =>
+          Math.max(prev - 1, RowTitles?.length > 0 ? 1 : 0)
+        );
+        // console.log("issue arrow left", {selectedRow, selectedColumn, columns, selectedColumn:  RowTitles?.length > 0 ? selectedColumn - 1 : selectedColumn})
+
+        if (!localStoragValue) {
+          if (ColTitles?.length > 0 && selectedColumn == 1) return;
+
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow,
+                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
+                ],
+              },
+            })
+          );
+        } else {
+          if (ColTitles?.length > 0 && selectedColumn == 1) return;
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow,
+                  ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
+                ],
+                Values: localStoragValue?.Event?.Values,
+              },
+            })
+          );
+        }
+        handleCellMove(
+          selectedRow,
+          ColTitles?.length > 0 ? selectedColumn - 1 : selectedColumn -1,
+          0
+        );
+      } else if (event.key === "ArrowUp") {
+        if (childExists || parentExists)
+          await waitForProceed(localStorage.getItem(eventId));
+        setSelectedRow((prev) => Math.max(prev - 1, 1));
+        if (!localStoragValue) {
+          if (selectedRow == 1 && RowTitles?.length > 0) return;
+
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow - 1,
+                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                ],
+              },
+            })
+          );
+        } else {
+          if (selectedRow == 1 && RowTitles?.length > 0) return;
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow - 1,
+                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                ],
+                Values: localStoragValue?.Event?.Values,
+              },
+            })
+          );
+        }
+        handleCellMove(
+          selectedRow - 1,
+          ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+          0
+        );
+      } else if (event.key === "ArrowDown" || event.key==="Enter") {
+        if (childExists || parentExists)
+          await waitForProceed(localStorage.getItem(eventId));
+        setSelectedRow((prev) => Math.min(prev + 1, rows - 1));
+        if (!localStoragValue) {
+          if (selectedRow == rows - 1) return;
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow + 1,
+                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                ],
+              },
+            })
+          );
+        } else {
+          if (selectedRow == rows - 1) return;
+
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  selectedRow + 1,
+                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                ],
+                Values: localStoragValue?.Event?.Values,
+              },
+            })
+          );
+        }
+        handleCellMove(
+          selectedRow + 1,
+          ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+          0
+        );
+      } else if (event.key === "PageDown") {
+        if (childExists || parentExists)
+          await waitForProceed(localStorage.getItem(eventId));
+        const demoRow = Math.min(selectedRow + 9, 10);
+        setSelectedRow(demoRow);
+        if (!localStoragValue) {
+          if (selectedRow == rows - 1) return;
+          localStorage.setItem(
+            data?.ID,
+            JSON.stringify({
+              Event: {
+                CurCell: [
+                  demoRow,
+                  ColTitles?.length > 0 ? selectedColumn : selectedColumn + 1,
+                ],
+              },
+            })
+          );
+        } else {
+          if (selectedRow == rows - 1) return;
+
 
   const updatePosition = (key) => {
     if (key === "ArrowRight") {
@@ -716,6 +952,8 @@ const Grid = ({ data }) => {
                         focused: isFocused,
                         backgroundColor: data?.backgroundColor,
                       }}
+                      onKeyDown1={handleKeyDown} 
+
                     />
                   </div>
                 );
