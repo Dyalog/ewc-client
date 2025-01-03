@@ -19,7 +19,8 @@ import { useEffect, useState } from "react";
 
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
-  const { findDesiredData, socket } = useAppData();
+  const { findDesiredData, socket , isDesktop} = useAppData();
+  console.log("Desktop is as",!isDesktop);
   const [formStyles, setFormStyles] = useState({});
 
   const dimensions = useResizeObserver(document.getElementById(data?.ID));
@@ -34,6 +35,9 @@ const Form = ({ data }) => {
     Event,
     CSS,
   } = data?.Properties;
+
+  console.log("Dtaa is as",data,Posn);
+  
   const styles = parseFlexStyles(CSS);
 
   console.log("form after parsing", { styles, CSS, Flex });
@@ -62,6 +66,7 @@ const Form = ({ data }) => {
   };
 
   const sendDeviceCapabilities = () => {
+    console.log("Coming here in devive capabilities");
     let zoom = Math.round(window.devicePixelRatio * 100);
     let event = JSON.stringify({
       DeviceCapabilities: {
@@ -123,7 +128,10 @@ const Form = ({ data }) => {
 
   useEffect(() => {
     sendConfigureEvent();
+    if(!isDesktop)
+    {
     sendDeviceCapabilities();
+    }
   }, [dimensions]);
 
   // console.log("App Form", {

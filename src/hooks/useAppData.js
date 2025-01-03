@@ -4,7 +4,7 @@ import { flattenJsonToArray } from './../utils/index';
 
 const useAppData = () => {
 
-  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef} =
+  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef, isDesktop} =
 
     useContext(AppDataContext);
 
@@ -57,7 +57,8 @@ const useAppData = () => {
     nqEvents,
     setNqEvents,
     findCurrentData,
-    updateCurrentEvent,currentEventRef
+    updateCurrentEvent,currentEventRef,
+    isDesktop
   };
 };
 export default useAppData;
