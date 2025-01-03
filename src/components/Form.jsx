@@ -128,10 +128,8 @@ const Form = ({ data }) => {
 
   useEffect(() => {
     sendConfigureEvent();
-    if(!isDesktop)
-    {
     sendDeviceCapabilities();
-    }
+   
   }, [dimensions]);
 
   // console.log("App Form", {

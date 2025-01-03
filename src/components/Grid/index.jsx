@@ -22,8 +22,8 @@ import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
 
-const Component = ({ data }) => {
-  if (data?.type == "Edit") return <GridEdit data={data} />;
+const Component = ({ data,onKeyDown1 }) => {
+  if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
   else if (data?.type == "Button") return <GridButton data={data} />;
   else if (data?.type == "cell" || data?.type == "rowTitle") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
@@ -168,7 +168,6 @@ const Grid = ({ data }) => {
     setEventId(eventId);
     // localStorage.setItem("keyPressEventId", eventId)
     // if (clickData.isClicked) {
-    
 
       updateCurrentEvent({
         curEvent: "CellMove",
@@ -324,7 +323,7 @@ const Grid = ({ data }) => {
         selectedColumn,
         0
       );
-    } else if (key === "ArrowDown") {
+    } else if (key === "ArrowDown" || key==="Enter") {
       const updatedRow = Math.min(selectedRow + 1, rows - 1)
       if (selectedRow == rows - 1) return;
       if (selectedRow === updatedRow) return
@@ -333,6 +332,7 @@ const Grid = ({ data }) => {
         selectedColumn,
         0
       );
+    
     } else if (key === "PageDown") {
       const demoRow = Math.min(selectedRow + 9, rows - 1);
       handleCellMove(

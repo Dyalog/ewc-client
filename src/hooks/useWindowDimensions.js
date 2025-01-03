@@ -28,8 +28,7 @@ const useWindowDimensions = () => {
         clearTimeout(resizeTimeoutRef.current);
       }
       // const name=dataRef?.current?.Mode?.Properties?.Desktop
-      if(!isDesktop)
-      {
+    
 
       resizeTimeoutRef.current = setTimeout(() => {
         let event = JSON.stringify({
@@ -44,7 +43,7 @@ const useWindowDimensions = () => {
         socket.send(event);
 
       }, 1000);
-    }
+
 
     };
 
