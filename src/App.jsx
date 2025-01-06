@@ -683,7 +683,7 @@ const App = () => {
               },
             });
 
-            console.log(event);
+            console.log("server event is as2",event);
             webSocket.send(event);
             return;
           }
@@ -1430,8 +1430,8 @@ const App = () => {
             });
 
             // console.log(event);
-            webSocket.send(event);
-            return;
+            return webSocket.send(event);
+           
           }
           if (Type === "Upload") return Upload.WG(wsSend, serverEvent);
           return;
@@ -1444,11 +1444,10 @@ const App = () => {
         }
       } else if (keys[0] == "NQ") {
         const nqEvent = JSON.parse(event.data).NQ;
-        console.log("300", nqEvent);
+        console.log("300", nqEvent,nqEvent.ID,nqEvent.Event,nqEvent.Info);
         const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
         const appElement = getObjectById(dataRef.current, ID);
-        console.log("Evenet iss assss", Event);
 
         if (Event && Event == "Configure") {
           handleData(
@@ -1463,6 +1462,15 @@ const App = () => {
             "WS"
           );
 
+          const event = JSON.stringify({
+            Event: {
+              EventName: nqEvent.Event,
+              ID:nqEvent.ID,
+              Info:nqEvent.Info,
+            },
+          });
+
+          webSocket.send(event);
           return;
         } else if (Event == "SetPing") {
           window.EWC.pingMS = Info[0] * 1000;

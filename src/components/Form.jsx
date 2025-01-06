@@ -60,7 +60,7 @@ const Form = ({ data }) => {
       },
     });
     const exists = Event && Event.some((item) => item[0] === "Configure");
-    console.log(event);
+    console.log("Event is as in Form",event);
     if (!exists) return;
     socket.send(event);
   };
@@ -76,7 +76,7 @@ const Form = ({ data }) => {
         PPI: 200,
       },
     });
-    console.log(event);
+    console.log("Event sent is as",event);
     socket.send(event);
   };
 
