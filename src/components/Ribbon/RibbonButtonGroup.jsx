@@ -10,6 +10,8 @@ const CustomRibbonButtonGroup = ({ data }) => {
   let ImageList = data.ImageList
 
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
+  console.log("Values reendered arw",Captions)
+
 
   const customStyles = parseFlexStyles(CSS)
   const font = findCurrentData(data.FontObj && data.FontObj);
@@ -77,7 +79,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
   }
   
   return (
-    <div className="d-flex flex-column alig-items-center justify-content-center " style={{ width: "fit-content" }}>
+    <div className="d-flex flex-column align-items-center justify-content-center " style={{ width: "fit-content" }}>
       {Captions.map((title, i) => {
 
         const result = getImageDataByCaption(title);
@@ -95,7 +97,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
             id={`${data?.ID}-${i}`}
             md={colSize}
             className="d-flex align-items-center justify-content-left gap-1"
-            style={{ cursor: "pointer", ...customStyles }}
+            style={{ cursor: "pointer", ...customStyles}}
             onClick={() => handleButtonEvent(i + 1)}
           >
             {result && result?.imgUrl ? (

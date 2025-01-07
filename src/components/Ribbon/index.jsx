@@ -22,6 +22,8 @@ const CustomRibbon = ({ data }) => {
       className='row'
       style={{
         // height: !Size ? '9rem' : Size[0],
+        // border: "2px solid black",
+        backgroundColor:"rgb(134,171,220)" ,
         width: !Size ? parentSize && parentSize[1] : Size && Size[1],
         display: Visible == 0 ? 'none' : 'flex',
         ...customStyles
