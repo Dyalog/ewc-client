@@ -242,7 +242,7 @@ const CustomRibbonGroup = ({ data }) => {
             }}
             className="text-center"
           >
-            {Title}
+            {Title}nsnjisnjsnjksnjk
           </p>
         </div>
       </div>
