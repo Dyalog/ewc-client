@@ -25,7 +25,7 @@ const CustomRibbonGroup = ({ data }) => {
 
   const [tempDivWidth, setTempDivWidth] = useState("auto");
   const [divHeight, setDivHeight] = useState("auto");
-  const [maxHeight, setMaxHeight] = useState(100);
+  const [maxHeight, setMaxHeight] = useState(50);
  
 
   useEffect(() => {
@@ -242,7 +242,7 @@ const CustomRibbonGroup = ({ data }) => {
             }}
             className="text-center"
           >
-            {Title}nsnjisnjsnjksnjk
+            {Title}
           </p>
         </div>
       </div>
