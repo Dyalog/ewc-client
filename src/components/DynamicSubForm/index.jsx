@@ -19,7 +19,7 @@ import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
 const SubForm = ({ data }) => {
-  const { findDesiredData, socket } = useAppData();
+  const { findDesiredData, socket,dataRef } = useAppData();
   const {
     Size,
     Posn,
@@ -33,6 +33,8 @@ const SubForm = ({ data }) => {
     CSS,
     Event,
   } = data?.Properties;
+
+  // console.log("Dattatatatatttt",dataRef)
 
   const observedDiv = useRef(null);
   const styles = setStyle(data?.Properties, "absolute", Flex);
@@ -81,12 +83,16 @@ const SubForm = ({ data }) => {
         })
       );
     } else {
+      
+      // let name=localStorage.getItem("TabControlData",JSON)
       localStorage.setItem(
         data.ID,
-        JSON.stringify({
-          Size: Size && Size,
-          Posn: Posn && Posn,
-        })
+        // JSON.parse(localStorage.getItem())
+        localStorage.getItem("TabControlData")
+        // JSON.stringify({
+        //   Size: Size && Size,
+        //   Posn: Posn && Posn,
+        // })
       );
     }
   }, [data]);

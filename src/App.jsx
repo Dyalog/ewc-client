@@ -1269,83 +1269,81 @@ const App = () => {
 
             const serverPropertiesObj = {};
             console.log("Serverrrrrr", serverEvent.ID)
-            // const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-            // console.log("Value of subform is as", SubForm);
-            let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-            console.log("+====>",!SubForm,SubForm)
+            const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            console.log("Value of subform is as", SubForm);
+            // let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            // console.log("+====>", !SubForm, SubForm)
 
-            if( SubForm.length === 0)
-            {
-              console.log("+====>1",SubForm.length)
+            // if (SubForm.length === 0) {
+            //   console.log("+====>1", SubForm.length)
 
-            }
-            
+            // }
 
-            if (SubForm ) 
-              {
-              // Retrieve data from "TabControlData" if SubForm is empty
-              const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
 
-              if (tabControlData) {
-                SubForm = tabControlData;
-                console.log("SubForm was empty. Assigned TabControlData to SubForm.");
-              } else {
-                console.warn("Both SubForm and TabControlData are empty.");
-              }
-            } else {
-              console.log("Value of SubForm is:", SubForm);
-            }
+            // if (SubForm) {
+            //   // Retrieve data from "TabControlData" if SubForm is empty
+            //   const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
+
+            //   if (tabControlData) {
+            //     SubForm = tabControlData;
+            //     console.log("SubForm was empty. Assigned TabControlData to SubForm.");
+            //   } else {
+            //     console.warn("Both SubForm and TabControlData are empty.");
+            //   }
+            // } else {
+            //   console.log("Value of SubForm is:", SubForm);
+            // }
 
             serverEvent.Properties.map((key) => {
               console.log("Keyyy", key)
               return (serverPropertiesObj[key] = SubForm[key]);
             });
             console.log("Server properties are", serverPropertiesObj)
-            console.log("Server properties are1", localStorage.getItem("formDimension"));
+            // console.log("Server properties are1", localStorage.getItem("formDimension"));
 
 
-            if (!serverPropertiesObj.Posn) {
-              let name = JSON.parse(localStorage.getItem("formDimension"))
-              let name1 = JSON.parse(localStorage.getItem("formPositions"))
-              const serverPropertiesObj1 = {
-                Posn: [name1[0], name1[1]],
-                Size: [name[0], name[1]]
+            // if (!serverPropertiesObj.Posn) {
+            //   let name = JSON.parse(localStorage.getItem("formDimension"))
+            //   let name1 = JSON.parse(localStorage.getItem("formPositions"))
+            //   const serverPropertiesObj1 = {
+            //     Posn: [name1[0], name1[1]],
+            //     Size: [name[0], name[1]]
 
-              };
+            //   };
 
-              console.log("+++++++++++++", JSON.stringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj1,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              }))
-              return webSocket.send(
-                JSON.stringify({
-                  WG: {
-                    ID: serverEvent.ID,
-                    Properties: serverPropertiesObj1,
-                    WGID: serverEvent.WGID,
-                    ...(result &&
-                      result.NotSupported &&
-                      result.NotSupported.length > 0
-                      ? { NotSupported: result.NotSupported }
-                      : null),
-                  },
-                })
-              );
-              // let name=JSON.parse(localStorage.getItem("formDimension"));
-              // console.log("nAME IS",name,name[0],name[1]); 
-              // serverPropertiesObj[Posn]=name[0]
-              // serverPropertiesObj[Size]=name[1]
-            }
-            else {
-            }
+            //   console.log("+++++++++++++", JSON.stringify({
+            //     WG: {
+            //       ID: serverEvent.ID,
+            //       Properties: serverPropertiesObj1,
+            //       WGID: serverEvent.WGID,
+            //       ...(result &&
+            //         result.NotSupported &&
+            //         result.NotSupported.length > 0
+            //         ? { NotSupported: result.NotSupported }
+            //         : null),
+            //     },
+            //   }))
+            //   return webSocket.send(
+            //     JSON.stringify({
+            //       WG: {
+            //         ID: serverEvent.ID,
+            //         Properties: serverPropertiesObj1,
+            //         WGID: serverEvent.WGID,
+            //         ...(result &&
+            //           result.NotSupported &&
+            //           result.NotSupported.length > 0
+            //           ? { NotSupported: result.NotSupported }
+            //           : null),
+            //       },
+            //     })
+            //   );
+            //   // let name=JSON.parse(localStorage.getItem("formDimension"));
+            //   // console.log("nAME IS",name,name[0],name[1]); 
+            //   // serverPropertiesObj[Posn]=name[0]
+            //   // serverPropertiesObj[Size]=name[1]
+            // }
+            // else {
+            // }
 
 
             console.log("Coming in form but su3",
