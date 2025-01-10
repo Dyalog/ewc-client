@@ -14,6 +14,7 @@ const CustomRibbon = ({ data }) => {
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
   const customStyles = parseFlexStyles(CSS)
   const ID = getStringafterPeriod(ImageListObj);
+  console.log("Dtaatataat is as",data?.Properties?.BodyHeight)
   const ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
 
   return (
@@ -23,6 +24,7 @@ const CustomRibbon = ({ data }) => {
       style={{
         // height: !Size ? '9rem' : Size[0],
         // border: "2px solid black",
+        
         backgroundColor:"rgb(134,171,220)" ,
         width: !Size ? parentSize && parentSize[1] : Size && Size[1],
         display: Visible == 0 ? 'none' : 'flex',
