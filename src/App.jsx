@@ -232,12 +232,16 @@ const App = () => {
       }
     } else {
       let newData = JSON.parse(JSON.stringify(data));
+      console.log("New data is assss", newData)
       // Create a new object at the final level
       try {
         if (
           data.Properties.hasOwnProperty("FillCol") ||
           data.Properties.hasOwnProperty("FCol") ||
-          data.Properties.hasOwnProperty("BCol")
+          data.Properties.hasOwnProperty("BCol") ||
+          data.Properties.hasOwnProperty("BodyHeight") ||
+          data.Properties.hasOwnProperty("MaxButtonWidth")
+
         ) {
           // console.log('compare', {_property_before: data?.Properties, colors})
           newData = {
@@ -253,10 +257,28 @@ const App = () => {
               ...(data?.Properties?.BCol && {
                 BCol: getRequiredRGBChannel(data.Properties.BCol),
               }),
+              ...(data?.Properties?.BodyHeight && {
+                BodyHeight: getRequiredRGBChannel(data.Properties.BodyHeight),
+              }),
+              ...(data?.Properties?.MaxButtonWidth && {
+                MaxButtonWidth: getRequiredRGBChannel(data.Properties.MaxButtonWidth),
+              }),
             },
+
           };
+
           // console.log('compare', {_property_after: newData?.Properties})
         }
+        else if (data?.Properties?.Type === "TabControl") {
+          const tabControlData = {
+            Size: data?.Properties?.Size,
+            Posn: data?.Properties?.Posn,
+          };
+
+          // Store the combined object as a JSON string
+          localStorage.setItem("TabControlData", JSON.stringify(tabControlData));
+        }
+
       } catch (error) {
         console.log({ error });
       }
@@ -265,7 +287,7 @@ const App = () => {
         ID: data.ID,
         ...newData,
       };
-      // console.log('compare', {data, newData})
+      console.log('compare', { data, newData })
     }
 
     reRender();
@@ -375,6 +397,7 @@ const App = () => {
           const updatedData = deleteFormAndSiblings(dataRef.current);
           dataRef.current = {};
           dataRef.current = updatedData;
+
           handleData(JSON.parse(event.data).WC, "WC");
           return;
         }
@@ -523,8 +546,8 @@ const App = () => {
           // Get Data from the Ref
 
           const { Properties } = refData;
-          console.log("Reference adata a",refData,Properties);
-          console.log("Reffffffff",Properties);
+          console.log("Reference adata a", refData, Properties);
+          console.log("Reffffffff", Properties);
 
           if (Type == "Grid") {
             const { Values, CurCell } = Properties;
@@ -549,8 +572,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -581,8 +604,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -617,8 +640,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -634,10 +657,10 @@ const App = () => {
               supportedProperties,
               serverEvent?.Properties
             );
-            console.log("Server event is assss", serverEvent,result);
+            console.log("Server event is assss", serverEvent, result);
             const serverPropertiesObj = {};
             const Form = JSON.parse(localStorage.getItem(serverEvent.ID));
-            console.log("Value of form is", Properties,Form);
+            console.log("Value of form is", Properties, Form);
 
             if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
@@ -656,8 +679,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -678,14 +701,14 @@ const App = () => {
                 Properties: serverPropertiesObj,
                 WGID: serverEvent.WGID,
                 ...(result &&
-                result.NotSupported &&
-                result.NotSupported.length > 0
+                  result.NotSupported &&
+                  result.NotSupported.length > 0
                   ? { NotSupported: result.NotSupported }
                   : null),
               },
             });
 
-            console.log("server event is as2",event);
+            console.log("server event is as2", event);
             webSocket.send(event);
             return;
           }
@@ -738,8 +761,8 @@ const App = () => {
                     Properties: serverPropertiesObj,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -752,8 +775,8 @@ const App = () => {
                     Properties: serverPropertiesObj,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -790,8 +813,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -804,8 +827,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -848,8 +871,8 @@ const App = () => {
                   key === "SelItems"
                     ? newSelItems
                     : key === "Text"
-                    ? Text
-                    : Properties[key];
+                      ? Text
+                      : Properties[key];
               });
               // serverEvent.Properties.map((key) => {
               //   serverPropertiesObj[key] =
@@ -902,10 +925,10 @@ const App = () => {
                 key === "SelItems"
                   ? newSelItems
                   : key === "Text"
-                  ? Text
-                  : key === "Items"
-                  ? Items[Info]
-                  : Event[key];
+                    ? Text
+                    : key === "Items"
+                      ? Items[Info]
+                      : Event[key];
             });
             // serverEvent.Properties.map((key) => {
             //   serverPropertiesObj[key] =
@@ -956,8 +979,8 @@ const App = () => {
                       SelItems,
                     },
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
 
@@ -973,8 +996,8 @@ const App = () => {
                       SelItems,
                     },
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
 
@@ -993,8 +1016,8 @@ const App = () => {
                     SelItems: Event["SelItems"],
                   },
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
 
@@ -1010,8 +1033,8 @@ const App = () => {
                     SelItems: Event["SelItems"],
                   },
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
 
@@ -1042,8 +1065,8 @@ const App = () => {
                     },
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1058,8 +1081,8 @@ const App = () => {
                     },
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1079,8 +1102,8 @@ const App = () => {
                   },
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1095,8 +1118,8 @@ const App = () => {
                   },
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1128,8 +1151,8 @@ const App = () => {
                     Properties: serverPropertiesObj,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1142,8 +1165,8 @@ const App = () => {
                     Properties: serverPropertiesObj,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1166,8 +1189,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1180,8 +1203,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1197,21 +1220,21 @@ const App = () => {
               supportedProperties,
               serverEvent?.Properties
             );
-            console.log("Valuuuuuuuu",result);
-            console.log("Servere event is ",serverEvent)
+            console.log("Valuuuuuuuu", result);
+            console.log("Servere event is ", serverEvent)
 
 
             if (!localStorage.getItem(serverEvent.ID)) {
               console.log("Coming in form but su1");
 
               const serverPropertiesObj = {};
-              console.log("Properiessss",serverEvent.Properties,Properties)
+              console.log("Properiessss", serverEvent.Properties, Properties)
 
               serverEvent.Properties.map((key) => {
-                console.log("Propertiesss2",Properties[key])
+                console.log("Propertiesss2", Properties[key])
                 return (serverPropertiesObj[key] = Properties[key]);
               });
-              console.log("Server propertoes aew,",serverPropertiesObj)
+              console.log("Server propertoes aew,", serverPropertiesObj)
 
               console.log(
                 JSON.stringify({
@@ -1220,8 +1243,8 @@ const App = () => {
                     Properties: serverPropertiesObj,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1234,8 +1257,8 @@ const App = () => {
                     Properties: serverPropertiesObj,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1245,35 +1268,59 @@ const App = () => {
             console.log("Coming in form but su2");
 
             const serverPropertiesObj = {};
-            console.log("Serverrrrrr",serverEvent.ID)
-            const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-            console.log("Value of subform is as",SubForm);
+            console.log("Serverrrrrr", serverEvent.ID)
+            // const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            // console.log("Value of subform is as", SubForm);
+            let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            console.log("+====>",!SubForm,SubForm)
+
+            if( SubForm.length === 0)
+            {
+              console.log("+====>1",SubForm.length)
+
+            }
+            
+
+            if (SubForm ) 
+              {
+              // Retrieve data from "TabControlData" if SubForm is empty
+              const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
+
+              if (tabControlData) {
+                SubForm = tabControlData;
+                console.log("SubForm was empty. Assigned TabControlData to SubForm.");
+              } else {
+                console.warn("Both SubForm and TabControlData are empty.");
+              }
+            } else {
+              console.log("Value of SubForm is:", SubForm);
+            }
+
             serverEvent.Properties.map((key) => {
-              console.log("Keyyy",key)
+              console.log("Keyyy", key)
               return (serverPropertiesObj[key] = SubForm[key]);
             });
-            console.log("Server properties are",serverPropertiesObj)
-            console.log("Server properties are1",localStorage.getItem("formDimension"));
-           
+            console.log("Server properties are", serverPropertiesObj)
+            console.log("Server properties are1", localStorage.getItem("formDimension"));
 
-            if(!serverPropertiesObj.Posn)
-            {
-              let name=JSON.parse(localStorage.getItem("formDimension"))
-              let name1=JSON.parse(localStorage.getItem("formPositions"))
+
+            if (!serverPropertiesObj.Posn) {
+              let name = JSON.parse(localStorage.getItem("formDimension"))
+              let name1 = JSON.parse(localStorage.getItem("formPositions"))
               const serverPropertiesObj1 = {
-                Posn:[name1[0],name1[1]],
+                Posn: [name1[0], name1[1]],
                 Size: [name[0], name[1]]
-               
+
               };
 
-              console.log( "+++++++++++++",JSON.stringify({
+              console.log("+++++++++++++", JSON.stringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj1,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1282,11 +1329,11 @@ const App = () => {
                 JSON.stringify({
                   WG: {
                     ID: serverEvent.ID,
-                    Properties:serverPropertiesObj1 ,
+                    Properties: serverPropertiesObj1,
                     WGID: serverEvent.WGID,
                     ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
                       ? { NotSupported: result.NotSupported }
                       : null),
                   },
@@ -1297,25 +1344,25 @@ const App = () => {
               // serverPropertiesObj[Posn]=name[0]
               // serverPropertiesObj[Size]=name[1]
             }
-            else{
+            else {
             }
 
 
-            console.log("Coming in form but su3" ,
+            console.log("Coming in form but su3",
               JSON.stringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
               })
             );
-           
+
             return webSocket.send(
               JSON.stringify({
                 WG: {
@@ -1323,8 +1370,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1356,8 +1403,8 @@ const App = () => {
                   Properties: serverPropertiesObj,
                   WGID: serverEvent.WGID,
                   ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
                     ? { NotSupported: result.NotSupported }
                     : null),
                 },
@@ -1383,8 +1430,8 @@ const App = () => {
                 Properties: serverPropertiesObj,
                 WGID: serverEvent.WGID,
                 ...(result &&
-                result.NotSupported &&
-                result.NotSupported.length > 0
+                  result.NotSupported &&
+                  result.NotSupported.length > 0
                   ? { NotSupported: result.NotSupported }
                   : null),
               },
@@ -1412,8 +1459,8 @@ const App = () => {
                 },
                 WGID: serverEvent.WGID,
                 ...(result &&
-                result.NotSupported &&
-                result.NotSupported.length > 0
+                  result.NotSupported &&
+                  result.NotSupported.length > 0
                   ? { NotSupported: result.NotSupported }
                   : null),
               },
@@ -1440,8 +1487,8 @@ const App = () => {
                 },
                 WGID: serverEvent.WGID,
                 ...(result &&
-                result.NotSupported &&
-                result.NotSupported.length > 0
+                  result.NotSupported &&
+                  result.NotSupported.length > 0
                   ? { NotSupported: result.NotSupported }
                   : null),
               },
@@ -1467,8 +1514,8 @@ const App = () => {
                 },
                 WGID: serverEvent.WGID,
                 ...(result &&
-                result.NotSupported &&
-                result.NotSupported.length > 0
+                  result.NotSupported &&
+                  result.NotSupported.length > 0
                   ? { NotSupported: result.NotSupported }
                   : null),
               },
@@ -1496,7 +1543,7 @@ const App = () => {
 
             // console.log(event);
             return webSocket.send(event);
-           
+
           }
           if (Type === "Upload") return Upload.WG(wsSend, serverEvent);
           return;
@@ -1509,7 +1556,7 @@ const App = () => {
         }
       } else if (keys[0] == "NQ") {
         const nqEvent = JSON.parse(event.data).NQ;
-        console.log("300", nqEvent,nqEvent.ID,nqEvent.Event,nqEvent.Info);
+        console.log("300", nqEvent, nqEvent.ID, nqEvent.Event, nqEvent.Info);
         const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
         const appElement = getObjectById(dataRef.current, ID);
@@ -1530,8 +1577,8 @@ const App = () => {
           const event = JSON.stringify({
             Event: {
               EventName: nqEvent.Event,
-              ID:nqEvent.ID,
-              Info:nqEvent.Info,
+              ID: nqEvent.ID,
+              Info: nqEvent.Info,
             },
           });
 
@@ -1840,7 +1887,7 @@ const App = () => {
           setNqEvents,
           currentEventRef: currentEventRef.current,
           updateCurrentEvent,
-          isDesktop:dataRef?.current?.Mode?.Properties?.Desktop
+          isDesktop: dataRef?.current?.Mode?.Properties?.Desktop
         }}
       >
         {dataRef && formParentID && (
