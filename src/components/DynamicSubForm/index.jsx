@@ -88,11 +88,11 @@ const SubForm = ({ data }) => {
       localStorage.setItem(
         data.ID,
         // JSON.parse(localStorage.getItem())
-        localStorage.getItem("TabControlData")
-        // JSON.stringify({
-        //   Size: Size && Size,
-        //   Posn: Posn && Posn,
-        // })
+        // localStorage.getItem("TabControlData")
+        JSON.stringify({
+          Size: Size && Size,
+          Posn: Posn && Posn,
+        })
       );
     }
   }, [data]);
