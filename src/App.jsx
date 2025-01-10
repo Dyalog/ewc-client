@@ -523,6 +523,8 @@ const App = () => {
           // Get Data from the Ref
 
           const { Properties } = refData;
+          console.log("Reference adata a",refData,Properties);
+          console.log("Reffffffff",Properties);
 
           if (Type == "Grid") {
             const { Values, CurCell } = Properties;
@@ -632,10 +634,10 @@ const App = () => {
               supportedProperties,
               serverEvent?.Properties
             );
-            console.log("Server event is as", serverEvent);
+            console.log("Server event is assss", serverEvent,result);
             const serverPropertiesObj = {};
             const Form = JSON.parse(localStorage.getItem(serverEvent.ID));
-            console.log("Value of form is", Properties);
+            console.log("Value of form is", Properties,Form);
 
             if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
@@ -1188,20 +1190,28 @@ const App = () => {
           }
 
           if (Type == "SubForm") {
-            console.log("Coming in form but su");
+            console.log("Coming in form but suss");
             const supportedProperties = ["Posn", "Size"];
 
             const result = checkSupportedProperties(
               supportedProperties,
               serverEvent?.Properties
             );
+            console.log("Valuuuuuuuu",result);
+            console.log("Servere event is ",serverEvent)
+
 
             if (!localStorage.getItem(serverEvent.ID)) {
+              console.log("Coming in form but su1");
+
               const serverPropertiesObj = {};
+              console.log("Properiessss",serverEvent.Properties,Properties)
 
               serverEvent.Properties.map((key) => {
+                console.log("Propertiesss2",Properties[key])
                 return (serverPropertiesObj[key] = Properties[key]);
               });
+              console.log("Server propertoes aew,",serverPropertiesObj)
 
               console.log(
                 JSON.stringify({
@@ -1232,13 +1242,66 @@ const App = () => {
                 })
               );
             }
+            console.log("Coming in form but su2");
+
             const serverPropertiesObj = {};
+            console.log("Serverrrrrr",serverEvent.ID)
             const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            console.log("Value of subform is as",SubForm);
             serverEvent.Properties.map((key) => {
+              console.log("Keyyy",key)
               return (serverPropertiesObj[key] = SubForm[key]);
             });
+            console.log("Server properties are",serverPropertiesObj)
+            console.log("Server properties are1",localStorage.getItem("formDimension"));
+           
 
-            console.log(
+            if(!serverPropertiesObj.Posn)
+            {
+              let name=JSON.parse(localStorage.getItem("formDimension"))
+              let name1=JSON.parse(localStorage.getItem("formPositions"))
+              const serverPropertiesObj1 = {
+                Posn:[name1[0],name1[1]],
+                Size: [name[0], name[1]]
+               
+              };
+
+              console.log( "+++++++++++++",JSON.stringify({
+                WG: {
+                  ID: serverEvent.ID,
+                  Properties: serverPropertiesObj1,
+                  WGID: serverEvent.WGID,
+                  ...(result &&
+                  result.NotSupported &&
+                  result.NotSupported.length > 0
+                    ? { NotSupported: result.NotSupported }
+                    : null),
+                },
+              }))
+              return webSocket.send(
+                JSON.stringify({
+                  WG: {
+                    ID: serverEvent.ID,
+                    Properties:serverPropertiesObj1 ,
+                    WGID: serverEvent.WGID,
+                    ...(result &&
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
+                      ? { NotSupported: result.NotSupported }
+                      : null),
+                  },
+                })
+              );
+              // let name=JSON.parse(localStorage.getItem("formDimension"));
+              // console.log("nAME IS",name,name[0],name[1]); 
+              // serverPropertiesObj[Posn]=name[0]
+              // serverPropertiesObj[Size]=name[1]
+            }
+            else{
+            }
+
+
+            console.log("Coming in form but su3" ,
               JSON.stringify({
                 WG: {
                   ID: serverEvent.ID,
@@ -1252,6 +1315,7 @@ const App = () => {
                 },
               })
             );
+           
             return webSocket.send(
               JSON.stringify({
                 WG: {
@@ -1269,6 +1333,7 @@ const App = () => {
           }
 
           if (Type == "Button") {
+            console.log("Coming here in buttons")
             crossOriginIsolated.log("Coming inproperties");
             const { State } = Properties;
             const supportedProperties = ["State", "Posn", "Size"];
