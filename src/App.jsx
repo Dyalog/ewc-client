@@ -1421,7 +1421,6 @@ const App = () => {
 
           if (Type == "Button") {
             console.log("Coming here in buttons")
-            crossOriginIsolated.log("Coming inproperties");
             const { State } = Properties;
             const supportedProperties = ["State", "Posn", "Size"];
 
