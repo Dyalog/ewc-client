@@ -584,12 +584,15 @@ const App = () => {
         console.log("Data is as", evData.WG);
         const serverEvent = evData.WG;
 
-        const bBox = document.getElementById(serverEvent.ID).getBoundingClientRect();
+        const formBBox = document.getElementById(serverEvent.ID.split('.')[0]).getBoundingClientRect();
+        const el = document.getElementById(serverEvent.ID + ".$CONTAINER") || document.getElementById(serverEvent.ID);
+        const bBox = el.getBoundingClientRect();
         const updateAndStringify = (resp) => {
           if (!resp.WG?.Properties) return JSON.stringify(resp);
 
           if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-            resp.WG.Properties['Posn'] = [bBox.y, bBox.x];
+            // TODO: the -1s are worrying!
+            resp.WG.Properties['Posn'] = [bBox.y - formBBox.y - 1, bBox.x - formBBox.x - 1];
           }
           if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
             resp.WG.Properties['Size'] = [bBox.height, bBox.width];
