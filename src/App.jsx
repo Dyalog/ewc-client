@@ -649,7 +649,6 @@ const App = () => {
                 return (serverPropertiesObj[key] = Properties[key]);
               });
              
-
               const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
