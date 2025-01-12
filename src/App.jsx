@@ -17,6 +17,7 @@ import Text from "./components/Text";
 import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
+import {size, posn} from "./utils/sizeposn"
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -520,18 +521,13 @@ const App = () => {
         console.log("Data is as", JSON.parse(event.data).WG);
         const serverEvent = JSON.parse(event.data).WG;
 
-        const formBBox = document.getElementById(serverEvent.ID.split('.')[0]).getBoundingClientRect();
-        const el = document.getElementById(serverEvent.ID + ".$CONTAINER") || document.getElementById(serverEvent.ID);
-        const bBox = el.getBoundingClientRect();
         const updateAndStringify = (resp) => {
           if (!resp.WG?.Properties) return JSON.stringify(resp);
-
           if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-            // TODO: the -1s are worrying!
-            resp.WG.Properties['Posn'] = [bBox.y - formBBox.y - 1, bBox.x - formBBox.x - 1];
+            resp.WG.Properties['Posn'] = posn(serverEvent.ID);
           }
           if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-            resp.WG.Properties['Size'] = [bBox.height, bBox.width];
+            resp.WG.Properties['Size'] = size(serverEvent.ID);
           }
           return JSON.stringify(resp);
         };
