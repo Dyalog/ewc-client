@@ -17,6 +17,7 @@ import Text from "./components/Text";
 import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
+import {size, posn} from "./utils/sizeposn"
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -47,6 +48,9 @@ const App = () => {
   };
 
   const dataRef = useRef({});
+  // Convenience for being able to check the current state of the tree in the
+  // browser console.
+  window.ewcDataRef = dataRef;
   const appRef = useRef(null);
 
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
@@ -519,6 +523,18 @@ const App = () => {
       } else if (keys[0] == "WG") {
         console.log("Data is as", JSON.parse(event.data).WG);
         const serverEvent = JSON.parse(event.data).WG;
+
+        const updateAndStringify = (resp) => {
+          if (!resp.WG?.Properties) return JSON.stringify(resp);
+          if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
+            resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+          }
+          if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
+            resp.WG.Properties['Size'] = size(serverEvent.ID);
+          }
+          return JSON.stringify(resp);
+        };
+
         try {
           // console.log({serverEvent})
 
@@ -566,7 +582,7 @@ const App = () => {
                 return (serverPropertiesObj[key] = Properties[key]);
               });
 
-              const event = JSON.stringify({
+              const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -598,7 +614,7 @@ const App = () => {
             // Values[Row - 1][Col - 1] = Value;
             console.log(
               "250",
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -634,7 +650,7 @@ const App = () => {
             });
 
             webSocket.send(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -647,8 +663,7 @@ const App = () => {
                 },
               })
             );
-          }
-          if (Type == "Form") {
+          } else if (Type == "Form") {
             console.log("Coming in forms");
 
             const supportedProperties = ["Posn", "Size"];
@@ -673,7 +688,7 @@ const App = () => {
 
               console.log("+++++++", serverEvent, serverPropertiesObj);
 
-              const event = JSON.stringify({
+              const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -695,7 +710,7 @@ const App = () => {
               return (serverPropertiesObj[key] = Form[key]);
             });
 
-            const event = JSON.stringify({
+            const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,
                 Properties: serverPropertiesObj,
@@ -711,9 +726,7 @@ const App = () => {
             console.log("server event is as2", event);
             webSocket.send(event);
             return;
-          }
-
-          if (Type == "Edit") {
+          } else if (Type == "Edit") {
             const { Text = "", Value, SelText } = Properties;
             const supportedProperties = ["Text", "Value", "SelText"];
             // setTimeout(() => {},100)
@@ -755,7 +768,7 @@ const App = () => {
               });
 
               console.log(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: serverPropertiesObj,
@@ -769,7 +782,7 @@ const App = () => {
                 })
               );
               return webSocket.send(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: serverPropertiesObj,
@@ -807,7 +820,7 @@ const App = () => {
             });
 
             console.log(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -821,7 +834,7 @@ const App = () => {
               })
             );
             webSocket.send(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -834,9 +847,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Combo") {
+          } else if (Type == "Combo") {
             console.log("Properties are", Properties);
             const { SelItems, Items, Text } = Properties;
             console.log("Coming in form but combo");
@@ -899,7 +910,7 @@ const App = () => {
               };
 
               console.log("server event is as2", message);
-              return webSocket.send(JSON.stringify(message));
+              return webSocket.send(updateAndStringify(message));
             }
             console.log("rESULT IS AS4");
 
@@ -955,11 +966,8 @@ const App = () => {
             };
 
             console.log("server event is as2", message);
-            return webSocket.send(JSON.stringify(message));
-          }
-          console.log("Coming here in nnnnn");
-
-          if (Type == "List") {
+            return webSocket.send(updateAndStringify(message));
+          } else if (Type == "List") {
             console.log("Coming here");
             const { SelItems } = Properties;
 
@@ -972,7 +980,7 @@ const App = () => {
 
             if (!localStorage.getItem(serverEvent.ID)) {
               console.log(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
@@ -989,7 +997,7 @@ const App = () => {
                 })
               );
               return webSocket.send(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
@@ -1009,7 +1017,7 @@ const App = () => {
 
             const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
             console.log(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: {
@@ -1026,7 +1034,7 @@ const App = () => {
               })
             );
             return webSocket.send(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: {
@@ -1042,9 +1050,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Scroll") {
+          } else if (Type == "Scroll") {
             const { Thumb = 1 } = Properties;
             const supportedProperties = ["Thumb"];
 
@@ -1057,7 +1063,7 @@ const App = () => {
 
             if (!localStorage.getItem(serverEvent.ID)) {
               console.log(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
@@ -1073,7 +1079,7 @@ const App = () => {
                 })
               );
               return webSocket.send(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
@@ -1094,7 +1100,7 @@ const App = () => {
             const { Info } = Event;
 
             console.log(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: {
@@ -1110,7 +1116,7 @@ const App = () => {
               })
             );
             return webSocket.send(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: {
@@ -1125,9 +1131,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Splitter") {
+          } else if (Type == "Splitter") {
             console.log("Coming in form but splitter");
 
             const { Posn } = Properties;
@@ -1145,7 +1149,7 @@ const App = () => {
               });
 
               console.log(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: serverPropertiesObj,
@@ -1159,7 +1163,7 @@ const App = () => {
                 })
               );
               return webSocket.send(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: serverPropertiesObj,
@@ -1183,7 +1187,7 @@ const App = () => {
             });
 
             console.log(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -1197,7 +1201,7 @@ const App = () => {
               })
             );
             return webSocket.send(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -1210,9 +1214,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "SubForm") {
+          } else if (Type == "SubForm") {
             console.log("Coming in form but suss");
             const supportedProperties = ["Posn", "Size"];
 
@@ -1237,7 +1239,7 @@ const App = () => {
               console.log("Server propertoes aew,", serverPropertiesObj)
 
               console.log(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: serverPropertiesObj,
@@ -1251,7 +1253,7 @@ const App = () => {
                 })
               );
               return webSocket.send(
-                JSON.stringify({
+                updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: serverPropertiesObj,
@@ -1301,53 +1303,8 @@ const App = () => {
             console.log("Server properties are", serverPropertiesObj)
             // console.log("Server properties are1", localStorage.getItem("formDimension"));
 
-
-            // if (!serverPropertiesObj.Posn) {
-            //   let name = JSON.parse(localStorage.getItem("formDimension"))
-            //   let name1 = JSON.parse(localStorage.getItem("formPositions"))
-            //   const serverPropertiesObj1 = {
-            //     Posn: [name1[0], name1[1]],
-            //     Size: [name[0], name[1]]
-
-            //   };
-
-            //   console.log("+++++++++++++", JSON.stringify({
-            //     WG: {
-            //       ID: serverEvent.ID,
-            //       Properties: serverPropertiesObj1,
-            //       WGID: serverEvent.WGID,
-            //       ...(result &&
-            //         result.NotSupported &&
-            //         result.NotSupported.length > 0
-            //         ? { NotSupported: result.NotSupported }
-            //         : null),
-            //     },
-            //   }))
-            //   return webSocket.send(
-            //     JSON.stringify({
-            //       WG: {
-            //         ID: serverEvent.ID,
-            //         Properties: serverPropertiesObj1,
-            //         WGID: serverEvent.WGID,
-            //         ...(result &&
-            //           result.NotSupported &&
-            //           result.NotSupported.length > 0
-            //           ? { NotSupported: result.NotSupported }
-            //           : null),
-            //       },
-            //     })
-            //   );
-            //   // let name=JSON.parse(localStorage.getItem("formDimension"));
-            //   // console.log("nAME IS",name,name[0],name[1]); 
-            //   // serverPropertiesObj[Posn]=name[0]
-            //   // serverPropertiesObj[Size]=name[1]
-            // }
-            // else {
-            // }
-
-
-            console.log("Coming in form but su3",
-              JSON.stringify({
+            console.log(
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -1362,7 +1319,7 @@ const App = () => {
             );
 
             return webSocket.send(
-              JSON.stringify({
+              updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -1375,9 +1332,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Button") {
+          } else if (Type == "Button") {
             console.log("Coming here in buttons")
             const { State } = Properties;
             const supportedProperties = ["State", "Posn", "Size"];
@@ -1394,7 +1349,7 @@ const App = () => {
                   key == "State" ? (State ? State : 0) : Properties[key]);
               });
 
-              const event = JSON.stringify({
+              const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
                   Properties: serverPropertiesObj,
@@ -1421,7 +1376,7 @@ const App = () => {
                 key == "State" ? Value : Event[key]);
             });
 
-            const event = JSON.stringify({
+            const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,
                 Properties: serverPropertiesObj,
@@ -1437,9 +1392,7 @@ const App = () => {
             console.log(event);
 
             return webSocket.send(event);
-          }
-
-          if (Type == "TreeView") {
+          } else if (Type == "TreeView") {
             const supportedProperties = ["SelItems"];
             const result = checkSupportedProperties(
               supportedProperties,
@@ -1448,7 +1401,7 @@ const App = () => {
             const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
             const { SelItems } = Event;
 
-            const event = JSON.stringify({
+            const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,
                 Properties: {
@@ -1465,9 +1418,7 @@ const App = () => {
 
             console.log(event);
             return webSocket.send(event);
-          }
-
-          if (Type == "Timer") {
+          } else if (Type == "Timer") {
             const supportedProperties = ["FireOnce"];
             const result = checkSupportedProperties(
               supportedProperties,
@@ -1476,7 +1427,7 @@ const App = () => {
             const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
             const { FireOnce } = Event;
 
-            const event = JSON.stringify({
+            const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,
                 Properties: {
@@ -1492,9 +1443,7 @@ const App = () => {
             });
             console.log(event);
             return webSocket.send(event);
-          }
-
-          if (Type == "ListView") {
+          } else if (Type == "ListView") {
             const supportedProperties = ["SelItems"];
             const result = checkSupportedProperties(
               supportedProperties,
@@ -1503,7 +1452,7 @@ const App = () => {
             const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
 
             const { SelItems } = Event;
-            const event = JSON.stringify({
+            const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,
                 Properties: {
@@ -1520,15 +1469,14 @@ const App = () => {
 
             console.log(event);
             return webSocket.send(event);
-          }
-          if (Type === "ApexChart") {
+          } else if (Type === "ApexChart") {
             const supportedProperties = ["SVG"];
             const { SVG } = Properties;
             const data = JSON.parse(
               getObjectById(dataRef.current, serverEvent.ID)
             );
 
-            const event = JSON.stringify({
+            const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,
                 WGID: serverEvent.WGID,
@@ -1541,9 +1489,25 @@ const App = () => {
             // console.log(event);
             return webSocket.send(event);
 
+          } else if (Type === "Upload") {
+            // TODO size and posn
+            return Upload.WG(wsSend, serverEvent);
+          } else {
+            const replyProps = {};
+            for (const prop in serverEvent.Properties) {
+              if (refData.Properties[prop]) {
+                replyProps[prop] = refData[prop];
+              }
+            }
+
+            return webSocket.send(updateAndStringify({
+              WG: {
+                ID: serverEvent.ID,
+                Properties: replyProps,
+                WGID: serverEvent.WGID,
+              }
+            }));
           }
-          if (Type === "Upload") return Upload.WG(wsSend, serverEvent);
-          return;
         } catch (e) {
           // There should be a proper error response here, but for now, we just log.
           // This is because we know something failed, but APL doesn't and
