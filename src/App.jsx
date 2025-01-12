@@ -48,6 +48,9 @@ const App = () => {
   };
 
   const dataRef = useRef({});
+  // Convenience for being able to check the current state of the tree in the
+  // browser console.
+  window.ewcDataRef = dataRef;
   const appRef = useRef(null);
 
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));
@@ -660,8 +663,7 @@ const App = () => {
                 },
               })
             );
-          }
-          if (Type == "Form") {
+          } else if (Type == "Form") {
             console.log("Coming in forms");
 
             const supportedProperties = ["Posn", "Size"];
@@ -724,9 +726,7 @@ const App = () => {
             console.log("server event is as2", event);
             webSocket.send(event);
             return;
-          }
-
-          if (Type == "Edit") {
+          } else if (Type == "Edit") {
             const { Text = "", Value, SelText } = Properties;
             const supportedProperties = ["Text", "Value", "SelText"];
             // setTimeout(() => {},100)
@@ -847,9 +847,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Combo") {
+          } else if (Type == "Combo") {
             console.log("Properties are", Properties);
             const { SelItems, Items, Text } = Properties;
             console.log("Coming in form but combo");
@@ -969,10 +967,7 @@ const App = () => {
 
             console.log("server event is as2", message);
             return webSocket.send(updateAndStringify(message));
-          }
-          console.log("Coming here in nnnnn");
-
-          if (Type == "List") {
+          } else if (Type == "List") {
             console.log("Coming here");
             const { SelItems } = Properties;
 
@@ -1055,9 +1050,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Scroll") {
+          } else if (Type == "Scroll") {
             const { Thumb = 1 } = Properties;
             const supportedProperties = ["Thumb"];
 
@@ -1138,9 +1131,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Splitter") {
+          } else if (Type == "Splitter") {
             console.log("Coming in form but splitter");
 
             const { Posn } = Properties;
@@ -1223,9 +1214,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "SubForm") {
+          } else if (Type == "SubForm") {
             console.log("Coming in form but suss");
             const supportedProperties = ["Posn", "Size"];
 
@@ -1343,9 +1332,7 @@ const App = () => {
                 },
               })
             );
-          }
-
-          if (Type == "Button") {
+          } else if (Type == "Button") {
             console.log("Coming here in buttons")
             const { State } = Properties;
             const supportedProperties = ["State", "Posn", "Size"];
@@ -1405,9 +1392,7 @@ const App = () => {
             console.log(event);
 
             return webSocket.send(event);
-          }
-
-          if (Type == "TreeView") {
+          } else if (Type == "TreeView") {
             const supportedProperties = ["SelItems"];
             const result = checkSupportedProperties(
               supportedProperties,
@@ -1433,9 +1418,7 @@ const App = () => {
 
             console.log(event);
             return webSocket.send(event);
-          }
-
-          if (Type == "Timer") {
+          } else if (Type == "Timer") {
             const supportedProperties = ["FireOnce"];
             const result = checkSupportedProperties(
               supportedProperties,
@@ -1460,9 +1443,7 @@ const App = () => {
             });
             console.log(event);
             return webSocket.send(event);
-          }
-
-          if (Type == "ListView") {
+          } else if (Type == "ListView") {
             const supportedProperties = ["SelItems"];
             const result = checkSupportedProperties(
               supportedProperties,
@@ -1488,8 +1469,7 @@ const App = () => {
 
             console.log(event);
             return webSocket.send(event);
-          }
-          if (Type === "ApexChart") {
+          } else if (Type === "ApexChart") {
             const supportedProperties = ["SVG"];
             const { SVG } = Properties;
             const data = JSON.parse(
@@ -1509,24 +1489,25 @@ const App = () => {
             // console.log(event);
             return webSocket.send(event);
 
-          }
-          // TODO size and posn
-          if (Type === "Upload") return Upload.WG(wsSend, serverEvent);
-          // Generic WG
-          const replyProps = {};
-          for (const prop in serverEvent.Properties) {
-            if (refData.Properties[prop]) {
-              replyProps[prop] = refData[prop];
+          } else if (Type === "Upload") {
+            // TODO size and posn
+            return Upload.WG(wsSend, serverEvent);
+          } else {
+            const replyProps = {};
+            for (const prop in serverEvent.Properties) {
+              if (refData.Properties[prop]) {
+                replyProps[prop] = refData[prop];
+              }
             }
-          }
 
-          return webSocket.send(updateAndStringify({
-            WG: {
-              ID: serverEvent.ID,
-              Properties: replyProps,
-              WGID: serverEvent.WGID,
-            }
-          }));
+            return webSocket.send(updateAndStringify({
+              WG: {
+                ID: serverEvent.ID,
+                Properties: replyProps,
+                WGID: serverEvent.WGID,
+              }
+            }));
+          }
         } catch (e) {
           // There should be a proper error response here, but for now, we just log.
           // This is because we know something failed, but APL doesn't and
