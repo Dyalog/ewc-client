@@ -589,11 +589,23 @@ const App = () => {
 
         const updateAndStringify = (resp) => {
           if (!resp.WG?.Properties) return JSON.stringify(resp);
+          const error = () => webSocket.send(JSON.stringify({
+            WG: {
+              ID: serverEvent?.ID,
+              Error: {
+                Code: 2,
+                Message: "ID '" + serverEvent?.ID + "' has no Size or Posn. Is this a non-rendering component?",
+                WGID: serverEvent?.WGID,
+              },
+            },
+          }));
           if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-            resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+            const p = resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+            // if (p === null) return error();
           }
           if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-            resp.WG.Properties['Size'] = size(serverEvent.ID);
+            const s = resp.WG.Properties['Size'] = size(serverEvent.ID);
+            // if (s === null) return error();
           }
           return JSON.stringify(resp);
         };
@@ -1302,6 +1314,9 @@ const App = () => {
                   key == "State" ? (State ? State : 0) : Properties[key]);
               });
 
+              delete serverPropertiesObj['Size'];
+              delete serverPropertiesObj['Posn'];
+
               const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
@@ -1329,6 +1344,8 @@ const App = () => {
                 key == "State" ? Value : Event[key]);
             });
 
+              delete serverPropertiesObj['Size'];
+              delete serverPropertiesObj['Posn'];
             const event = updateAndStringify({
               WG: {
                 ID: serverEvent.ID,

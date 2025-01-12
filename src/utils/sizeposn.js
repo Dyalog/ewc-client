@@ -12,7 +12,7 @@ function parentId(id) {
 
 function posn(id) {
   const bb = boundingBox(id);
-  if (bb === null) return [0, 0];
+  if (bb === null) return null;
   const pid = parentId(id);
   if (pid === null) return [bb.y, bb.x];
   const pbb = boundingBox(pid);
@@ -21,7 +21,7 @@ function posn(id) {
 
 function size(id) {
   const bb = boundingBox(id);
-  if (bb === null) return [0, 0];
+  if (bb === null) return null;
   return [bb.height, bb.width];
 }
 
