@@ -279,6 +279,16 @@ const App = () => {
           // Store the combined object as a JSON string
           localStorage.setItem("TabControlData", JSON.stringify(tabControlData));
         }
+        else if(data?.Properties?.Type==="Form")
+        {
+          const tabControlData1 = {
+                Size: data?.Properties?.Size,
+                Posn: data?.Properties?.Posn,
+              };
+    
+            //   // Store the combined object as a JSON string
+              localStorage.setItem("FormData", JSON.stringify(tabControlData1));
+        }
         else if (data?.Properties?.Type === "SubForm" && data?.Properties?.TabObj ){
           localStorage.setItem("TabControlInSubForm",1);
         }
