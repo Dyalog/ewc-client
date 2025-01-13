@@ -269,7 +269,7 @@ const App = () => {
 
           // console.log('compare', {_property_after: newData?.Properties})
         }
-       
+
         else if (data?.Properties?.Type === "TabControl") {
           const tabControlData = {
             Size: data?.Properties?.Size,
@@ -279,18 +279,29 @@ const App = () => {
           // Store the combined object as a JSON string
           localStorage.setItem("TabControlData", JSON.stringify(tabControlData));
         }
-        else if(data?.Properties?.Type==="Form")
-        {
+        else if (data?.Properties?.Type === "Form") {
           const tabControlData1 = {
-                Size: data?.Properties?.Size,
-                Posn: data?.Properties?.Posn,
-              };
-    
-            //   // Store the combined object as a JSON string
-              localStorage.setItem("FormData", JSON.stringify(tabControlData1));
+            Size: data?.Properties?.Size,
+            Posn: data?.Properties?.Posn,
+          };
+
+          //   // Store the combined object as a JSON string
+          localStorage.setItem("FormData", JSON.stringify(tabControlData1));
         }
-        else if (data?.Properties?.Type === "SubForm" && data?.Properties?.TabObj ){
-          localStorage.setItem("TabControlInSubForm",1);
+        else if (data.Properties.Type === "SubForm" && data.Properties.TabObj) {
+          console.log("Data we are geting is as", data, localStorage.getItem("FormData"), localStorage.getItem("TabControlData"))
+          let name = JSON.parse(localStorage.getItem("TabControlData"))
+          let name1 = JSON.parse(localStorage.getItem("FormData"))
+          localStorage.setItem("TabControlInSubForm", 1);
+          newData = {
+            ...data,
+            Properties: {
+              ...data.Properties,
+              Size: name.Size || name1.Size,
+              Posn: name.Posn || [0, 0]
+
+            }
+          }
         }
 
       } catch (error) {

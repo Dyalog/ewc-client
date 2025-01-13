@@ -89,7 +89,10 @@ const SubForm = ({ data }) => {
       console.log("Coming in name");
       let name = JSON.parse(localStorage.getItem("TabControlData"))
       let name1=JSON.parse(localStorage.getItem("FormData"))
-      console.log("nmmmmmm",name,name.Size,name.Posn)
+      // console.log("nmmmmmm",name,name.Posn)
+      if(name.Size1){
+        console.log("undeffffff");
+      }
       localStorage.setItem(
         data.ID,
         // JSON.parse(localStorage.getItem())
