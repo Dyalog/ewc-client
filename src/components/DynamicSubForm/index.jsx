@@ -52,10 +52,8 @@ const SubForm = ({ data }) => {
   );
 
   let updatedStyles = { ...styles, ...imageStyles, ...flexStyles };
-  const tabControl = localStorage.getItem("TabControlInSubForm")
-  // const dataTabControl = JSON.parse(localStorage.getItem("TabControlData"))
-  // const dataForm=JSON.parse(localStorage.getItem("FormData"));
-
+  const name = localStorage.getItem("TabControlInSubForm")
+  console.log("nmsmsmsmsmsmsmsmsmsmmsmsms", name)
 
   console.log("App Subform", {
     styles,
@@ -87,13 +85,10 @@ const SubForm = ({ data }) => {
         })
       );
     }
-    else if (tabControl) {
-      console.log("Commmminggg", tabControl)
+    else if (name) {
+      console.log("Coming in name");
       let name = JSON.parse(localStorage.getItem("TabControlData"))
-      const dataForm=JSON.parse(localStorage.getItem("FormData"));
-
-
-      // console.log("nmmmmmm",name,name.Size,name.Posn)
+      console.log("nmmmmmm",name,name.Size,name.Posn)
       localStorage.setItem(
         data.ID,
         // JSON.parse(localStorage.getItem())
@@ -101,14 +96,11 @@ const SubForm = ({ data }) => {
           Size:name.Size,
           Posn:name.Posn
         })
-        // JSON.stringify({
-        //   Size: name.Size,
-        //   Posn: name.Posn
-        // })
         // localStorage.getItem("TabControlData")
       );
     }
     else {
+
       // let name=localStorage.getItem("TabControlData",JSON)
       localStorage.setItem(
         data.ID,
