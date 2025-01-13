@@ -19,7 +19,7 @@ import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
 const SubForm = ({ data }) => {
-  const { findDesiredData, socket,dataRef } = useAppData();
+  const { findDesiredData, socket, dataRef } = useAppData();
   const {
     Size,
     Posn,
@@ -52,6 +52,8 @@ const SubForm = ({ data }) => {
   );
 
   let updatedStyles = { ...styles, ...imageStyles, ...flexStyles };
+  const name = localStorage.getItem("TabControlInSubForm")
+  console.log("nmsmsmsmsmsmsmsmsmsmmsmsms", name)
 
   console.log("App Subform", {
     styles,
@@ -82,8 +84,23 @@ const SubForm = ({ data }) => {
           Posn: Posn || [50, 50], // Default position if none provided
         })
       );
-    } else {
-      
+    }
+    else if (name) {
+      console.log("Coming in name");
+      let name = JSON.parse(localStorage.getItem("TabControlData"))
+      console.log("nmmmmmm",name,name.Size,name.Posn)
+      localStorage.setItem(
+        data.ID,
+        // JSON.parse(localStorage.getItem())
+        JSON.stringify({
+          Size:name.Size,
+          Posn:name.Posn
+        })
+        // localStorage.getItem("TabControlData")
+      );
+    }
+    else {
+
       // let name=localStorage.getItem("TabControlData",JSON)
       localStorage.setItem(
         data.ID,
@@ -105,8 +122,8 @@ const SubForm = ({ data }) => {
           Visible == 0
             ? "none"
             : data?.Properties.hasOwnProperty("Flex")
-            ? "flex"
-            : "block",
+              ? "flex"
+              : "block",
         background: BCol && rgbColor(BCol),
         ...updatedStyles,
         // height: Size && Size[0],

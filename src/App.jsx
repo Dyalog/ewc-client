@@ -269,6 +269,7 @@ const App = () => {
 
           // console.log('compare', {_property_after: newData?.Properties})
         }
+       
         else if (data?.Properties?.Type === "TabControl") {
           const tabControlData = {
             Size: data?.Properties?.Size,
@@ -277,6 +278,9 @@ const App = () => {
 
           // Store the combined object as a JSON string
           localStorage.setItem("TabControlData", JSON.stringify(tabControlData));
+        }
+        else if (data?.Properties?.Type === "SubForm" && data?.Properties?.TabObj ){
+          localStorage.setItem("TabControlInSubForm",1);
         }
 
       } catch (error) {
