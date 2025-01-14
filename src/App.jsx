@@ -183,6 +183,7 @@ const App = () => {
     console.log("handleData", data, mode);
     const splitID = data.ID.split(".");
     const currentLevel = locateParentByPath(dataRef.current, data.ID);
+   
 
     // Check if the key already exists at the final level
     const finalKey = splitID[splitID.length - 1];
@@ -271,12 +272,14 @@ const App = () => {
         }
 
         else if (data?.Properties?.Type === "TabControl") {
+     
           const tabControlData = {
-            Size: data?.Properties?.Size,
-            Posn: data?.Properties?.Posn,
+            Size: data?.Properties?.Size||data?.Properties?.TabSize,
+            Posn: data?.Properties?.Posn ||[0,0],
           };
+          // console.log("Valuueueueueuueue",tabControlData,data?.Properties);
 
-          // Store the combined object as a JSON string
+          // // Store the combined object as a JSON string
           localStorage.setItem("TabControlData", JSON.stringify(tabControlData));
         }
         else if (data?.Properties?.Type === "Form") {
@@ -288,10 +291,12 @@ const App = () => {
           //   // Store the combined object as a JSON string
           localStorage.setItem("FormData", JSON.stringify(tabControlData1));
         }
-        else if (data.Properties.Type === "SubForm" && data.Properties.TabObj) {
+        else if (data?.Properties?.Type === "SubForm" && data?.Properties?.TabObj) {
           console.log("Data we are geting is as", data, localStorage.getItem("FormData"), localStorage.getItem("TabControlData"))
+          
           let name = JSON.parse(localStorage.getItem("TabControlData"))
           let name1 = JSON.parse(localStorage.getItem("FormData"))
+          console.log("Datta id isssss",data?.ID,name.Size,name.Posn)
           localStorage.setItem("TabControlInSubForm", 1);
           newData = {
             ...data,
@@ -302,7 +307,9 @@ const App = () => {
 
             }
           }
+          console.log("Newwwwwwwwwwwwwwssss",newData)
         }
+
 
       } catch (error) {
         console.log({ error });
@@ -1246,7 +1253,11 @@ const App = () => {
               serverEvent?.Properties
             );
             console.log("Valuuuuuuuu", result);
-            console.log("Servere event is ", serverEvent)
+            console.log("Servere event is ", serverEvent,serverEvent.ID)
+            const sanitizedID = serverEvent.ID.split('.')[0]; // Get 'FsCShSpec' from 'FsCShSpec.O'
+
+            console.log("Sanitized ID:", sanitizedID); 
+
 
 
             if (!localStorage.getItem(serverEvent.ID)) {
@@ -1261,7 +1272,7 @@ const App = () => {
               });
               console.log("Server propertoes aew,", serverPropertiesObj)
 
-              console.log(
+              console.log("value sendt is as",
                 JSON.stringify({
                   WG: {
                     ID: serverEvent.ID,
@@ -1295,6 +1306,10 @@ const App = () => {
             const serverPropertiesObj = {};
             console.log("Serverrrrrr", serverEvent.ID)
             const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            // const storedSubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+
+            // const baseID = serverEvent.ID.split('.')[0];
+
             console.log("Value of subform is as", SubForm);
             // let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
             // console.log("+====>", !SubForm, SubForm)

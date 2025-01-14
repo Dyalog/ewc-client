@@ -93,6 +93,7 @@ const SubForm = ({ data }) => {
       if(name.Size1){
         console.log("undeffffff");
       }
+      console.log("Wr are getting id is a",data.ID);
       localStorage.setItem(
         data.ID,
         // JSON.parse(localStorage.getItem())
