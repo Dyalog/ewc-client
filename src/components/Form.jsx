@@ -21,6 +21,7 @@ const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
   const { findDesiredData, socket , isDesktop} = useAppData();
   console.log("Desktop is as",!isDesktop);
+
   const [formStyles, setFormStyles] = useState({});
 
   const dimensions = useResizeObserver(document.getElementById(data?.ID));

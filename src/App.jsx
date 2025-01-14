@@ -74,13 +74,15 @@ const App = () => {
   }
 
   useEffect(() => {
+    console.log("Valuuuuu",layout)
     dataRef.current = {};
     setSocketData([]);
-    localStorage.clear();
+    // localStorage.clear()⌈;⌈
     fetchData();
 
     const handleBeforeUnload = () => {
       // Attempt to send a closing message before the tab is closed
+      console.log("kksksksksksk",webSocketRef.current)
       if (webSocketRef.current) {
         webSocketRef.current.send(
           JSON.stringify({ Signal: { Name: "Close" } })
