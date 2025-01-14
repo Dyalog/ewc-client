@@ -14,8 +14,8 @@ const CustomRibbon = ({ data }) => {
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
   const customStyles = parseFlexStyles(CSS)
   const ID = getStringafterPeriod(ImageListObj);
-  const height=data?.Properties?.BodyHeight;
-  console.log("Dtaatataat is as",dataRef,data?.Properties?.BodyHeight)
+  const height = data?.Properties?.BodyHeight;
+  console.log("Dtaatataat is as", dataRef, data?.Properties?.BodyHeight)
   const ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
 
 
@@ -26,18 +26,18 @@ const CustomRibbon = ({ data }) => {
       style={{
         // height: !Size ? '9rem' : Size[0],
         // border: "2px solid black",
-      height: height ? `${height}px`: "120px",
+        height: height ? `${height}px` : "120px",
 
         // maxWidth:data?.Properties?.ma
-        
-        backgroundColor:"rgb(134,171,220)" ,
+
+        backgroundColor: "rgb(134,171,220)",
         width: !Size ? parentSize && parentSize[1] : Size && Size[1],
         display: Visible == 0 ? 'none' : 'flex',
         ...customStyles
       }}
     >
       {Object.keys(updatedData).map((key, index) => {
-        return <SelectComponent key={index} data={{...updatedData[key],FontObj, id: index, ImageList}} />;
+        return <SelectComponent key={index} data={{ ...updatedData[key], FontObj, id: index, ImageList }} />;
       })}
     </div>
   );
