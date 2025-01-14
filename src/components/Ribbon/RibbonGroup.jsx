@@ -76,7 +76,7 @@ const CustomRibbonGroup = ({ data }) => {
         setTimeout(() => {
           ribbonElementsWithoutId.forEach((element) => {
             const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
-            element.style.height = `${maxHeight + titleDivHeight + 20}px`;
+            // element.style.height = `${maxHeight + titleDivHeight + 20}px`;
             console.log("Maxxxx value seeeeettt", maxHeight, titleDivHeight, element.style.height, data.ID, data.id);
           });
         }, 100); // Add a delay to ensure state update
@@ -87,7 +87,7 @@ const CustomRibbonGroup = ({ data }) => {
     window.addEventListener("resize", updateDimensions);
   
     return () => window.removeEventListener("resize", updateDimensions);
-  }, [data.ID, data.id, dataRef.current.F1?.Properties?.Caption, maxHeight]); // Add `maxHeight` as dependency
+  }, [data.ID, data.id, dataRef.current.F1?.Properties?.Caption, maxHeight]); 
 
   // useEffect(() => {
 
@@ -199,8 +199,9 @@ const CustomRibbonGroup = ({ data }) => {
           border: `1px solid ${rgbColor(BorderCol)}`,
           borderTop: 0,
           position: "relative",
-          height: divHeight + 18,
-          // border:"2px solid-black",
+          height:"100%",
+          // height: divHeight + 18,
+          // border:"2px solid pink",
           justifyContent: "space-around",
           paddingTop: "3px",
           ...customStyle,
@@ -242,7 +243,7 @@ const CustomRibbonGroup = ({ data }) => {
             }}
             className="text-center"
           >
-            {Title}
+            {Title}ss
           </p>
         </div>
       </div>

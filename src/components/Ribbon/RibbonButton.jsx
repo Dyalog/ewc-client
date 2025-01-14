@@ -37,7 +37,8 @@ const CustomRibbonButton = ({ data }) => {
   const IconComponent = Icons[Icon] ? Icons[Icon] : MdOutlineQuestionMark;
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", height: "100%", marginTop: "5px", }}>
+    <div style={{ display: "flex", alignItems: "flex-start", marginTop: "5px",maxWidth:data?.Properties?.MaxButtonWidth,
+    }}>
       <Row>
         <Col>
           <div
