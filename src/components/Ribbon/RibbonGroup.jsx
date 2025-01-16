@@ -40,6 +40,17 @@ const CustomRibbonGroup = ({ data }) => {
         let maxRibbonHeight = 0;
         let sumRibbonDivWidth = 0;
         let sumRibbonDivHeight = 0;
+        ribbonElements.forEach((element) => {
+          const ribbonText = element.textContent.trim();
+          if (ribbonText === "") {
+            console.log("Ribbon element has empty text. Excluding from DOM or calculations.", element);
+        
+            element.remove();
+          } else {
+            console.log("Ribbon Element Text:", ribbonText);
+        
+          }
+        });
   
         ribbonElements.forEach((element) => {
           const elementHeight = element.getBoundingClientRect().height || 0;
@@ -61,8 +72,9 @@ const CustomRibbonGroup = ({ data }) => {
         const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
   
         if (ribbonElements.length > 1) {
-          setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)}px`);
+          setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)-35}px`);
         } else {
+
           setTempDivWidth(`${Math.max(tempWidth, titleDivWidth)}px`);
         }
   
@@ -87,7 +99,7 @@ const CustomRibbonGroup = ({ data }) => {
     window.addEventListener("resize", updateDimensions);
   
     return () => window.removeEventListener("resize", updateDimensions);
-  }, [data.ID, data.id, dataRef.current.F1?.Properties?.Caption, maxHeight]); 
+  }, [data.ID, data.id]); 
 
   // useEffect(() => {
 
@@ -190,10 +202,12 @@ const CustomRibbonGroup = ({ data }) => {
   //   return () => window.removeEventListener("resize", updateDimensions);
   // }, [data.ID, data.id]);
 
-
+console.log("Updated Data is as",updatedData);
 
   return (
-    <div id={data?.ID} style={{ width: tempDivWidth }}>
+    <div id={data?.ID} style={{
+       width: tempDivWidth
+       }}>
       <div
         style={{
           border: `1px solid ${rgbColor(BorderCol)}`,
@@ -210,6 +224,7 @@ const CustomRibbonGroup = ({ data }) => {
         className="row"
       >
         {Object.keys(updatedData).map((key, index) => {
+          console.log("Updated key is aszzzzzzzzzzzzzzzzzzzzzzzzzzzz",updatedData[key])
           return (
             <SelectComponent
               key={index}

@@ -12,12 +12,12 @@ const RibbonDropDownButton = ({ data }) => {
   const { socket, findCurrentData, fontScale } = useAppData();
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
-  const { Icon, Caption, ImageIndex, CSS,ImageListObj } = data?.Properties;
+  const { Icon, Caption, ImageIndex, CSS, ImageListObj } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const wrapperRef = useRef(null);
   const ImageListObjCurrent = findCurrentData(ImageListObj)
-  const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex); 
+  const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex);
 
   const handleSelectEvent = (menuItemID, Event) => {
     const selectEvent = JSON.stringify({
@@ -56,13 +56,19 @@ const RibbonDropDownButton = ({ data }) => {
   };
 
   return (
-    <div ref={wrapperRef}>
+    <div
+      style=
+      {{
+        // border: "2px solid green",
+        // gap:"2px"
+      }}
+      ref={wrapperRef}>
       <Row>
         <Col md={12}>
           <div
             id={data?.ID}
             className="d-flex align-items-center flex-column justify-content-center"
-            style={{ cursor: "pointer", ...customStyles }}
+            style={{ cursor: "pointer", ...customStyles}}
             onClick={(e) => {
               e.stopPropagation();
               toggleDropdown(e);
@@ -94,12 +100,29 @@ const RibbonDropDownButton = ({ data }) => {
             ) : (
               <IconComponent size={35} />
             )}
-            <div className="text-center" style={{ fontFamily: fontProperties?.PName,
+            {/* <div className="text-center" style={{ fontFamily: fontProperties?.PName,
                 fontSize: fontProperties?.Size
                     ? `${fontProperties.Size * fontScale}px`
                     : `${12 * fontScale}px`,}}>
               {Caption}
+            </div> */}
+            <div
+              className="text-center"
+              style={{
+                fontFamily: fontProperties?.PName,
+                fontSize: fontProperties?.Size
+                  ? `${fontProperties.Size * fontScale}px`
+                  : `${12 * fontScale}px`,
+                whiteSpace: "normal",
+                wordWrap: "break-word",
+                textAlign: "center", 
+                width:data?.Properties?.MaxButtonWidth,
+                maxWidth: "80px", 
+              }}
+            >
+              {Caption}
             </div>
+
             <GoChevronDown
 
               size={fontProperties?.Size

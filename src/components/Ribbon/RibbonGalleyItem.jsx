@@ -22,14 +22,16 @@ const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, Item
             onClick={() =>
                 handleSelectEvent(data.ID, Event)
             }
-            style={{minWidth:"max-content"}}
+            style={{minWidth:"max-content",backgroundColor:"#d3e5f7"}}
             id={"gallery-Item"}
             title={Caption}
         >
             <div className="item-preview" style={{
                 minWidth:"max-content",
                 width: ItemWidth + "px",
-                height: ItemHeight + "px"
+                backgroundColor:"#d3e5f7",
+                border:"2px #d3e5f7",
+                height: (ItemHeight-10) + "px"
             }}>
                 {imageUrl && (
                     <img src={imageUrl} style={{

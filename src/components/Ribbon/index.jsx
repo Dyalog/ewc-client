@@ -26,12 +26,11 @@ const CustomRibbon = ({ data }) => {
       style={{
         // height: !Size ? '9rem' : Size[0],
         // border: "2px solid black",
-        height: height ? `${height}px` : "120px",
-
+        height: height ? `${height}px` : "110px",
+        
         // maxWidth:data?.Properties?.ma
-
         backgroundColor: "rgb(134,171,220)",
-        width: !Size ? parentSize && parentSize[1] : Size && Size[1],
+        // width: !Size ? parentSize && parentSize[1] : Size && Size[1],
         display: Visible == 0 ? 'none' : 'flex',
         ...customStyles
       }}

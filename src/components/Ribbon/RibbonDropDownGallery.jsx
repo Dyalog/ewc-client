@@ -7,6 +7,7 @@ import RibbonGalleyItem from "./RibbonGalleyItem";
 const RibbonGallery = ({ data }) => {
   const { socket, findCurrentData } = useAppData();
   const { Cols, ItemHeight, ItemWidth } = data.Properties;
+  console.log("Collllllsss", Cols)
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
@@ -26,6 +27,7 @@ const RibbonGallery = ({ data }) => {
   const maxStartIndex = totalItems - lastPageItems;
 
   const handleScrollLeft = () => {
+
     setStartIndex((prevIndex) => Math.max(prevIndex - Cols, 0));
   };
 
@@ -110,24 +112,31 @@ const RibbonGallery = ({ data }) => {
       className="ribbon-gallery"
       ref={galleryRef}
       style={{
-        minWidth:"max-content",
-        width: maxWidth * Cols + Cols * 5 + 22,
-        height: `${itemHeight + 8}px`,
+        // minWidth:"max-content",
+        // width: maxWidth * Cols + Cols * 5 + 22,
+        // height: `${itemHeight + itemHeight}px`,
+        width: `${maxWidth * 2 + 22}px`,
+        height: `${itemHeight * 2+10}px`,
         justifyContent: "start",
-        margin: "5px",
+        background:"#d3e5f7",
+        // border:"2px solid purple",
+        // margin: "5px",
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "5px",
+
       }}
     >
       {!isDropdownOpen && (
         <div
           className="d-flex"
           style={{
-            justifyContent: `${
-              visibleItems.length < Cols ? "start" : "center"
-            }`,
+            justifyContent: `${visibleItems.length < Cols ? "start" : "center"
+              }`,
             marginLeft: `${visibleItems.length < Cols ? "10px" : ""}`,
           }}
         >
-          <div className="gallery-content" ref={galleryRef2}>
+          <div className="gallery-content" style={{ display: "flex", width: "100%", flexWrap: "wrap"}} ref={galleryRef2}>
             {visibleItems.map((item, index) => (
               <RibbonGalleyItem
                 key={index}
@@ -136,7 +145,7 @@ const RibbonGallery = ({ data }) => {
                 startIndex={index + startIndex}
                 handleSelectEvent={handleSelectEvent}
                 ItemWidth={maxWidth}
-                ItemHeight={itemHeight-2}
+                ItemHeight={itemHeight - 2}
                 fontProperties={fontProperties}
               />
             ))}
