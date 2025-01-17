@@ -77,7 +77,7 @@ const App = () => {
     console.log("Valuuuuu",layout)
     dataRef.current = {};
     setSocketData([]);
-    // localStorage.clear()⌈;⌈
+    // localStorage.clear();
     fetchData();
 
     const handleBeforeUnload = () => {
