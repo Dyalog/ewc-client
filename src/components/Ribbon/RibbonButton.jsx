@@ -134,24 +134,24 @@ const CustomRibbonButton = ({ data }) => {
     ImageData.imageSize[0] === 16 &&
     ImageData.imageSize[1] === 16;
 
-   
 
-    // if(isSmallImage){
-    //   console.log("+++++++++++++++",data?.Properties,ImageData);
-    //   localStorage.setItem("SmallImageDetail",JSON.stringify(data?.Properties));
-    //   return;
-    // }
+
+  // if(isSmallImage){
+  //   console.log("+++++++++++++++",data?.Properties,ImageData);
+  //   localStorage.setItem("SmallImageDetail",JSON.stringify(data?.Properties));
+  //   return;
+  // }
 
   return (
-
     <div
       style={{
         display: isSmallImage ? "flex" : "block",
-        flexDirection: isSmallImage? "row" : "column",
-        // border: "2px solid red",
-        alignItems: "center",
+        flexDirection: isSmallImage ? "row" : "column",
+        margin: "2px",
+        alignItems: isSmallImage ? "flex-start" : "center", // Align items at the top for small images
+        justifyContent: "flex-start", // Prevent center alignment
         flexWrap: "wrap",
-        marginTop: "5px",
+        marginTop: isSmallImage ? "15px" : "5px",
         height: "auto",
       }}
     >
@@ -162,9 +162,8 @@ const CustomRibbonButton = ({ data }) => {
           style={{
             cursor: "pointer",
             flexDirection: isSmallImage ? "row" : "column",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            // border: "2px solid green",
+            justifyContent: isSmallImage ? "flex-start" : "center", // Align horizontally at the start for small images
+            alignItems: isSmallImage ? "flex-start" : "center", // Align items at the top for small images
             ...customStyles,
           }}
         >
@@ -173,7 +172,7 @@ const CustomRibbonButton = ({ data }) => {
               style={{
                 width: ImageData.imageSize[1],
                 height: ImageData.imageSize[0],
-                marginRight: isSmallImage ? "8px" : "0",
+                marginRight: isSmallImage ? "4px" : "0",
               }}
               src={`${getCurrentUrl()}${ImageData.imageUrl}`}
               alt="Image"
@@ -187,7 +186,7 @@ const CustomRibbonButton = ({ data }) => {
                 height:
                   ImageList?.Properties?.Size &&
                   ImageList?.Properties?.Size[0],
-                marginRight: isSmallImage ? "8px" : "0",
+                marginRight: isSmallImage ? "4px" : "0",
               }}
               src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
                 }`}
@@ -210,6 +209,76 @@ const CustomRibbonButton = ({ data }) => {
         </div>
       </Row>
     </div>
+
+
+    // <div
+    //   style={{
+    //     display: isSmallImage ? "flex" : "block",
+    //     flexDirection: isSmallImage? "row" : "column",
+    //     // border: "2px solid red",
+    //     margin:"2px",
+    //     alignItems: "center",
+    //     flexWrap: "wrap",
+    //     marginTop: "5px",
+    //     height: "auto",
+    //   }}
+    // >
+    //   <Row>
+    //     <div
+    //       className="d-flex align-items-center"
+    //       onClick={handleButtonEvent}
+    //       style={{
+    //         cursor: "pointer",
+    //         flexDirection: isSmallImage ? "row" : "column",
+    //         justifyContent: "flex-start",
+    //         alignItems: isSmallImage?"flex-start":"center",
+
+    //         // border: "2px solid green",
+    //         ...customStyles,
+    //       }}
+    //     >
+    //       {ImageData ? (
+    //         <img
+    //           style={{
+    //             width: ImageData.imageSize[1],
+    //             height: ImageData.imageSize[0],
+    //             marginRight: isSmallImage ? "4px" : "0",
+    //           }}
+    //           src={`${getCurrentUrl()}${ImageData.imageUrl}`}
+    //           alt="Image"
+    //         />
+    //       ) : ImageIndex ? (
+    //         <img
+    //           style={{
+    //             width:
+    //               ImageList?.Properties?.Size &&
+    //               ImageList?.Properties?.Size[1],
+    //             height:
+    //               ImageList?.Properties?.Size &&
+    //               ImageList?.Properties?.Size[0],
+    //             marginRight: isSmallImage ? "4px" : "0",
+    //           }}
+    //           src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+    //             }`}
+    //           alt="Image"
+    //         />
+    //       ) : (
+    //         <IconComponent size={35} />
+    //       )}
+    //       <div
+    //         className="text-center"
+    //         style={{
+    //           fontFamily: fontProperties?.PName,
+    //           fontSize: fontProperties?.Size
+    //             ? `${fontProperties.Size * fontScale}px`
+    //             : `${12 * fontScale}px`,
+    //         }}
+    //       >
+    //         {Caption}
+    //       </div>
+    //     </div>
+    //   </Row>
+    // </div>
 
   );
 };

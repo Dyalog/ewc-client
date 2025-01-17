@@ -26,7 +26,7 @@ const CustomRibbon = ({ data }) => {
       style={{
         // height: !Size ? '9rem' : Size[0],
         // border: "2px solid black",
-        height: height ? `${height}px` : "110px",
+        height: height ? `${height}px` : "97px",
         
         // maxWidth:data?.Properties?.ma
         backgroundColor: "rgb(134,171,220)",

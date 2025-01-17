@@ -13,6 +13,20 @@ const RibbonDropDownButton = ({ data }) => {
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
   const { Icon, Caption, ImageIndex, CSS, ImageListObj } = data?.Properties;
+  const [captionWrap, setCaptionWrap] = useState(false);
+  console.log("Caption is as", Caption);
+  const captionParts = Caption ? Caption.split(" ") : [];
+  console.log("Caption parurur", captionParts)
+
+  useEffect(() => {
+    if (captionParts.length > 2) {
+      setCaptionWrap(true);
+    } else {
+      setCaptionWrap(false);
+    }
+  }, [Caption]);
+
+
   const customStyles = parseFlexStyles(CSS);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const wrapperRef = useRef(null);
@@ -47,7 +61,7 @@ const RibbonDropDownButton = ({ data }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-    };
+    }
   }, []);
 
   const toggleDropdown = (event) => {
@@ -68,7 +82,7 @@ const RibbonDropDownButton = ({ data }) => {
           <div
             id={data?.ID}
             className="d-flex align-items-center flex-column justify-content-center"
-            style={{ cursor: "pointer", ...customStyles}}
+            style={{ cursor: "pointer", ...customStyles }}
             onClick={(e) => {
               e.stopPropagation();
               toggleDropdown(e);
@@ -106,7 +120,7 @@ const RibbonDropDownButton = ({ data }) => {
                     : `${12 * fontScale}px`,}}>
               {Caption}
             </div> */}
-            <div
+            {/* <div
               className="text-center"
               style={{
                 fontFamily: fontProperties?.PName,
@@ -115,25 +129,72 @@ const RibbonDropDownButton = ({ data }) => {
                   : `${12 * fontScale}px`,
                 whiteSpace: "normal",
                 wordWrap: "break-word",
-                textAlign: "center", 
-                width:data?.Properties?.MaxButtonWidth,
-                maxWidth: "80px", 
+                textAlign: "center",
+                width: data?.Properties?.MaxButtonWidth,
+                maxWidth: "80px",
               }}
-            >
-              {Caption}
-            </div>
+                 > */}
+            {captionWrap ?
+              <div
+                className="text-center"
+                style={{
+                  fontFamily: fontProperties?.PName,
+                  fontSize: fontProperties?.Size
+                    ? `${fontProperties.Size * fontScale}px`
+                    : `${12 * fontScale}px`,
+                  lineHeight: fontProperties?.Size
+                    ? `${fontProperties.Size * fontScale * 1.2}px`
+                    : "14px", // Adjust the value as needed
+                  whiteSpace: "normal",
+                  wordWrap: "break-word",
+                  textAlign: "center",
+                  width: data?.Properties?.MaxButtonWidth,
+                  maxWidth: "80px",
+                }}
+              >
 
-            <GoChevronDown
-
-              size={fontProperties?.Size
-                ? `${fontProperties.Size * fontScale}`
-                : `${12 * fontScale}`}
-            />
+                {Caption}
+                <GoChevronDown
+                  size={fontProperties?.Size
+                    ? `${fontProperties.Size * fontScale}`
+                    : `${12 * fontScale}`}
+                />
+              </div> : (
+                <div>
+                <div
+                  className="text-center"
+                  style={{
+                    fontFamily: fontProperties?.PName,
+                    fontSize: fontProperties?.Size
+                      ? `${fontProperties.Size * fontScale}px`
+                      : `${12 * fontScale}px`,
+                    whiteSpace: "normal",
+                    wordWrap: "break-word",
+                    textAlign: "center",
+                    width: data?.Properties?.MaxButtonWidth,
+                    maxWidth: "80px",
+                    display: "flex",        
+                    flexDirection: "column", 
+                    alignItems: "center",    
+                    justifyContent: "center" 
+                  }}
+                >
+                  {Caption}
+                  <GoChevronDown
+                    size={
+                      fontProperties?.Size
+                        ? `${fontProperties.Size * fontScale}`
+                        : `${12 * fontScale}`
+                    }
+                  />
+                </div>
+              </div>
+             
+                )}
           </div>
 
           {dropdownOpen && (
             <div
-
               className="custom-dropdown-menu"
               style={{
                 position: "absolute",

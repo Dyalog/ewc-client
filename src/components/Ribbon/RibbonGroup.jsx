@@ -72,7 +72,7 @@ const CustomRibbonGroup = ({ data }) => {
         const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
   
         if (ribbonElements.length > 1) {
-          setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)-35}px`);
+          setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)-25}px`);
         } else {
 
           setTempDivWidth(`${Math.max(tempWidth, titleDivWidth)}px`);
@@ -214,6 +214,7 @@ console.log("Updated Data is as",updatedData);
           borderTop: 0,
           position: "relative",
           height:"100%",
+
           // height: divHeight + 18,
           // border:"2px solid pink",
           justifyContent: "space-around",
