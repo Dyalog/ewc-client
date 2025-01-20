@@ -20,24 +20,32 @@ const CustomRibbon = ({ data }) => {
 
 
   return (
-    <div
-      id={data?.ID}
-      className='row'
-      style={{
-        // height: !Size ? '9rem' : Size[0],
-        // border: "2px solid black",
-        height: height ? `${height}px` : "97px",
-        
-        // maxWidth:data?.Properties?.ma
-        backgroundColor: "rgb(134,171,220)",
-        // width: !Size ? parentSize && parentSize[1] : Size && Size[1],
-        display: Visible == 0 ? 'none' : 'flex',
-        ...customStyles
-      }}
-    >
-      {Object.keys(updatedData).map((key, index) => {
-        return <SelectComponent key={index} data={{ ...updatedData[key], FontObj, id: index, ImageList }} />;
-      })}
+    <div className="w-full" style={{
+     backgroundColor: "rgb(134,171,220)", width:"100vw"
+
+    }}>
+      <div
+        id={data?.ID}
+        className='row'
+        style={{
+          // height: !Size ? '9rem' : Size[0],
+          // border: "2px solid black",
+          height: height ? `${height}px` : "97px",
+
+          // maxWidth:data?.Properties?.ma
+          whiteSpace: 'nowrap',
+          minWidth:"max-content",
+
+          // width: !Size ? parentSize && parentSize[1] : Size && Size[1],
+          display: Visible == 0 ? 'none' : 'flex',
+          ...customStyles
+
+        }}
+      >
+        {Object.keys(updatedData).map((key, index) => {
+          return <SelectComponent key={index} data={{ ...updatedData[key], FontObj, id: index, ImageList }} />;
+        })}
+      </div>
     </div>
   );
 };
