@@ -1,4 +1,4 @@
-import { setStyle, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
+import { setStyle,getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { useAppData, useResizeObserver } from '../hooks';
 import { useState, useRef } from 'react';
@@ -6,9 +6,10 @@ import { useEffect } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
-  const {CSS} = data.Properties;
+  const {CSS,FontObj} = data.Properties;
 
   const customStyles = parseFlexStyles(CSS)
+
 
   const inputRef = useRef();
 
@@ -19,6 +20,8 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   console.log("this event",{Event})
   const [comboInput, setComboInput] = useState('+');
@@ -339,7 +342,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           fontSize: '12px',
           height: location === 'inGrid' ? null : '100%',
           zIndex: 1,
-          ...customStyles
+          ...customStyles,
+          ...fontStyles
+
         }}
         onChange={(e) => {
           e.stopPropagation();

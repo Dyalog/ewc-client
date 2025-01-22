@@ -76,7 +76,6 @@ const Edit = ({
   } = data?.Properties;
 
   const hasTextProperty = data?.Properties.hasOwnProperty("Text");
-  console.log("sjssssssss",data?.Properties,hasTextProperty)
   const hasValueProperty = data?.Properties.hasOwnProperty("Value");
   const isPassword = data?.Properties.hasOwnProperty("Password");
   const inputRef = useRef(null);
@@ -87,7 +86,6 @@ const Edit = ({
   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
 
-    console.log("Value is assssss",location)
     if (location === "inGrid") {
       if (FieldType === "Date") {
         setEmitValue(value);
@@ -108,10 +106,8 @@ const Edit = ({
     }
 
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
-      console.log("CMMMMMMMMMMMMMMMMMMMMMMMMM8")
 
       if (isPassword) {
-        console.log("CMMMMMMMMMMMMMMMMMMMMMMMMM6")
 
 
         setInitialValue(generateAsteriskString(data?.Properties?.Text?.length)); // Custom function to generate asterisks
@@ -120,7 +116,6 @@ const Edit = ({
           generateAsteriskString(data?.Properties?.Text?.length)
         );
       } else {
-        console.log("CMMMMMMMMMMMMMMMMMMMMMMMMM7")
 
         setEmitValue(data?.Properties?.Text);
         setInitialValue(data?.Properties?.Text);
@@ -129,9 +124,7 @@ const Edit = ({
     }
 
     if (data?.Properties?.FieldType?.includes("Numeric")) {
-      console.log("CMMMMMMMMMMMMMMMMMMMMMMMMM2")
       if (isPassword) {
-        console.log("CMMMMMMMMMMMMMMMMMMMMMMMMM3")
 
         setInitialValue(
           generateAsteriskString(data?.Properties?.Value?.length)
@@ -141,7 +134,6 @@ const Edit = ({
           generateAsteriskString(data?.Properties?.Value?.length)
         );
       } else {
-        console.log("CMMMMMMMMMMMMMMMMMMMMMMMMM4,",data?.Properties?.Text)
 
         setInitialValue(data?.Properties?.Text);
         setEmitValue(data?.Properties?.Text);
@@ -182,7 +174,6 @@ const Edit = ({
   }, [decideInputType]);
 
   useEffect(() => {
-    console.log("CMMMMMMMMMMMMMMMMMM")
     
     decideInputValue();
   }, [decideInputValue]);
@@ -626,7 +617,6 @@ const Edit = ({
 
 
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
-    console.log("++++++++++++++++++++++++++++1")
     return (
       <NumericFormat
         className="currency"

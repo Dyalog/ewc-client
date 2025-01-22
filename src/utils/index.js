@@ -4,6 +4,7 @@ export * from "./flexStyles";
 export * from "./getType";
 export * from "./getLastTabButton";
 export * from "./locateInDataRef";
+export * from "./getFontStyles"
 import { v4 as uuidv4 } from "uuid";
 
 export const handleMouseDown = (e, socket, Event, ID) => {

@@ -1,5 +1,6 @@
 import {
   extractStringUntilLastPeriod,
+  getFontStyles,
   handleKeyPressUtils,
   handleMouseDoubleClick,
   handleMouseDown,
@@ -17,8 +18,12 @@ import { useAppData, useResizeObserver } from "../hooks";
 const List = ({ data }) => {
   const { socket } = useAppData();
   const styles = setStyle(data?.Properties);
-  const { Items, SelItems, Visible, Size, Event, CSS } = data?.Properties;
+  const { Items, SelItems, Visible, Size, Event, CSS,FontObj } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
   const ref = useRef();
   const [selectedItem, _] = useState(1);
   const [items, setItems] = useState(SelItems);
@@ -101,6 +106,7 @@ const List = ({ data }) => {
                 alignItems: "center",
                 padding: "1px",
                 ...customStyles,
+                ...fontStyles,
               }}
             >
               {item}
@@ -116,6 +122,7 @@ const List = ({ data }) => {
                 display: "flex",
                 alignItems: "center",
                 ...customStyles,
+                ...fontStyles
               }}
             >
               {item}

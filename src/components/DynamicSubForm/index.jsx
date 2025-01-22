@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import {
   excludeKeys,
   setStyle,
+  getFontStyles,
   getImageStyles,
   rgbColor,
   parseFlexStyles,
@@ -29,12 +30,11 @@ const SubForm = ({ data }) => {
     FlexDirection,
     JustifyContent,
     Display,
+    FontObj,
     Flex = 0,
     CSS,
     Event,
   } = data?.Properties;
-
-  // console.log("Dattatatatatttt",dataRef)
 
   const observedDiv = useRef(null);
   const styles = setStyle(data?.Properties, "absolute", Flex);
@@ -48,10 +48,17 @@ const SubForm = ({ data }) => {
   const imageStyles = getImageStyles(
     Picture && Picture[1],
     ImageData,
-    data?.Properties
+    data?.Properties                            
   );
 
-  let updatedStyles = { ...styles, ...imageStyles, ...flexStyles };
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
+
+
+  let updatedStyles = { ...styles, ...imageStyles, ...flexStyles,...fontStyles };
+
+
   const name = localStorage.getItem("TabControlInSubForm")
   console.log("nmsmsmsmsmsmsmsmsmsmmsmsms", name)
 

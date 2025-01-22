@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import {
   setStyle,
+  getFontStyles,
   createListViewObjects,
   handleMouseDown,
   handleMouseUp,
@@ -28,10 +29,14 @@ const ListView = ({ data }) => {
     ReportInfo,
     Event,
     CSS,
+    FontObj
   } = data && data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
   const styles = setStyle(data?.Properties);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   useEffect(() => {
     localStorage.setItem(
@@ -104,6 +109,7 @@ const ListView = ({ data }) => {
           border: !Border ? null : "1px solid black",
           ...style,
           ...customStyles,
+          ...fontStyles,
         }}
         onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
@@ -212,7 +218,7 @@ const ListView = ({ data }) => {
       !ReportInfo ? [] : ReportInfo,
       !ImageIndex ? [] : ImageIndex
     );
-    
+
     return (
       <div
         style={{
@@ -220,6 +226,7 @@ const ListView = ({ data }) => {
           border: !Border ? null : "1px solid black",
           overflowY: "scroll",
           ...customStyles,
+          ...fontStyles,
         }}
       >
         {/* Header of the component */}

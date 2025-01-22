@@ -1,4 +1,5 @@
 import {
+  getFontStyles,
   setStyle,
   excludeKeys,
   rgbColor,
@@ -35,6 +36,7 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
+    FontObj
   } = data?.Properties;
 
   console.log("Dtaa is as",data,Posn);
@@ -46,6 +48,9 @@ const Form = ({ data }) => {
   const ImageData = findDesiredData(Picture && Picture[0]);
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   const sendConfigureEvent = () => {
     const event = JSON.stringify({
@@ -170,6 +175,7 @@ const Form = ({ data }) => {
       style={{
         ...formStyles,
         ...styles,
+        ...fontStyles,
         background: BCol ? rgbColor(BCol) : "#F0F0F0",
         position: "relative",
         border: "1px solid #F0F0F0",

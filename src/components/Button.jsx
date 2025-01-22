@@ -1,5 +1,6 @@
 import {
   setStyle,
+  getFontStyles,
   extractStringUntilLastPeriod,
   getObjectTypeById,
   handleMouseMove,
@@ -34,12 +35,16 @@ const Button = ({
   const styles = setStyle(data?.Properties);
   const { socket, findDesiredData, dataRef, handleData, reRender } =
     useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } =
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, FontObj} =
     data?.Properties;
 
   console.log("data Button", data);
 
   const customStyles = parseFlexStyles(CSS);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
   const inputRef = useRef();
   const buttonRef = useRef();
 
@@ -469,6 +474,7 @@ const Button = ({
               top: 0,
               left: 16,
               ...customStyles,
+              ...fontStyles
             }}
           >
             {Caption}
@@ -562,6 +568,7 @@ const Button = ({
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
           ...customStyles,
+          ...fontStyles
         }}
       >
         {Align && Align == "Left" ? (
@@ -572,6 +579,7 @@ const Button = ({
               top: 2,
               left: 0,
               ...customStyles,
+              ...fontStyles
             }}
           >
             {Caption}
@@ -597,6 +605,7 @@ const Button = ({
               top: 2,
               left: 16,
               ...customStyles,
+              ...fontStyles
             }}
           >
             <label for={data?.ID}>{Caption}</label>
@@ -658,6 +667,7 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
+        ...fontStyles
       }}
     >
       {ImageData ? (

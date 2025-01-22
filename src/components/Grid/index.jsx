@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   setStyle,
+  getFontStyles,
   generateHeader,
   extractStringUntilLastPeriod,
   rgbColor,
@@ -79,6 +80,7 @@ const Grid = ({ data }) => {
     Attach,
     Event,
     CSS,
+    FontObj,
   } = data?.Properties;
 
   const [height, setHeight] = useState(Size[0]);
@@ -146,6 +148,8 @@ const Grid = ({ data }) => {
 
 
   const style = setStyle(data?.Properties);
+
+
 
   useEffect(() => {
     if (!Attach) return;
@@ -614,6 +618,9 @@ const Grid = ({ data }) => {
   const gridData = modifyGridData();
   const customStyles = parseFlexStyles(CSS);
 
+   const font = findDesiredData(FontObj && FontObj);
+    const fontStyles = getFontStyles(font, 12);
+
   return (
     <>
       <div
@@ -663,6 +670,7 @@ const Grid = ({ data }) => {
                 ? "auto"
                 : "auto",
           ...customStyles,
+          ...fontStyles,
         }}
       >
         {gridData?.map((row, rowi) => {

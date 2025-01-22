@@ -1,4 +1,5 @@
 import {
+  getFontStyles,
   handleMouseDoubleClick,
   handleMouseDown,
   handleMouseEnter,
@@ -75,12 +76,15 @@ const calculateTextDimensions = (lines, fontSize = 12) => {
 };
 
 const Text = ({ data, fontProperties }) => {
-  const { Visible, Points, Text, FCol, BCol, Event, CSS } = data?.Properties;
+  const { Visible, Points, Text, FCol, BCol, Event, CSS,FontObj } = data?.Properties;
 
   console.log("254", { data, fontProperties });
-  const { socket, fontScale } = useAppData();
+  const { findDesiredData,socket, fontScale } = useAppData();
 
   const customStyles = parseFlexStyles(CSS);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   const { reRender } = useForceRerender();
 
@@ -194,7 +198,7 @@ const Text = ({ data, fontProperties }) => {
                   }) translate(${points && -points[0]}, ${
                     points && -points[1]
                   })`}
-                  style={{ ...customStyles }}
+                  style={{ ...customStyles,...fontStyles }}
                 >
                   {text /*text.replace(/ /g, "\u00A0")*/}
                 </text>
