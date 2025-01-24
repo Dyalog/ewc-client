@@ -1,10 +1,13 @@
 import { setStyle,getFontStyles, excludeKeys, getLastTabButton, rgbColor, parseFlexStyles } from '../../utils';
 import SubForm from '../DynamicSubForm';
 import TabButton from '../TabButton';
+import { useAppData } from '../../hooks';
 import { useEffect, useState } from 'react';
 
 const TabControl = ({ data }) => {
   const { BCol, FCol, ActiveBCol, CSS,FontObj } = data?.Properties;
+
+  const {findDesiredData}=useAppData();
 
   const font = findDesiredData(FontObj && FontObj);
   const fontStyles = font && getFontStyles(font, 12);
