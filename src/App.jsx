@@ -683,29 +683,21 @@ const App = () => {
             );
           }
           if (Type == "Form") {
-            console.log("Coming in forms");
-
             const supportedProperties = ["Posn", "Size"];
-            console.log("Server isssue is as", serverEvent);
             const result = checkSupportedProperties(
               supportedProperties,
               serverEvent?.Properties
             );
-            console.log("Server event is assss", serverEvent, result);
             const serverPropertiesObj = {};
             const Form = JSON.parse(localStorage.getItem(serverEvent.ID));
-            console.log("Value of form is", Properties, Form);
 
             if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
 
               serverEvent.Properties.map((key) => {
-                console.log("Properties key is", Properties[key]);
                 return (serverPropertiesObj[key] = Properties[key]);
               });
-              console.log("Valllll===>");
-
-              console.log("+++++++", serverEvent, serverPropertiesObj);
+             
 
               const event = JSON.stringify({
                 WG: {
@@ -720,11 +712,9 @@ const App = () => {
                 },
               });
 
-              console.log("server event is as2", event);
               webSocket.send(event);
               return;
             }
-            console.log("Coming outside");
             serverEvent.Properties.map((key) => {
               return (serverPropertiesObj[key] = Form[key]);
             });
@@ -742,7 +732,6 @@ const App = () => {
               },
             });
 
-            console.log("server event is as2", event);
             webSocket.send(event);
             return;
           }
@@ -871,23 +860,15 @@ const App = () => {
           }
 
           if (Type == "Combo") {
-            console.log("Properties are", Properties);
             const { SelItems, Items, Text } = Properties;
-            console.log("Coming in form but combo");
             const supportedProperties = ["Text", "SelItems", "Posn", "Size"];
-            console.log("server event is as", serverEvent);
 
             const result = checkSupportedProperties(
               supportedProperties,
               serverEvent?.Properties
             );
-            console.log("RESULT IS AS", result);
-
-            console.log("rESULT IS AS", result);
-            console.log("rESULT IS AS2", localStorage.getItem(serverEvent.ID));
 
             if (!localStorage.getItem(serverEvent.ID)) {
-              console.log("server event is as", serverEvent);
 
               let newSelItems = SelItems || new Array(Items.length).fill(0);
 
@@ -932,14 +913,11 @@ const App = () => {
                 },
               };
 
-              console.log("server event is as2", message);
               return webSocket.send(JSON.stringify(message));
             }
-            console.log("rESULT IS AS4");
 
             // Parse the event data from localStorage
             const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-            console.log("EVENY IS AS", Event, serverEvent.WGID);
             const { Info, Size, Posn } = Event;
 
             let newSelItems = SelItems || new Array(Items.length).fill(0);
@@ -953,7 +931,6 @@ const App = () => {
             }
 
             const serverPropertiesObj = {};
-            console.log("Server eveny is as", serverEvent.Properties);
             serverEvent.Properties.map((key) => {
               serverPropertiesObj[key] =
                 key === "SelItems"
@@ -988,13 +965,10 @@ const App = () => {
               },
             };
 
-            console.log("server event is as2", message);
             return webSocket.send(JSON.stringify(message));
           }
-          console.log("Coming here in nnnnn");
 
           if (Type == "List") {
-            console.log("Coming here");
             const { SelItems } = Properties;
 
             const supportedProperties = ["SelItems"];

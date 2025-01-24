@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
 
 const List = ({ data }) => {
-  const { socket } = useAppData();
+  const { socket,findDesiredData } = useAppData();
   const styles = setStyle(data?.Properties);
   const { Items, SelItems, Visible, Size, Event, CSS,FontObj } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
