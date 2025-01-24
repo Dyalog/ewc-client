@@ -969,7 +969,11 @@ const App = () => {
           }
 
           if (Type == "List") {
-            const { SelItems } = Properties;
+            let { SelItems, Items } = Properties;
+            // If nothing has been selected yet, return all 0s
+            if (SelItems === undefined) {
+              SelItems = Array(Items.length).fill(0);
+            }
 
             const supportedProperties = ["SelItems"];
 

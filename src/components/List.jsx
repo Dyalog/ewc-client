@@ -242,6 +242,7 @@ const List = ({ data }) => {
       if (data?.Properties?.Style === "Multi") {
         const start = Math.min(dragStart, index);
         const end = Math.max(dragStart, index);
+        updatedArray.fill(0); 
         for (let i = start; i <= end; i++) {
           updatedArray[i] = 1;
         }
@@ -257,6 +258,16 @@ const List = ({ data }) => {
   };
 
   const handleMouseUpDrag = () => {
+    // TODO - replace localStorage
+    localStorage.setItem(
+      data?.ID,
+      JSON.stringify({
+        Event: {
+          ID: data?.ID,
+          SelItems: items,
+        },
+      })
+    );
     setIsMouseDown(false);
     setDragStart(null);
   };
