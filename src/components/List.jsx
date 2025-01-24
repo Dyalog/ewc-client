@@ -180,19 +180,38 @@ const List = ({ data }) => {
     cursor: "pointer",
   };
 
+  // Meta-click and plain click both reset this state, and then it is used for
+  // shift-clicking. The logic from Windows is that if you've ctrl-clicked
+  // multiple items, then the last one clicked is used for the next shift click.
+  // However, it's also the case that if you click item 3 then shift click 2
+  // then 4, your selection should be {3} -> {2, 3} -> {3, 4}, so shift clicks
+  // themselves don't set this.
+  const [lastClickIndex, setLastClickIndex] = useState(0);
+
   const handleClick = (index, event) => {
     event.preventDefault(); 
 
     const length = items.length;
     let updatedArray = [...items];
 
-    if (event.metaKey || event.shiftKey) {
-      if (data?.Properties?.Style === "Multi") {
-        updatedArray[index] = updatedArray[index] ? 0 : 1;
+    if (event.metaKey && data?.Properties?.Style === "Multi") {
+      updatedArray[index] = updatedArray[index] ? 0 : 1;
+      setLastClickIndex(index);
+    } else if (event.shiftKey && data?.Properties?.Style === "Multi") {
+      updatedArray = Array(length).fill(0);
+      if (index > lastClickIndex) {
+        for (let i = index; i >= lastClickIndex; i--) {
+          updatedArray[i] = 1;
+        }
+      } else {
+        for (let i = index; i <= lastClickIndex; i++) {
+          updatedArray[i] = 1;
+        }
       }
     } else {
       updatedArray = Array(length).fill(0);
-      updatedArray[index] = items[index] ? 1 : 1;
+      updatedArray[index] = 1;
+      setLastClickIndex(index);
     }
     localStorage.setItem(
       data?.ID,
