@@ -561,7 +561,6 @@ const Edit = ({
           id={data?.ID}
           style={{
             ...styles,
-            borderRadius: "2px",
             fontSize: "12px",
             zIndex: 1,
             display: Visible == 0 ? "none" : "block",
