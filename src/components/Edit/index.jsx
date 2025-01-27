@@ -107,25 +107,26 @@ const Edit = ({
 
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
 
-      if (isPassword) {
+      // if (isPassword) {
+      //   console.log("ISSSSSSS PASS1",data?.Properties?.Text,data?.Properties)
 
+      //   setInitialValue(data?.Properties?.Text?.length); // Custom function to generate asterisks
 
-        setInitialValue(generateAsteriskString(data?.Properties?.Text?.length)); // Custom function to generate asterisks
-        setEmitValue(data?.Properties?.Text);
-        return setInputValue(
-          generateAsteriskString(data?.Properties?.Text?.length)
-        );
-      } else {
+      //   setEmitValue(data?.Properties?.Text);
+      //   console.log("ISSSSSSS PASS",isPassword,data?.Properties?.Text)
+
+      //   return setInputValue(data?.Properties?.Text
+      //   );
+      // } else {
 
         setEmitValue(data?.Properties?.Text);
         setInitialValue(data?.Properties?.Text);
         return setInputValue(data?.Properties?.Text);
-      }
+      // }
     }
 
     if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
-
         setInitialValue(
           generateAsteriskString(data?.Properties?.Value?.length)
         ); // Custom function to generate asterisks
@@ -134,10 +135,9 @@ const Edit = ({
           generateAsteriskString(data?.Properties?.Value?.length)
         );
       } else {
-
-        setInitialValue(data?.Properties?.Text);
-        setEmitValue(data?.Properties?.Text);
-        return setInputValue(data?.Properties?.Text);
+        setInitialValue(data?.Properties?.Value||data?.Properties?.Text);
+        setEmitValue(data?.Properties?.Value||data?.Properties?.Text);
+        return setInputValue(data?.Properties?.Value||data?.Properties?.Text);
       }
     }
   }, [
@@ -174,7 +174,6 @@ const Edit = ({
   }, [decideInputType]);
 
   useEffect(() => {
-    
     decideInputValue();
   }, [decideInputValue]);
 

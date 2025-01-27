@@ -227,7 +227,6 @@ const List = ({ data }) => {
 
   const handleMouseDownDrag = (index,event) => {
     event.preventDefault(event); 
-
     setIsMouseDown(true);
     setDragStart(index);
   };
