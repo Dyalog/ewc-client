@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppData, useResizeObserver } from '../../hooks';
 import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
 
 const VerticalSplitter = ({ data }) => {
+  const elementRef = useRef(null); 
+
   const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
   );
 
-  const { Posn, SplitObj1, SplitObj2, Event,CSS } = data?.Properties;
+  const { Posn, SplitObj1, SplitObj2, Event, CSS } = data?.Properties;
   const style = setStyle(data.Properties)
   const customStyles = parseFlexStyles(CSS)
   const [position, setPosition] = useState({ left: Posn && Posn[1] });
@@ -72,6 +74,17 @@ const VerticalSplitter = ({ data }) => {
     reRender();
   }, [dimensions]);
 
+  const [left, setLeft] = useState(position?.left);
+
+
+  useEffect(() => {
+    if (position?.left !== undefined) {
+      setLeft(position.left); 
+      elementRef.current.style.left = `${position.left}px`;
+    }
+  }, [position?.left]);
+
+
   let formWidth = dimensions.width;
   let formHeight = dimensions.height;
   const emitEvent = Event && Event[0];
@@ -82,10 +95,11 @@ const VerticalSplitter = ({ data }) => {
     cursor: 'col-resize',
     position: 'absolute',
     top: Posn && Posn[0],
-    left: position?.left,
+    left: left,
     ...style,
     ...customStyles
   };
+
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -174,6 +188,8 @@ const VerticalSplitter = ({ data }) => {
 
   return (
     <div
+    ref={elementRef}
+    className="border border 2px solid black"
       id={data?.ID}
       onClick={(e) => e.preventDefault()}
       onMouseDown={handleMouseDown}
