@@ -224,6 +224,7 @@ const App = () => {
         }
 
         // Merge the existing object with new properties
+        // console.log("valuuuu123",mode,data);
         currentLevel[finalKey] = {
           ID: data.ID,
           ...currentLevel[finalKey],
@@ -232,6 +233,7 @@ const App = () => {
             ...(data.Properties || {}),
           },
         };
+        // console.log("Current level final keys is",currentLevel[finalKey])
       }
     } else {
       let newData = JSON.parse(JSON.stringify(data));

@@ -51,6 +51,7 @@ const Grid = ({ data }) => {
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
+  // console.log("Dimesnions is as",dimensions)
 
 
   const gridRef = useRef(null);
@@ -96,6 +97,13 @@ const Grid = ({ data }) => {
 
  
   const [clickData, setClickData] = useState({ isClicked: false, row: selectedRow, column: selectedColumn })
+
+  useEffect(() => {
+    if (Size && Size.length > 0) {
+      setHeight(Size[0]);
+      setWidth(Size[1])
+    }
+  }, [Size]);
 
   useEffect(() => {
     gridRef.current.focus();
