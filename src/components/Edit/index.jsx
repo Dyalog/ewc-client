@@ -560,11 +560,13 @@ const Edit = ({
           id={data?.ID}
           style={{
             ...styles,
+            borderRadius: "2px",
+            border: "0px",
             fontSize: "12px",
             zIndex: 1,
             display: Visible == 0 ? "none" : "block",
             paddingLeft: "5px",
-            ...customStyles
+            ...customStyles,
           }}
           value={inputValue}
           type="text"

@@ -31,6 +31,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   useEffect(() => {
     const index = SelItems?.findIndex((element) => element == 1);
+    if (index == undefined || index == -1) {
+      return;
+    }
     setComboInput(Items[index]);
     const triggerEvent = JSON.stringify({
       Event: {
