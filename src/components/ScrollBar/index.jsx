@@ -345,8 +345,6 @@ const ScrollBar = ({ data }) => {
       console.log("temp scled value si as",tempScaledValue)
 
       let lastValue = tempScaledValue;
-      
-
 
       const newThumbPosition = Math.max(
         0,

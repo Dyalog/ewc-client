@@ -1,4 +1,4 @@
-import { setStyle,getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
+import { setStyle, getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { useAppData, useResizeObserver } from '../hooks';
 import { useState, useRef } from 'react';
@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
-  const {CSS,FontObj} = data.Properties;
+  const { CSS, FontObj } = data.Properties;
 
   const customStyles = parseFlexStyles(CSS)
 
@@ -23,7 +23,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   const font = findDesiredData(FontObj && FontObj);
   const fontStyles = getFontStyles(font, 12);
 
-  console.log("this event",{Event})
+  console.log("this event", { Event })
   const [comboInput, setComboInput] = useState('+');
   const [position, setPosition] = useState({ top: Posn && Posn[0], left: Posn && Posn[1] });
 
@@ -231,7 +231,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const nextSibling = grandParent.nextSibling;
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
 
-    triggerCellMoveEvent(row, column + 1,0, value);
+    triggerCellMoveEvent(row, column + 1, 0, value);
     const element = nextSibling?.querySelectorAll(querySelector);
     console.log({ element });
 
@@ -246,7 +246,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;
     const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column - 1,0, value);
+    triggerCellMoveEvent(row, column - 1, 0, value);
     const element = nextSibling?.querySelectorAll(querySelector);
 
     if (querySelector == 'select') return element && element[0].focus();
@@ -260,7 +260,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.previousSibling;
     const element = nextSibling?.querySelectorAll('select');
-    triggerCellMoveEvent(row - 1, column,0, value);
+    triggerCellMoveEvent(row - 1, column, 0, value);
     element &&
       element.forEach((inputElement) => {
         if (inputElement.id === data?.ID) {
@@ -274,7 +274,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const grandParent = parent.parentElement;
     const superParent = grandParent.parentElement;
     const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(row + 1, column,0, value);
+    triggerCellMoveEvent(row + 1, column, 0, value);
     const element = nextSibling?.querySelectorAll('select');
     element &&
       element.forEach((inputElement) => {
@@ -297,6 +297,68 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   // console.log({ comboInput });
 
   return (
+    //     <select
+    //   ref={inputRef}
+    //   onKeyDown={(e) => handleKeyPress(e)}
+    //   id={data?.ID}
+    //   value={value ? value : comboInput}
+    //   style={{
+    //     width: '100%',
+    //     border: 0,
+    //     fontSize: '12px',
+    //     height: location === 'inGrid' ? null : '100%',
+    //     zIndex: 1,
+    //     borderColor: '#ccc',
+    //     display: Visible == 0 ? 'none' : 'block',
+    //     top: position?.top,
+    //     left: position?.left,
+    //     ...styles,
+    //     ...customStyles,
+    //     ...fontStyles
+    //   }}
+    //   onChange={(e) => {
+    //     e.stopPropagation();
+    //     setComboInput(e.target.value);
+    //     handleSelItemsEvent(e.target.value);
+    //   }}
+    //   onMouseDown={(e) => {
+    //     e.stopPropagation();
+    //     handleMouseDown(e, socket, Event, data?.ID);
+    //   }}
+    //   onMouseUp={(e) => {
+    //     e.stopPropagation();
+    //     handleMouseUp(e, socket, Event, data?.ID);
+    //   }}
+    //   onMouseEnter={(e) => {
+    //     e.stopPropagation();
+    //     handleMouseEnter(e, socket, Event, data?.ID);
+    //   }}
+    //   onMouseMove={(e) => {
+    //     e.stopPropagation();
+    //     handleMouseMove(e, socket, Event, data?.ID);
+    //   }}
+    //   onMouseLeave={(e) => {
+    //     e.stopPropagation();
+    //     handleMouseLeave(e, socket, Event, data?.ID);
+    //   }}
+    //   onWheel={(e) => {
+    //     handleMouseWheel(e, socket, Event, data?.ID);
+    //   }}
+    //   onDoubleClick={(e) => {
+    //     e.stopPropagation();
+    //     handleMouseDoubleClick(e, socket, Event, data?.ID);
+    //   }}
+    //   // onKeyDown={(e) => {
+    //   //   handleKeyPressUtils(e, socket, Event, data?.ID);
+    //   // }}
+    // >
+    //   {Items && Items.map((item, i) => (
+    //     <option value={item} key={i}>
+    //       {item}
+    //     </option>
+    //   ))}
+    // </select>
+
     <div
       style={{
         ...styles,
@@ -307,7 +369,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       }}
       onMouseDown={(e) => {
         e.stopPropagation();
-        handleMouseDown(e, socket, Event,data?.ID);
+        handleMouseDown(e, socket, Event, data?.ID);
       }}
       onMouseUp={(e) => {
         e.stopPropagation();
@@ -328,13 +390,13 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       onWheel={(e) => {
         handleMouseWheel(e, socket, Event, data?.ID);
       }}
-      onDoubleClick={(e)=>{
+      onDoubleClick={(e) => {
         e.stopPropagation();
-        handleMouseDoubleClick(e, socket, Event,data?.ID);
+        handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
-      onKeyDown={(e)=>{ handleKeyPressUtils(e, socket, Event, data?.ID);}}
-      >
-      <select
+      onKeyDown={(e) => { handleKeyPressUtils(e, socket, Event, data?.ID); }}
+    >
+      {/* <select
         ref={inputRef}
         onKeyDown={(e) => handleKeyPress(e)}
         id={data?.ID}
@@ -348,7 +410,29 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           ...customStyles,
           ...fontStyles
 
+        }} */}
+      <select
+       ref={inputRef}
+       onKeyDown={(e) => handleKeyPress(e)}
+       id={data?.ID}
+       value={value ? value : comboInput}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          border: 0,
+          padding: 0,
+          margin: 0,
+          fontSize: '12px',
+          lineHeight: 'normal',
+          zIndex: 1,
+          ...customStyles,
+          ...fontStyles
         }}
+
+
         onChange={(e) => {
           e.stopPropagation();
           setComboInput(e.target.value);
