@@ -19,6 +19,7 @@ import { values } from "lodash";
 const GridEdit = ({ data, onKeyDown1 }) => {
   // console.log("grid data", {data})
   const inputRef = useRef(null);
+  console.log("Inpitb reew",inputRef)
   const dateRef = useRef(null);
   const divRef = useRef(null);
   const [isEditable, setIsEditable] = useState(false);
@@ -74,7 +75,6 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     ) {
       const [start, end] = SelText;
       const textNode = divRef.current.firstChild;
-
       console.log({ textNode });
 
       // Check if textNode is wrapped in an object
@@ -89,7 +89,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
 
         const parent = actualTextNode.parentNode;
         const content = parent.textContent.trim();
-        console.log("use effect", { content: data?.formattedValue });
+        console.log("use effect238983", { content: data?.formattedValue });
 
         if (data?.formattedValue) {
           console.log("content", {
@@ -166,7 +166,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
   };
   const handleKeyDown = (event) => {
     event.stopPropagation();
-    // console.log("Key down event triggered:", event.target, { event });
+    console.log("Key down event triggered:", event.target, { event });
 
     const input = event.target;
     const start = input.selectionStart;
@@ -248,6 +248,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     // const gridEvent = findDesiredData(data?.gridId);
 
     const values = data?.gridValues;
+    console.log("valueeee1",data?.rown-1,data?.column)
 
     values[data?.row - 1][data?.column] =
       FieldType == "Date" ? dateFormattedValue : inputValue;
@@ -262,13 +263,15 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     //   },
     //   'WS'
     // );
+    console.log("valueeee2",data?.rown-1,data?.column+1)
+
 
     const cellChangedEvent = JSON.stringify({
       Event: {
         EventName: "CellChanged",
         ID: data?.gridId,
         Row: data?.row,
-        Col: data?.column + 1,
+        Col: data?.column,
         Value: FieldType == "Date" ? dateFormattedValue : inputValue,
       },
     });
@@ -276,13 +279,13 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       Event: {
         EventName: "CellChanged",
         Values: values,
-        CurCell: [data?.row, data?.column + 1],
+        CurCell: [data?.row, data?.column],
       },
     });
 
     const formatCellEvent = JSON.stringify({
       FormatCell: {
-        Cell: [data?.row, data?.column + 1],
+        Cell: [data?.row, data?.column],
         ID: data?.gridId,
         Value: FieldType == "Date" ? dateFormattedValue : inputValue,
       },
@@ -297,6 +300,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     if (!exists) return;
     console.log(cellChangedEvent);
     socket.send(cellChangedEvent);
+    console.log("Input value")
     localStorage.setItem(
       "isChanged",
       JSON.stringify({
@@ -411,6 +415,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     };
 
     const handleInputChange = (event) => {
+      console.log("Innn nisaokdmwisjk")
       setInputValue(event.target.value);
     };
 
@@ -517,6 +522,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
             ref={divRef}
             // onMouseUp={handleDivSelect}
             onDoubleClick={(e) => {
+              console.log("ckckmcdkd")
               setIsEditable(true);
             }}
             // onMouseDown={(e) => {
