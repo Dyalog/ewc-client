@@ -506,6 +506,7 @@ const Edit = ({
     } else {
       triggerChangeEvent();
     }
+
   };
 
   const handleGotFocus = () => {
