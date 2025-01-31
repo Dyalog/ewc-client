@@ -488,7 +488,15 @@ const Edit = ({
     socket.send(formatCellEvent);
   };
 
-  const handleEditEvents = () => {
+  const handleBlur = () => {
+    socket.send(JSON.stringify({
+      Event: {
+        EventName: "LostFocus",
+        ID: data?.ID,
+        Info: [], // TODO
+      },
+    }));
+
     // check that the Edit is inside the Grid
     if (location == "inGrid") {
       if (value != emitValue) {
@@ -573,7 +581,7 @@ const Edit = ({
           readOnly
           onClick={handleTextClick}
           onBlur={() => {
-            handleEditEvents();
+            handleBlur();
           }}
           onKeyDown={(e) => handleKeyPress(e)}
           onMouseDown={(e) => {
@@ -651,7 +659,7 @@ const Edit = ({
         value={inputValue}
         decimalSeparator={decimalSeparator}
         thousandSeparator={FieldType == "LongNumeric" && Thousand}
-        onBlur={() => handleEditEvents()}
+        onBlur={handleBlur}
         onKeyDown={(e) => handleKeyPress(e)}
         onFocus={handleGotFocus}
         onMouseDown={(e) => {
@@ -697,9 +705,7 @@ const Edit = ({
           setInputValue(e.target.value);
         }
       }}
-      onBlur={() => {
-        handleEditEvents();
-      }}
+      onBlur={handleBlur}
       onKeyDown={(e) => handleKeyPress(e)}
       style={{
         ...styles,
