@@ -489,13 +489,15 @@ const Edit = ({
   };
 
   const handleBlur = () => {
-    socket.send(JSON.stringify({
-      Event: {
-        EventName: "LostFocus",
-        ID: data?.ID,
-        Info: [], // TODO
-      },
-    }));
+    if (Event && Event.some((item) => item[0] === "LostFocus")) {
+      socket.send(JSON.stringify({
+        Event: {
+          EventName: "LostFocus",
+          ID: data?.ID,
+          Info: [], // TODO?
+        },
+      }));
+    }
 
     // check that the Edit is inside the Grid
     if (location == "inGrid") {

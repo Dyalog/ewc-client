@@ -174,7 +174,6 @@ const Form = ({ data }) => {
       id={data?.ID}
       style={{
         ...formStyles,
-        ...styles,
         ...fontStyles,
         background: BCol ? rgbColor(BCol) : "#F0F0F0",
         position: "relative",
@@ -187,6 +186,7 @@ const Form = ({ data }) => {
             : "block",
 
         ...imageStyles,
+        ...styles,
         // overflow: 'hidden',
       }}
       onKeyDown={(e) => {
