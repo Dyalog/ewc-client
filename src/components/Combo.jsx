@@ -20,6 +20,8 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   console.log("this event", { Event })
   const [comboInput, setComboInput] = useState('+');
@@ -406,6 +408,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           height: location === 'inGrid' ? null : '100%',
           zIndex: 1,
           ...customStyles,
+          ...fontStyles
 
         }} */}
       <select
@@ -426,6 +429,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           lineHeight: 'normal',
           zIndex: 1,
           ...customStyles,
+          ...fontStyles
         }}
 
 
