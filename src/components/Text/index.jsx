@@ -76,10 +76,9 @@ const calculateTextDimensions = (lines, fontSize = 12) => {
 };
 
 const Text = ({ data, fontProperties }) => {
-  const { Visible, Points, Text, FCol, BCol, Event, CSS,FontObj } = data?.Properties;
-
-  console.log("254", { data, fontProperties });
-  const { findDesiredData,socket, fontScale } = useAppData();
+  const { findDesiredData,socket, fontScale, inheritedProperties } = useAppData();
+  const { Visible, Points, Text, FCol, BCol, Event, CSS } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS);
 

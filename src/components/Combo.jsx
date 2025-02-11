@@ -6,14 +6,15 @@ import { useEffect } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
-  const { CSS, FontObj } = data.Properties;
-
-  const customStyles = parseFlexStyles(CSS)
-
 
   const inputRef = useRef();
 
-  const { socket, handleData, findDesiredData, reRender, dataRef } = useAppData();
+  const { socket, handleData, findDesiredData, reRender, dataRef, inheritedProperties } = useAppData();
+
+  const { CSS } = data.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
+
+  const customStyles = parseFlexStyles(CSS)
   const styles = setStyle(data?.Properties);
   const { Items, SelItems, Event, Visible, Posn, Size } = data?.Properties;
   const dimensions = useResizeObserver(
@@ -294,71 +295,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     else if (e.key == 'ArrowUp') handleUpArrow(e.target.value);
   };
 
-  // console.log({ comboInput });
-
   return (
-    //     <select
-    //   ref={inputRef}
-    //   onKeyDown={(e) => handleKeyPress(e)}
-    //   id={data?.ID}
-    //   value={value ? value : comboInput}
-    //   style={{
-    //     width: '100%',
-    //     border: 0,
-    //     fontSize: '12px',
-    //     height: location === 'inGrid' ? null : '100%',
-    //     zIndex: 1,
-    //     borderColor: '#ccc',
-    //     display: Visible == 0 ? 'none' : 'block',
-    //     top: position?.top,
-    //     left: position?.left,
-    //     ...styles,
-    //     ...customStyles,
-    //     ...fontStyles
-    //   }}
-    //   onChange={(e) => {
-    //     e.stopPropagation();
-    //     setComboInput(e.target.value);
-    //     handleSelItemsEvent(e.target.value);
-    //   }}
-    //   onMouseDown={(e) => {
-    //     e.stopPropagation();
-    //     handleMouseDown(e, socket, Event, data?.ID);
-    //   }}
-    //   onMouseUp={(e) => {
-    //     e.stopPropagation();
-    //     handleMouseUp(e, socket, Event, data?.ID);
-    //   }}
-    //   onMouseEnter={(e) => {
-    //     e.stopPropagation();
-    //     handleMouseEnter(e, socket, Event, data?.ID);
-    //   }}
-    //   onMouseMove={(e) => {
-    //     e.stopPropagation();
-    //     handleMouseMove(e, socket, Event, data?.ID);
-    //   }}
-    //   onMouseLeave={(e) => {
-    //     e.stopPropagation();
-    //     handleMouseLeave(e, socket, Event, data?.ID);
-    //   }}
-    //   onWheel={(e) => {
-    //     handleMouseWheel(e, socket, Event, data?.ID);
-    //   }}
-    //   onDoubleClick={(e) => {
-    //     e.stopPropagation();
-    //     handleMouseDoubleClick(e, socket, Event, data?.ID);
-    //   }}
-    //   // onKeyDown={(e) => {
-    //   //   handleKeyPressUtils(e, socket, Event, data?.ID);
-    //   // }}
-    // >
-    //   {Items && Items.map((item, i) => (
-    //     <option value={item} key={i}>
-    //       {item}
-    //     </option>
-    //   ))}
-    // </select>
-
     <div
       style={{
         ...styles,

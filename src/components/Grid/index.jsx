@@ -43,7 +43,9 @@ const Grid = ({ data }) => {
     setProceedEventArray,
     findAggregatedPropertiesData,
     handleData,
-    currentEventRef, updateCurrentEvent
+    currentEventRef,
+    updateCurrentEvent,
+    inheritedProperties,
   } = useAppData();
 
   const [eventId, setEventId] = useState(null);
@@ -81,8 +83,8 @@ const Grid = ({ data }) => {
     Attach,
     Event,
     CSS,
-    FontObj,
   } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const [height, setHeight] = useState(Size[0]);
   const [width, setWidth] = useState(Size[1]);
@@ -626,8 +628,8 @@ const Grid = ({ data }) => {
   const gridData = modifyGridData();
   const customStyles = parseFlexStyles(CSS);
 
-   const font = findDesiredData(FontObj && FontObj);
-    const fontStyles = getFontStyles(font, 12);
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   return (
     <>
@@ -703,7 +705,7 @@ const Grid = ({ data }) => {
                       borderBottom: isFocused
                         ? "1px solid blue"
                         : "1px solid  #EFEFEF",
-                      fontSize: "12px",
+                      // fontSize: "12px",
                       minHeight: `${data?.height}px`,
                       maxHeight: `${data?.height}px`,
                       minWidth: `${data?.width}px`,
