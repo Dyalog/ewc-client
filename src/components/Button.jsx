@@ -33,10 +33,9 @@ const Button = ({
   );
 
   const styles = setStyle(data?.Properties);
-  const { socket, findDesiredData, dataRef, handleData, reRender } =
-    useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, FontObj} =
-    data?.Properties;
+  const { socket, findDesiredData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   console.log("data Button", data);
 

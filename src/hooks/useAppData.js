@@ -1,6 +1,7 @@
 import { AppDataContext } from '../context';
 import { useContext } from 'react';
 import { flattenJsonToArray } from './../utils/index';
+import { parentId } from "../utils";
 
 const useAppData = () => {
 
@@ -16,6 +17,30 @@ const useAppData = () => {
   const findCurrentData = (ID) => {
     const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
     return findData;
+  };
+
+  const inheritedProperty = (data, prop) => {
+    if (data?.Properties.hasOwnProperty(prop)) {
+      return data.Properties[prop];
+    } else {
+      const pid = parentId(data.ID);
+      if (pid) {
+        return inheritedProperty(findCurrentData(pid), prop);
+      }
+    }
+    return null;
+  };
+
+  const inheritedProperties = (data, ...props) => {
+    const ret = {};
+    for (const prop of props) {
+      const v = inheritedProperty(data, prop);
+      if (v) {
+        ret[prop] = v;
+        continue;
+      }
+    }
+    return ret;
   };
 
   const findAggregatedPropertiesData = (ID) => {
@@ -60,7 +85,9 @@ const useAppData = () => {
     setNqEvents,
     findCurrentData,
     updateCurrentEvent,currentEventRef,
-    isDesktop
+    isDesktop,
+    inheritedProperty,
+    inheritedProperties
   };
 };
 export default useAppData;

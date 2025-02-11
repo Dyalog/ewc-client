@@ -282,6 +282,12 @@ export const extractStringUntilLastPeriod = (inputString) => {
   return inputString;
 };
 
+export const parentId = (id) => {
+  const pid = extractStringUntilLastPeriod(id);
+  if (pid === id) return null;
+  return pid;
+}
+
 export const extractStringFromLastPeriod = (inputString) => {
   const lastPeriodIndex = inputString.lastIndexOf(".");
 

@@ -37,8 +37,8 @@ const Edit = ({
     dataRef,
     findDesiredData,
     handleData,
-    addChangeEvent,
     fontScale,
+    inheritedProperties
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -67,13 +67,13 @@ const Edit = ({
     Decimal,
     Visible,
     Event,
-    FontObj,
     Size,
     EdgeStyle,
     Border = 0,
     CSS,
     Active,
   } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const hasTextProperty = data?.Properties.hasOwnProperty("Text");
   const hasValueProperty = data?.Properties.hasOwnProperty("Value");
