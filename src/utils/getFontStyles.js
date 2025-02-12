@@ -1,4 +1,5 @@
-export const getFontStyles = (fontObj, defaultSize = 12) => {
+export const getFontStyles = (fontObj, defaultSize = 12) => { // TODO remove defaultSize
+    // TODO! no fontScale used?!
     if (!fontObj) return {};
   
     const fontProperties = fontObj?.Properties;

@@ -17,6 +17,7 @@ import Text from "./components/Text";
 import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
+import * as Globals from "./Globals";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -120,7 +121,7 @@ const App = () => {
   }, []);
 
   if (fontScale) {
-    localStorage.setItem("fontscale", fontScale);
+    Globals.set('fontScale', fontScale);
   }
 
   // Helper function to get color from the index
@@ -1760,12 +1761,7 @@ const App = () => {
           const font = JSON.parse(
             getObjectById(dataRef.current, Info && Info[1])
           );
-          const fontProperties = font && font?.Properties;
-          const textDimensions = Text.calculateTextDimensions(
-            joinedString,
-            fontProperties?.Size
-          );
-          // console.log({textDimensions: textDimensions})
+          const textDimensions = Text.calculateTextDimensions(joinedString, font);
           const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
           console.log(event);
           return webSocket.send(event);

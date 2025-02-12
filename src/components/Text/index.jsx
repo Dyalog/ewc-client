@@ -12,6 +12,7 @@ import {
 } from "../../utils";
 import { useAppData } from "../../hooks";
 import { useState } from "react";
+import * as Globals from "../../Globals";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -40,38 +41,37 @@ const flattenIfThreeLevels = (arr) => {
   }
 };
 
-const calculateTextDimensions = (lines, fontSize = 12) => {
+const calculateTextDimensions = (lines, font) => {
   // Create a hidden div element to calculate text dimensions
-  const scale = localStorage.getItem("fontscale")
+  const scale = Globals.get('fontScale');
   const container = document.createElement('div');
   container.style.visibility = 'hidden';
   container.style.display = 'inline-block';
   container.style.position = 'fixed';
-  container.style.fontSize = fontSize;
-  container.style.lineHeight = fontSize + 'px';
   container.style.top = '0';
   container.style.left = '0';
-  container.style.fontSize = (fontSize * scale) + 'px';
 
-  // Iterate through the array of words
+  // TODO remove references to 12px everywhere
+  let lineHeight = '12px';
+  if (font && font?.Properties && font.Properties?.Size) {
+    lineHeight = (font.Properties.Size * scale) + 'px';
+  }
+
   lines.forEach(line => {
-    // Create a span element for each word
     const lineDiv = document.createElement('div');
     lineDiv.style.margin = '0';
     lineDiv.style.padding = '0';
     lineDiv.textContent = line;
     lineDiv.style.display = 'block'; // Start each word on a new line
+    lineDiv.style.lineHeight = lineHeight;
+    Object.assign(lineDiv.style, getFontStyles(font));
     container.appendChild(lineDiv);
   });
 
-  // Append the container to the body
   document.body.appendChild(container);
-  // Retrieve dimensions
   const width = container.offsetWidth;
   const height = container.offsetHeight;
-
   document.body.removeChild(container);
-
   return [height, width];
 };
 
@@ -132,9 +132,7 @@ const Text = ({ data, fontProperties }) => {
           {Text?.map((text, index) => {
             const dimensions = calculateTextDimensions(
               [text],
-              fontProperties?.Size
-                ? fontProperties.Size * fontScale
-                : 12 * fontScale
+              fontProperties
             );
             const textWidth = dimensions?.width;
             const textHeight = dimensions?.height;
