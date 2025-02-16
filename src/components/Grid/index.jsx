@@ -108,7 +108,12 @@ const Grid = ({ data }) => {
   }, [Size]);
 
   useEffect(() => {
-    gridRef.current.focus();
+    // TODO TEMPORARILY disabled as it's causing havoc; just changing CurCell
+    // should ONLY refocus if we want it to. eg an action outside of the Grid
+    // that moves it around, should keep the focus on the outside component.
+    // If the focus was already in the Grid and we eg clicked on a ScrollBar,
+    // then that needs to be handled there...
+    // gridRef.current.focus();
     if (CurCell) {  
       let defaultRow
       let defaultCol
@@ -120,7 +125,7 @@ const Grid = ({ data }) => {
       //   setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
       // }
       // else {
-      gridRef.current.focus();
+      // gridRef.current.focus();
       defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
       defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
       setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
