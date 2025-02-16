@@ -17,6 +17,8 @@ import Text from "./components/Text";
 import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
+import { getGrid } from "./components/Grid/getGrid";
+import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
 
 function useForceRerender() {
@@ -202,6 +204,16 @@ const App = () => {
           ...data,
         };
       } else if (mode === "WS") {
+        // TODO move to a new home and organise it better!
+        // Catch if we're moving outside of bounds and bring us back in
+        if (currentLevel[finalKey]?.Properties?.Type === 'Grid') {
+          setGrid({
+            data,
+            currentLevel,
+            finalKey,
+          });
+        }
+
         // Special logic for radio buttons! This goes up to the parent, and sets
         // all other radio buttons within the container to false.
         // N.B. the assumption is that radios are always within a container of
@@ -425,32 +437,41 @@ const App = () => {
       // webSocket.send('Initialise')
     };
     webSocket.onmessage = (event) => {
-      const keys = Object.keys(JSON.parse(event.data));
+      const evData = JSON.parse(event.data);
+      const keys = Object.keys(evData);
       if (keys[0] == "WC") {
-        let windowCreationEvent = JSON.parse(event.data).WC;
-        // console.log({windowCreationEvent})
+        let windowCreationEvent = evData.WC;
         if (windowCreationEvent?.Properties?.Type == "Form") {
           localStorage.clear();
           const updatedData = deleteFormAndSiblings(dataRef.current);
           dataRef.current = {};
           dataRef.current = updatedData;
 
-          handleData(JSON.parse(event.data).WC, "WC");
+          handleData(evData.WC, "WC");
           return;
         }
 
         // Handle Message Box separately
         if (windowCreationEvent?.Properties?.Type == "MsgBox") {
           setMessageBoxData(windowCreationEvent);
-          // handleData(JSON.parse(event.data).WC, 'WC');
+          // handleData(evData.WC, 'WC');
           return;
         }
 
-        // console.log('event from server WC', JSON.parse(event.data).WC);
-        setSocketData((prevData) => [...prevData, JSON.parse(event.data).WC]);
-        handleData(JSON.parse(event.data).WC, "WC");
+        // TODO move to a new home!
+        const defaultProperties = {
+          Grid: { CurCell: [1, 1] },
+        };
+        const dflts = defaultProperties[evData.WC?.Properties?.Type];
+        if (dflts) {
+          evData.WC.Properties = { ...evData.WC.Properties, ...dflts };
+        }
+
+        // console.log('event from server WC', evData.WC);
+        setSocketData((prevData) => [...prevData, evData.WC]);
+        handleData(evData.WC, "WC");
       } else if (keys[0] == "WS") {
-        const serverEvent = JSON.parse(event.data).WS;
+        const serverEvent = evData.WS;
 
         let value = null;
         // @Todo Check that the Edit is Already Present or not if it is Present just change the value we are getting from the server
@@ -482,7 +503,7 @@ const App = () => {
           if (data?.Properties.hasOwnProperty("Text")) {
             setSocketData((prevData) => [
               ...prevData,
-              JSON.parse(event.data).WS,
+              evData.WS,
             ]);
             return handleData(
               {
@@ -498,7 +519,7 @@ const App = () => {
           } else if (data?.Properties.hasOwnProperty("Value")) {
             setSocketData((prevData) => [
               ...prevData,
-              JSON.parse(event.data).WS,
+              evData.WS,
             ]);
             return handleData(
               {
@@ -512,7 +533,7 @@ const App = () => {
           } else if (data?.Properties.hasOwnProperty("SelText")) {
             setSocketData((prevData) => [
               ...prevData,
-              JSON.parse(event.data).WS,
+              evData.WS,
             ]);
             return handleData(
               {
@@ -531,7 +552,7 @@ const App = () => {
           if (serverEvent?.Properties.hasOwnProperty("SelItems")) {
             setSocketData((prevData) => [
               ...prevData,
-              JSON.parse(event.data).WS,
+              evData.WS,
             ]);
             value = serverEvent?.Properties.SelItems;
             const indextoFind = value.indexOf(1);
@@ -550,12 +571,12 @@ const App = () => {
           }
         }
 
-        setSocketData((prevData) => [...prevData, JSON.parse(event.data).WS]);
-        // serverEvent.ID == "F1.LEFTRIGHT" && console.log("horizontal ws ", {WSThumbValue: JSON.parse(event.data).WS.Properties.Thumb})
-        handleData(JSON.parse(event.data).WS, "WS");
+        setSocketData((prevData) => [...prevData, evData.WS]);
+        // serverEvent.ID == "F1.LEFTRIGHT" && console.log("horizontal ws ", {WSThumbValue: evData.WS.Properties.Thumb})
+        handleData(evData.WS, "WS");
       } else if (keys[0] == "WG") {
-        console.log("Data is as", JSON.parse(event.data).WG);
-        const serverEvent = JSON.parse(event.data).WG;
+        console.log("Data is as", evData.WG);
+        const serverEvent = evData.WG;
         try {
           // console.log({serverEvent})
 
@@ -587,103 +608,7 @@ const App = () => {
           console.log("Reffffffff", Properties);
 
           if (Type == "Grid") {
-            const { Values, CurCell } = Properties;
-            console.log("250 values", { Values, CurCell });
-
-            const supportedProperties = ["Values", "CurCell"];
-
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-
-            if (!localStorage.getItem(serverEvent.ID)) {
-              const serverPropertiesObj = {};
-              serverEvent.Properties.map((key) => {
-                return (serverPropertiesObj[key] = Properties[key]);
-              });
-
-              const event = JSON.stringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              });
-
-              // serverEvent.ID == "F1.LEFTRIGHT" && console.log("horizontal event", event);
-              return webSocket.send(event);
-            }
-
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-            const serverPropertiesObj = {};
-            serverEvent.Properties.map((key) => {
-              if (key === "CurCell") {
-                serverPropertiesObj[key] = CurCell;
-              } else {
-                serverPropertiesObj[key] =
-                  Event[key] || refData?.Properties?.[key];
-              }
-            });
-            // console.log("issue check properties", {local: serverPropertiesObj, app: Properties})
-
-            // Values[Row - 1][Col - 1] = Value;
-            console.log(
-              "250",
-              JSON.stringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-
-            // Modify the data store in the ref to get the updated value
-
-            setSocketData((prevData) => [
-              ...prevData,
-              {
-                ID: serverEvent.ID,
-                Properties: {
-                  ...Properties,
-                  Values,
-                },
-              },
-            ]);
-
-            handleData({
-              ID: serverEvent.ID,
-              Properties: {
-                ...Properties,
-                Values,
-              },
-            });
-
-            webSocket.send(
-              JSON.stringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
+            return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
           }
           if (Type == "Form") {
             const supportedProperties = ["Posn", "Size"];
@@ -814,21 +739,17 @@ const App = () => {
             const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
             const { Info } = Event;
             const serverPropertiesObj = {};
-            console.log("edit 2", { serverPropertiesObj });
             serverEvent.Properties.forEach((key) => {
               if (key === "Value") {
                 serverPropertiesObj[key] = Info;
               } else if (key === "SelText") {
                 serverPropertiesObj[key] = SelText;
               } else if (key === "Text") {
-                console.log("edit 3 hrere");
                 const storedText = JSON.parse(
                   localStorage.getItem(serverEvent?.ID)
                 )?.Text;
-                serverPropertiesObj[key] = Text || storedText;
-                // serverPropertiesObj[key] = Array.isArray(Text || storedText)
-                //   ? Text || storedText
-                //   : Text;
+                const txt = Text !== undefined ? Text : storedText;
+                serverPropertiesObj[key] = txt !== undefined ? txt : '';
               } else {
                 serverPropertiesObj[key] = Info.toString();
               }
@@ -1577,7 +1498,7 @@ const App = () => {
           // wsSend({...});
         }
       } else if (keys[0] == "NQ") {
-        const nqEvent = JSON.parse(event.data).NQ;
+        const nqEvent = evData.NQ;
         console.log("300", nqEvent, nqEvent.ID, nqEvent.Event, nqEvent.Info);
         const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
@@ -1635,58 +1556,22 @@ const App = () => {
           console.log(event);
           if (NoCallback == 0) webSocket.send(event);
           return;
+        } else if (Event == "KeyPress") {
+          // ch is often going to be a character, but it may be a code such as
+          // LC for ArrowLeft
+          // There should be only one element from tests in Windows
+          const ch = Info[0];
+          const el = document.getElementById(ID);
+          switch (ch) {
+            case 'HT':
+              el.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
+              break;
+            default:
+              el.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
+          }
         } else if (Event == "CellMove") {
           console.log("296", { nqEvent });
           setNqEvents([...nqEvents, nqEvent]);
-          // handleData(
-          //   {
-          //     ID: ID,
-          //     Properties: {
-          //       CurCell: [Info[0], Info[1]],
-          //     },
-          //   },
-          //   'WS'
-          // );
-
-          //   handleData(
-          //   {
-          //     ID: ID,
-          //     Properties: {
-          //       CurCell: [Info[0], Info[1]],
-          //     },
-          //   },
-          //   'WS'
-          // );
-          // webSocket.send(
-          //   JSON.stringify({
-          //     Event: {
-          //       EventName: 'CellMove',
-          //       EventID: localStorage.getItem("keyPressEventId"),
-          //       ID,
-          //       Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-          //     },
-          //   })
-          // );
-
-          // handleData(
-          //   {
-          //     ID: ID,
-          //     Properties: {
-          //       CurCell: [Info[0], Info[1]],
-          //     },
-          //   },
-          //   'WS'
-          // );
-          // webSocket.send(
-          //   JSON.stringify({
-          //     Event: {
-          //       EventName: 'CellMove',
-          //       EventID: eventId,
-          //       ID,
-          //       Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-          //     },
-          //   })
-          // );
           localStorage.setItem(
             ID,
             JSON.stringify({
@@ -1732,7 +1617,7 @@ const App = () => {
         const element = document.getElementById(nqEvent.ID);
         element && element.focus();
       } else if (keys[0] == "EC") {
-        const serverEvent = JSON.parse(event.data).EC;
+        const serverEvent = evData.EC;
 
         const { EventID, Proceed } = serverEvent;
         setProceedEventArray((prev) => {
@@ -1750,11 +1635,11 @@ const App = () => {
         setProceed(Proceed);
         // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
       } else if (keys[0] == "EX") {
-        const serverEvent = JSON.parse(event.data).EX;
+        const serverEvent = evData.EX;
 
         deleteObjectsById(dataRef.current, serverEvent?.ID);
       } else if (keys[0] == "WX") {
-        const serverEvent = JSON.parse(event.data).WX;
+        const serverEvent = evData.WX;
         const { Method, Info, WGID, ID } = serverEvent;
         // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
 
@@ -1814,19 +1699,19 @@ const App = () => {
           webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
         }
       } else if (keys[0] == "Options") {
-        handleData(JSON.parse(event.data).Options, "WC");
-        console.log("label", JSON.parse(event.data).Options);
+        handleData(evData.Options, "WC");
+        console.log("label", evData.Options);
 
-        JSON.parse(event.data).Options.ID == "Fonts" &&
-          setFontScale(JSON.parse(event.data).Options.Properties.Scale);
-        JSON.parse(event.data).Options.ID == "Fonts" &&
-          console.log("label", JSON.parse(event.data).Options.Properties.Scale);
-        JSON.parse(event.data).Options.ID == "Mode" &&
-          setOptions(JSON.parse(event.data).Options.Properties);
-        if (JSON.parse(event.data).Options.ID == "Colors")
-          setColorFunc(JSON.parse(event.data).Options.Properties.Standard);
+        evData.Options.ID == "Fonts" &&
+          setFontScale(evData.Options.Properties.Scale);
+        evData.Options.ID == "Fonts" &&
+          console.log("label", evData.Options.Properties.Scale);
+        evData.Options.ID == "Mode" &&
+          setOptions(evData.Options.Properties);
+        if (evData.Options.ID == "Colors")
+          setColorFunc(evData.Options.Properties.Standard);
       } else if (keys[0] == "FormatCell") {
-        const formatCellEvent = JSON.parse(event.data);
+        const formatCellEvent = evData;
         const { FormatCell } = formatCellEvent;
         const refData = JSON.parse(
           getObjectById(dataRef.current, FormatCell?.ID)

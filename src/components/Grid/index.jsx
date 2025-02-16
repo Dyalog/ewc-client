@@ -117,22 +117,11 @@ const Grid = ({ data }) => {
     if (CurCell) {  
       let defaultRow
       let defaultCol
-      // if (curCell) {
-      //   const {Info} = curCell
-      //   defaultRow = !curCell ? (RowTitles?.length > 0 ? 1 : 0) : Info[0];
-      //   defaultCol = !curCell ? (TitleWidth === 0 ? 1 : 0) : Info[1];
-      //   setSelectedRow((prev) => (prev !== Info[0] ? defaultRow : prev));
-      //   setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
-      // }
-      // else {
       // gridRef.current.focus();
       defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
       defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
       setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
       setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
-      // }
-
-
     }
   }, [CurCell]);
 
