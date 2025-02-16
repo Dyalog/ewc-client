@@ -757,7 +757,8 @@ const App = () => {
             );
 
             if (!localStorage.getItem(serverEvent.ID)) {
-              const editValue = Text ? Text : Value;
+              let editValue = Text !== undefined ? Text : Value;
+              editValue = editValue !== undefined ? editValue : "";
 
               const isNumber = refData?.Properties?.hasOwnProperty("FieldType");
 
@@ -768,7 +769,7 @@ const App = () => {
                     ? editValue.toString()
                     : "";
                 } else if (key === "Value") {
-                  serverPropertiesObj[key] = isNumber
+                  serverPropertiesObj[key] = isNumber && editValue != ''
                     ? parseInt(editValue)
                     : editValue;
                 } else if (key === "SelText") {
@@ -824,9 +825,10 @@ const App = () => {
                 const storedText = JSON.parse(
                   localStorage.getItem(serverEvent?.ID)
                 )?.Text;
-                serverPropertiesObj[key] = Array.isArray(Text || storedText)
-                  ? Text || storedText
-                  : Text || "2";
+                serverPropertiesObj[key] = Text || storedText;
+                // serverPropertiesObj[key] = Array.isArray(Text || storedText)
+                //   ? Text || storedText
+                //   : Text;
               } else {
                 serverPropertiesObj[key] = Info.toString();
               }

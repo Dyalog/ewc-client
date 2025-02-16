@@ -85,6 +85,10 @@ const Edit = ({
   
   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
+    let propsValue = data?.Properties?.Value;
+    if (propsValue === undefined) {
+      propsValue = data?.Properties?.Text;
+    }
 
     if (location === "inGrid") {
       if (FieldType === "Date") {
@@ -106,38 +110,24 @@ const Edit = ({
     }
 
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
-
-      // if (isPassword) {
-      //   console.log("ISSSSSSS PASS1",data?.Properties?.Text,data?.Properties)
-
-      //   setInitialValue(data?.Properties?.Text?.length); // Custom function to generate asterisks
-
-      //   setEmitValue(data?.Properties?.Text);
-      //   console.log("ISSSSSSS PASS",isPassword,data?.Properties?.Text)
-
-      //   return setInputValue(data?.Properties?.Text
-      //   );
-      // } else {
-
-        setEmitValue(data?.Properties?.Text);
-        setInitialValue(data?.Properties?.Text);
-        return setInputValue(data?.Properties?.Text);
-      // }
+      setEmitValue(propsValue);
+      setInitialValue(propsValue);
+      return setInputValue(propsValue);
     }
 
     if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
         setInitialValue(
-          generateAsteriskString(data?.Properties?.Value?.length)
+          generateAsteriskString(propsValue.length)
         ); // Custom function to generate asterisks
-        setEmitValue(data?.Properties?.Value);
+        setEmitValue(propsValue);
         return setInputValue(
-          generateAsteriskString(data?.Properties?.Value?.length)
+          generateAsteriskString(propsValue.length)
         );
       } else {
-        setInitialValue(data?.Properties?.Value||data?.Properties?.Text);
-        setEmitValue(data?.Properties?.Value||data?.Properties?.Text);
-        return setInputValue(data?.Properties?.Value||data?.Properties?.Text);
+        setInitialValue(propsValue);
+        setEmitValue(propsValue);
+        return setInputValue(propsValue);
       }
     }
   }, [
