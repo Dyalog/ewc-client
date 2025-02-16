@@ -464,7 +464,7 @@ const App = () => {
         };
         const dflts = defaultProperties[evData.WC?.Properties?.Type];
         if (dflts) {
-          evData.WC.Properties = { ...evData.WC.Properties, ...dflts };
+          evData.WC.Properties = { ...dflts, ...evData.WC.Properties };
         }
 
         // console.log('event from server WC', evData.WC);
