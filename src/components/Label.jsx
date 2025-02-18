@@ -9,10 +9,18 @@ const Label = ({ data, gridValue }) => {
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
-  const { Visible, Caption, Size, BCol, Event, CSS } = data?.Properties;
+  const { Visible, Caption, Size, Font, FCol, BCol, Justify, Event, CSS } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS)
+
+  // If a newline is used anywhere, it's a wrapping, multiline label, otherwise
+  // it is always a single line label
+  if (Caption.indexOf('\n') !== -1) {
+    styles.whiteSpace = 'pre-wrap';
+  } else {
+    styles.textWrapMode = 'nowrap';
+  }
 
   if (haveColor) {
     styles = {
@@ -21,22 +29,26 @@ const Label = ({ data, gridValue }) => {
     };
   }
 
+  // Both center and centre are allowed in ⎕WC
+  const justifications = { 'left': 'left', 'centre': 'center', 'center': 'center', 'right': 'right', };
+  if (Justify) styles.textAlign = justifications[Justify.toLowerCase()];
+
   if (haveFontProperty) {
     styles = {
       ...styles,
-      fontFamily: data.Properties?.Font[0],
-      fontSize: data?.Properties?.Font[1],
+      fontFamily: Font[0],
+      fontSize: Font[1],
     };
   } else {
     const font = findDesiredData(FontObj && FontObj);
     const fontProperties = font && font?.Properties;
+    const fontCss = fontProperties?.CSS ? parseFlexStyles(fontProperties.CSS) : {};
     styles = {
       ...styles,
       fontFamily: fontProperties?.PName,
       fontSize: fontProperties?.Size
         ? `${fontProperties.Size * fontScale}px`
         : `${12 * fontScale}px`,
-      // fontSize: fontProperties?.Size ? `${fontProperties.Size * fontScale}px` : `${11 * fontScale}px`,
       textDecoration: !fontProperties?.Underline
         ? "none"
         : fontProperties?.Underline == 1
@@ -48,10 +60,14 @@ const Label = ({ data, gridValue }) => {
         ? "italic"
         : "none",
       fontWeight: !fontProperties?.Weight ? 0 : fontProperties?.Weight,
-      background: BCol && rgbColor(BCol),
-      // paddingLeft: '10px',
-      // paddingRight: '10px'
+      ...fontCss,
     };
+  }
+
+  styles = {
+    ...styles,
+    background: BCol && rgbColor(BCol),
+    overflow: 'hidden',
   }
 
 

@@ -227,16 +227,24 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
     };
   }
 
+  // [] (zilde or ⍬) means omit in Size - it allows setting only one of height
+  // or width instead of forcing a none or all situation.
+  let size = {};
+  if (Properties?.Size) {
+    let s = Properties?.Size;
+    if (!Array.isArray(s[0]) || s[0].length !== 0) {
+      size.height = s[0];
+    }
+    if (!Array.isArray(s[1]) || s[1].length !== 0) {
+      size.width = s[1];
+    }
+  }
+
   return {
     ...(Properties?.hasOwnProperty("Posn")
       ? { position: "absolute" }
       : { position: "relative" }),
-    // position: Properties?.Posn ? 'absolute' : 'relative',
-
-    ...(Properties?.Size && {
-      height: Properties?.Size && Properties?.Size[0],
-      width: Properties?.Size && Properties?.Size[1],
-    }),
+    ...size,
     ...(Properties?.Posn && {
       top: Properties?.Posn && Properties?.Posn[0],
       left: Properties?.Posn && Properties?.Posn[1],
