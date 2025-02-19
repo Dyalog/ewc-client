@@ -38,10 +38,11 @@ const Label = ({ data, gridValue }) => {
   if (Justify) styles.textAlign = justifications[Justify.toLowerCase()];
 
   if (haveFontProperty) {
+    if (!styles.lineHeight) styles.lineHeight= `${Font[1] * fontScale + 2}px`;
     styles = {
       ...styles,
       fontFamily: Font[0],
-      fontSize: Font[1],
+      fontSize: Font[1] * fontScale,
     };
   } else {
     // const font = findDesiredData(FontObj && FontObj);
@@ -50,12 +51,12 @@ const Label = ({ data, gridValue }) => {
     const font = socketData.filter((x) => x.ID === FontObj).pop();
     const fontProperties = font && font?.Properties;
     const fontCss = fontProperties?.CSS ? parseFlexStyles(fontProperties.CSS) : {};
+    const fontSize = fontScale * (fontProperties?.Size ? fontProperties.Size : 12);
     styles = {
       ...styles,
       fontFamily: fontProperties?.PName,
-      fontSize: fontProperties?.Size
-        ? `${fontProperties.Size * fontScale}px`
-        : `${12 * fontScale}px`,
+      fontSize: `${fontSize}px`,
+      lineHeight: `${fontSize + 2}px`,
       textDecoration: !fontProperties?.Underline
         ? "none"
         : fontProperties?.Underline == 1
