@@ -50,6 +50,9 @@ const App = () => {
   };
 
   const dataRef = useRef({});
+  window.ewcDataRef = dataRef;
+  window.ewcSocketData = socketData;
+  window.ewcProceedArray = proceedEventArray;
   const appRef = useRef(null);
 
   const wsSend = (d) => webSocketRef.current.send(JSON.stringify(d));

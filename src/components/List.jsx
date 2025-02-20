@@ -15,13 +15,13 @@ import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
 
 const List = ({ data }) => {
-  const { socket, findDesiredData, inheritedProperties } = useAppData();
+  const { socket, findCurrentData, inheritedProperties } = useAppData();
   const styles = setStyle(data?.Properties);
   const { Items, SelItems, Visible, Size, Event, CSS } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
   const customStyles = parseFlexStyles(CSS);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   const ref = useRef();

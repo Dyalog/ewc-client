@@ -29,11 +29,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
 
   const { FieldType, Decimal, SelText, Event } = data?.typeObj?.Properties;
 
-  // console.log({value: data.value, focused: data.focused, datatype: data?.typeObj.ID, SelText})
-
-  const { dataRef, findDesiredData, handleData, socket, socketData } =
-    useAppData();
-  // data?.typeObj?.ID === "F1.Holdings.TEXT" && console.log("edit data", {data, dataRef, socketData, property: findDesiredData(data?.typeObj?.ID)})
+  const { dataRef, handleData, socket } = useAppData();
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
   const {
     ShortDate,

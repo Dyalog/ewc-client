@@ -33,7 +33,7 @@ const Button = ({
   );
 
   const styles = setStyle(data?.Properties);
-  const { socket, findDesiredData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+  const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
   const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
@@ -41,7 +41,7 @@ const Button = ({
 
   const customStyles = parseFlexStyles(CSS);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   const inputRef = useRef();
@@ -62,7 +62,7 @@ const Button = ({
 
   const isRadio = data?.Properties?.Style && data?.Properties?.Style == "Radio";
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const buttonEvent = data.Properties.Event && data?.Properties?.Event[0];
 
@@ -237,7 +237,7 @@ const Button = ({
   }, [dimensions]);
 
   const handleCellChangedEvent = (value) => {
-    const gridEvent = findDesiredData(extractStringUntilLastPeriod(data?.ID));
+    const gridEvent = findCurrentData(extractStringUntilLastPeriod(data?.ID));
     (values[parseInt(row) - 1][parseInt(column) - 1] = value ? 1 : 0),
       handleData(
         {

@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
-  const { findDesiredData, socket , isDesktop} = useAppData();
+  const { findCurrentData, socket , isDesktop} = useAppData();
   console.log("Desktop is as",!isDesktop);
 
   const [formStyles, setFormStyles] = useState({});
@@ -45,11 +45,11 @@ const Form = ({ data }) => {
 
   console.log("form after parsing", { styles, CSS, Flex });
   const updatedData = excludeKeys(data);
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   const sendConfigureEvent = () => {

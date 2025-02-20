@@ -36,6 +36,7 @@ const Edit = ({
     socket,
     dataRef,
     findDesiredData,
+    findCurrentData,
     handleData,
     fontScale,
     inheritedProperties
@@ -79,7 +80,7 @@ const Edit = ({
   const hasValueProperty = data?.Properties.hasOwnProperty("Value");
   const isPassword = data?.Properties.hasOwnProperty("Password");
   const inputRef = useRef(null);
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS)
   

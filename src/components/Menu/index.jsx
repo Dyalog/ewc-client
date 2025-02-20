@@ -4,7 +4,7 @@ import Dropdown from '../DropDown';
 import './Menu.css';
 
 const Menu = ({ data }) => {
-  const {findDesiredData}=useAppData();
+  const {findCurrentData}=useAppData();
   const updatedData = excludeKeys(data);
   const style = setStyle(data.Properties);
   const { CSS,FontObj } = data.Properties;
@@ -12,7 +12,7 @@ const Menu = ({ data }) => {
 
   const empty = isEmpty(updatedData);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   // Render the Caption if the Object didn't have any Keys

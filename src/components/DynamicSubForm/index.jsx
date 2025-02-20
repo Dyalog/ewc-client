@@ -20,7 +20,7 @@ import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
 const SubForm = ({ data }) => {
-  const { findDesiredData, socket, dataRef } = useAppData();
+  const { findCurrentData, socket, dataRef } = useAppData();
   const {
     Size,
     Posn,
@@ -43,7 +43,7 @@ const SubForm = ({ data }) => {
 
   const updatedData = excludeKeys(data);
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const imageStyles = getImageStyles(
     Picture && Picture[1],
@@ -51,7 +51,7 @@ const SubForm = ({ data }) => {
     data?.Properties                            
   );
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
 

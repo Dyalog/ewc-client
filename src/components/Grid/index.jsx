@@ -36,6 +36,7 @@ const Grid = ({ data }) => {
   const gridId = data?.ID;
   const {
     findDesiredData,
+    findCurrentData,
     socket,
     proceed,
     setProceed,
@@ -622,7 +623,7 @@ const Grid = ({ data }) => {
   const gridData = modifyGridData();
   const customStyles = parseFlexStyles(CSS);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   return (

@@ -9,7 +9,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   const inputRef = useRef();
 
-  const { socket, handleData, findDesiredData, reRender, dataRef, inheritedProperties } = useAppData();
+  const { socket, handleData, findCurrentData, reRender, dataRef, inheritedProperties } = useAppData();
 
   const { CSS } = data.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
@@ -21,7 +21,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   console.log("this event", { Event })

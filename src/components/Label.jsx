@@ -5,7 +5,7 @@ import { useAppData } from "../hooks";
 const Label = ({ data, gridValue }) => {
   let styles = setStyle(data?.Properties);
 
-  const { inheritedProperties, findDesiredData, fontScale, socket, socketData } = useAppData();
+  const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
@@ -45,10 +45,7 @@ const Label = ({ data, gridValue }) => {
       fontSize: Font[1] * fontScale,
     };
   } else {
-    // const font = findDesiredData(FontObj && FontObj);
-    // TODO hack until socketData is completely removed!
-    // Find the last Font not the first
-    const font = socketData.filter((x) => x.ID === FontObj).pop();
+    const font = findCurrentData(FontObj);
     const fontProperties = font && font?.Properties;
     const fontCss = fontProperties?.CSS ? parseFlexStyles(fontProperties.CSS) : {};
     const fontSize = fontScale * (fontProperties?.Size ? fontProperties.Size : 12);

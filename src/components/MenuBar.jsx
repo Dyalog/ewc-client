@@ -7,9 +7,9 @@ const MenuBar = ({ data }) => {
   const { Visible, CSS, FontObj } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
   const style = setStyle(data?.Properties)
-  const { findDesiredData } = useAppData();
+  const { findCurrentData } = useAppData();
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   return (

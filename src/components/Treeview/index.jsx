@@ -33,9 +33,9 @@ const Treeview = ({ data }) => {
 
   const [nodeData, setNodeData] = useState([]);
 
-  const { dataRef, socket, findDesiredData } = useAppData();
+  const { dataRef, socket, findCurrentData } = useAppData();
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
 

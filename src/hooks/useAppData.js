@@ -15,6 +15,7 @@ const useAppData = () => {
   };
   
   const findCurrentData = (ID) => {
+    if (!ID) return null;
     const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
     return findData;
   };

@@ -76,13 +76,13 @@ const calculateTextDimensions = (lines, font) => {
 };
 
 const Text = ({ data, fontProperties }) => {
-  const { findDesiredData,socket, fontScale, inheritedProperties } = useAppData();
+  const { findCurrentData,socket, fontScale, inheritedProperties } = useAppData();
   const { Visible, Points, Text, FCol, BCol, Event, CSS } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   const { reRender } = useForceRerender();

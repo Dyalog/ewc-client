@@ -29,7 +29,7 @@ const Group = ({ data }) => {
     Event,
     FontObj,
   } = data?.Properties;
-  const { findDesiredData, socket } = useAppData();
+  const { findCurrentData, socket } = useAppData();
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
@@ -44,13 +44,13 @@ const Group = ({ data }) => {
     }
   }, [dimensions]);
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
   const flexStyles = parseFlexStyles(CSS);
 
-   const font = findDesiredData(FontObj && FontObj);
+   const font = findCurrentData(FontObj);
     const fontStyles = getFontStyles(font, 12);
 
   const updatedData = excludeKeys(data);

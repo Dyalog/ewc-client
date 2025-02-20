@@ -7,9 +7,9 @@ import { useEffect, useState } from 'react';
 const TabControl = ({ data }) => {
   const { BCol, FCol, ActiveBCol, CSS,FontObj } = data?.Properties;
 
-  const {findDesiredData}=useAppData();
+  const {findCurrentData}=useAppData();
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = font && getFontStyles(font, 12);
 
   let styles = setStyle(data?.Properties);
