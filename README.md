@@ -31,5 +31,14 @@ In APL, you simply change mode from 'Desktop' to 'Browser':
     demo.Run 'Browser'
 
 Then open http://localhost:5173 (assuming default vite port). By default, this
-will connect a websockett over the same :22322 port.
+will connect a websocket over the :22322 port, as mentioned above.
 
+## Branches
+
+We use three permanent branches in ewc-client.
+
+* `main`: this code has been released.
+* `next`: this will become the next `main`. It should be stable.
+* `devt`: this is unstable and should be considered the 'bleeding edge'.
+
+Contributors should checkout devt, and create PRs against that branch.
