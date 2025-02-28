@@ -79,8 +79,8 @@ const Grid = ({ data }) => {
     TitleHeight,
     TitleWidth,
     FormatString,
-    VScroll = 0,
-    HScroll = 0,
+    VScroll,
+    HScroll,
     Attach,
     Event,
     CSS,
@@ -626,6 +626,20 @@ const Grid = ({ data }) => {
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
+  // Returns the right overflow for HScroll and VScroll.
+  const overflowFor = (scroll) => {
+    if (scroll !== undefined) {
+      return {
+        '0': 'hidden',
+        '-1': 'auto',
+        '-2': 'auto',
+        '-3': 'scroll',
+      }['' + scroll];
+    } else {
+      return 'auto';
+    }
+  };
+
   return (
     <>
       <div
@@ -659,21 +673,12 @@ const Grid = ({ data }) => {
           height,
           width,
           border: "1px solid black",
+          // ??? TODO doesn't seem right
           overflow: !ColTitles ? "auto" : "hidden",
           background: "white",
           display: Visible == 0 ? "none" : "block",
-          overflowX:
-            HScroll == -3
-              ? "scroll"
-              : HScroll == -1 || HScroll == -2
-                ? "auto"
-                : "auto",
-          overflowY:
-            VScroll == -3
-              ? "scroll"
-              : VScroll == -1 || HScroll == -2
-                ? "auto"
-                : "auto",
+          overflowX: overflowFor(HScroll),
+          overflowY: overflowFor(VScroll),
           ...customStyles,
           ...fontStyles,
         }}
