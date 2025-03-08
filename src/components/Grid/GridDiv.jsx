@@ -16,8 +16,6 @@ const GridDiv = ({ data }) => {
     fontWeight: !fontProperties?.Weight ? 0 : fontProperties?.Weight,
   };
   const style = {
-    width: '100%',
-    height: '100%',
     ...setStyle(data.Properties),
     ...fontStyles,
     ...parseFlexStyles(CSS)
@@ -27,7 +25,7 @@ const GridDiv = ({ data }) => {
 
   const fillBox = {width: '100%', height: '100%', position: 'absolute', top: 0, left: 0};
   return (
-      <div id={data.ID} style={style}>
+      <div id={data.ID} style={{...fillBox, ...style}}>
           <div id={data.ID+'.$INNERHTML'} dangerouslySetInnerHTML={{__html: HTML}} style={fillBox}/>
       </div>
   );

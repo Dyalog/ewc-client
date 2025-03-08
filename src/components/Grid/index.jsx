@@ -93,13 +93,17 @@ const Grid = ({ data }) => {
   const [width, setWidth] = useState(Size[1]);
   const [rows, setRows] = useState(0);
   const [columns, setColumns] = useState(0);
-  const [selectedRow, setSelectedRow] = useState(
-    !CurCell ? (ColTitles?.length > 0 ? 1 : 0) : CurCell[0]
-  );
-  const [selectedColumn, setSelectedColumn] = useState(
-    !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
-  );
 
+  // The Grid is treated as an entire Grid, including column and row headers -
+  // this has led to some complexity in converting between current cell position
+  // as far as JS is concerned and as far as APL is concerned.
+  // If the Title* is set to 0, no title should be shown, so the origin of the
+  // first data cell is 0 in that dimension.
+  // CurCell is 1-based, but we want 0-based, hence the little dance below.
+  const originY = TitleHeight === 0 ? 0 : 1;
+  const originX = TitleWidth === 0 ? 0 : 1;
+  const [selectedRow, setSelectedRow] = useState((CurCell ? CurCell[0] : 1)+originY-1);
+  const [selectedColumn, setSelectedColumn] = useState((CurCell ? CurCell[1] : 1)+originX-1);
  
   const [clickData, setClickData] = useState({ isClicked: false, row: selectedRow, column: selectedColumn })
 

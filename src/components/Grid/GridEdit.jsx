@@ -244,23 +244,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     // const gridEvent = findDesiredData(data?.gridId);
 
     const values = data?.gridValues;
-    console.log("valueeee1",data?.rown-1,data?.column)
-
-    values[data?.row - 1][data?.column] =
-      FieldType == "Date" ? dateFormattedValue : inputValue;
-    // handleData(
-    //   {
-    //     ID: data?.gridId,
-    //     Properties: {
-    //       ...gridEvent.Properties,
-    //       Values: values,
-    //       CurCell: [data?.row, data?.column + 1],
-    //     },
-    //   },
-    //   'WS'
-    // );
-    console.log("valueeee2",data?.rown-1,data?.column+1)
-
+    values[data?.row - 1][data?.column - 1] = FieldType == "Date" ? dateFormattedValue : inputValue;
 
     const cellChangedEvent = JSON.stringify({
       Event: {
