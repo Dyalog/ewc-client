@@ -22,6 +22,7 @@ import GridButton from "./GridButton";
 import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
+import GridDiv from "./GridDiv";
 
 const Component = ({ data,onKeyDown1 }) => {
   if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
@@ -30,7 +31,7 @@ const Component = ({ data,onKeyDown1 }) => {
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
-  // else if (data?.type == "Div") return <GridLabel data={data} />;
+  else if (data?.type == "Div") return <GridDiv data={data} />;
 };
 
 const Grid = ({ data }) => {
@@ -485,7 +486,7 @@ const Grid = ({ data }) => {
     // Make the body the Grid Like if it have Input Array that means it have types
     if (!Input) {
       for (let i = 0; i < Values?.length; i++) {
-        let cellType = CellTypes && CellTypes[i][0];
+        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
         const backgroundColor = BCol && BCol[cellType - 1];
         let body = [];
         let obj = {
@@ -530,7 +531,7 @@ const Grid = ({ data }) => {
     } else if (Input) {
       for (let i = 0; i < Values?.length; i++) {
         let body = [];
-        let cellType = CellTypes && CellTypes[i][0];
+        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
         const backgroundColor = BCol && BCol[cellType - 1];
 
         // Decide to add the RowTitles If the TitleWidth is Greater than 0
@@ -554,7 +555,7 @@ const Grid = ({ data }) => {
             : body.push(obj);
 
         for (let j = 0; j < columns; j++) {
-          let cellType = CellTypes && CellTypes[i][j];
+          let cellType = CellTypes && CellTypes[i] && CellTypes[i][j];
           const type = findAggregatedPropertiesData(
             Input?.length > 1 ? Input && Input[cellType - 1] : Input[0]
           );
