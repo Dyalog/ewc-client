@@ -57,10 +57,7 @@ const Edit = ({
   const [initialValue, setInitialValue] = useState("");
   const [prevFocused, setprevFocused] = useState("⌈");
   const [eventId, setEventId] = useState(null);
-  const dateInputRef = useRef();
 
-
-  
   const {
     FieldType,
     MaxLength,

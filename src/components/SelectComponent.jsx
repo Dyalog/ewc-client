@@ -36,6 +36,7 @@ import Chart from './Chart';
 import MessageBox from './MessageBox';
 import Link from './Link';
 import Upload from './Upload';
+import Div from './Div';
 
 import KendoChart from './KendoChart';
 import KendoGrid from './KendoGrid';
@@ -186,6 +187,7 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'KendoGrid') return <KendoGrid data={data} />;
   if (data?.Properties?.Type == 'Link') return <Link data={data} />;
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
+  if (data?.Properties?.Type == 'Div') return <Div data={data} />;
 
   console.log("UNKNOWN: " + data?.Properties?.Type);
 };

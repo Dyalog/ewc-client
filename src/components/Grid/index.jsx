@@ -30,6 +30,7 @@ const Component = ({ data,onKeyDown1 }) => {
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
+  // else if (data?.type == "Div") return <GridLabel data={data} />;
 };
 
 const Grid = ({ data }) => {
@@ -673,10 +674,11 @@ const Grid = ({ data }) => {
           height,
           width,
           border: "1px solid black",
-          // ??? TODO doesn't seem right
-          overflow: !ColTitles ? "auto" : "hidden",
           background: "white",
           display: Visible == 0 ? "none" : "block",
+          // Default to auto - it should be ignored if overflowX or overflowY
+          // are defined below.
+          overflow: "auto",
           overflowX: overflowFor(HScroll),
           overflowY: overflowFor(VScroll),
           ...customStyles,
