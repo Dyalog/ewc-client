@@ -342,7 +342,7 @@ export const generateHeader = (length) => {
   return result;
 };
 
-export const getObjectById = (jsonData, targetId) => {
+export const getObjectByIdObject = (jsonData, targetId) => {
   const data = jsonData;
 
   function searchObject(node, idToFind) {
@@ -368,6 +368,11 @@ export const getObjectById = (jsonData, targetId) => {
   }
 
   const result = searchObject(data, targetId);
+  return result;
+};
+
+export const getObjectById = (jsonData, targetId) => {
+  const result = getObjectByIdObject(jsonData, targetId);
   return result ? JSON.stringify(result, null, 2) : null;
 };
 

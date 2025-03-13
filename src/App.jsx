@@ -3,6 +3,7 @@ import { AppDataContext } from "./context";
 import { SelectComponent } from "./components";
 import {
   getObjectById,
+  getObjectByIdObject,
   checkSupportedProperties,
   findFormParentID,
   deleteFormAndSiblings,
@@ -20,6 +21,8 @@ import MsgBox from "./components/MessageBox";
 import { getGrid } from "./components/Grid/getGrid";
 import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
+import keypressHandlers from "./utils/keypressHandlers";
+import hasEventCallback from "./utils/hasEventCallback";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -1562,15 +1565,42 @@ const App = () => {
         } else if (Event == "KeyPress") {
           // ch is often going to be a character, but it may be a code such as
           // LC for ArrowLeft
-          // There should be only one element from tests in Windows
+          // There should be only one element
+          // IMPORTANT:
+          // We try to imitate ⎕WC as much as possible, but this behaves in a
+          // slightly odd fashion, so this is done largely from experimentation.
+          // For example, HT for 'tab' should work and trigger an event, but DB
+          // for backspace should have no effect when requested as an NQ.
+          // We should *send* a DB on a backspace within eg an Edit field when
+          // the user presses backspace and it deletes a character but also when
+          // the server instructs us with a DB, we should do nothing to the text
+          // but nonetheless return an event.
+          // This is highly counter-intuitive, as others do have an effect, eg:
+          //   * DI (Delete Item) *does* do forward delete or deletes the selection
+          //   * DK (Delete blocK) will remove to the end of the line
+          // So, by default, we will blindly echo any KeyPress event to the
+          // server, and we implement handlers for the subset of codes we are
+          // interested in.
           const ch = Info[0];
-          const el = document.getElementById(ID);
-          switch (ch) {
-            case 'HT':
-              el.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
-              break;
-            default:
-              el.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
+          if (ch.length == 1) {
+            // Single character insert
+            const el = document.getElementById(ID);
+            el.dispatchEvent(new KeyboardEvent("keydown", {key: ch}));
+          } else {
+            // Echo by default, if a handler is found, let it decide
+            const kph = keypressHandlers[ch];
+            let response = true;
+            if (kph) response = kph(handleData, ID);
+            const hasKeyPress = hasEventCallback(getObjectByIdObject(dataRef.current, ID), 'KeyPress');
+            if (hasKeyPress && response) {
+              webSocket.send(JSON.stringify({
+                Event: {
+                  EventName: "KeyPress",
+                  ID: ID,
+                  Info: [ch],
+                },
+              }));
+            }
           }
         } else if (Event == "CellMove") {
           console.log("296", { nqEvent });
