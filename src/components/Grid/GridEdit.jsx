@@ -14,7 +14,7 @@ import {
   handleMouseDoubleClick,
 } from "../../utils";
 import dayjs from "dayjs";
-import { values } from "lodash";
+import * as Globals from "./../../Globals";
 
 const GridEdit = ({ data, onKeyDown1 }) => {
   // console.log("grid data", {data})
@@ -127,7 +127,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     console.log("select", !!selectedText);
 
     if (!!selectedText) {
-      localStorage.setItem(
+      Globals.set(
         data?.typeObj?.ID,
         JSON.stringify({ Event: { Info: [start, end] } })
       );
@@ -141,7 +141,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
         "WS"
       );
     } else {
-      localStorage.setItem(
+      Globals.set(
         data?.typeObj?.ID,
         JSON.stringify({ Event: { Info: [1, 1] } })
       );
@@ -224,7 +224,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       const selectedText = content.substring(start, end);
       // console.log({ data, actualTextNode, start, end, selectedText });
 
-      localStorage.setItem(
+      Globals.set(
         data?.typeObj?.ID,
         JSON.stringify({ Event: { Info: [start + 1, end + 1] } })
       );
@@ -271,9 +271,9 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       },
     });
 
-    localStorage.setItem(data?.gridId, updatedGridValues);
+    Globals.set(data?.gridId, updatedGridValues);
 
-    // localStorage.setItem(data?.gridId, cellChangedEvent);
+    // Globals.set(data?.gridId, cellChangedEvent);
     const exists =
       data?.gridEvent &&
       data?.gridEvent.some((item) => item[0] === "CellChanged");
@@ -281,7 +281,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     console.log(cellChangedEvent);
     socket.send(cellChangedEvent);
     console.log("Input value")
-    localStorage.setItem(
+    Globals.set(
       "isChanged",
       JSON.stringify({
         isChange: true,
@@ -306,7 +306,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       return;
     }
     console.log("select useEffect 2", { selected });
-    localStorage.setItem(
+    Globals.set(
       data?.typeObj?.ID,
       JSON.stringify({ Event: { Info: [1, 1] } })
     );

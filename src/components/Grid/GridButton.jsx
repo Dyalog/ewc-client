@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAppData } from "../../hooks";
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel } from "../../utils";
+import * as Globals from "./../../Globals";
 
 const GridButton = ({ data }) => {
   console.log("GridButton", data);
@@ -60,7 +61,7 @@ const GridButton = ({ data }) => {
       },
     });
 
-    localStorage.setItem(data?.gridId, updatedGridValues);
+    Globals.set(data?.gridId, updatedGridValues);
     console.log(triggerEvent);
     const exists =
       data?.gridEvent &&
@@ -71,7 +72,7 @@ const GridButton = ({ data }) => {
       console.log(formatCellEvent);
     }
     socket.send(triggerEvent);
-    localStorage.setItem(
+    Globals.set(
       "isChanged",
       JSON.stringify({ isChange: true, value: value ? 1 : 0 })
     );

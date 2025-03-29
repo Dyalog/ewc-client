@@ -13,6 +13,7 @@ import {
 import "./textArea.css";
 import "../../styles/font.css";
 import { useAppData } from "../../hooks";
+import * as Globals from "./../../Globals";
 
 const TextArea = ({ data }) => {
   const { handleData, socket,dataRef } = useAppData();
@@ -26,7 +27,7 @@ const TextArea = ({ data }) => {
         ? data.Properties.Text.join("\n")
         : data.Properties.Text;
     } else {
-      const stored = localStorage.getItem(data.ID);
+      const stored = Globals.get(data.ID);
       return stored ? JSON.parse(stored).Text || "" : "";
     }
   };
@@ -40,7 +41,7 @@ const TextArea = ({ data }) => {
   // Update localText when external Text changes
   useEffect(() => {
     if (data?.Properties?.Text) {
-      localStorage.setItem(
+      Globals.set(
         data.ID,
         JSON.stringify(data.Properties)
       );
@@ -75,7 +76,7 @@ const TextArea = ({ data }) => {
   const handleChange = (e) => {
     const newText = e.target.value;
     setLocalText(newText);
-    localStorage.setItem(
+    Globals.set(
       data.ID,
       JSON.stringify({ ...data.Properties, Text: newText })
     );

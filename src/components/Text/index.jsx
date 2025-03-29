@@ -87,7 +87,7 @@ const Text = ({ data, fontProperties }) => {
 
   const { reRender } = useForceRerender();
 
-  const parentSize = JSON.parse(localStorage.getItem("formDimension"));
+  const parentSize = JSON.parse(Globals.get("formDimension"));
 
   const newPoints = flattenIfThreeLevels(Points);
 

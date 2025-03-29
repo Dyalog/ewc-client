@@ -17,6 +17,7 @@ import { useAppData, useResizeObserver } from "../hooks";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 import { getObjectById, getImageStyles } from "../utils";
+import * as Globals from "./../Globals";
 
 const Button = ({
   data,
@@ -29,7 +30,7 @@ const Button = ({
 }) => {
 
   const parentSize = JSON.parse(
-    localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
+    Globals.get(extractStringUntilLastPeriod(data?.ID))
   );
 
   const styles = setStyle(data?.Properties);
@@ -120,7 +121,7 @@ const Button = ({
       e.preventDefault();
       return;
     }
-    document.getElementById(localStorage.getItem("current-focus"))?.blur();
+    document.getElementById(Globals.get("current-focus"))?.blur();
     if (buttonEvent) {
       console.log(
         JSON.stringify({
@@ -131,14 +132,14 @@ const Button = ({
         })
       );
       if (
-        localStorage.getItem("current-focus") &&
-        localStorage.getItem("shouldChangeEvent") === "true"
+        Globals.get("current-focus") &&
+        Globals.get("shouldChangeEvent") === "true"
       ) {
         console.log( 
           JSON.stringify({
             Event: {
               EventName: "Change",
-              ID: localStorage.getItem("current-focus"),
+              ID: Globals.get("current-focus"),
               Info: [data?.ID],
             },
           })
@@ -148,7 +149,7 @@ const Button = ({
           JSON.stringify({
             Event: {
               EventName: "Change",
-              ID: localStorage.getItem("current-focus"),
+              ID: Globals.get("current-focus"),
               Info: [data?.ID],
             },
           })
@@ -205,7 +206,7 @@ const Button = ({
       "WS"
     );
 
-    if (!localStorage.getItem(data?.ID)) {
+    if (!Globals.get(data?.ID)) {
       const event = JSON.stringify({
         Event: {
           EventName: "Select",
@@ -216,9 +217,9 @@ const Button = ({
         },
       });
 
-      localStorage.setItem(data?.ID, event);
+      Globals.set(data?.ID, event);
     } else {
-      const { Event } = JSON.parse(localStorage.getItem(data?.ID));
+      const { Event } = JSON.parse(Globals.get(data?.ID));
       const { Value } = Event;
       const event = JSON.stringify({
         Event: {
@@ -230,7 +231,7 @@ const Button = ({
         },
       });
 
-      localStorage.setItem(data?.ID, event);
+      Globals.set(data?.ID, event);
     }
     setParentOldDimensions([dimensions?.height, dimensions?.width]);
     reRender();
@@ -277,7 +278,7 @@ const Button = ({
       },
     });
 
-    localStorage.setItem(
+    Globals.set(
       extractStringUntilLastPeriod(data?.ID),
       updatedGridValues
     );
@@ -299,7 +300,7 @@ const Button = ({
         Size: [Size && Size[0], Size && Size[1]],
       },
     });
-    localStorage.setItem(data?.ID, triggerEvent);
+    Globals.set(data?.ID, triggerEvent);
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
     console.log(triggerEvent);
@@ -406,7 +407,7 @@ const Button = ({
 
   //handle got focus event on all controls
   const handleGotFocus = () => {
-    const previousFocusedId = localStorage.getItem("current-focus");
+    const previousFocusedId = Globals.get("current-focus");
     const gotFocusEvent = JSON.stringify({
       Event: {
         EventName: "GotFocus",
@@ -414,7 +415,7 @@ const Button = ({
         Info: !previousFocusedId ? [""] : [previousFocusedId],
       },
     });
-    localStorage.setItem("current-focus", data?.ID);
+    Globals.set("current-focus", data?.ID);
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;

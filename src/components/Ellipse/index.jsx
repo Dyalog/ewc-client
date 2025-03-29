@@ -1,8 +1,9 @@
 import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
+import * as Globals from "./../../Globals";
 
-const Ecllipse = ({ data }) => {
-  const parentSize = JSON.parse(localStorage.getItem('formDimension'));
+const Ellipse = ({ data }) => {
+  const parentSize = JSON.parse(Globals.get('formDimension'));
 
   const { FillCol, Start, FCol, Size, End, Points, Event, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS)
@@ -141,7 +142,7 @@ const {socket} = useAppData()
     </div>
   );
 };
-export default Ecllipse;
+export default Ellipse;
 
 // Correct value for the Pie Chart
 /* <path

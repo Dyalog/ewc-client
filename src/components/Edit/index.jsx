@@ -21,6 +21,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
+import * as Globals from "./../../Globals";
 
 const Edit = ({
   data,
@@ -317,7 +318,7 @@ const Edit = ({
   const triggerChangeEvent = () => {
     // TODO as far as I can tell, this is how we are storing the last value, so
     // we can fetch it again for WG.
-    // *Not* setting this value in localStorage causes problems.
+    // *Not* setting this value in Globals causes problems.
     let event2;
 
     if (FieldType === "Date") {
@@ -362,13 +363,13 @@ const Edit = ({
         "WS"
       );
     }
-    localStorage.setItem(data?.ID, event2);
-    localStorage.setItem(
+    Globals.set(data?.ID, event2);
+    Globals.set(
       "shouldChangeEvent",
       data.Properties.hasOwnProperty("Event")
     );
 
-    const prevFocusedID = JSON.parse(localStorage.getItem(prevFocused));
+    const prevFocusedID = JSON.parse(Globals.get(prevFocused));
 
     if (!!data.Properties.hasOwnProperty("Event")) {
       const event1 = JSON.stringify({
@@ -415,7 +416,7 @@ const Edit = ({
       },
     });
 
-    localStorage.setItem("change-event", event);
+    Globals.set("change-event", event);
   };
 
   const triggerCellChangedEvent = () => {
@@ -459,12 +460,12 @@ const Edit = ({
       },
     });
 
-    localStorage.setItem(
+    Globals.set(
       extractStringUntilLastPeriod(data?.ID),
       updatedGridValues
     );
 
-    // localStorage.setItem(extractStringUntilSecondPeriod(data?.ID), cellChangedEvent);
+    // Globals.set(extractStringUntilSecondPeriod(data?.ID), cellChangedEvent);
     const exists = event && event.some((item) => item[0] === "CellChanged");
     if (!exists) return;
     console.log(cellChangedEvent);
@@ -500,7 +501,7 @@ const Edit = ({
   };
 
   const handleGotFocus = () => {
-    const previousFocusedId = localStorage.getItem("current-focus");
+    const previousFocusedId = Globals.get("current-focus");
     setprevFocused(previousFocusedId);
     const gotFocusEvent = JSON.stringify({
       Event: {
@@ -509,7 +510,7 @@ const Edit = ({
         Info: !previousFocusedId ? [""] : [previousFocusedId],
       },
     });
-    localStorage.setItem("current-focus", data?.ID);
+    Globals.set("current-focus", data?.ID);
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;

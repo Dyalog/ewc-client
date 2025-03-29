@@ -1,11 +1,10 @@
 import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
-import Canvas from '../Canvas';
-import { Chart, ChartSeries, ChartSeriesItem } from '@progress/kendo-react-charts';
+import * as Globals from "./../../Globals";
 
 const Rectangle = ({
   data,
-  parentSize = JSON.parse(localStorage.getItem('formDimension')),
+  parentSize = JSON.parse(Globals.get('formDimension')),
   posn = [0, 0],
 }) => {
   const { Points, Size, FCol, Radius, Visible, FStyle, FillCol, Event,CSS } = data?.Properties;

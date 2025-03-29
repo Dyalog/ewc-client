@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppData, useResizeObserver } from '../../hooks';
 import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
+import * as Globals from "./../../Globals";
 
 const VerticalSplitter = ({ data }) => {
   const elementRef = useRef(null); 
 
   const { Size: SubformSize } = JSON.parse(
-    localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
+    Globals.get(extractStringUntilLastPeriod(data?.ID))
   );
 
   const { Posn, SplitObj1, SplitObj2, Event, CSS } = data?.Properties;
@@ -58,7 +59,7 @@ const VerticalSplitter = ({ data }) => {
       'WS'
     );
 
-    localStorage.setItem(
+    Globals.set(
       data?.ID,
       JSON.stringify({
         Event: {
@@ -104,18 +105,18 @@ const VerticalSplitter = ({ data }) => {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (isResizing) {
-        const formPositions = JSON.parse(localStorage.getItem('formPositions'));
+        const formPositions = JSON.parse(Globals.get('formPositions'));
 
         let newLeft = e.clientX - formPositions[1];
         newLeft = Math.max(0, Math.min(newLeft, formWidth - 3));
         const rightWidth = formWidth - (newLeft + 3);
 
-        localStorage.setItem(
+        Globals.set(
           SplitObj1,
           JSON.stringify({ Posn: [0, 0], Size: [formHeight, newLeft] })
         );
 
-        localStorage.setItem(
+        Globals.set(
           SplitObj2,
           JSON.stringify({ Posn: [0, newLeft + 3], Size: [formHeight, rightWidth] })
         );
@@ -144,7 +145,7 @@ const VerticalSplitter = ({ data }) => {
           'WS'
         );
 
-        localStorage.setItem(
+        Globals.set(
           data?.ID,
           JSON.stringify({
             Event: {
@@ -163,7 +164,7 @@ const VerticalSplitter = ({ data }) => {
     const handleMouseUp = () => {
       if (isResizing) {
         setResizing(false);
-        const { Event: customEvent } = JSON.parse(localStorage.getItem(data?.ID));
+        const { Event: customEvent } = JSON.parse(Globals.get(data?.ID));
         const { Size, ...event } = customEvent;
         const exists = Event && Event?.some((item) => item[0] === 'EndSplit');
         if (!exists) return;

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useAppData } from '../../hooks';
+import * as Globals from "./../../Globals";
 
 const GridSelect = ({ data }) => {
   const selectRef = useRef(null);
@@ -49,14 +50,14 @@ const GridSelect = ({ data }) => {
       },
     });
 
-    localStorage.setItem(data?.gridId, updatedGridValues);
+    Globals.set(data?.gridId, updatedGridValues);
 
     const exists = data?.gridEvent?.some((item) => item[0] === 'CellChanged');
     if (!exists) return;
 
     console.log(triggerEvent);
     socket.send(triggerEvent);
-    localStorage.setItem(
+    Globals.set(
       'isChanged',
       JSON.stringify({
         isChange: true,

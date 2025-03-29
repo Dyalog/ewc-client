@@ -2,6 +2,7 @@ import ReactApexChart from 'react-apexcharts';
 import { useAppData } from '../../hooks';
 import { parseFlexStyles, setStyle } from '../../utils';
 import { useEffect, useRef, useState } from 'react';
+import * as Globals from "./../../Globals";
 
 const Chart = ({ data }) => {
   const { Options, Posn, Series, Size, ChartType, Event, CSS } = data?.Properties;
@@ -31,7 +32,7 @@ const Chart = ({ data }) => {
         const svg = chartInstance.svg();
         if (svg) {
           setChartSvg(svg);
-          localStorage.setItem(data.ID, JSON.stringify(svg));
+          Globals.set(data.ID, JSON.stringify(svg));
           handleData(
             {
               ID: data?.ID,
@@ -68,88 +69,7 @@ const Chart = ({ data }) => {
     socket.send(Event);
   };
   
-  // const options = {
-  //   chart: {
-  //     parentHeightOffset: 0,
-  //     toolbar: { show: false },
-  //   },
-  //   plotOptions: {
-  //     bar: {
-  //       borderRadius: 6,
-  //       borderRadiusApplication: 'end',
-  //       distributed: true,
-  //       columnWidth: '35%',
-  //       startingShape: 'rounded',
-  //       dataLabels: { position: 'top' },
-  //     },
-  //   },
-  //   legend: { show: false },
-  //   tooltip: { enabled: false },
-  //   dataLabels: {
-  //     offsetY: -15,
-  //     // formatter: (val) => `${val}k`,
-  //     style: {
-  //       fontWeight: 600,
-  //       fontSize: '1rem',
-  //       colors: ['#4b465c'],
-  //     },
-  //   },
-  //   grid: {
-  //     show: false,
-  //   },
-  //   xaxis: {
-  //     axisTicks: { show: false },
-  //     axisBorder: {
-  //       color: 'gray',
-  //     },
-  //     categories: Options?.xaxis.categories,
-  //     labels: {
-  //       style: {
-  //         fontSize: '13px',
-  //         colors: [1, 2].map(() => 'red'),
-  //         fontWeight: 400,
-  //         fontFamily: 'Poppins',
-  //       },
-  //     },
-  //   },
-  //   yaxis: {
-  //     min: Options?.yMin,
-  //     max: Options?.yMax,
-  //     tickAmount: Options?.Intervals,
-  //     labels: {
-  //       offsetX: -15,
-  //       style: {
-  //         fontSize: '13px',
-  //         fontWeight: 400,
-  //         colors: ['#22292f80'],
-  //         fontFamily: 'Poppins',
-  //       },
-  //     },
-  //   },
-  //   responsive: [
-  //     {
-  //       options: {
-  //         plotOptions: {
-  //           bar: { columnWidth: '60%' },
-  //         },
-  //         grid: {
-  //           padding: { right: 20 },
-  //         },
-  //       },
-  //     },
-  //   ],
-  // };
-
   console.log("chart",chartSvg)
-  // console.log("chart", data)
-
-
-  // const getCurve = {
-  //   bar: "straight",
-  //   MOVAVG:"straight",
-  // }
-
-  
 
   const options = {
     ...Options,
@@ -165,7 +85,6 @@ const Chart = ({ data }) => {
         }),
       },
     },
-    // stroke: { curve: 'smooth'}
   };
 
   return (

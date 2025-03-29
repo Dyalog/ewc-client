@@ -1,6 +1,7 @@
 import { setStyle, getImageStyles } from '../../utils';
 import { useAppData } from '../../hooks';
 import { useEffect } from 'react';
+import * as Globals from "./Globals";
 
 const ImageSubForm = ({ data }) => {
 
@@ -13,10 +14,10 @@ const ImageSubForm = ({ data }) => {
 
   const imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
-  const parentSize = JSON.parse(localStorage.getItem('formDimension'));
+  const parentSize = JSON.parse(Globals.get('formDimension'));
 
   useEffect(() => {
-    localStorage.setItem(
+    Globals.set(
       data.ID,
       JSON.stringify({
         Size: !Size ? [parentSize[0], parentSize[1]] : Size,
