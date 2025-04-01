@@ -1582,6 +1582,8 @@ const App = () => {
           // server, and we implement handlers for the subset of codes we are
           // interested in.
           const ch = Info[0];
+          let response = true;
+          
           if (ch.length == 1) {
             // Single character insert
             const el = document.getElementById(ID);
@@ -1589,18 +1591,18 @@ const App = () => {
           } else {
             // Echo by default, if a handler is found, let it decide
             const kph = keypressHandlers[ch];
-            let response = true;
             if (kph) response = kph(handleData, ID);
-            const hasKeyPress = hasEventCallback(getObjectByIdObject(dataRef.current, ID), 'KeyPress');
-            if (hasKeyPress && response) {
-              webSocket.send(JSON.stringify({
-                Event: {
-                  EventName: "KeyPress",
-                  ID: ID,
-                  Info: [ch],
-                },
-              }));
-            }
+          }
+
+          const hasKeyPress = hasEventCallback(getObjectByIdObject(dataRef.current, ID), 'KeyPress');
+          if (hasKeyPress && response) {
+            webSocket.send(JSON.stringify({
+              Event: {
+                EventName: "KeyPress",
+                ID: ID,
+                Info: [ch],
+              },
+            }));
           }
         } else if (Event == "CellMove") {
           console.log("296", { nqEvent });

@@ -7,12 +7,20 @@ export * from "./locateInDataRef";
 export * from "./getFontStyles"
 import { v4 as uuidv4 } from "uuid";
 
+// 1,4,2 is what quad-WC uses and annoyingly what e.buttons uses in JS, but
+// 0,1,2 is what e.button (NB no s) uses in JS
+const buttonCode = {
+  0: 1, // Left click
+  1: 4, // Middle click
+  2: 2, // Right click
+};
+
 export const handleMouseDown = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
-  const button = e.button;
+  const button = buttonCode[e.button];
 
   const mousedownEvent = JSON.stringify({
     Event: {
@@ -33,7 +41,7 @@ export const handleMouseUp = (e, socket, Event, ID) => {
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
-  const button = e.button;
+  const button = buttonCode[e.button];
 
   const mouseUpEvent = JSON.stringify({
     Event: {
@@ -54,7 +62,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
-  const button = e.button;
+  const button = buttonCode[e.button];
 
   const mouseUpEvent = JSON.stringify({
     Event: {
