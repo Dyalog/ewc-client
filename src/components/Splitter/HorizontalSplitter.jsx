@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppData, useResizeObserver } from '../../hooks';
 import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
-import * as Globals from "./../../Globals";
 
 const HorizontalSplitter = ({ data }) => {
   const elementRef = useRef(null);
 
   const { Size: SubformSize, Posn: SubFormPosn } = JSON.parse(
-    Globals.get(extractStringUntilLastPeriod(data?.ID))
+    localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
   );
 
 
@@ -31,19 +30,19 @@ const HorizontalSplitter = ({ data }) => {
     if (!oldFormValues) return;
 
     if (oldHeight == dimensions.height) {
-      const obj1 = JSON.parse(Globals.get(SplitObj1));
-      const obj2 = JSON.parse(Globals.get(SplitObj2));
+      const obj1 = JSON.parse(localStorage.getItem(SplitObj1));
+      const obj2 = JSON.parse(localStorage.getItem(SplitObj2));
       if (!obj1 && !obj2) return;
       const { Size: Size1, Posn: Posn1 } = obj1;
       const { Size: Size2, Posn: Posn2 } = obj2;
-      Globals.set(
+      localStorage.setItem(
         SplitObj1,
         JSON.stringify({
           Size: [Math.round(Size1 && Size1[0]), dimensions.width],
           Posn: Posn1,
         })
       );
-      Globals.set(
+      localStorage.setItem(
         SplitObj2,
         JSON.stringify({
           Size: [Math.round(Size2 && Size2[0]), dimensions.width],
@@ -114,11 +113,11 @@ const HorizontalSplitter = ({ data }) => {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (isResizing) {
-        const formPositions = JSON.parse(Globals.get('formPositions'));
+        const formPositions = JSON.parse(localStorage.getItem('formPositions'));
         let newTop = e.clientY - formPositions[1];
 
         const parentSize = JSON.parse(
-          Globals.get(extractStringUntilLastPeriod(data?.ID))
+          localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
         );
         const { Size } = parentSize;
 
@@ -145,7 +144,7 @@ const HorizontalSplitter = ({ data }) => {
           'WS'
         );
 
-        Globals.set(
+        localStorage.setItem(
           data?.ID,
           JSON.stringify({
             Event: {
@@ -164,7 +163,7 @@ const HorizontalSplitter = ({ data }) => {
     const handleMouseUp = () => {
       if (isResizing) {
         setResizing(false);
-        const { Event: customEvent } = JSON.parse(Globals.get(data?.ID));
+        const { Event: customEvent } = JSON.parse(localStorage.getItem(data?.ID));
         const { Size, ...event } = customEvent;
         const exists = Event && Event?.some((item) => item[0] === 'EndSplit');
         if (!exists) return;

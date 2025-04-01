@@ -23,7 +23,6 @@ import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
 import GridDiv from "./GridDiv";
-import * as Globals from "./../../Globals";
 
 const Component = ({ data,onKeyDown1 }) => {
   if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
@@ -177,12 +176,12 @@ const Grid = ({ data }) => {
   }, [data]);
 
   const handleCellMove = (row, column, mouseClick) => {
-    // Globals.set("current-event", "CellMove")
+    // localStorage.setItem("current-event", "CellMove")
     if (column > columns || column <= 0) return;
     const isKeyboard = !mouseClick ? 1 : 0;
     const eventId = uuidv4();
     setEventId(eventId);
-    // Globals.set("keyPressEventId", eventId)
+    // localStorage.setItem("keyPressEventId", eventId)
     // if (clickData.isClicked) {
 
       updateCurrentEvent({
@@ -192,7 +191,7 @@ const Grid = ({ data }) => {
       });
     // }
     // setCurrentEvent({...currentEvent, curEvent:"CellMove", eventID:eventId})
-    const cellChanged = JSON.parse(Globals.get("isChanged"));
+    const cellChanged = JSON.parse(localStorage.getItem("isChanged"));
     const cellMoveEvent = JSON.stringify({
       Event: {
         ID: data?.ID,
@@ -230,8 +229,8 @@ const Grid = ({ data }) => {
 
 
   const handleKeyDown = (event) => {
-    // Globals.set("event", JSON.stringify(event.key))
-    // Globals.set("current-event", "KeyPress")
+    // localStorage.setItem("event", JSON.stringify(event.key))
+    // localStorage.setItem("current-event", "KeyPress")
     const isAltPressed = event.altKey ? 4 : 0;
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
@@ -276,7 +275,7 @@ const Grid = ({ data }) => {
         Info: [event.key, charCode, event.keyCode, shiftState],
       },
     });
-    // Globals.set("keyPressEventId", eventId)
+    // localStorage.setItem("keyPressEventId", eventId)
     const keyPressEvent = JSON.stringify({
       Event: {
         EventName: "KeyPress",

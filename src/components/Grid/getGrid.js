@@ -1,5 +1,3 @@
-import * as Globals from "./../../Globals";
-
 // HACK this is a make-shift way to pull some logic out from App.jsx. It's not
 // intended as a template for a general solution, but more to feel out the right
 // direction to go...
@@ -21,7 +19,7 @@ export function getGrid({
     serverEvent?.Properties
   );
 
-  if (!Globals.get(serverEvent.ID)) {
+  if (!localStorage.getItem(serverEvent.ID)) {
     const serverPropertiesObj = {};
     serverEvent.Properties.map((key) => {
       return (serverPropertiesObj[key] = Properties[key]);
@@ -43,7 +41,7 @@ export function getGrid({
     return webSocket.send(event);
   }
 
-  const { Event } = JSON.parse(Globals.get(serverEvent.ID));
+  const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
   const serverPropertiesObj = {};
   serverEvent.Properties.map((key) => {
     if (key === "CurCell") {

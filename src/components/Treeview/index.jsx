@@ -19,7 +19,6 @@ import {
 } from "../../utils";
 import { useAppData } from "../../hooks";
 import { useEffect, useState, useRef } from "react";
-import * as Globals from "./../../Globals";
 
 import Tree from "rc-tree";
 import "rc-tree/assets/index.css";
@@ -173,7 +172,7 @@ const Treeview = ({ data }) => {
         SelItems: SelItems,
       },
     });
-    Globals.set(data?.ID, storedFocusedIndex);
+    localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === "ItemDown");
     if (!exists) return;
     console.log(event);
@@ -212,7 +211,7 @@ const Treeview = ({ data }) => {
         SelItems: SelItems,
       },
     });
-    Globals.set(data?.ID, storedFocusedIndex);
+    localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === "ItemDblClick");
     if (!exists) return;
     console.log(event);
@@ -233,7 +232,7 @@ const Treeview = ({ data }) => {
   // Set the initial localstorage if no item is selected
 
   useEffect(() => {
-    Globals.set(
+    localStorage.setItem(
       data.ID,
       JSON.stringify({
         Event: {

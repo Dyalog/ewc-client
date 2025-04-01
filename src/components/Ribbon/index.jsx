@@ -11,6 +11,7 @@ const CustomRibbon = ({ data }) => {
   const updatedData = excludeKeys(data);
   const { dataRef } = useAppData();
   const { Visible, Size, ImageListObj, CSS, FontObj } = data?.Properties;
+  const parentSize = JSON.parse(localStorage.getItem('formDimension'));
   const customStyles = parseFlexStyles(CSS)
   const ID = getStringafterPeriod(ImageListObj);
   const height = data?.Properties?.BodyHeight;

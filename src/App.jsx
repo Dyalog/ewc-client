@@ -86,6 +86,7 @@ const App = () => {
     console.log("Valuuuuu",layout)
     dataRef.current = {};
     setSocketData([]);
+    // localStorage.clear();
     fetchData();
 
     const handleBeforeUnload = () => {
@@ -200,26 +201,14 @@ const App = () => {
     if (currentLevel.hasOwnProperty(finalKey)) {
       if (mode === "WC") {
         if (data.Properties && data.Properties.Type === "Form") {
-          Globals.reset();
+          localStorage.clear();
         }
-        // If it exists, we remove it and wait for a frame to render, before
-        // creating it. This way React doesn't preserve any state in the DOM, eg
-        // an input's value
-        if (currentLevel[finalKey]) {
-          delete currentLevel[finalKey];
-          requestAnimationFrame(() => {
-            currentLevel[finalKey] = {
-              ID: data.ID,
-              ...data,
-            };
-            reRender();
-          });
-        } else {
-          currentLevel[finalKey] = {
-            ID: data.ID,
-            ...data,
-          };
-        }
+        // Overwrite the existing object with new properties
+
+        currentLevel[finalKey] = {
+          ID: data.ID,
+          ...data,
+        };
       } else if (mode === "WS") {
         // TODO move to a new home and organise it better!
         // Catch if we're moving outside of bounds and bring us back in
@@ -314,7 +303,7 @@ const App = () => {
           // console.log("Valuueueueueuueue",tabControlData,data?.Properties);
 
           // // Store the combined object as a JSON string
-          Globals.set("TabControlData", JSON.stringify(tabControlData));
+          localStorage.setItem("TabControlData", JSON.stringify(tabControlData));
         }
         else if (data?.Properties?.Type === "Form") {
           const tabControlData1 = {
@@ -323,15 +312,15 @@ const App = () => {
           };
 
           //   // Store the combined object as a JSON string
-          Globals.set("FormData", JSON.stringify(tabControlData1));
+          localStorage.setItem("FormData", JSON.stringify(tabControlData1));
         }
         else if (data?.Properties?.Type === "SubForm" && data?.Properties?.TabObj) {
-          console.log("Data we are geting is as", data, Globals.get("FormData"), Globals.get("TabControlData"))
+          console.log("Data we are geting is as", data, localStorage.getItem("FormData"), localStorage.getItem("TabControlData"))
           
-          let name = JSON.parse(Globals.get("TabControlData"))
-          let name1 = JSON.parse(Globals.get("FormData"))
+          let name = JSON.parse(localStorage.getItem("TabControlData"))
+          let name1 = JSON.parse(localStorage.getItem("FormData"))
           console.log("Datta id isssss",data?.ID,name.Size,name.Posn)
-          Globals.set("TabControlInSubForm", 1);
+          localStorage.setItem("TabControlInSubForm", 1);
           newData = {
             ...data,
             Properties: {
@@ -459,7 +448,7 @@ const App = () => {
       if (keys[0] == "WC") {
         let windowCreationEvent = evData.WC;
         if (windowCreationEvent?.Properties?.Type == "Form") {
-          Globals.reset();
+          localStorage.clear();
           const updatedData = deleteFormAndSiblings(dataRef.current);
           dataRef.current = {};
           dataRef.current = updatedData;
@@ -634,9 +623,9 @@ const App = () => {
               serverEvent?.Properties
             );
             const serverPropertiesObj = {};
-            const Form = JSON.parse(Globals.get(serverEvent.ID));
+            const Form = JSON.parse(localStorage.getItem(serverEvent.ID));
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
 
               serverEvent.Properties.map((key) => {
@@ -690,7 +679,7 @@ const App = () => {
               serverEvent,
               Properties,
               Text,
-              local: Globals.get(serverEvent.ID),
+              local: localStorage.getItem(serverEvent.ID),
             });
 
             const result = checkSupportedProperties(
@@ -698,7 +687,7 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               let editValue = Text !== undefined ? Text : Value;
               editValue = editValue !== undefined ? editValue : "";
 
@@ -753,7 +742,7 @@ const App = () => {
               );
             }
 
-            const { Event } = JSON.parse(Globals.get(serverEvent?.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
             const { Info } = Event;
             const serverPropertiesObj = {};
             serverEvent.Properties.forEach((key) => {
@@ -763,7 +752,7 @@ const App = () => {
                 serverPropertiesObj[key] = SelText;
               } else if (key === "Text") {
                 const storedText = JSON.parse(
-                  Globals.get(serverEvent?.ID)
+                  localStorage.getItem(serverEvent?.ID)
                 )?.Text;
                 const txt = Text !== undefined ? Text : storedText;
                 serverPropertiesObj[key] = txt !== undefined ? txt : '';
@@ -811,7 +800,7 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
 
               let newSelItems = SelItems || new Array(Items.length).fill(0);
 
@@ -859,7 +848,8 @@ const App = () => {
               return webSocket.send(JSON.stringify(message));
             }
 
-            const { Event } = JSON.parse(Globals.get(serverEvent?.ID));
+            // Parse the event data from localStorage
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
             const { Info, Size, Posn } = Event;
 
             let newSelItems = SelItems || new Array(Items.length).fill(0);
@@ -924,7 +914,7 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               console.log(
                 JSON.stringify({
                   WG: {
@@ -961,7 +951,7 @@ const App = () => {
               );
             }
 
-            const { Event } = JSON.parse(Globals.get(serverEvent?.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
             console.log(
               JSON.stringify({
                 WG: {
@@ -1009,7 +999,7 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               console.log(
                 JSON.stringify({
                   WG: {
@@ -1044,7 +1034,7 @@ const App = () => {
               );
             }
 
-            const { Event } = JSON.parse(Globals.get(serverEvent?.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
             const { Info } = Event;
 
             console.log(
@@ -1092,7 +1082,7 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
               serverEvent.Properties.map((key) => {
                 return (serverPropertiesObj[key] = Properties[key]);
@@ -1128,7 +1118,7 @@ const App = () => {
               );
             }
 
-            const { Event } = JSON.parse(Globals.get(serverEvent.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
             const { Info, Size } = Event;
 
             const serverPropertiesObj = {};
@@ -1182,7 +1172,7 @@ const App = () => {
 
 
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               console.log("Coming in form but su1");
 
               const serverPropertiesObj = {};
@@ -1227,13 +1217,13 @@ const App = () => {
 
             const serverPropertiesObj = {};
             console.log("Serverrrrrr", serverEvent.ID)
-            const SubForm = JSON.parse(Globals.get(serverEvent.ID));
-            // const storedSubForm = JSON.parse(Globals.get(serverEvent.ID));
+            const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+            // const storedSubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
 
             // const baseID = serverEvent.ID.split('.')[0];
 
             console.log("Value of subform is as", SubForm);
-            // let SubForm = JSON.parse(Globals.get(serverEvent.ID));
+            // let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
             // console.log("+====>", !SubForm, SubForm)
 
             // if (SubForm.length === 0) {
@@ -1244,7 +1234,7 @@ const App = () => {
 
             // if (SubForm) {
             //   // Retrieve data from "TabControlData" if SubForm is empty
-            //   const tabControlData = JSON.parse(Globals.get("TabControlData"));
+            //   const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
 
             //   if (tabControlData) {
             //     SubForm = tabControlData;
@@ -1261,12 +1251,12 @@ const App = () => {
               return (serverPropertiesObj[key] = SubForm[key]);
             });
             console.log("Server properties are", serverPropertiesObj)
-            // console.log("Server properties are1", Globals.get("formDimension"));
+            // console.log("Server properties are1", localStorage.getItem("formDimension"));
 
 
             // if (!serverPropertiesObj.Posn) {
-            //   let name = JSON.parse(Globals.get("formDimension"))
-            //   let name1 = JSON.parse(Globals.get("formPositions"))
+            //   let name = JSON.parse(localStorage.getItem("formDimension"))
+            //   let name1 = JSON.parse(localStorage.getItem("formPositions"))
             //   const serverPropertiesObj1 = {
             //     Posn: [name1[0], name1[1]],
             //     Size: [name[0], name[1]]
@@ -1299,7 +1289,7 @@ const App = () => {
             //       },
             //     })
             //   );
-            //   // let name=JSON.parse(Globals.get("formDimension"));
+            //   // let name=JSON.parse(localStorage.getItem("formDimension"));
             //   // console.log("nAME IS",name,name[0],name[1]); 
             //   // serverPropertiesObj[Posn]=name[0]
             //   // serverPropertiesObj[Size]=name[1]
@@ -1349,7 +1339,7 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            if (!Globals.get(serverEvent.ID)) {
+            if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
               serverEvent.Properties.map((key) => {
                 return (serverPropertiesObj[key] =
@@ -1373,7 +1363,7 @@ const App = () => {
               return webSocket.send(event);
             }
 
-            const { Event } = JSON.parse(Globals.get(serverEvent.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
             const { Value } = Event;
 
             const serverPropertiesObj = {};
@@ -1407,7 +1397,7 @@ const App = () => {
               supportedProperties,
               serverEvent?.Properties
             );
-            const { Event } = JSON.parse(Globals.get(serverEvent.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
             const { SelItems } = Event;
 
             const event = JSON.stringify({
@@ -1435,7 +1425,7 @@ const App = () => {
               supportedProperties,
               serverEvent?.Properties
             );
-            const { Event } = JSON.parse(Globals.get(serverEvent.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
             const { FireOnce } = Event;
 
             const event = JSON.stringify({
@@ -1462,7 +1452,7 @@ const App = () => {
               supportedProperties,
               serverEvent?.Properties
             );
-            const { Event } = JSON.parse(Globals.get(serverEvent.ID));
+            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
 
             const { SelItems } = Event;
             const event = JSON.stringify({
@@ -1551,7 +1541,7 @@ const App = () => {
           (Event && Event == "GotFocus")
         ) {
           if (Event && Event == "GotFocus")
-            Globals.set("current-focus", ID);
+            localStorage.setItem("current-focus", ID);
 
           const existingData = JSON.parse(getObjectById(dataRef.current, ID));
 
@@ -1615,7 +1605,7 @@ const App = () => {
         } else if (Event == "CellMove") {
           console.log("296", { nqEvent });
           setNqEvents([...nqEvents, nqEvent]);
-          Globals.set(
+          localStorage.setItem(
             ID,
             JSON.stringify({
               Event: {
@@ -1623,7 +1613,7 @@ const App = () => {
               },
             })
           );
-          Globals.set(
+          localStorage.setItem(
             "nqCurCell",
             JSON.stringify({
               ID,
@@ -1676,7 +1666,7 @@ const App = () => {
         });
         // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
         setProceed(Proceed);
-        // Globals.set(`${EventID}${currentEvent.curEvent}`, Proceed);
+        // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
       } else if (keys[0] == "EX") {
         const serverEvent = evData.EX;
 
@@ -1706,7 +1696,7 @@ const App = () => {
           }
           webSocket.send(event);
         } else if (Method == "GetFocus") {
-          const focusedID = Globals.get("current-focus");
+          const focusedID = localStorage.getItem("current-focus");
           const event = JSON.stringify({
             WX: { Info: !focusedID ? [] : [focusedID], WGID },
           });
@@ -1779,8 +1769,8 @@ const App = () => {
 
   const handleFocus = (element) => {
     const formParentID = findFormParentID(dataRef.current);
-    if (Globals.get("change-event")) {
-      const { Event } = JSON.parse(Globals.get("change-event"));
+    if (localStorage.getItem("change-event")) {
+      const { Event } = JSON.parse(localStorage.getItem("change-event"));
       const updatedEvent = {
         ...Event,
         Info: [!element.target.id ? formParentID : element.target.id],
@@ -1789,7 +1779,7 @@ const App = () => {
       let webSocket = webSocketRef.current;
 
       webSocket.send(JSON.stringify({ Event: { ...updatedEvent } }));
-      Globals.clear('change-event');
+      localStorage.removeItem("change-event");
     }
   };
 

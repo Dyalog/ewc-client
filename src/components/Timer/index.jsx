@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from '../../hooks';
-import * as Globals from "./../../Globals";
 
 const Timer = ({ data }) => {
   const { socket } = useAppData();
@@ -25,7 +24,7 @@ const Timer = ({ data }) => {
         timeoutId = setTimeout(() => {
           socket.send(timerEvent);
         }, Interval && Interval);
-        Globals.set(
+        localStorage.setItem(
           data.ID,
           JSON.stringify({ Event: { EventName: 'Timer', ID: data?.ID, FireOnce: 2 } })
         );
@@ -35,7 +34,7 @@ const Timer = ({ data }) => {
         clearInterval(intervalId);
         clearTimeout(timeoutId);
       } else if (eventFire == 0) {
-        Globals.set(
+        localStorage.setItem(
           data.ID,
           JSON.stringify({ Event: { EventName: 'Timer', ID: data?.ID, FireOnce: 0 } })
         );

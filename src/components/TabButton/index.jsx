@@ -1,6 +1,5 @@
 import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor, setStyle } from '../../utils';
-import * as Globals from "./../../Globals";
 
 const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, activebgColor }) => {
   const { socket } = useAppData();
@@ -67,7 +66,7 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
           })
         );
 
-        Globals.set(
+        localStorage.setItem(
           'lastEvent',
           JSON.stringify({
             Event: {

@@ -13,7 +13,6 @@ import {
 } from "../utils";
 import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
-import * as Globals from "./../Globals";
 
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
@@ -77,7 +76,7 @@ const List = ({ data }) => {
       updatedArray[index] = 1;
       setLastClickIndex(index);
     }
-    Globals.set(
+    localStorage.setItem(
       data?.ID,
       JSON.stringify({
         Event: {
@@ -121,8 +120,8 @@ const List = ({ data }) => {
   };
 
   const handleMouseUpDrag = () => {
-    // TODO - replace this
-    Globals.set(
+    // TODO - replace localStorage
+    localStorage.setItem(
       data?.ID,
       JSON.stringify({
         Event: {

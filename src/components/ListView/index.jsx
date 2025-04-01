@@ -15,7 +15,6 @@ import {
   handleKeyPressUtils,
 } from "../../utils";
 import { useAppData } from "../../hooks";
-import * as Globals from "./../../Globals";
 
 const ListView = ({ data }) => {
   const { findCurrentData, socket } = useAppData();
@@ -40,7 +39,7 @@ const ListView = ({ data }) => {
   const fontStyles = getFontStyles(font, 12);
 
   useEffect(() => {
-    Globals.set(
+    localStorage.setItem(
       data.ID,
       JSON.stringify({
         Event: {
@@ -70,7 +69,7 @@ const ListView = ({ data }) => {
         SelItems: SelItems,
       },
     });
-    Globals.set(data?.ID, storedFocusedIndex);
+    localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === eventName);
     if (!exists) return;
     console.log(event);

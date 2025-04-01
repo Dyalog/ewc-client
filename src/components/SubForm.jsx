@@ -2,17 +2,17 @@ import { excludeKeys } from '../utils';
 import SelectComponent from './SelectComponent';
 import TextArea from './TextArea';
 import { useEffect } from 'react';
-import * as Globals from "./Globals";
+
 
 const SubForm = ({ data }) => {
   console.log("8888888888888888888888888888888888888888888888888888889")
   const updatedData = excludeKeys(data);
-  const parentSize = JSON.parse(Globals.get('formDimension'));
+  const parentSize = JSON.parse(localStorage.getItem('formDimension'));
 
   const { Size, Posn, Visible } = data?.Properties;
 
   useEffect(() => {
-    Globals.set(
+    localStorage.setItem(
       data.ID,
       JSON.stringify({
         Size: !Size ? [parentSize[0], parentSize[1]] : Size,

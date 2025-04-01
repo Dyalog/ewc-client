@@ -1,6 +1,5 @@
 import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, renderImage, setStyle } from '../../utils';
-import * as Globals from "./../../Globals";
 
 const Image = ({ data }) => {
   const { findDesiredData, socket } = useAppData();
@@ -8,7 +7,7 @@ const Image = ({ data }) => {
   const customStyles = parseFlexStyles(CSS)
 
   const pointsArray = Points && Points[0].map((y, i) => [Points[1][i], y]);
-  const parentSize = JSON.parse(Globals.get('formDimension'));
+  const parentSize = JSON.parse(localStorage.getItem('formDimension'));
   const style = setStyle(data.Properties)
 
   return (

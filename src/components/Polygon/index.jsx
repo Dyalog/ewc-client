@@ -1,6 +1,5 @@
 import { useAppData } from "../../hooks";
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor, setStyle } from "../../utils";
-import * as Globals from "./../../Globals";
 
 const Poly = ({ data }) => {
   const { FCol, FillCol, LWidth, Points, FStyle, Visible, Event, CSS } = data?.Properties;
@@ -8,7 +7,7 @@ const Poly = ({ data }) => {
   const customStyles = parseFlexStyles(CSS)
   const style = setStyle(data.Properties)
 
-  const parentSize = JSON.parse(Globals.get("formDimension"));
+  const parentSize = JSON.parse(localStorage.getItem("formDimension"));
   const hasFCol = data?.Properties.hasOwnProperty("FCol");
 
   return (

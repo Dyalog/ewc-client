@@ -18,7 +18,6 @@ import {
 } from "../../utils";
 import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
-import * as Globals from "./../../Globals";
 
 const SubForm = ({ data }) => {
   const { findCurrentData, socket, dataRef } = useAppData();
@@ -55,9 +54,13 @@ const SubForm = ({ data }) => {
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
+
+
   let updatedStyles = { ...styles, ...imageStyles, ...flexStyles,...fontStyles };
 
-  const name = Globals.get("TabControlInSubForm")
+
+  const name = localStorage.getItem("TabControlInSubForm")
+  console.log("nmsmsmsmsmsmsmsmsmsmmsmsms", name)
 
   console.log("App Subform", {
     styles,
@@ -71,7 +74,7 @@ const SubForm = ({ data }) => {
     let existingData;
     if (data.ID === "F1.SCALE") {
       setTimeout(() => {
-        existingData = JSON.parse(Globals.get(data.ID));
+        existingData = JSON.parse(localStorage.getItem(data.ID));
         if (existingData && existingData.Event?.ID === data.ID) {
           existingData.Event = {
             ...existingData.Event,
@@ -81,7 +84,7 @@ const SubForm = ({ data }) => {
         }
       }, 500);
     } else if (data.ID === "F1.BX") {
-      Globals.set(
+      localStorage.setItem(
         data.ID,
         JSON.stringify({
           Size: Size || [600, 400], // Default size if none provided
@@ -91,23 +94,30 @@ const SubForm = ({ data }) => {
     }
     else if (name) {
       console.log("Coming in name");
-      let name = JSON.parse(Globals.get("TabControlData"))
-      let name1=JSON.parse(Globals.get("FormData"))
+      let name = JSON.parse(localStorage.getItem("TabControlData"))
+      let name1=JSON.parse(localStorage.getItem("FormData"))
+      // console.log("nmmmmmm",name,name.Posn)
       if(name.Size1){
         console.log("undeffffff");
       }
       console.log("Wr are getting id is a",data.ID);
-      Globals.set(
+      localStorage.setItem(
         data.ID,
+        // JSON.parse(localStorage.getItem())
         JSON.stringify({
           Size:name.Size||name1.Size,
           Posn:name.Posn||[0,0]
         })
+        // localStorage.getItem("TabControlData")
       );
     }
     else {
-      Globals.set(
+
+      // let name=localStorage.getItem("TabControlData",JSON)
+      localStorage.setItem(
         data.ID,
+        // JSON.parse(localStorage.getItem())
+        // localStorage.getItem("TabControlData")
         JSON.stringify({
           Size: Size && Size,
           Posn: Posn && Posn,
@@ -128,6 +138,11 @@ const SubForm = ({ data }) => {
               : "block",
         background: BCol && rgbColor(BCol),
         ...updatedStyles,
+        // height: Size && Size[0],
+        // width: Size && Size[1],
+        // top: Posn && Posn[0],
+        // left: Posn && Posn[1],
+        // position: 'absolute',
       }}
       ref={observedDiv}
       onMouseDown={(e) => {

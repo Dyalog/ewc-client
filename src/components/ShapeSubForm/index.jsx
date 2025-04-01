@@ -9,16 +9,16 @@ import Label from '../Label';
 import { useEffect } from 'react';
 import ListView from '../ListView';
 import Group from '../Group';
+import Grid from '../Grid';
 import SelectComponent from '../SelectComponent';
 import ScrollBar from '../ScrollBar';
-import * as Globals from "./Globals";
 
 const ShapeSubForm = ({ data, inSplitter }) => {
   const { Posn, Size, Visible } = data?.Properties;
   let styles = setStyle(data?.Properties);
   const updatedData = excludeKeys(data);
 
-  const parentSize = JSON.parse(Globals.get('formDimension'));
+  const parentSize = JSON.parse(localStorage.getItem('formDimension'));
 
   if (!Size) {
     styles = {
@@ -35,7 +35,7 @@ const ShapeSubForm = ({ data, inSplitter }) => {
   }
 
   useEffect(() => {
-    Globals.set(
+    localStorage.setItem(
       data.ID,
       JSON.stringify({
         Size: !Size ? [parentSize[0], parentSize[1]] : Size,

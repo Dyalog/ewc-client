@@ -19,5 +19,4 @@ let globals = defaults()
 
 export function get(k)    { return globals[k] }
 export function set(k, v) { globals[k] = v; return v }
-export function clear(k)  { delete globals[k] }
 export function reset()   { globals = defaults() }

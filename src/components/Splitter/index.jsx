@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import VerticalSplitter from './VerticalSplitter';
 import HorizontalSplitter from './HorizontalSplitter';
 import { useAppData } from '../../hooks';
-import * as Globals from "./../../Globals";
 
 
 const Splitter = ({ data }) => {
@@ -22,11 +21,11 @@ const Splitter = ({ data }) => {
         const IDs = key.split('.');
 
         if (IDs.length == 2 && IDs.includes('RIGHT')) {
-          const rightPaneDimensions = JSON.parse(Globals.get(key));
+          const rightPaneDimensions = JSON.parse(localStorage.getItem(key));
 
           const { Size } = rightPaneDimensions;
 
-          Globals.set(
+          localStorage.setItem(
             data?.ID,
             JSON.stringify({
               Event: {
@@ -37,7 +36,7 @@ const Splitter = ({ data }) => {
               },
             })
           );
-          Globals.set(
+          localStorage.setItem(
             SplitObj1,
             JSON.stringify({ Size: [Posn[0], Size[1]], Posn: [0, 0] })
           );
@@ -53,7 +52,7 @@ const Splitter = ({ data }) => {
             },
             'WS'
           );
-          Globals.set(
+          localStorage.setItem(
             SplitObj2,
             JSON.stringify({
               Size: [formHeight - (Posn[0] + 3), Size[1]],
@@ -74,7 +73,7 @@ const Splitter = ({ data }) => {
         }
       });
     } else {
-      Globals.set(
+      localStorage.setItem(
         data?.ID,
         JSON.stringify({
           Event: {
@@ -86,11 +85,11 @@ const Splitter = ({ data }) => {
         })
       );
 
-      Globals.set(
+      localStorage.setItem(
         SplitObj1,
         JSON.stringify({ Size: [formHeight, Posn[1]], Posn: [0, Posn[1]] })
       );
-      Globals.set(
+      localStorage.setItem(
         SplitObj2,
         JSON.stringify({
           Size: [formHeight, formWidth - (Posn[1] + 3)],

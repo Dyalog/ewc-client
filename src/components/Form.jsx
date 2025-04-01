@@ -17,7 +17,6 @@ import {
 import SelectComponent from "./SelectComponent";
 import { useAppData, useResizeObserver, useWindowDimensions } from "../hooks";
 import { useEffect, useState } from "react";
-import * as Globals from "./../Globals";
 
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
@@ -89,7 +88,7 @@ const Form = ({ data }) => {
 
   // Set the current Focus
   useEffect(() => {
-    Globals.set("current-focus", data.ID);
+    localStorage.setItem("current-focus", data.ID);
   }, []);
 
   // useEffect to check the size is present otherwise Viewport half height and width
@@ -101,16 +100,16 @@ const Form = ({ data }) => {
 
     const halfViewportHeight = Math.round(window.innerHeight / 2);
 
-    Globals.set(
+    localStorage.setItem(
       "formDimension",
       JSON.stringify(hasSize ? Size : [halfViewportHeight, halfViewportWidth])
     );
-    Globals.set(
+    localStorage.setItem(
       "formPositions",
       JSON.stringify([Posn && Posn[0], Posn && Posn[1]])
     );
 
-    Globals.set(
+    localStorage.setItem(
       data?.ID,
       JSON.stringify({
         Size: hasSize ? Size : [halfViewportHeight, halfViewportWidth],
@@ -138,6 +137,16 @@ const Form = ({ data }) => {
     sendDeviceCapabilities();
    
   }, [dimensions]);
+
+  // console.log("App Form", {
+  //   formStyles,
+  //   styles,
+  //   data,
+  //   updatedStyles,
+  //   flexDirection: updatedStyles.flexDirection,
+  // });
+
+  // console.log("App Form stringify", JSON.stringify(updatedStyles));
 
   return (
     <div
