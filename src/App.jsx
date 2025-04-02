@@ -1600,7 +1600,7 @@ const App = () => {
               Event: {
                 EventName: "KeyPress",
                 ID: ID,
-                Info: [ch],
+                Info: Info,
               },
             }));
           }
