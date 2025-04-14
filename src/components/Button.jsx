@@ -436,6 +436,7 @@ const Button = ({
 
     return (
       <div
+        id={data.ID + ".$CONTAINER"}
         onKeyDown={(e) => handleKeyPress(e)}
         style={{
           ...styles,
@@ -447,7 +448,7 @@ const Button = ({
           <div
             style={{ fontSize: "12px", position: "absolute", top: 0, left: 0 }}
           >
-            {Caption}
+            <label for={data?.ID}>{Caption}</label>
           </div>
         ) : null}
 
@@ -476,7 +477,7 @@ const Button = ({
               ...fontStyles
             }}
           >
-            {Caption}
+            <label for={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>
@@ -562,6 +563,7 @@ const Button = ({
 
     return (
       <div
+        id={data?.ID + ".$CONTAINER"}
         style={{
           ...styles,
           zIndex: 1,
