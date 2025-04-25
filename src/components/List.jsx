@@ -49,7 +49,11 @@ const List = ({ data }) => {
   // However, it's also the case that if you click item 3 then shift click 2
   // then 4, your selection should be {3} -> {2, 3} -> {3, 4}, so shift clicks
   // themselves don't set this.
-  const [lastClickIndex, setLastClickIndex] = useState(0);
+  var initlastClickIndex = 0;
+  if (SelItems) {
+    initlastClickIndex = SelItems.findIndex(x => x !== 0);
+  }
+  const [lastClickIndex, setLastClickIndex] = useState(initlastClickIndex);
 
   const handleClick = (index, event) => {
     event.preventDefault(); 
@@ -57,10 +61,10 @@ const List = ({ data }) => {
     const length = items.length;
     let updatedArray = [...items];
 
-    if (event.metaKey && data?.Properties?.Style === "Multi") {
+    if (event.metaKey && data?.Properties?.Style?.toLowerCase() === "multi") {
       updatedArray[index] = updatedArray[index] ? 0 : 1;
       setLastClickIndex(index);
-    } else if (event.shiftKey && data?.Properties?.Style === "Multi") {
+    } else if (event.shiftKey && data?.Properties?.Style?.toLowerCase() === "multi") {
       updatedArray = Array(length).fill(0);
       if (index > lastClickIndex) {
         for (let i = index; i >= lastClickIndex; i--) {
@@ -101,7 +105,7 @@ const List = ({ data }) => {
     if (isMouseDown) {
       const updatedArray = [...items];
 
-      if (data?.Properties?.Style === "Multi") {
+      if (data?.Properties?.Style?.toLowerCase() === "multi") {
         const start = Math.min(dragStart, index);
         const end = Math.max(dragStart, index);
         updatedArray.fill(0); 
