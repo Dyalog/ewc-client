@@ -102,6 +102,7 @@ const Text = ({ data, fontProperties }) => {
           display: Visible == 0 ? "none" : "block",
           top: 0,
           left: 0,
+          pointerEvents: 'none',
         }}
         onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
@@ -195,7 +196,11 @@ const Text = ({ data, fontProperties }) => {
                   }) translate(${points && -points[0]}, ${
                     points && -points[1]
                   })`}
-                  style={{ ...customStyles,...fontStyles }}
+                  style={{
+                    pointerEvents: 'auto',
+                    ...customStyles,
+                    ...fontStyles
+                  }}
                 >
                   {text /*text.replace(/ /g, "\u00A0")*/}
                 </text>
