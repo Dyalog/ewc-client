@@ -246,7 +246,6 @@ const App = () => {
         }
 
         // Merge the existing object with new properties
-        // console.log("valuuuu123",mode,data);
         currentLevel[finalKey] = {
           ID: data.ID,
           ...currentLevel[finalKey],
@@ -255,7 +254,13 @@ const App = () => {
             ...(data.Properties || {}),
           },
         };
-        // console.log("Current level final keys is",currentLevel[finalKey])
+
+        // Emit something for anything that needs to know about a WS. This is a
+        // hack to allow updating the internal state of components for
+        // *rendering purposes only*. As much as possible must rely on the above
+        // logic.
+        // List uses this.
+        document.dispatchEvent(new CustomEvent('EWC-WS-'+data.ID, {detail: data.Properties}));
       }
     } else {
       let newData = JSON.parse(JSON.stringify(data));

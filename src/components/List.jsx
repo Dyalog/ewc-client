@@ -33,6 +33,16 @@ const List = ({ data }) => {
   );
   const [width, setWidth] = useState(Size[1]);
 
+  // SelItems is used as the state, but the internal state of 'items' is used
+  // for rendering. So we use a hack where App.jsx sends a message to us, to
+  // update the internal state of the component.
+  useEffect(() => {
+    const listenerId = 'EWC-WS-' + data?.ID;
+    const handler = (e) => { if (e.detail.SelItems) { setItems(e.detail.SelItems) } };
+    document.addEventListener(listenerId, handler);
+    return () => { document.removeEventListener(listenerId, handler); }
+  }, []); // only on mount
+
   useEffect(() => {
     setWidth(dimensions?.width - 50);
   }, [dimensions]);
