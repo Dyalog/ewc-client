@@ -1582,7 +1582,7 @@ const App = () => {
           }
 
           const hasKeyPress = hasEventCallback(getObjectByIdObject(dataRef.current, ID), 'KeyPress');
-          if (hasKeyPress && response) {
+          if (hasKeyPress && response && NoCallback == 0) {
             webSocket.send(JSON.stringify({
               Event: {
                 EventName: "KeyPress",

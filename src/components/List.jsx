@@ -13,6 +13,7 @@ import {
 } from "../utils";
 import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
+import { pad } from "../utils/pad";
 
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
@@ -25,7 +26,7 @@ const List = ({ data }) => {
   const fontStyles = getFontStyles(font, 12);
 
   const ref = useRef();
-  const [items, setItems] = useState(SelItems || Array(Items.length).fill(0));
+  let [items, setItems] = useState(SelItems || Array(Items.length).fill(0));
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const dimensions = useResizeObserver(
@@ -36,9 +37,27 @@ const List = ({ data }) => {
   // SelItems is used as the state, but the internal state of 'items' is used
   // for rendering. So we use a hack where App.jsx sends a message to us, to
   // update the internal state of the component.
+  // This is horrible! Everything should come from the core state.
   useEffect(() => {
     const listenerId = 'EWC-WS-' + data?.ID;
-    const handler = (e) => { if (e.detail.SelItems) { setItems(e.detail.SelItems) } };
+    const handler = (e) => {
+      // If Items is set, reset the internal equivalent of SelItems (items)
+      let newItems = items;
+      if (e.detail.Items) { newItems = Array(e.detail.Items.length).fill(0) }
+      // If SelItems is set, we trim it if the length is wrong
+      if (e.detail.SelItems) { newItems = e.detail.SelItems }
+      items = newItems;
+      setItems(newItems);
+      localStorage.setItem(
+        data?.ID,
+        JSON.stringify({
+          Event: {
+            ID: data?.ID,
+            SelItems: newItems,
+          },
+        })
+      );
+    };
     document.addEventListener(listenerId, handler);
     return () => { document.removeEventListener(listenerId, handler); }
   }, []); // only on mount
@@ -129,6 +148,15 @@ const List = ({ data }) => {
         updatedArray[index] = 1; 
         setItems(updatedArray);
       }
+      localStorage.setItem(
+        data?.ID,
+        JSON.stringify({
+          Event: {
+            ID: data?.ID,
+            SelItems: updatedArray,
+          },
+        })
+      );
      
     }
   };
