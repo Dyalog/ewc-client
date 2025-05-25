@@ -62,7 +62,7 @@ const calculateTextDimensions = (lines, font) => {
     lineDiv.style.margin = '0';
     lineDiv.style.padding = '0';
     lineDiv.textContent = line;
-    lineDiv.style.display = 'block'; // Start each word on a new line
+    lineDiv.style.display = 'block'; // Start each on a new line
     lineDiv.style.lineHeight = lineHeight;
     Object.assign(lineDiv.style, getFontStyles(font));
     container.appendChild(lineDiv);

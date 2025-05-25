@@ -1666,13 +1666,23 @@ const App = () => {
         // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
 
         if (Method == "GetTextSize") {
-          const joinedString = Info && Info[0];
+          // Certain code re-encloses Info - if we can get to two values, we do that
+          // A real example: [[[["This is a text","This is a text"],"#.FntSys"]]]
+          let myInfo = Info;
+          while (Array.isArray(myInfo) && myInfo.length === 1) {
+            myInfo = myInfo[0];
+          }
+          // We failed to get to 2, so we have to just trust whatever the original was:
+          if (myInfo.length !== 2) {
+            myInfo = Info;
+          }
+          const strings = myInfo && myInfo[0];
           const font = JSON.parse(
-            getObjectById(dataRef.current, Info && Info[1])
+            getObjectById(dataRef.current, myInfo && myInfo[1])
           );
-          const textDimensions = Text.calculateTextDimensions(joinedString, font);
+          const textDimensions = Text.calculateTextDimensions(strings, font);
           const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
-          console.log(event);
+          // console.log(event);
           return webSocket.send(event);
         } else if (Method == "OnlyDQ") {
           let event;

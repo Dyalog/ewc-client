@@ -62,9 +62,9 @@ const List = ({ data }) => {
     return () => { document.removeEventListener(listenerId, handler); }
   }, []); // only on mount
 
-  useEffect(() => {
-    setWidth(dimensions?.width - 50);
-  }, [dimensions]);
+  // useEffect(() => {
+  //   setWidth(dimensions?.width - 50);
+  // }, [dimensions]);
 
   const selectedStyles = {
     background: "#1264FF",
@@ -178,6 +178,7 @@ const List = ({ data }) => {
 
   return (
     <div
+      id={data?.ID}
       ref={ref}
       style={{
         ...styles,
