@@ -716,6 +716,12 @@ const App = () => {
               serverEvent?.Properties
             );
 
+            const input = document.getElementById(serverEvent.ID);
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const browserSelText = [start, end];
+            console.log('BROWSERSELTEXT', SelText, browserSelText);
+
             if (!localStorage.getItem(serverEvent.ID)) {
               let editValue = Text !== undefined ? Text : Value;
               editValue = editValue !== undefined ? editValue : "";
@@ -733,9 +739,7 @@ const App = () => {
                     ? parseInt(editValue)
                     : editValue;
                 } else if (key === "SelText") {
-                  serverPropertiesObj[key] = Properties[key]
-                    ? Properties[key]
-                    : [1, 1];
+                  serverPropertiesObj[key] = SelText || browserSelText || Properties[key] || [1, 1];
                 } else {
                   serverPropertiesObj[key] = editValue;
                 }
@@ -778,7 +782,7 @@ const App = () => {
               if (key === "Value") {
                 serverPropertiesObj[key] = Info;
               } else if (key === "SelText") {
-                serverPropertiesObj[key] = SelText;
+                serverPropertiesObj[key] = SelText || [1, 1];
               } else if (key === "Text") {
                 const storedText = JSON.parse(
                   localStorage.getItem(serverEvent?.ID)
@@ -1495,6 +1499,8 @@ const App = () => {
         console.log("300", nqEvent, nqEvent.ID, nqEvent.Event, nqEvent.Info);
         const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
+        const existingData = JSON.parse(getObjectById(dataRef.current, ID));
+
         const appElement = getObjectById(dataRef.current, ID);
 
         if (Event && Event == "Configure") {
@@ -1551,23 +1557,21 @@ const App = () => {
           return;
         } else if (Event == "KeyPress") {
           // ch is often going to be a character, but it may be a code such as
-          // LC for ArrowLeft
+          // 'LC' for ArrowLeft
           // There should be only one element
           // IMPORTANT:
           // We try to imitate ⎕WC as much as possible, but this behaves in a
           // slightly odd fashion, so this is done largely from experimentation.
-          // For example, HT for 'tab' should work and trigger an event, but DB
-          // for backspace should have no effect when requested as an NQ.
-          // We should *send* a DB on a backspace within eg an Edit field when
-          // the user presses backspace and it deletes a character but also when
-          // the server instructs us with a DB, we should do nothing to the text
-          // but nonetheless return an event.
-          // This is highly counter-intuitive, as others do have an effect, eg:
+          // 
+          // Example of keycodes:
+          //   * DB (Delete backspace)
           //   * DI (Delete Item) *does* do forward delete or deletes the selection
           //   * DK (Delete blocK) will remove to the end of the line
-          // So, by default, we will blindly echo any KeyPress event to the
-          // server, and we implement handlers for the subset of codes we are
-          // interested in.
+          //   * HT (Horizontal tab) which needs to be able to move from element
+          //     to element
+          // Some keycodes have no noticeable effect in ⎕WC...
+          // ...so we blindly echo any KeyPress event to the server, and we
+          // implement handlers for the subset of codes we are interested in.
           const ch = Info[0];
           let response = true;
           
@@ -1578,7 +1582,7 @@ const App = () => {
           } else {
             // Echo by default, if a handler is found, let it decide
             const kph = keypressHandlers[ch];
-            if (kph) response = kph(handleData, ID);
+            if (kph) response = kph(handleData, ID, existingData?.Properties);
           }
 
           const hasKeyPress = hasEventCallback(getObjectByIdObject(dataRef.current, ID), 'KeyPress');

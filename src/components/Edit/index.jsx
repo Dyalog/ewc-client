@@ -139,6 +139,22 @@ const Edit = ({
     hasValueProperty,
   ]);
 
+  // We need to update SelText whenever we can
+  const updateSelText = () => {
+    const el = document.getElementById(data.ID);
+    const start = el.selectionStart+1;
+    const end = el.selectionEnd+1;
+    handleData(
+      {
+        ID: data?.ID,
+        Properties: {
+          SelText: [start, end],
+        },
+      },
+      "WS"
+    );
+  };
+
   // check that the Edit is in the Grid or not
 
   const handleInputClick = () => {
@@ -275,6 +291,7 @@ const Edit = ({
   };
 
   const handleKeyPress = (e) => {
+    updateSelText();
     if (e.key == "ArrowRight") handleRightArrow();
     else if (e.key == "ArrowLeft") handleLeftArrow();
     else if (e.key == "ArrowDown") handleCellMove();
@@ -477,6 +494,7 @@ const Edit = ({
   };
 
   const handleBlur = () => {
+    updateSelText();
     if (Event && Event.some((item) => item[0] === "LostFocus")) {
       socket.send(JSON.stringify({
         Event: {

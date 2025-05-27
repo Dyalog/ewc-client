@@ -1,6 +1,8 @@
 // Return true/false, in order to decide on sending a default response
 // Return an object to send a customised response
 
+// function startEnd(el, selText)
+
 export default {
   // Horizontal Tab
   'HT': function(_, id) {
@@ -34,10 +36,34 @@ export default {
     return true;
   },
   // Delete blocK
-  'DK': function(handleData, id) {
+  'DK': function(_, id) {
     const el = document.getElementById(id);
     el.value = el.value.slice(0, el.selectionStart);
     return true;
     // TODO as above, requires fixes to Edit fields for setting Value and Text!!!
-  }
+  },
+  // Delete Backspace
+  'DB': function(_, id, data) {
+    const el = document.getElementById(id);
+    let start = data.SelText[0]-1;
+    let end = data.SelText[1]-1;
+    if (start < 0) start = 0;
+    if (end < 0) end = 0;
+    console.log('HANDLEDBBEFORE', data, id, [start, end], el, el.value);
+    if (start === end && start > 0) {
+      console.log('HANDLEDB1');
+      el.value = el.value.slice(0, start - 1) + el.value.slice(end);
+      el.selectionStart = el.selectionEnd = start - 1;
+    } else {
+      console.log('HANDLEDB2');
+      el.value = el.value.slice(0, start) + el.value.slice(end);
+      el.selectionStart = el.selectionEnd = start;
+    }
+    console.log('HANDLEDBAFTER', id, el, el.value);
+    // Update internal model too
+    data.Text = el.value;
+    data.Value = el.value;
+
+    return true;
+  },
 };
