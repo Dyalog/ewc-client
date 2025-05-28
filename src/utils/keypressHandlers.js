@@ -7,7 +7,7 @@ export default {
   // Horizontal Tab
   'HT': function(_, id) {
     document.getElementById(id).dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
-    return false;
+    return true;
   },
   // Delete Item
   'DI': function(handleData, id) {

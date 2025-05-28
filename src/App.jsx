@@ -1503,6 +1503,9 @@ const App = () => {
 
         const appElement = getObjectById(dataRef.current, ID);
 
+        // Do nothing unless NoCallback=0 (default)
+        const nqCallback = NoCallback !== 0 ? ()=>{} : (ev)=>{ webSocket.send(JSON.stringify({ Event: ev })) };
+
         if (Event && Event == "Configure") {
           handleData(
             {
@@ -1515,17 +1518,11 @@ const App = () => {
             },
             "WS"
           );
-
-          const event = JSON.stringify({
-            Event: {
-              EventName: nqEvent.Event,
-              ID: nqEvent.ID,
-              Info: nqEvent.Info,
-            },
+          nqCallback({
+            EventName: Event,
+            ID: ID,
+            Info: Info,
           });
-
-          webSocket.send(event);
-          return;
         } else if (Event == "SetPing") {
           window.EWC.pingMS = Info[0] * 1000;
           return;
@@ -1542,19 +1539,12 @@ const App = () => {
             existingData?.Properties?.Event &&
             existingData?.Properties?.Event.some((item) => item[0] === Event);
 
-          if (!exists) return;
-
-          const event = JSON.stringify({
-            Event: {
-              EventName: Event,
-              ID,
-              Info,
-            },
+          if (!exists) return; // TODO shouldn't this still report back?!
+          nqCallback({
+            EventName: Event,
+            ID,
+            Info,
           });
-
-          console.log(event);
-          if (NoCallback == 0) webSocket.send(event);
-          return;
         } else if (Event == "KeyPress") {
           // ch is often going to be a character, but it may be a code such as
           // 'LC' for ArrowLeft
@@ -1573,28 +1563,21 @@ const App = () => {
           // ...so we blindly echo any KeyPress event to the server, and we
           // implement handlers for the subset of codes we are interested in.
           const ch = Info[0];
-          let response = true;
           
           if (ch.length == 1) {
             // Single character insert
             const el = document.getElementById(ID);
             el.dispatchEvent(new KeyboardEvent("keydown", {key: ch}));
           } else {
-            // Echo by default, if a handler is found, let it decide
             const kph = keypressHandlers[ch];
-            if (kph) response = kph(handleData, ID, existingData?.Properties);
+            if (kph) kph(handleData, ID, existingData?.Properties);
           }
 
-          const hasKeyPress = hasEventCallback(getObjectByIdObject(dataRef.current, ID), 'KeyPress');
-          if (hasKeyPress && response && NoCallback == 0) {
-            webSocket.send(JSON.stringify({
-              Event: {
-                EventName: "KeyPress",
-                ID: ID,
-                Info: Info,
-              },
-            }));
-          }
+          nqCallback({
+            EventName: "KeyPress",
+            ID: ID,
+            Info: Info,
+          });
         } else if (Event == "CellMove") {
           console.log("296", { nqEvent });
           setNqEvents([...nqEvents, nqEvent]);
@@ -1613,35 +1596,33 @@ const App = () => {
               Info,
             })
           );
-          // reRender();
-          return;
         } else if (Event == "Select") {
           const element = document.getElementById(nqEvent.ID);
           if (element) element.click();
-          webSocket.send(
-            JSON.stringify({
-              Event: {
-                EventName: "Select",
-                ID: ID,
-              },
-            })
-          );
+          nqCallback({
+            EventName: "Select",
+            ID: ID,
+          });
         } else if (Event == "Scroll") {
-          webSocket.send(
-            JSON.stringify({
-              Event: {
-                EventName: "Scroll",
-                ID: ID,
-                Info: [Info[0], Info[1]],
-              },
-            })
-          );
+          const thumbValue = Info[1];
+          console.log("300", { thumbValue });
+          handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+          const element = document.getElementById(nqEvent.ID);
+          element && element.focus();
+          nqCallback({
+            EventName: "Scroll",
+            ID: ID,
+            Info: [Info[0], Info[1]],
+          });
+        } else {
+          // All other NoCallback = 0 events should be echoed!
+          nqCallback({
+            EventName: Event,
+            ID: ID,
+            Info: Info,
+          });
         }
-        const thumbValue = Info[1];
-        console.log("300", { thumbValue });
-        handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
-        const element = document.getElementById(nqEvent.ID);
-        element && element.focus();
+        return;
       } else if (keys[0] == "EC") {
         const serverEvent = evData.EC;
 
