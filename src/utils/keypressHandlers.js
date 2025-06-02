@@ -10,7 +10,7 @@ export default {
     return true;
   },
   // Delete Item
-  'DI': function(handleData, id) {
+  'DI': function(handleData, id, data) {
     const el = document.getElementById(id);
     let value = el.value;
     if (el.selectionStart == el.selectionEnd) {
@@ -24,11 +24,11 @@ export default {
     }
     // Update everywhere
     el.value = value;
-    return true;
     // TODO requires fixes to Edit fields for setting Value and Text!!!
     handleData({
       ID: id,
       Properties: {
+        ...data,
         Value: value,
         Text: value,
       }
@@ -43,26 +43,31 @@ export default {
     // TODO as above, requires fixes to Edit fields for setting Value and Text!!!
   },
   // Delete Backspace
-  'DB': function(_, id, data) {
+  'DB': function(handleData, id, data) {
     const el = document.getElementById(id);
     let start = data.SelText[0]-1;
     let end = data.SelText[1]-1;
     if (start < 0) start = 0;
     if (end < 0) end = 0;
-    console.log('HANDLEDBBEFORE', data, id, [start, end], el, el.value);
     if (start === end && start > 0) {
-      console.log('HANDLEDB1');
       el.value = el.value.slice(0, start - 1) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start - 1;
     } else {
-      console.log('HANDLEDB2');
       el.value = el.value.slice(0, start) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start;
     }
-    console.log('HANDLEDBAFTER', id, el, el.value);
     // Update internal model too
-    data.Text = el.value;
-    data.Value = el.value;
+    handleData(
+      {
+        ID: id,
+        Properties: {
+          ...data,
+          Text: el.value,
+          Value: el.Value,
+        },
+      },
+      "WS"
+    );
 
     return true;
   },
