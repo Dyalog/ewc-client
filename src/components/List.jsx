@@ -13,7 +13,6 @@ import {
 } from "../utils";
 import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
-import { pad } from "../utils/pad";
 
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
@@ -28,11 +27,11 @@ const List = ({ data }) => {
   const ref = useRef();
   let [items, setItems] = useState(SelItems || Array(Items.length).fill(0));
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [dragStart, setDragStart] = useState(null);
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
   const [width, setWidth] = useState(Size[1]);
+  const [isFocused, setIsFocused] = useState(false);
 
   // SelItems is used as the state, but the internal state of 'items' is used
   // for rendering. So we use a hack where App.jsx sends a message to us, to
@@ -62,6 +61,20 @@ const List = ({ data }) => {
     return () => { document.removeEventListener(listenerId, handler); }
   }, []); // only on mount
 
+  // Update focused or not
+  useEffect(() => {
+    const f = () => {
+      const focused = document.activeElement === ref.current;
+      setIsFocused(focused);
+    };
+    window.addEventListener('focus', f, true);
+    window.addEventListener('blur', f, true);
+    return () => {
+      window.removeEventListener('focus', f, true);
+      window.removeEventListener('blur', f, true);
+    };
+  }, []);
+
   // useEffect(() => {
   //   setWidth(dimensions?.width - 50);
   // }, [dimensions]);
@@ -82,7 +95,23 @@ const List = ({ data }) => {
   if (SelItems) {
     initlastClickIndex = SelItems.findIndex(x => x !== 0);
   }
-  const [lastClickIndex, setLastClickIndex] = useState(initlastClickIndex);
+  // Three starts are used for selecting items:
+  // lastSel is the last selected item, by itself
+  // curStart is where we last did a single click, moved by one with the arrow
+  //     keys, or started a drag
+  // dragStart is used only during drags
+  // Example, saying we have a list of 5 items:
+  //   - click 2       - lastSel = 2, curStart = 2, sel = 2
+  //   - shift-click 4 - lastSel = 4, curStart = 2, sel = 2,3,4
+  //   - shift-click 5 - lastSel = 5, curStart = 2, sel = 2,3,4,5
+  //   - shift-up x4   - lastSel = 1, curStart = 2, sel = 1,2
+  //   - meta-click 3  - lastSel = 3, curStart = 3, sel = 1,2,3
+  //   - shift-down    - lastSel = 4, curStart = 3, sel = 3,4
+  const [lastSelIndex, setLastSelIndex] = useState(initlastClickIndex);
+  const [curStartIndex, setCurStartIndex] = useState(initlastClickIndex);
+  const [dragStart, setDragStart] = useState(null);
+
+  const isMulti = data?.Properties?.Style?.toLowerCase() === "multi";
 
   const handleClick = (index, event) => {
     event.preventDefault(); 
@@ -90,25 +119,26 @@ const List = ({ data }) => {
     const length = items.length;
     let updatedArray = [...items];
 
-    if (event.metaKey && data?.Properties?.Style?.toLowerCase() === "multi") {
+    if (event.metaKey && isMulti) {
       updatedArray[index] = updatedArray[index] ? 0 : 1;
-      setLastClickIndex(index);
-    } else if (event.shiftKey && data?.Properties?.Style?.toLowerCase() === "multi") {
+      setCurStartIndex(index);
+    } else if (event.shiftKey && isMulti) {
       updatedArray = Array(length).fill(0);
-      if (index > lastClickIndex) {
-        for (let i = index; i >= lastClickIndex; i--) {
+      if (index > curStartIndex) {
+        for (let i = index; i >= curStartIndex; i--) {
           updatedArray[i] = 1;
         }
       } else {
-        for (let i = index; i <= lastClickIndex; i++) {
+        for (let i = index; i <= curStartIndex; i++) {
           updatedArray[i] = 1;
         }
       }
     } else {
       updatedArray = Array(length).fill(0);
       updatedArray[index] = 1;
-      setLastClickIndex(index);
+      setCurStartIndex(index);
     }
+    setLastSelIndex(index);
     localStorage.setItem(
       data?.ID,
       JSON.stringify({
@@ -119,6 +149,7 @@ const List = ({ data }) => {
       })
     );
     setItems(updatedArray);
+    document.getElementById(data.ID).focus();
   };
 
   const handleMouseDownDrag = (index,event) => {
@@ -130,7 +161,6 @@ const List = ({ data }) => {
   const handleMouseOverDrag = (index,event) => {
     event.preventDefault(); 
 
-
     if (isMouseDown) {
       const updatedArray = [...items];
 
@@ -141,13 +171,14 @@ const List = ({ data }) => {
         for (let i = start; i <= end; i++) {
           updatedArray[i] = 1;
         }
-        setItems(updatedArray);
       }
       else {
         updatedArray.fill(0); 
         updatedArray[index] = 1; 
-        setItems(updatedArray);
       }
+      setItems(updatedArray);
+      setLastSelIndex(index);
+      setCurStartIndex(dragStart);
       localStorage.setItem(
         data?.ID,
         JSON.stringify({
@@ -157,7 +188,6 @@ const List = ({ data }) => {
           },
         })
       );
-     
     }
   };
 
@@ -174,6 +204,52 @@ const List = ({ data }) => {
     );
     setIsMouseDown(false);
     setDragStart(null);
+    document.getElementById(data.ID).focus();
+  };
+
+  const handleKeyDown = (e) => {
+    const length = items.length;
+    let updatedArray = [...items];
+    let newIndex
+    if (e.key === 'ArrowDown' && lastSelIndex !== length - 1) {
+      newIndex = lastSelIndex + 1;
+    } else if (e.key === 'ArrowUp' && lastSelIndex !== 0) {
+      newIndex = lastSelIndex - 1;
+    }
+    // Nothing to do
+    if (newIndex === undefined) return;
+
+    if (!e.shiftKey || !isMulti) {
+      // If a single select or simple move, just move up or down - unselect
+      // everything and then select just the newIndex and make it the last
+      // clicked position.
+      updatedArray.fill(0);
+      updatedArray[newIndex] = 1;
+      setItems(updatedArray);
+      setLastSelIndex(newIndex);
+      setCurStartIndex(newIndex);
+    } else if (e.shiftKey && isMulti) {
+      // Otherwise, it's a Multi and we're using shift.
+      // Shift and cursor keys can be thought of as a 'drag', so we reuse that
+      updatedArray.fill(0);
+      for (let i = Math.min(curStartIndex, newIndex); i <= Math.max(curStartIndex, newIndex); i++) {
+        updatedArray[i] = 1;
+        setItems(updatedArray);
+      }
+      setLastSelIndex(newIndex);
+    } else {
+      return;
+    }
+
+    localStorage.setItem(
+      data?.ID,
+      JSON.stringify({
+        Event: {
+          ID: data?.ID,
+          SelItems: updatedArray,
+        },
+      })
+    );
   };
 
   return (
@@ -183,9 +259,10 @@ const List = ({ data }) => {
       style={{
         ...styles,
         width,
-        border: "1px solid black",
+        border: "1px solid " + (isFocused ? "black" : "darkgrey"),
         display: Visible === 0 ? "none" : "block",
       }}
+      tabIndex={0}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}
@@ -208,6 +285,9 @@ const List = ({ data }) => {
       }}
       onDoubleClick={(e) => {
         handleMouseDoubleClick(e, socket, Event, data?.ID);
+      }}
+      onKeyDown={(e) => {
+        handleKeyDown(e);
       }}
     >
       {Items &&

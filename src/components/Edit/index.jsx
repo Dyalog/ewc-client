@@ -21,6 +21,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
+import * as Globals from "../../Globals";
 
 const Edit = ({
   data,
@@ -299,6 +300,11 @@ const Edit = ({
     else if (e.key == "ArrowUp") handleUpArrow();
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
+    // We utilise the browser for certain events (eg HT is just a dispatchEvent)
+    // - the problem is that we can end up in a loop here, with certain code,
+    // so we set a global flag for the duration of an NQ'd KeyPress with
+    // NoCallback set to 1.
+    if (Globals.get('suppressingCallbacks')) return;
 
     const eventId = uuidv4();
     setEventId(eventId);

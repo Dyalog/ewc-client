@@ -1505,124 +1505,132 @@ const App = () => {
 
         // Do nothing unless NoCallback=0 (default)
         const nqCallback = NoCallback !== 0 ? ()=>{} : (ev)=>{ webSocket.send(JSON.stringify({ Event: ev })) };
+        const prevSuppressingCallbacks = Globals.set('suppressingCallbacks', NoCallback === 1);
 
-        if (Event && Event == "Configure") {
-          handleData(
-            {
+        try {
+          if (Event && Event == "Configure") {
+            handleData(
+              {
+                ID: ID,
+                Properties: {
+                  ...appElement?.Properties,
+                  Posn: [Info[0], Info[1]],
+                  Size: [Info[2], Info[3]],
+                },
+              },
+              "WS"
+            );
+            nqCallback({
+              EventName: Event,
               ID: ID,
-              Properties: {
-                ...appElement?.Properties,
-                Posn: [Info[0], Info[1]],
-                Size: [Info[2], Info[3]],
-              },
-            },
-            "WS"
-          );
-          nqCallback({
-            EventName: Event,
-            ID: ID,
-            Info: Info,
-          });
-        } else if (Event == "SetPing") {
-          window.EWC.pingMS = Info[0] * 1000;
-          return;
-        } else if (
-          (Event && Event == "ItemDown") ||
-          (Event && Event == "GotFocus")
-        ) {
-          if (Event && Event == "GotFocus")
-            localStorage.setItem("current-focus", ID);
+              Info: Info,
+            });
+          } else if (Event == "SetPing") {
+            window.EWC.pingMS = Info[0] * 1000;
+            return;
+          } else if (
+            (Event && Event == "ItemDown") ||
+            (Event && Event == "GotFocus")
+          ) {
+            if (Event && Event == "GotFocus") {
+              localStorage.setItem("current-focus", ID);
+              const el = document.getElementById(ID);
+              if (el) el.focus();
+            }
 
-          const existingData = JSON.parse(getObjectById(dataRef.current, ID));
+            const existingData = JSON.parse(getObjectById(dataRef.current, ID));
 
-          const exists =
-            existingData?.Properties?.Event &&
-            existingData?.Properties?.Event.some((item) => item[0] === Event);
+            const exists =
+              existingData?.Properties?.Event &&
+              existingData?.Properties?.Event.some((item) => item[0] === Event);
 
-          if (!exists) return; // TODO shouldn't this still report back?!
-          nqCallback({
-            EventName: Event,
-            ID,
-            Info,
-          });
-        } else if (Event == "KeyPress") {
-          // ch is often going to be a character, but it may be a code such as
-          // 'LC' for ArrowLeft
-          // There should be only one element
-          // IMPORTANT:
-          // We try to imitate ⎕WC as much as possible, but this behaves in a
-          // slightly odd fashion, so this is done largely from experimentation.
-          // 
-          // Example of keycodes:
-          //   * DB (Delete backspace)
-          //   * DI (Delete Item) *does* do forward delete or deletes the selection
-          //   * DK (Delete blocK) will remove to the end of the line
-          //   * HT (Horizontal tab) which needs to be able to move from element
-          //     to element
-          // Some keycodes have no noticeable effect in ⎕WC...
-          // ...so we blindly echo any KeyPress event to the server, and we
-          // implement handlers for the subset of codes we are interested in.
-          const ch = Info[0];
-          
-          if (ch.length == 1) {
-            // Single character insert
-            const el = document.getElementById(ID);
-            el.dispatchEvent(new KeyboardEvent("keydown", {key: ch}));
-          } else {
-            const kph = keypressHandlers[ch];
-            if (kph) kph(handleData, ID, existingData?.Properties);
-          }
-
-          nqCallback({
-            EventName: "KeyPress",
-            ID: ID,
-            Info: Info,
-          });
-        } else if (Event == "CellMove") {
-          console.log("296", { nqEvent });
-          setNqEvents([...nqEvents, nqEvent]);
-          localStorage.setItem(
-            ID,
-            JSON.stringify({
-              Event: {
-                CurCell: [Info[0], Info[1]],
-              },
-            })
-          );
-          localStorage.setItem(
-            "nqCurCell",
-            JSON.stringify({
+            if (!exists) return; // TODO shouldn't this still report back?!
+            nqCallback({
+              EventName: Event,
               ID,
               Info,
-            })
-          );
-        } else if (Event == "Select") {
-          const element = document.getElementById(nqEvent.ID);
-          if (element) element.click();
-          nqCallback({
-            EventName: "Select",
-            ID: ID,
-          });
-        } else if (Event == "Scroll") {
-          const thumbValue = Info[1];
-          console.log("300", { thumbValue });
-          handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
-          const element = document.getElementById(nqEvent.ID);
-          element && element.focus();
-          nqCallback({
-            EventName: "Scroll",
-            ID: ID,
-            Info: [Info[0], Info[1]],
-          });
-        } else {
-          // All other NoCallback = 0 events should be echoed!
-          nqCallback({
-            EventName: Event,
-            ID: ID,
-            Info: Info,
-          });
+            });
+          } else if (Event == "KeyPress") {
+            // ch is often going to be a character, but it may be a code such as
+            // 'LC' for ArrowLeft
+            // There should be only one element
+            // IMPORTANT:
+            // We try to imitate ⎕WC as much as possible, but this behaves in a
+            // slightly odd fashion, so this is done largely from experimentation.
+            // 
+            // Example of keycodes:
+            //   * DB (Delete backspace)
+            //   * DI (Delete Item) *does* do forward delete or deletes the selection
+            //   * DK (Delete blocK) will remove to the end of the line
+            //   * HT (Horizontal tab) which needs to be able to move from element
+            //     to element
+            // Some keycodes have no noticeable effect in ⎕WC...
+            // ...so we blindly echo any KeyPress event to the server, and we
+            // implement handlers for the subset of codes we are interested in.
+            const ch = Info[0];
+
+            if (ch.length == 1) {
+              // Single character insert
+              const el = document.getElementById(ID);
+              el.dispatchEvent(new KeyboardEvent("keydown", { key: ch }));
+            } else {
+              const kph = keypressHandlers[ch];
+              if (kph) kph(handleData, ID, existingData?.Properties);
+            }
+
+            nqCallback({
+              EventName: "KeyPress",
+              ID: ID,
+              Info: Info,
+            });
+          } else if (Event == "CellMove") {
+            console.log("296", { nqEvent });
+            setNqEvents([...nqEvents, nqEvent]);
+            localStorage.setItem(
+              ID,
+              JSON.stringify({
+                Event: {
+                  CurCell: [Info[0], Info[1]],
+                },
+              })
+            );
+            localStorage.setItem(
+              "nqCurCell",
+              JSON.stringify({
+                ID,
+                Info,
+              })
+            );
+          } else if (Event == "Select") {
+            const element = document.getElementById(nqEvent.ID);
+            if (element) element.click();
+            nqCallback({
+              EventName: "Select",
+              ID: ID,
+            });
+          } else if (Event == "Scroll") {
+            const thumbValue = Info[1];
+            console.log("300", { thumbValue });
+            handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+            const element = document.getElementById(nqEvent.ID);
+            element && element.focus();
+            nqCallback({
+              EventName: "Scroll",
+              ID: ID,
+              Info: [Info[0], Info[1]],
+            });
+          } else {
+            // All other NoCallback = 0 events should be echoed!
+            nqCallback({
+              EventName: Event,
+              ID: ID,
+              Info: Info,
+            });
+          }
+          return;
+        } finally {
+          Globals.set('suppressingCallbacks', prevSuppressingCallbacks);
         }
-        return;
       } else if (keys[0] == "EC") {
         const serverEvent = evData.EC;
 
