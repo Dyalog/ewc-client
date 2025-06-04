@@ -454,7 +454,9 @@ const Grid = ({ data }) => {
         width: !TitleWidth ? 100 : TitleWidth,
         height: !TitleHeight ? 20 : TitleHeight,
       };
-      TitleWidth === 0 ? null : header.push(emptyobj)
+      if (RowTitles && RowTitles !== 0) {
+        header.push(emptyobj);
+      }
 
       for (let i = 0; i < ColTitles?.length; i++) {
         let obj = {

@@ -13,7 +13,13 @@ const Poly = ({ data }) => {
   return (
     <div
       id={data?.ID}
-      style={{ position: "absolute", display: Visible == 0 ? "none" : "block" ,...style,...customStyles}}
+      style={{
+        position: "absolute",
+        display: Visible == 0 ? "none" : "block",
+        pointerEvents: "none",
+        ...style,
+        ...customStyles
+      }}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}
