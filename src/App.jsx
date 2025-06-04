@@ -700,7 +700,7 @@ const App = () => {
             webSocket.send(event);
             return;
           } else if (Type == "Edit") {
-            const { Text = "", Value, SelText } = Properties;
+            const { Text, Value, SelText } = Properties;
             const supportedProperties = ["Text", "Value", "SelText"];
             // setTimeout(() => {},100)
 
