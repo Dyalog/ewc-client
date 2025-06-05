@@ -25,6 +25,7 @@ const Rectangle = ({
         top: 0,
         left: 0,
         display: Visible == 0 ? 'none' : 'block',
+        pointerEvents: 'none',
         ...customStyles
       }}
       onMouseDown={(e) => {

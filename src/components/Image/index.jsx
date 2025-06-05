@@ -18,6 +18,7 @@ const Image = ({ data }) => {
         top: 0,
         left: 0,
         display: Visible == 0 ? 'none' : 'block',
+        pointerEvents: 'none',
         ...style,
         ...customStyles
       }}
