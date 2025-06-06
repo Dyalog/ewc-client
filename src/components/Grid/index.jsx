@@ -454,9 +454,7 @@ const Grid = ({ data }) => {
         width: !TitleWidth ? 100 : TitleWidth,
         height: !TitleHeight ? 20 : TitleHeight,
       };
-      if (RowTitles && RowTitles !== 0) {
-        header.push(emptyobj);
-      }
+      TitleWidth === 0 ? null : header.push(emptyobj);
 
       for (let i = 0; i < ColTitles?.length; i++) {
         let obj = {
@@ -498,7 +496,7 @@ const Grid = ({ data }) => {
         let obj = {
           type: "rowTitle",
           value: RowTitles ? RowTitles[i] : i + 1,
-          width: RowTitles ? (!TitleWidth ? 100 : TitleWidth) : 100,
+          width: !TitleWidth ? 100 : TitleWidth,
           height: !CellHeights
             ? 20
             : Array.isArray(CellHeights)
