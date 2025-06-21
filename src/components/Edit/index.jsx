@@ -41,7 +41,7 @@ const Edit = ({
     handleData,
     fontScale,
     inheritedProperties,
-    setPendingKeypressEvent
+    setPendingKeypressEvents
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -413,15 +413,20 @@ const Edit = ({
     const eventId = uuidv4();
     setEventId(eventId);
     
-    // Set pending keypress flag for HT handler
-    const pendingEvent = { 
-      key: e.key, 
-      eventId, 
-      componentId: data?.ID,
-      shiftKey: e.shiftKey 
-    };
-    console.log('ECDBG: Setting pendingKeypressEvent:', pendingEvent);
-    setPendingKeypressEvent(pendingEvent);
+    // Set pending keypress flag for HT handler, but only for non-modifier keys
+    const modifierKeys = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock'];
+    if (!modifierKeys.includes(e.key)) {
+      const pendingEvent = { 
+        key: e.key, 
+        eventId, 
+        componentId: data?.ID,
+        shiftKey: e.shiftKey 
+      };
+      console.log('ECDBG: Adding pendingKeypressEvent to queue for non-modifier key:', pendingEvent);
+      setPendingKeypressEvents(prev => [...prev, pendingEvent]);
+    } else {
+      console.log('ECDBG: Skipping pendingKeypressEvent for modifier key:', e.key);
+    }
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;

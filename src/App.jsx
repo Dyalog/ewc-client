@@ -38,7 +38,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
-  const [pendingKeypressEvent, setPendingKeypressEvent] = useState(null);
+  const [pendingKeypressEvents, setPendingKeypressEvents] = useState([]);
   const [nqEvents, setNqEvents] = useState([]);
   const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
@@ -1748,38 +1748,41 @@ const App = () => {
           setProceed(Proceed);
 
           // Handle pending keypress based on Proceed value
-          console.log('ECDBG: EC handler - EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvent =', pendingKeypressEvent);
-          if (pendingKeypressEvent) {
-            console.log('ECDBG: EventID match check:', EventID, '===', pendingKeypressEvent.eventId, '?', EventID === pendingKeypressEvent.eventId);
-          }
-          if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
+          console.log('ECDBG: EC handler - EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvents =', pendingKeypressEvents);
+          
+          // Find the event with matching EventID in the queue
+          const eventIndex = pendingKeypressEvents.findIndex(event => event.eventId === EventID);
+          const matchingEvent = eventIndex !== -1 ? pendingKeypressEvents[eventIndex] : null;
+          
+          if (matchingEvent) {
+            console.log('ECDBG: Found matching event at index', eventIndex, ':', matchingEvent);
             if (Proceed === 1) {
               // Apply the pending keystroke to the Edit field
-              const editElement = document.getElementById(pendingKeypressEvent.componentId);
+              const editElement = document.getElementById(matchingEvent.componentId);
               if (editElement) {
-                const componentData = JSON.parse(getObjectById(dataRef.current, pendingKeypressEvent.componentId));
+                const componentData = JSON.parse(getObjectById(dataRef.current, matchingEvent.componentId));
                 
                 // Map JavaScript key names to keypressHandler names
                 const keyMap = {
                   'Tab': 'HT',
-                  'ArrowLeft': pendingKeypressEvent.shiftKey ? 'Lc' : 'LC',
-                  'ArrowRight': pendingKeypressEvent.shiftKey ? 'Rc' : 'RC', 
+                  'ArrowLeft': matchingEvent.shiftKey ? 'Lc' : 'LC',
+                  'ArrowRight': matchingEvent.shiftKey ? 'Rc' : 'RC', 
                   'Backspace': 'DB',
                   'Delete': 'DI'
                 };
                 
-                const handlerKey = keyMap[pendingKeypressEvent.key];
+                const handlerKey = keyMap[matchingEvent.key];
                 
                 if (handlerKey && keypressHandlers[handlerKey]) {
                   // Use the appropriate keypress handler for special keys
-                  console.log('ECDBG: Applying special key handler:', handlerKey, 'for key:', pendingKeypressEvent.key);
-                  keypressHandlers[handlerKey](handleData, pendingKeypressEvent.componentId, componentData);
-                } else if (pendingKeypressEvent.key.length === 1) {
+                  console.log('ECDBG: Applying special key handler:', handlerKey, 'for key:', matchingEvent.key);
+                  keypressHandlers[handlerKey](handleData, matchingEvent.componentId, componentData);
+                } else if (matchingEvent.key.length === 1) {
                   // Handle regular character input
                   const start = editElement.selectionStart;
                   const end = editElement.selectionEnd;
                   const currentValue = editElement.value;
-                  const newValue = currentValue.slice(0, start) + pendingKeypressEvent.key + currentValue.slice(end);
+                  const newValue = currentValue.slice(0, start) + matchingEvent.key + currentValue.slice(end);
                   
                   // Update the DOM
                   editElement.value = newValue;
@@ -1787,7 +1790,7 @@ const App = () => {
                   
                   // Update the global tree so WG requests see the new value
                   handleData({
-                    ID: pendingKeypressEvent.componentId,
+                    ID: matchingEvent.componentId,
                     Properties: {
                       Text: newValue,
                       Value: newValue,
@@ -1795,16 +1798,20 @@ const App = () => {
                     },
                   }, "WS");
                   
-                  console.log('ECDBG: Applied character keystroke:', pendingKeypressEvent.key, 'new value:', newValue);
+                  console.log('ECDBG: Applied character keystroke:', matchingEvent.key, 'new value:', newValue);
                 } else {
-                  console.log('ECDBG: Unknown key, not applying:', pendingKeypressEvent.key);
+                  console.log('ECDBG: Unknown key, not applying:', matchingEvent.key);
                 }
               }
             } else {
-              console.log('ECDBG: Keystroke rejected by APL, not applying:', pendingKeypressEvent.key);
+              console.log('ECDBG: Keystroke rejected by APL, not applying:', matchingEvent.key);
             }
-            console.log('ECDBG: Clearing pendingKeypressEvent for EventID:', EventID);
-            setPendingKeypressEvent(null);
+            
+            // Remove this event and all events before it from the queue (WebSocket ordering)
+            console.log('ECDBG: Removing events 0 through', eventIndex, 'from queue');
+            setPendingKeypressEvents(prev => prev.slice(eventIndex + 1));
+          } else {
+            console.log('ECDBG: No matching event found for EventID:', EventID);
           }
 
           // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
@@ -1901,8 +1908,8 @@ const App = () => {
           setProceed,
           proceedEventArray,
           setProceedEventArray,
-          pendingKeypressEvent,
-          setPendingKeypressEvent,
+          pendingKeypressEvents,
+          setPendingKeypressEvents,
           colors,
           fontScale,
           nqEvents,
