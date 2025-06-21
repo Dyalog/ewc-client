@@ -4,6 +4,40 @@
 // function startEnd(el, selText)
 
 export default {
+  // Left Cursor
+  'LC': function(handleData, id, data) {
+    const el = document.getElementById(id);
+    if (el.selectionStart > 0) {
+      el.selectionStart = el.selectionEnd = el.selectionStart - 1;
+    }
+    return true;
+  },
+  // Right Cursor  
+  'RC': function(handleData, id, data) {
+    const el = document.getElementById(id);
+    if (el.selectionStart < el.value.length) {
+      el.selectionStart = el.selectionEnd = el.selectionStart + 1;
+    }
+    return true;
+  },
+  // Left Cursor with Shift (extend selection left)
+  'Lc': function(handleData, id, data) {
+    const el = document.getElementById(id);
+    if (el.selectionStart > 0) {
+      el.selectionStart = el.selectionStart - 1;
+      // Don't change selectionEnd - this extends the selection
+    }
+    return true;
+  },
+  // Right Cursor with Shift (extend selection right)
+  'Rc': function(handleData, id, data) {
+    const el = document.getElementById(id);
+    if (el.selectionEnd < el.value.length) {
+      el.selectionEnd = el.selectionEnd + 1;
+      // Don't change selectionStart - this extends the selection
+    }
+    return true;
+  },
   // Horizontal Tab
   'HT': function(_, id) {
     document.getElementById(id).dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
