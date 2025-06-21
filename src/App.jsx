@@ -1800,6 +1800,7 @@ const App = () => {
             } else {
               console.log('ECDBG: Keystroke rejected by APL, not applying:', pendingKeypressEvent.key);
             }
+            console.log('ECDBG: Clearing pendingKeypressEvent for EventID:', EventID);
             setPendingKeypressEvent(null);
           }
 
