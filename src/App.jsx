@@ -1672,7 +1672,7 @@ const App = () => {
                 const kph = keypressHandlers[ch];
                 if (kph) {
                   const globalState = {
-                    pendingKeypressEvent,
+                    pendingKeypressEvent: pendingKeypressEventsRef.current,
                     socketData,
                     nqEvents,
                     proceed,
