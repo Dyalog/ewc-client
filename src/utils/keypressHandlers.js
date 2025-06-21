@@ -10,6 +10,16 @@ export default {
     if (el.selectionStart > 0) {
       el.selectionStart = el.selectionEnd = el.selectionStart - 1;
     }
+    // Update global tree with new cursor position
+    const textLength = el.value.length;
+    const clampedStart = Math.max(1, Math.min(el.selectionStart + 1, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(el.selectionEnd + 1, textLength + 1));
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [clampedStart, clampedEnd],
+      },
+    }, "WS");
     return true;
   },
   // Right Cursor  
@@ -18,6 +28,13 @@ export default {
     if (el.selectionStart < el.value.length) {
       el.selectionStart = el.selectionEnd = el.selectionStart + 1;
     }
+    // Update global tree with new cursor position
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+      },
+    }, "WS");
     return true;
   },
   // Left Cursor with Shift (extend selection left)
@@ -27,6 +44,13 @@ export default {
       el.selectionStart = el.selectionStart - 1;
       // Don't change selectionEnd - this extends the selection
     }
+    // Update global tree with new cursor position
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+      },
+    }, "WS");
     return true;
   },
   // Right Cursor with Shift (extend selection right)
@@ -36,6 +60,13 @@ export default {
       el.selectionEnd = el.selectionEnd + 1;
       // Don't change selectionStart - this extends the selection
     }
+    // Update global tree with new cursor position
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+      },
+    }, "WS");
     return true;
   },
   // Horizontal Tab
@@ -47,24 +78,31 @@ export default {
   'DI': function(handleData, id, data) {
     const el = document.getElementById(id);
     let value = el.value;
+    const cursorPos = el.selectionStart; // Save cursor position
+    
     if (el.selectionStart == el.selectionEnd) {
       if (value.length > el.selectionStart) {
-        // Delete forward one
+        // Delete forward one - cursor stays at same position
         value = value.slice(0, el.selectionStart)+value.slice(el.selectionStart+1);
       }
     } else {
-      // Delete selected
+      // Delete selected - cursor moves to start of selection
       value = value.slice(0, el.selectionStart)+value.slice(el.selectionEnd);
     }
     // Update everywhere
     el.value = value;
+    el.selectionStart = el.selectionEnd = cursorPos; // Restore cursor position
     // TODO requires fixes to Edit fields for setting Value and Text!!!
+    const textLength = el.value.length;
+    const clampedStart = Math.max(1, Math.min(el.selectionStart + 1, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(el.selectionEnd + 1, textLength + 1));
     handleData({
       ID: id,
       Properties: {
         ...data,
         Value: value,
         Text: value,
+        SelText: [clampedStart, clampedEnd],
       }
     }, 'WS');
     return true;
@@ -100,6 +138,9 @@ export default {
     console.log('ARGH DB handler: after deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
     
     // Update internal model too
+    const textLength = el.value.length;
+    const clampedStart = Math.max(1, Math.min(el.selectionStart + 1, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(el.selectionEnd + 1, textLength + 1));
     handleData(
       {
         ID: id,
@@ -107,7 +148,7 @@ export default {
           ...data,
           Text: el.value,
           Value: el.value,
-          SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+          SelText: [clampedStart, clampedEnd],
         },
       },
       "WS"
