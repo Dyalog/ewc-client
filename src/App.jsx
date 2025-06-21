@@ -702,7 +702,6 @@ const App = () => {
           } else if (Type == "Edit") {
             const { Text, Value, SelText } = Properties;
             const supportedProperties = ["Text", "Value", "SelText"];
-            // setTimeout(() => {},100)
 
             console.log("edit", {
               serverEvent,
@@ -716,14 +715,18 @@ const App = () => {
               serverEvent?.Properties
             );
 
-            const input = document.getElementById(serverEvent.ID);
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const browserSelText = [start, end];
-            console.log('BROWSERSELTEXT', SelText, browserSelText);
+            // Read from global tree (refData) instead of DOM
+            const globalText = refData?.Properties?.Text;
+            const globalValue = refData?.Properties?.Value;
+            const globalSelText = refData?.Properties?.SelText;
+
+            console.log('ARGH WG reading from global tree:', { globalText, globalValue, globalSelText });
 
             if (!localStorage.getItem(serverEvent.ID)) {
-              let editValue = Text !== undefined ? Text : Value;
+              // Prefer global tree data over component props
+              let editValue = globalText !== undefined ? globalText : 
+                             globalValue !== undefined ? globalValue :
+                             Text !== undefined ? Text : Value;
               editValue = editValue !== undefined ? editValue : "";
 
               const isNumber = refData?.Properties?.hasOwnProperty("FieldType");
@@ -731,15 +734,16 @@ const App = () => {
               const serverPropertiesObj = {};
               serverEvent.Properties.forEach((key) => {
                 if (key === "Text") {
-                  serverPropertiesObj[key] = editValue
-                    ? editValue.toString()
-                    : "";
+                  serverPropertiesObj[key] = globalText !== undefined ? globalText.toString() : 
+                                           editValue ? editValue.toString() : "";
                 } else if (key === "Value") {
-                  serverPropertiesObj[key] = isNumber && editValue != ''
-                    ? parseInt(editValue)
-                    : editValue;
+                  const valueToUse = globalValue !== undefined ? globalValue : editValue;
+                  serverPropertiesObj[key] = isNumber && valueToUse != ''
+                    ? parseInt(valueToUse)
+                    : valueToUse;
                 } else if (key === "SelText") {
-                  serverPropertiesObj[key] = SelText || browserSelText || Properties[key] || [1, 1];
+                  // Prefer global tree SelText, fallback to component props, fallback to [1,1]
+                  serverPropertiesObj[key] = globalSelText || SelText || [1, 1];
                 } else {
                   serverPropertiesObj[key] = editValue;
                 }
