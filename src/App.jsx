@@ -455,6 +455,82 @@ const App = () => {
     webSocket.onmessage = (event) => {
       const evData = JSON.parse(event.data);
       const keys = Object.keys(evData);
+      
+      // Handle WX messages immediately - APL expects immediate response
+      if (keys[0] == "WX") {
+        const serverEvent = evData.WX;
+        const { Method, Info, WGID, ID } = serverEvent;
+        console.log("WX Method Call (immediate):", Method, Info);
+
+        if (Method == "GetTextSize") {
+          // Certain code re-encloses Info - if we can get to two values, we do that
+          // A real example: [[[["This is a text","This is a text"],"#.FntSys"]]]
+          let myInfo = Info;
+          while (Array.isArray(myInfo) && myInfo.length === 1) {
+            myInfo = myInfo[0];
+          }
+          // We failed to get to 2, so we have to just trust whatever the original was:
+          if (myInfo.length !== 2) {
+            myInfo = Info;
+          }
+          const strings = myInfo && myInfo[0];
+          const font = JSON.parse(
+            getObjectById(dataRef.current, myInfo && myInfo[1])
+          );
+          const textDimensions = Text.calculateTextDimensions(strings, font);
+          const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
+          console.log("WX Response (immediate):", event);
+          return webSocket.send(event);
+        } else if (Method == "OnlyDQ") {
+          let event;
+          if (!!Info?.[0]) {
+            event = JSON.stringify({
+              WX: { Info: [[ID, 150, 300]], WGID: WGID },
+            });
+          } else {
+            event = JSON.stringify({ WX: { Info: [], WGID: WGID } });
+          }
+          return webSocket.send(event);
+        } else if (Method == "GetFocus") {
+          const focusedID = localStorage.getItem("current-focus");
+          const event = JSON.stringify({
+            WX: { Info: !focusedID ? [] : [focusedID], WGID },
+          });
+          return webSocket.send(event);
+        } else if (Method == "SetCookie") {
+          Info.forEach((c) => {
+            document.cookie = c;
+          });
+          return webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
+        } else if (Method == "GetCookie") {
+          const found = document.cookie
+            .split("; ")
+            .map((c) => c.split("="))
+            .filter((c) => Info.includes(c[0]));
+          return webSocket.send(JSON.stringify({ WX: { Info: found, WGID } }));
+        } else if (Method == "SetTitle") {
+          document.title = Info[0];
+          return webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
+        } else if (Method == "GetTitle") {
+          return webSocket.send(
+            JSON.stringify({ WX: { Info: [document.title], WGID } })
+          );
+        } else if (Method == "EvalJS") {
+          // Here be dragons!
+          const results = Info.map((code) => {
+            try {
+              return [0, eval?.(code)];
+            } catch (e) {
+              return [-1, e.toString()];
+            }
+          });
+          return webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
+        } else {
+          // Default response for unknown methods
+          return webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
+        }
+      }
+      
       const handleMessage = function() {
         if (keys[0] == "WC") {
           let windowCreationEvent = evData.WC;
@@ -1680,76 +1756,6 @@ const App = () => {
           const serverEvent = evData.EX;
 
           deleteObjectsById(dataRef.current, serverEvent?.ID);
-        } else if (keys[0] == "WX") {
-          const serverEvent = evData.WX;
-          const { Method, Info, WGID, ID } = serverEvent;
-          // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
-
-          if (Method == "GetTextSize") {
-            // Certain code re-encloses Info - if we can get to two values, we do that
-            // A real example: [[[["This is a text","This is a text"],"#.FntSys"]]]
-            let myInfo = Info;
-            while (Array.isArray(myInfo) && myInfo.length === 1) {
-              myInfo = myInfo[0];
-            }
-            // We failed to get to 2, so we have to just trust whatever the original was:
-            if (myInfo.length !== 2) {
-              myInfo = Info;
-            }
-            const strings = myInfo && myInfo[0];
-            const font = JSON.parse(
-              getObjectById(dataRef.current, myInfo && myInfo[1])
-            );
-            const textDimensions = Text.calculateTextDimensions(strings, font);
-            const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
-            // console.log(event);
-            return webSocket.send(event);
-          } else if (Method == "OnlyDQ") {
-            let event;
-            if (!!Info?.[0]) {
-              event = JSON.stringify({
-                WX: { Info: [[ID, 150, 300]], WGID: WGID },
-              });
-            } else {
-              event = JSON.stringify({ WX: { Info: [], WGID: WGID } });
-            }
-            webSocket.send(event);
-          } else if (Method == "GetFocus") {
-            const focusedID = localStorage.getItem("current-focus");
-            const event = JSON.stringify({
-              WX: { Info: !focusedID ? [] : [focusedID], WGID },
-            });
-            console.log(event);
-            webSocket.send(event);
-          } else if (Method == "SetCookie") {
-            Info.forEach((c) => {
-              document.cookie = c;
-            });
-            webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
-          } else if (Method == "GetCookie") {
-            const found = document.cookie
-              .split("; ")
-              .map((c) => c.split("="))
-              .filter((c) => Info.includes(c[0]));
-            webSocket.send(JSON.stringify({ WX: { Info: found, WGID } }));
-          } else if (Method == "SetTitle") {
-            document.title = Info[0];
-            webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
-          } else if (Method == "GetTitle") {
-            webSocket.send(
-              JSON.stringify({ WX: { Info: [document.title], WGID } })
-            );
-          } else if (Method == "EvalJS") {
-            // Here be dragons!
-            const results = Info.map((code) => {
-              try {
-                return [0, eval?.(code)];
-              } catch (e) {
-                return [-1, e.toString()];
-              }
-            });
-            webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
-          }
         } else if (keys[0] == "Options") {
           handleData(evData.Options, "WC");
           console.log("label", evData.Options);
