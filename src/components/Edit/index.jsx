@@ -414,7 +414,12 @@ const Edit = ({
     setEventId(eventId);
     
     // Set pending keypress flag for HT handler
-    setPendingKeypressEvent({ key: e.key, eventId });
+    setPendingKeypressEvent({ 
+      key: e.key, 
+      eventId, 
+      componentId: data?.ID,
+      shiftKey: e.shiftKey 
+    });
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;

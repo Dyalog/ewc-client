@@ -1746,8 +1746,58 @@ const App = () => {
           // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
           setProceed(Proceed);
 
-          // Clear the pending keypress event flag when we receive the EC response
+          // Handle pending keypress based on Proceed value
           if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
+            if (Proceed === 1) {
+              // Apply the pending keystroke to the Edit field
+              const editElement = document.getElementById(pendingKeypressEvent.componentId);
+              if (editElement) {
+                const componentData = JSON.parse(getObjectById(dataRef.current, pendingKeypressEvent.componentId));
+                
+                // Map JavaScript key names to keypressHandler names
+                const keyMap = {
+                  'Tab': 'HT',
+                  'ArrowLeft': pendingKeypressEvent.shiftKey ? 'Lc' : 'LC',
+                  'ArrowRight': pendingKeypressEvent.shiftKey ? 'Rc' : 'RC', 
+                  'Backspace': 'DB',
+                  'Delete': 'DI'
+                };
+                
+                const handlerKey = keyMap[pendingKeypressEvent.key];
+                
+                if (handlerKey && keypressHandlers[handlerKey]) {
+                  // Use the appropriate keypress handler for special keys
+                  console.log('Applying special key handler:', handlerKey, 'for key:', pendingKeypressEvent.key);
+                  keypressHandlers[handlerKey](handleData, pendingKeypressEvent.componentId, componentData);
+                } else if (pendingKeypressEvent.key.length === 1) {
+                  // Handle regular character input
+                  const start = editElement.selectionStart;
+                  const end = editElement.selectionEnd;
+                  const currentValue = editElement.value;
+                  const newValue = currentValue.slice(0, start) + pendingKeypressEvent.key + currentValue.slice(end);
+                  
+                  // Update the DOM
+                  editElement.value = newValue;
+                  editElement.setSelectionRange(start + 1, start + 1);
+                  
+                  // Update the global tree so WG requests see the new value
+                  handleData({
+                    ID: pendingKeypressEvent.componentId,
+                    Properties: {
+                      Text: newValue,
+                      Value: newValue,
+                      SelText: [start + 2, start + 2], // 1-indexed for APL
+                    },
+                  }, "WS");
+                  
+                  console.log('Applied character keystroke:', pendingKeypressEvent.key, 'new value:', newValue);
+                } else {
+                  console.log('Unknown key, not applying:', pendingKeypressEvent.key);
+                }
+              }
+            } else {
+              console.log('Keystroke rejected by APL, not applying:', pendingKeypressEvent.key);
+            }
             setPendingKeypressEvent(null);
           }
 
