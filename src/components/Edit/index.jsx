@@ -40,7 +40,8 @@ const Edit = ({
     findCurrentData,
     handleData,
     fontScale,
-    inheritedProperties
+    inheritedProperties,
+    setPendingKeypressEvent
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -411,6 +412,9 @@ const Edit = ({
     
     const eventId = uuidv4();
     setEventId(eventId);
+    
+    // Set pending keypress flag for HT handler
+    setPendingKeypressEvent({ key: e.key, eventId });
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;
