@@ -1747,6 +1747,7 @@ const App = () => {
           setProceed(Proceed);
 
           // Handle pending keypress based on Proceed value
+          console.log('EC handler: EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvent =', pendingKeypressEvent);
           if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
             if (Proceed === 1) {
               // Apply the pending keystroke to the Edit field
