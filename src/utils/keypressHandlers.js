@@ -10,6 +10,16 @@ export default {
     if (el.selectionStart > 0) {
       el.selectionStart = el.selectionEnd = el.selectionStart - 1;
     }
+    // Update global tree with new cursor position
+    const textLength = el.value.length;
+    const clampedStart = Math.max(1, Math.min(el.selectionStart + 1, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(el.selectionEnd + 1, textLength + 1));
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [clampedStart, clampedEnd],
+      },
+    }, "WS");
     return true;
   },
   // Right Cursor  
@@ -18,6 +28,13 @@ export default {
     if (el.selectionStart < el.value.length) {
       el.selectionStart = el.selectionEnd = el.selectionStart + 1;
     }
+    // Update global tree with new cursor position
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+      },
+    }, "WS");
     return true;
   },
   // Left Cursor with Shift (extend selection left)
@@ -27,6 +44,13 @@ export default {
       el.selectionStart = el.selectionStart - 1;
       // Don't change selectionEnd - this extends the selection
     }
+    // Update global tree with new cursor position
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+      },
+    }, "WS");
     return true;
   },
   // Right Cursor with Shift (extend selection right)
@@ -36,35 +60,90 @@ export default {
       el.selectionEnd = el.selectionEnd + 1;
       // Don't change selectionStart - this extends the selection
     }
+    // Update global tree with new cursor position
+    handleData({
+      ID: id,
+      Properties: {
+        SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
+      },
+    }, "WS");
     return true;
   },
   // Horizontal Tab
-  'HT': function(_, id) {
-    document.getElementById(id).dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", keyCode: 9, bubbles: true }));
+  'HT': function(handleData, id, data, globalState) {
+    const currentElement = document.getElementById(id);
+    
+    // Get commonly focusable elements plus any with explicit tabindex
+    const potentialElements = document.querySelectorAll(
+      'input, button, select, textarea, a, area, iframe, object, embed, [tabindex]'
+    );
+    // Remove duplicates and filter by what browser considers focusable
+    const uniqueElements = [...new Set(potentialElements)];
+    const focusableElements = uniqueElements.filter(el => 
+      el.tabIndex >= 0 && !el.disabled
+    );
+    
+    // Sort by proper tab order: tabindex > 0 first (ascending), then tabindex 0/unset in document order
+    // querySelectorAll already returns elements in document order, so we preserve that
+    const focusableArray = focusableElements.map((el, index) => ({ el, docIndex: index }))
+      .sort((a, b) => {
+        const aTabIndex = a.el.tabIndex;
+        const bTabIndex = b.el.tabIndex;
+        
+        // First sort by tabindex value
+        if (aTabIndex !== bTabIndex) {
+          // Positive tabindex elements come first, sorted by tabindex value
+          if (aTabIndex > 0 && bTabIndex > 0) {
+            return aTabIndex - bTabIndex;
+          }
+          if (aTabIndex > 0 && bTabIndex === 0) return -1;
+          if (aTabIndex === 0 && bTabIndex > 0) return 1;
+        }
+        
+        // Same tabindex - maintain document order
+        return a.docIndex - b.docIndex;
+      })
+      .map(item => item.el);
+    
+    const currentIndex = focusableArray.indexOf(currentElement);
+    
+    if (currentIndex !== -1) {
+      // Move to next element (wrap to first if at end)
+      const nextIndex = (currentIndex + 1) % focusableArray.length;
+      focusableArray[nextIndex].focus();
+    }
+    
     return false;
   },
   // Delete Item
   'DI': function(handleData, id, data) {
     const el = document.getElementById(id);
     let value = el.value;
+    const cursorPos = el.selectionStart; // Save cursor position
+    
     if (el.selectionStart == el.selectionEnd) {
       if (value.length > el.selectionStart) {
-        // Delete forward one
+        // Delete forward one - cursor stays at same position
         value = value.slice(0, el.selectionStart)+value.slice(el.selectionStart+1);
       }
     } else {
-      // Delete selected
+      // Delete selected - cursor moves to start of selection
       value = value.slice(0, el.selectionStart)+value.slice(el.selectionEnd);
     }
     // Update everywhere
     el.value = value;
+    el.selectionStart = el.selectionEnd = cursorPos; // Restore cursor position
     // TODO requires fixes to Edit fields for setting Value and Text!!!
+    const textLength = el.value.length;
+    const clampedStart = Math.max(1, Math.min(el.selectionStart + 1, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(el.selectionEnd + 1, textLength + 1));
     handleData({
       ID: id,
       Properties: {
         ...data,
         Value: value,
         Text: value,
+        SelText: [clampedStart, clampedEnd],
       }
     }, 'WS');
     return true;
@@ -81,28 +160,51 @@ export default {
     const el = document.getElementById(id);
     let start = data.SelText[0]-1;
     let end = data.SelText[1]-1;
+    console.log('ARGH DB handler: initial SelText from APL:', data.SelText, 'converted to:', start, end);
     if (start < 0) start = 0;
     if (end < 0) end = 0;
+    
+    console.log('ARGH DB handler: before deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
+    
     if (start === end && start > 0) {
       el.value = el.value.slice(0, start - 1) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start - 1;
+      console.log('ARGH DB handler: single cursor case, set cursor to:', start - 1);
     } else {
       el.value = el.value.slice(0, start) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start;
+      console.log('ARGH DB handler: selection case, set cursor to:', start);
     }
+    
+    console.log('ARGH DB handler: after deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
+    
     // Update internal model too
+    const textLength = el.value.length;
+    const clampedStart = Math.max(1, Math.min(el.selectionStart + 1, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(el.selectionEnd + 1, textLength + 1));
     handleData(
       {
         ID: id,
         Properties: {
           ...data,
           Text: el.value,
-          Value: el.Value,
+          Value: el.value,
+          SelText: [clampedStart, clampedEnd],
         },
       },
       "WS"
     );
 
+    console.log('ARGH DB handler: after handleData, cursor:', el.selectionStart, el.selectionEnd);
+    
+    // Add a delayed check to see if cursor gets moved after we return
+    setTimeout(() => {
+      console.log('ARGH DB handler: cursor 10ms later:', el.selectionStart, el.selectionEnd);
+    }, 10);
+    setTimeout(() => {
+      console.log('ARGH DB handler: cursor 50ms later:', el.selectionStart, el.selectionEnd);
+    }, 50);
+    
     return true;
   },
 };

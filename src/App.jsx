@@ -38,6 +38,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
+  const [pendingKeypressEvent, setPendingKeypressEvent] = useState(null);
   const [nqEvents, setNqEvents] = useState([]);
   const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
@@ -719,8 +720,13 @@ const App = () => {
             const globalText = refData?.Properties?.Text;
             const globalValue = refData?.Properties?.Value;
             const globalSelText = refData?.Properties?.SelText;
+            
+            // Also check what DOM says for comparison
+            const input = document.getElementById(serverEvent.ID);
+            const domCursor = input ? [input.selectionStart + 1, input.selectionEnd + 1] : null;
 
-            console.log('ARGH WG reading from global tree:', { globalText, globalValue, globalSelText });
+            console.log('ARGH WG reading - global tree:', { globalText, globalValue, globalSelText });
+            console.log('ARGH WG reading - DOM cursor (1-indexed):', domCursor);
 
             if (!localStorage.getItem(serverEvent.ID)) {
               // Prefer global tree data over component props
@@ -1579,7 +1585,16 @@ const App = () => {
               el.dispatchEvent(new KeyboardEvent("keydown", { key: ch }));
             } else {
               const kph = keypressHandlers[ch];
-              if (kph) kph(handleData, ID, existingData?.Properties);
+              if (kph) {
+                const globalState = {
+                  pendingKeypressEvent,
+                  socketData,
+                  nqEvents,
+                  proceed,
+                  proceedEventArray
+                };
+                kph(handleData, ID, existingData?.Properties, globalState);
+              }
             }
 
             nqCallback({
@@ -1652,6 +1667,12 @@ const App = () => {
         });
         // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
         setProceed(Proceed);
+        
+        // Clear the pending keypress event flag when we receive the EC response
+        if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
+          setPendingKeypressEvent(null);
+        }
+        
         // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
       } else if (keys[0] == "EX") {
         const serverEvent = evData.EX;
@@ -1812,6 +1833,8 @@ const App = () => {
           setProceed,
           proceedEventArray,
           setProceedEventArray,
+          pendingKeypressEvent,
+          setPendingKeypressEvent,
           colors,
           fontScale,
           nqEvents,
