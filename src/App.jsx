@@ -39,8 +39,6 @@ const App = () => {
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
   const [pendingKeypressEvent, setPendingKeypressEvent] = useState(null);
-  const [messageQueue, setMessageQueue] = useState([]);
-  const [processingQueue, setProcessingQueue] = useState(false);
   const [nqEvents, setNqEvents] = useState([]);
   const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
@@ -56,30 +54,6 @@ const App = () => {
     currentEventRef.current = { ...currentEventRef.current, ...newEvent };
   };
 
-  // Process message queue one at a time, waiting for render after each
-  const processMessageQueue = () => {
-    if (processingQueue || messageQueue.length === 0) return;
-    
-    setProcessingQueue(true);
-    const messageToProcess = messageQueue[0];
-    
-    // Process the message immediately
-    processMessage(messageToProcess);
-    
-    // Wait for render to complete before processing next message
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        // Remove processed message and continue
-        setMessageQueue(prev => prev.slice(1));
-        setProcessingQueue(false);
-      }, 1);
-    });
-  };
-
-  // Process queue whenever it changes
-  useEffect(() => {
-    processMessageQueue();
-  }, [messageQueue, processingQueue]);
 
   const dataRef = useRef({});
   // Convenience for being able to check the current state of the tree in the
@@ -480,12 +454,6 @@ const App = () => {
     };
     webSocket.onmessage = (event) => {
       const evData = JSON.parse(event.data);
-      // Queue all messages for sequential processing
-      setMessageQueue(prev => [...prev, evData]);
-    };
-
-    // Process messages (this replaces the direct processing above)
-    const processMessage = (evData) => {
       const keys = Object.keys(evData);
       const handleMessage = function() {
         if (keys[0] == "WC") {
