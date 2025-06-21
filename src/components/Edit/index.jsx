@@ -143,13 +143,22 @@ const Edit = ({
   // We need to update SelText whenever we can
   const updateSelText = () => {
     const el = document.getElementById(data.ID);
-    const start = el.selectionStart+1;
-    const end = el.selectionEnd+1;
+    if (!el) return;
+    
+    const textLength = el.value.length;
+    const rawStart = el.selectionStart + 1; // Convert to 1-indexed
+    const rawEnd = el.selectionEnd + 1;     // Convert to 1-indexed
+    
+    // Clamp to valid range [1, textLength+1] like native APL controls
+    const clampedStart = Math.max(1, Math.min(rawStart, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(rawEnd, textLength + 1));
+    
+    // Update global tree for WG requests
     handleData(
       {
         ID: data?.ID,
         Properties: {
-          SelText: [start, end],
+          SelText: [clampedStart, clampedEnd],
         },
       },
       "WS"
@@ -159,9 +168,10 @@ const Edit = ({
   // check that the Edit is in the Grid or not
 
   const handleInputClick = () => {
-    if (inputRef.current) {
-      inputRef.current.select();
-    }
+    // Don't auto-select all text - let user click to position cursor normally
+    // if (inputRef.current) {
+    //   inputRef.current.select();
+    // }
   };
 
   const decideInputType = useCallback(() => {
@@ -181,6 +191,47 @@ const Edit = ({
   useEffect(() => {
     decideInputValue();
   }, [decideInputValue]);
+
+  // Debug: log any data prop changes
+  useEffect(() => {
+    console.log('ARGH Data prop changed:', data);
+  }, [data]);
+
+  // Listen for Text/Value updates from APL via WS messages
+  useEffect(() => {
+    const textFromAPL = data?.Properties?.Text;
+    const valueFromAPL = data?.Properties?.Value;
+    
+    console.log('ARGH Edit WS update check:', { textFromAPL, valueFromAPL, currentInputValue: inputValue, currentEmitValue: emitValue });
+    
+    // APL is source of truth - always update when APL sends new Text/Value
+    if (textFromAPL !== undefined) {
+      console.log('ARGH Updating inputValue from APL Text:', textFromAPL);
+      setInputValue(textFromAPL);
+      setEmitValue(textFromAPL);
+    } else if (valueFromAPL !== undefined) {
+      console.log('ARGH Updating inputValue from APL Value:', valueFromAPL);
+      setInputValue(valueFromAPL);
+      setEmitValue(valueFromAPL);
+    }
+  }, [data?.Properties?.Text, data?.Properties?.Value]);
+
+  // Update global tree when input changes (for WG requests)
+  useEffect(() => {
+    if (inputValue !== undefined) {
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            Text: inputValue,
+            Value: inputValue,
+          },
+        },
+        "WS"
+      );
+    }
+  }, [inputValue]);
+
 
   // Checks for the Styling of the Edit Field
 
@@ -292,7 +343,7 @@ const Edit = ({
   };
 
   const handleKeyPress = (e) => {
-    updateSelText();
+    updateSelText(); // Update global tree with current selection
     if (e.key == "ArrowRight") handleRightArrow();
     else if (e.key == "ArrowLeft") handleLeftArrow();
     else if (e.key == "ArrowDown") handleCellMove();
@@ -306,6 +357,10 @@ const Edit = ({
     // NoCallback set to 1.
     if (Globals.get('suppressingCallbacks')) return;
 
+    // Prevent default behavior for keys that APL might handle
+    console.log('ARGH preventDefault called for:', e.key, 'inputValue:', inputValue, 'focused:', document.activeElement === inputRef.current);
+    e.preventDefault();
+    
     const eventId = uuidv4();
     setEventId(eventId);
     const isAltPressed = e.altKey ? 4 : 0;
@@ -500,7 +555,7 @@ const Edit = ({
   };
 
   const handleBlur = () => {
-    updateSelText();
+    updateSelText(); // Update global tree with final selection
     if (Event && Event.some((item) => item[0] === "LostFocus")) {
       socket.send(JSON.stringify({
         Event: {
