@@ -5,7 +5,7 @@ import { parentId } from "../utils";
 
 const useAppData = () => {
 
-  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, pendingKeypressEvents, setPendingKeypressEvents, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef, isDesktop} =
+  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, addPendingKeypressEvent, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef, isDesktop} =
 
     useContext(AppDataContext);
 
@@ -79,8 +79,7 @@ const useAppData = () => {
     setProceed,
     proceedEventArray,
     setProceedEventArray,
-    pendingKeypressEvents,
-    setPendingKeypressEvents,
+    addPendingKeypressEvent,
     colors,
     findAggregatedPropertiesData,
     fontScale,

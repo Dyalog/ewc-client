@@ -41,7 +41,7 @@ const Edit = ({
     handleData,
     fontScale,
     inheritedProperties,
-    setPendingKeypressEvents
+    addPendingKeypressEvent
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -423,7 +423,7 @@ const Edit = ({
         shiftKey: e.shiftKey 
       };
       console.log('ECDBG: Adding pendingKeypressEvent to queue for non-modifier key:', pendingEvent);
-      setPendingKeypressEvents(prev => [...prev, pendingEvent]);
+      addPendingKeypressEvent(pendingEvent);
     } else {
       console.log('ECDBG: Skipping pendingKeypressEvent for modifier key:', e.key);
     }

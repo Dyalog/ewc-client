@@ -38,7 +38,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
-  const [pendingKeypressEvents, setPendingKeypressEvents] = useState([]);
+  const pendingKeypressEventsRef = useRef([]);
   const [nqEvents, setNqEvents] = useState([]);
   const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
@@ -52,6 +52,12 @@ const App = () => {
 
   const updateCurrentEvent = (newEvent) => {
     currentEventRef.current = { ...currentEventRef.current, ...newEvent };
+  };
+
+  const addPendingKeypressEvent = (event) => {
+    console.log('ECDBG: Adding event to ref queue:', event);
+    pendingKeypressEventsRef.current.push(event);
+    console.log('ECDBG: Queue after adding:', pendingKeypressEventsRef.current);
   };
 
 
@@ -1748,11 +1754,11 @@ const App = () => {
           setProceed(Proceed);
 
           // Handle pending keypress based on Proceed value
-          console.log('ECDBG: EC handler - EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvents =', pendingKeypressEvents);
+          console.log('ECDBG: EC handler - EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvents =', pendingKeypressEventsRef.current);
           
           // Find the event with matching EventID in the queue
-          const eventIndex = pendingKeypressEvents.findIndex(event => event.eventId === EventID);
-          const matchingEvent = eventIndex !== -1 ? pendingKeypressEvents[eventIndex] : null;
+          const eventIndex = pendingKeypressEventsRef.current.findIndex(event => event.eventId === EventID);
+          const matchingEvent = eventIndex !== -1 ? pendingKeypressEventsRef.current[eventIndex] : null;
           
           if (matchingEvent) {
             console.log('ECDBG: Found matching event at index', eventIndex, ':', matchingEvent);
@@ -1809,7 +1815,7 @@ const App = () => {
             
             // Remove this event and all events before it from the queue (WebSocket ordering)
             console.log('ECDBG: Removing events 0 through', eventIndex, 'from queue');
-            setPendingKeypressEvents(prev => prev.slice(eventIndex + 1));
+            pendingKeypressEventsRef.current = pendingKeypressEventsRef.current.slice(eventIndex + 1);
           } else {
             console.log('ECDBG: No matching event found for EventID:', EventID);
           }
@@ -1908,8 +1914,7 @@ const App = () => {
           setProceed,
           proceedEventArray,
           setProceedEventArray,
-          pendingKeypressEvents,
-          setPendingKeypressEvents,
+          addPendingKeypressEvent,
           colors,
           fontScale,
           nqEvents,
