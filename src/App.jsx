@@ -54,6 +54,7 @@ const App = () => {
     currentEventRef.current = { ...currentEventRef.current, ...newEvent };
   };
 
+
   const dataRef = useRef({});
   // Convenience for being able to check the current state of the tree in the
   // browser console.
@@ -454,217 +455,238 @@ const App = () => {
     webSocket.onmessage = (event) => {
       const evData = JSON.parse(event.data);
       const keys = Object.keys(evData);
-      if (keys[0] == "WC") {
-        let windowCreationEvent = evData.WC;
-        if (windowCreationEvent?.Properties?.Type == "Form") {
-          localStorage.clear();
-          const updatedData = deleteFormAndSiblings(dataRef.current);
-          dataRef.current = {};
-          dataRef.current = updatedData;
+      const handleMessage = function() {
+        if (keys[0] == "WC") {
+          let windowCreationEvent = evData.WC;
+          if (windowCreationEvent?.Properties?.Type == "Form") {
+            localStorage.clear();
+            const updatedData = deleteFormAndSiblings(dataRef.current);
+            dataRef.current = {};
+            dataRef.current = updatedData;
 
-          handleData(evData.WC, "WC");
-          return;
-        }
-
-        // Handle Message Box separately
-        if (windowCreationEvent?.Properties?.Type == "MsgBox") {
-          setMessageBoxData(windowCreationEvent);
-          // handleData(evData.WC, 'WC');
-          return;
-        }
-
-        // TODO move to a new home!
-        const defaultProperties = {
-          Grid: { CurCell: [1, 1] },
-        };
-        const dflts = defaultProperties[evData.WC?.Properties?.Type];
-        if (dflts) {
-          evData.WC.Properties = { ...dflts, ...evData.WC.Properties };
-        }
-
-        // console.log('event from server WC', evData.WC);
-        setSocketData((prevData) => [...prevData, evData.WC]);
-        handleData(evData.WC, "WC");
-      } else if (keys[0] == "WS") {
-        const serverEvent = evData.WS;
-
-        let value = null;
-        // @Todo Check that the Edit is Already Present or not if it is Present just change the value we are getting from the server
-        const data = JSON.parse(getObjectById(dataRef.current, serverEvent.ID));
-
-        console.log("WSSocket", { serverEvent, data });
-        if (data?.Properties?.Type == "Edit") {
-          if (serverEvent?.Properties.hasOwnProperty("Text")) {
-            value = serverEvent?.Properties.Text;
-          } else if (serverEvent?.Properties.hasOwnProperty("Value")) {
-            value = serverEvent?.Properties.Value;
-          } else if (serverEvent?.Properties.hasOwnProperty("SelText")) {
-            value = serverEvent?.Properties.SelText;
+            handleData(evData.WC, "WC");
+            return;
           }
 
-          const updatedProperties = {
-            ...data?.Properties,
-            ...serverEvent?.Properties,
+          // Handle Message Box separately
+          if (windowCreationEvent?.Properties?.Type == "MsgBox") {
+            setMessageBoxData(windowCreationEvent);
+            // handleData(evData.WC, 'WC');
+            return;
+          }
+
+          // TODO move to a new home!
+          const defaultProperties = {
+            Grid: { CurCell: [1, 1] },
+          };
+          const dflts = defaultProperties[evData.WC?.Properties?.Type];
+          if (dflts) {
+            evData.WC.Properties = { ...dflts, ...evData.WC.Properties };
+          }
+
+          // console.log('event from server WC', evData.WC);
+          setSocketData((prevData) => [...prevData, evData.WC]);
+          handleData(evData.WC, "WC");
+        } else if (keys[0] == "WS") {
+          const serverEvent = evData.WS;
+
+          let value = null;
+          // @Todo Check that the Edit is Already Present or not if it is Present just change the value we are getting from the server
+          const data = JSON.parse(getObjectById(dataRef.current, serverEvent.ID));
+
+          console.log("WSSocket", { serverEvent, data });
+          if (data?.Properties?.Type == "Edit") {
+            if (serverEvent?.Properties.hasOwnProperty("Text")) {
+              value = serverEvent?.Properties.Text;
+            } else if (serverEvent?.Properties.hasOwnProperty("Value")) {
+              value = serverEvent?.Properties.Value;
+            } else if (serverEvent?.Properties.hasOwnProperty("SelText")) {
+              value = serverEvent?.Properties.SelText;
+            }
+
+            const updatedProperties = {
+              ...data?.Properties,
+              ...serverEvent?.Properties,
+            };
+
+            return handleData(
+              {
+                ID: serverEvent.ID,
+                Properties: updatedProperties,
+              },
+              "WS"
+            );
+            // Check that the Already Present Data have Text Key or Value Key
+            if (data?.Properties.hasOwnProperty("Text")) {
+              setSocketData((prevData) => [
+                ...prevData,
+                evData.WS,
+              ]);
+              return handleData(
+                {
+                  ID: serverEvent.ID,
+
+                  Properties: {
+                    Event: serverEvent.Properties.Event,
+                    Text: serverEvent?.Properties.Text,
+                  },
+                },
+                "WS"
+              );
+            } else if (data?.Properties.hasOwnProperty("Value")) {
+              setSocketData((prevData) => [
+                ...prevData,
+                evData.WS,
+              ]);
+              return handleData(
+                {
+                  ID: serverEvent.ID,
+                  Properties: {
+                    Value: serverEvent?.Properties.Value,
+                  },
+                },
+                "WS"
+              );
+            } else if (data?.Properties.hasOwnProperty("SelText")) {
+              setSocketData((prevData) => [
+                ...prevData,
+                evData.WS,
+              ]);
+              return handleData(
+                {
+                  ID: serverEvent.ID,
+                  Properties: {
+                    SelText: serverEvent?.Properties.SelText,
+                  },
+                },
+                "WS"
+              );
+            } else {
+            }
+          }
+
+          if (data?.Properties?.Type == "Combo") {
+            if (serverEvent?.Properties.hasOwnProperty("SelItems")) {
+              setSocketData((prevData) => [
+                ...prevData,
+                evData.WS,
+              ]);
+              value = serverEvent?.Properties.SelItems;
+              const indextoFind = value.indexOf(1);
+              let Text = data?.Properties?.Items[indextoFind];
+              return handleData(
+                {
+                  ID: serverEvent.ID,
+                  Properties: {
+                    ...data?.Properties,
+                    SelItems: value,
+                    Text,
+                  },
+                },
+                "WS"
+              );
+            }
+          }
+
+          setSocketData((prevData) => [...prevData, evData.WS]);
+          // serverEvent.ID == "F1.LEFTRIGHT" && console.log("horizontal ws ", {WSThumbValue: evData.WS.Properties.Thumb})
+          handleData(evData.WS, "WS");
+        } else if (keys[0] == "WG") {
+          console.log("Data is as", evData.WG);
+          const serverEvent = evData.WG;
+
+          const updateAndStringify = (resp) => {
+            if (!resp.WG?.Properties) return JSON.stringify(resp);
+            const error = () => webSocket.send(JSON.stringify({
+              WG: {
+                ID: serverEvent?.ID,
+                Error: {
+                  Code: 2,
+                  Message: "ID '" + serverEvent?.ID + "' has no Size or Posn. Is this a non-rendering component?",
+                  WGID: serverEvent?.WGID,
+                },
+              },
+            }));
+            if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
+              const p = resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+              // if (p === null) return error();
+            }
+            if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
+              const s = resp.WG.Properties['Size'] = size(serverEvent.ID);
+              // if (s === null) return error();
+            }
+            return JSON.stringify(resp);
           };
 
-          return handleData(
-            {
-              ID: serverEvent.ID,
-              Properties: updatedProperties,
-            },
-            "WS"
-          );
-          // Check that the Already Present Data have Text Key or Value Key
-          if (data?.Properties.hasOwnProperty("Text")) {
-            setSocketData((prevData) => [
-              ...prevData,
-              evData.WS,
-            ]);
-            return handleData(
-              {
-                ID: serverEvent.ID,
+          try {
+            // console.log({serverEvent})
 
-                Properties: {
-                  Event: serverEvent.Properties.Event,
-                  Text: serverEvent?.Properties.Text,
+            const refData = JSON.parse(
+              getObjectById(dataRef.current, serverEvent?.ID)
+            );
+            // serverEvent.ID == "F1.LEFTRIGHT" &&  console.log("horizontal wg", serverEvent.ID, getObjectById(dataRef.current, serverEvent?.ID))
+            const Type = refData?.Properties?.Type;
+            // console.log("issue refData", {refData, Type})
+
+            // If didn't have any type on WG then return an ErrorMessage
+
+            const errorEvent = JSON.stringify({
+              WG: {
+                ID: serverEvent?.ID,
+                Error: {
+                  Code: 1,
+                  Message: "ID not found",
+                  WGID: serverEvent?.WGID,
                 },
               },
-              "WS"
-            );
-          } else if (data?.Properties.hasOwnProperty("Value")) {
-            setSocketData((prevData) => [
-              ...prevData,
-              evData.WS,
-            ]);
-            return handleData(
-              {
-                ID: serverEvent.ID,
-                Properties: {
-                  Value: serverEvent?.Properties.Value,
-                },
-              },
-              "WS"
-            );
-          } else if (data?.Properties.hasOwnProperty("SelText")) {
-            setSocketData((prevData) => [
-              ...prevData,
-              evData.WS,
-            ]);
-            return handleData(
-              {
-                ID: serverEvent.ID,
-                Properties: {
-                  SelText: serverEvent?.Properties.SelText,
-                },
-              },
-              "WS"
-            );
-          } else {
-          }
-        }
+            });
 
-        if (data?.Properties?.Type == "Combo") {
-          if (serverEvent?.Properties.hasOwnProperty("SelItems")) {
-            setSocketData((prevData) => [
-              ...prevData,
-              evData.WS,
-            ]);
-            value = serverEvent?.Properties.SelItems;
-            const indextoFind = value.indexOf(1);
-            let Text = data?.Properties?.Items[indextoFind];
-            return handleData(
-              {
-                ID: serverEvent.ID,
-                Properties: {
-                  ...data?.Properties,
-                  SelItems: value,
-                  Text,
-                },
-              },
-              "WS"
-            );
-          }
-        }
+            if (!Type) return webSocket.send(errorEvent);
+            // Get Data from the Ref
 
-        setSocketData((prevData) => [...prevData, evData.WS]);
-        // serverEvent.ID == "F1.LEFTRIGHT" && console.log("horizontal ws ", {WSThumbValue: evData.WS.Properties.Thumb})
-        handleData(evData.WS, "WS");
-      } else if (keys[0] == "WG") {
-        console.log("Data is as", evData.WG);
-        const serverEvent = evData.WG;
+            const { Properties } = refData;
+            console.log("Reference adata a", refData, Properties);
+            console.log("Reffffffff", Properties);
 
-        const updateAndStringify = (resp) => {
-          if (!resp.WG?.Properties) return JSON.stringify(resp);
-          const error = () => webSocket.send(JSON.stringify({
-            WG: {
-              ID: serverEvent?.ID,
-              Error: {
-                Code: 2,
-                Message: "ID '" + serverEvent?.ID + "' has no Size or Posn. Is this a non-rendering component?",
-                WGID: serverEvent?.WGID,
-              },
-            },
-          }));
-          if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-            const p = resp.WG.Properties['Posn'] = posn(serverEvent.ID);
-            // if (p === null) return error();
-          }
-          if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-            const s = resp.WG.Properties['Size'] = size(serverEvent.ID);
-            // if (s === null) return error();
-          }
-          return JSON.stringify(resp);
-        };
-
-        try {
-          // console.log({serverEvent})
-
-          const refData = JSON.parse(
-            getObjectById(dataRef.current, serverEvent?.ID)
-          );
-          // serverEvent.ID == "F1.LEFTRIGHT" &&  console.log("horizontal wg", serverEvent.ID, getObjectById(dataRef.current, serverEvent?.ID))
-          const Type = refData?.Properties?.Type;
-          // console.log("issue refData", {refData, Type})
-
-          // If didn't have any type on WG then return an ErrorMessage
-
-          const errorEvent = JSON.stringify({
-            WG: {
-              ID: serverEvent?.ID,
-              Error: {
-                Code: 1,
-                Message: "ID not found",
-                WGID: serverEvent?.WGID,
-              },
-            },
-          });
-
-          if (!Type) return webSocket.send(errorEvent);
-          // Get Data from the Ref
-
-          const { Properties } = refData;
-          console.log("Reference adata a", refData, Properties);
-          console.log("Reffffffff", Properties);
-
-          if (Type == "Grid") {
-            return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
-          }
-          if (Type == "Form") {
-            const supportedProperties = ["Posn", "Size"];
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-            const serverPropertiesObj = {};
-            const Form = JSON.parse(localStorage.getItem(serverEvent.ID));
-
-            if (!localStorage.getItem(serverEvent.ID)) {
+            if (Type == "Grid") {
+              return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
+            }
+            if (Type == "Form") {
+              const supportedProperties = ["Posn", "Size"];
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
               const serverPropertiesObj = {};
+              const Form = JSON.parse(localStorage.getItem(serverEvent.ID));
 
+              if (!localStorage.getItem(serverEvent.ID)) {
+                const serverPropertiesObj = {};
+
+                serverEvent.Properties.map((key) => {
+                  return (serverPropertiesObj[key] = Properties[key]);
+                });
+
+                const event = updateAndStringify({
+                  WG: {
+                    ID: serverEvent.ID,
+                    Properties: serverPropertiesObj,
+                    WGID: serverEvent.WGID,
+                    ...(result &&
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
+                      ? { NotSupported: result.NotSupported }
+                      : null),
+                  },
+                });
+
+                webSocket.send(event);
+                return;
+              }
               serverEvent.Properties.map((key) => {
-                return (serverPropertiesObj[key] = Properties[key]);
+                return (serverPropertiesObj[key] = Form[key]);
               });
-             
+
               const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
@@ -680,78 +702,107 @@ const App = () => {
 
               webSocket.send(event);
               return;
-            }
-            serverEvent.Properties.map((key) => {
-              return (serverPropertiesObj[key] = Form[key]);
-            });
+            } else if (Type == "Edit") {
+              const { Text, Value, SelText } = Properties;
+              const supportedProperties = ["Text", "Value", "SelText"];
 
-            const event = updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                Properties: serverPropertiesObj,
-                WGID: serverEvent.WGID,
-                ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
-                  ? { NotSupported: result.NotSupported }
-                  : null),
-              },
-            });
+              console.log("edit", {
+                serverEvent,
+                Properties,
+                Text,
+                local: localStorage.getItem(serverEvent.ID),
+              });
 
-            webSocket.send(event);
-            return;
-          } else if (Type == "Edit") {
-            const { Text, Value, SelText } = Properties;
-            const supportedProperties = ["Text", "Value", "SelText"];
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
 
-            console.log("edit", {
-              serverEvent,
-              Properties,
-              Text,
-              local: localStorage.getItem(serverEvent.ID),
-            });
+              // Read from global tree (refData) instead of DOM
+              const globalText = refData?.Properties?.Text;
+              const globalValue = refData?.Properties?.Value;
+              const globalSelText = refData?.Properties?.SelText;
 
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
+              // Also check what DOM says for comparison
+              const input = document.getElementById(serverEvent.ID);
+              const domCursor = input ? [input.selectionStart + 1, input.selectionEnd + 1] : null;
 
-            // Read from global tree (refData) instead of DOM
-            const globalText = refData?.Properties?.Text;
-            const globalValue = refData?.Properties?.Value;
-            const globalSelText = refData?.Properties?.SelText;
-            
-            // Also check what DOM says for comparison
-            const input = document.getElementById(serverEvent.ID);
-            const domCursor = input ? [input.selectionStart + 1, input.selectionEnd + 1] : null;
+              console.log('ARGH WG reading - global tree:', { globalText, globalValue, globalSelText });
+              console.log('ARGH WG reading - DOM cursor (1-indexed):', domCursor);
 
-            console.log('ARGH WG reading - global tree:', { globalText, globalValue, globalSelText });
-            console.log('ARGH WG reading - DOM cursor (1-indexed):', domCursor);
+              if (!localStorage.getItem(serverEvent.ID)) {
+                // Prefer global tree data over component props
+                let editValue = globalText !== undefined ? globalText :
+                  globalValue !== undefined ? globalValue :
+                    Text !== undefined ? Text : Value;
+                editValue = editValue !== undefined ? editValue : "";
 
-            if (!localStorage.getItem(serverEvent.ID)) {
-              // Prefer global tree data over component props
-              let editValue = globalText !== undefined ? globalText : 
-                             globalValue !== undefined ? globalValue :
-                             Text !== undefined ? Text : Value;
-              editValue = editValue !== undefined ? editValue : "";
+                const isNumber = refData?.Properties?.hasOwnProperty("FieldType");
 
-              const isNumber = refData?.Properties?.hasOwnProperty("FieldType");
+                const serverPropertiesObj = {};
+                serverEvent.Properties.forEach((key) => {
+                  if (key === "Text") {
+                    serverPropertiesObj[key] = globalText !== undefined ? globalText.toString() :
+                      editValue ? editValue.toString() : "";
+                  } else if (key === "Value") {
+                    const valueToUse = globalValue !== undefined ? globalValue : editValue;
+                    serverPropertiesObj[key] = isNumber && valueToUse != ''
+                      ? parseInt(valueToUse)
+                      : valueToUse;
+                  } else if (key === "SelText") {
+                    // Prefer global tree SelText, fallback to component props, fallback to [1,1]
+                    serverPropertiesObj[key] = globalSelText || SelText || [1, 1];
+                  } else {
+                    serverPropertiesObj[key] = editValue;
+                  }
+                });
 
+                console.log(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: serverPropertiesObj,
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+                return webSocket.send(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: serverPropertiesObj,
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+              }
+
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
+              const { Info } = Event;
               const serverPropertiesObj = {};
               serverEvent.Properties.forEach((key) => {
-                if (key === "Text") {
-                  serverPropertiesObj[key] = globalText !== undefined ? globalText.toString() : 
-                                           editValue ? editValue.toString() : "";
-                } else if (key === "Value") {
-                  const valueToUse = globalValue !== undefined ? globalValue : editValue;
-                  serverPropertiesObj[key] = isNumber && valueToUse != ''
-                    ? parseInt(valueToUse)
-                    : valueToUse;
+                if (key === "Value") {
+                  serverPropertiesObj[key] = Info;
                 } else if (key === "SelText") {
-                  // Prefer global tree SelText, fallback to component props, fallback to [1,1]
-                  serverPropertiesObj[key] = globalSelText || SelText || [1, 1];
+                  serverPropertiesObj[key] = SelText || [1, 1];
+                } else if (key === "Text") {
+                  const storedText = JSON.parse(
+                    localStorage.getItem(serverEvent?.ID)
+                  )?.Text;
+                  const txt = Text !== undefined ? Text : storedText;
+                  serverPropertiesObj[key] = txt !== undefined ? txt : '';
                 } else {
-                  serverPropertiesObj[key] = editValue;
+                  serverPropertiesObj[key] = Info.toString();
                 }
               });
 
@@ -769,7 +820,7 @@ const App = () => {
                   },
                 })
               );
-              return webSocket.send(
+              webSocket.send(
                 updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
@@ -783,66 +834,67 @@ const App = () => {
                   },
                 })
               );
-            }
+            } else if (Type == "Combo") {
+              console.log("Properties are", Properties);
+              const { SelItems, Items, Text } = Properties;
+              const supportedProperties = ["Text", "SelItems", "Posn", "Size"];
 
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-            const { Info } = Event;
-            const serverPropertiesObj = {};
-            serverEvent.Properties.forEach((key) => {
-              if (key === "Value") {
-                serverPropertiesObj[key] = Info;
-              } else if (key === "SelText") {
-                serverPropertiesObj[key] = SelText || [1, 1];
-              } else if (key === "Text") {
-                const storedText = JSON.parse(
-                  localStorage.getItem(serverEvent?.ID)
-                )?.Text;
-                const txt = Text !== undefined ? Text : storedText;
-                serverPropertiesObj[key] = txt !== undefined ? txt : '';
-              } else {
-                serverPropertiesObj[key] = Info.toString();
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
+
+              if (!localStorage.getItem(serverEvent.ID)) {
+
+                let newSelItems = SelItems || new Array(Items.length).fill(0);
+
+                if (Text) {
+                  const indexToChange = Items.indexOf(Text);
+                  if (indexToChange >= 0) {
+                    newSelItems.fill(0);
+                    newSelItems[indexToChange] = 1;
+                  }
+                }
+
+                const serverPropertiesObj = {};
+                serverEvent.Properties.map((key) => {
+                  serverPropertiesObj[key] =
+                    key === "SelItems"
+                      ? newSelItems
+                      : key === "Text"
+                        ? Text
+                        : Properties[key];
+                });
+                // serverEvent.Properties.map((key) => {
+                //   serverPropertiesObj[key] =
+                //     key === "SelItems"
+                //       ? newSelItems
+                //       : key === "Text"
+                //       ? Text
+                //       : key === "Size" || key === "Posn"
+                //       ? Properties[key] || Event[key] // Prioritize current Properties or fallback to Event
+                //       : key === "Items"
+                //       ? Items[Info]
+                //       : Event[key];
+                // });
+
+                const message = {
+                  WG: {
+                    ID: serverEvent.ID,
+                    Properties: serverPropertiesObj,
+                    WGID: serverEvent.WGID,
+                    ...(result?.NotSupported?.length > 0
+                      ? { NotSupported: result.NotSupported }
+                      : null),
+                  },
+                };
+
+                return webSocket.send(updateAndStringify(message));
               }
-            });
 
-            console.log(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-            webSocket.send(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-          } else if (Type == "Combo") {
-            console.log("Properties are", Properties);
-            const { SelItems, Items, Text } = Properties;
-            const supportedProperties = ["Text", "SelItems", "Posn", "Size"];
-
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-
-            if (!localStorage.getItem(serverEvent.ID)) {
+              // Parse the event data from localStorage
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
+              const { Info, Size, Posn } = Event;
 
               let newSelItems = SelItems || new Array(Items.length).fill(0);
 
@@ -861,7 +913,9 @@ const App = () => {
                     ? newSelItems
                     : key === "Text"
                       ? Text
-                      : Properties[key];
+                      : key === "Items"
+                        ? Items[Info]
+                        : Event[key];
               });
               // serverEvent.Properties.map((key) => {
               //   serverPropertiesObj[key] =
@@ -872,7 +926,7 @@ const App = () => {
               //       : key === "Size" || key === "Posn"
               //       ? Properties[key] || Event[key] // Prioritize current Properties or fallback to Event
               //       : key === "Items"
-              //       ? Items[Info]
+              //       ? Items[Info]⌈
               //       : Event[key];
               // });
 
@@ -888,79 +942,64 @@ const App = () => {
               };
 
               return webSocket.send(updateAndStringify(message));
-            }
-
-            // Parse the event data from localStorage
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-            const { Info, Size, Posn } = Event;
-
-            let newSelItems = SelItems || new Array(Items.length).fill(0);
-
-            if (Text) {
-              const indexToChange = Items.indexOf(Text);
-              if (indexToChange >= 0) {
-                newSelItems.fill(0);
-                newSelItems[indexToChange] = 1;
+            } else if (Type == "List") {
+              let { SelItems, Items } = Properties;
+              // If nothing has been selected yet, return all 0s
+              if (SelItems === undefined) {
+                SelItems = Array(Items.length).fill(0);
               }
-            }
 
-            const serverPropertiesObj = {};
-            serverEvent.Properties.map((key) => {
-              serverPropertiesObj[key] =
-                key === "SelItems"
-                  ? newSelItems
-                  : key === "Text"
-                    ? Text
-                    : key === "Items"
-                      ? Items[Info]
-                      : Event[key];
-            });
-            // serverEvent.Properties.map((key) => {
-            //   serverPropertiesObj[key] =
-            //     key === "SelItems"
-            //       ? newSelItems
-            //       : key === "Text"
-            //       ? Text
-            //       : key === "Size" || key === "Posn"
-            //       ? Properties[key] || Event[key] // Prioritize current Properties or fallback to Event
-            //       : key === "Items"
-            //       ? Items[Info]⌈
-            //       : Event[key];
-            // });
+              const supportedProperties = ["SelItems"];
 
-            const message = {
-              WG: {
-                ID: serverEvent.ID,
-                Properties: serverPropertiesObj,
-                WGID: serverEvent.WGID,
-                ...(result?.NotSupported?.length > 0
-                  ? { NotSupported: result.NotSupported }
-                  : null),
-              },
-            };
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
 
-            return webSocket.send(updateAndStringify(message));
-          } else if (Type == "List") {
-            let { SelItems, Items } = Properties;
-            // If nothing has been selected yet, return all 0s
-            if (SelItems === undefined) {
-              SelItems = Array(Items.length).fill(0);
-            }
+              if (!localStorage.getItem(serverEvent.ID)) {
+                console.log(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: {
+                        SelItems,
+                      },
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
 
-            const supportedProperties = ["SelItems"];
+                      WGID: serverEvent.WGID,
+                    },
+                  })
+                );
+                return webSocket.send(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: {
+                        SelItems,
+                      },
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
 
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
+                      WGID: serverEvent.WGID,
+                    },
+                  })
+                );
+              }
 
-            if (!localStorage.getItem(serverEvent.ID)) {
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
               console.log(
                 updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
-                      SelItems,
+                      SelItems: Event["SelItems"],
                     },
                     ...(result &&
                       result.NotSupported &&
@@ -977,7 +1016,7 @@ const App = () => {
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
-                      SelItems,
+                      SelItems: Event["SelItems"],
                     },
                     ...(result &&
                       result.NotSupported &&
@@ -989,61 +1028,61 @@ const App = () => {
                   },
                 })
               );
-            }
+            } else if (Type == "Scroll") {
+              const { Thumb = 1 } = Properties;
+              const supportedProperties = ["Thumb"];
 
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-            console.log(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: {
-                    SelItems: Event["SelItems"],
-                  },
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
+              console.log("300", Thumb);
 
-                  WGID: serverEvent.WGID,
-                },
-              })
-            );
-            return webSocket.send(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: {
-                    SelItems: Event["SelItems"],
-                  },
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
 
-                  WGID: serverEvent.WGID,
-                },
-              })
-            );
-          } else if (Type == "Scroll") {
-            const { Thumb = 1 } = Properties;
-            const supportedProperties = ["Thumb"];
+              if (!localStorage.getItem(serverEvent.ID)) {
+                console.log(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: {
+                        Thumb,
+                      },
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+                return webSocket.send(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: {
+                        Thumb,
+                      },
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+              }
 
-            console.log("300", Thumb);
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
+              const { Info } = Event;
 
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-
-            if (!localStorage.getItem(serverEvent.ID)) {
               console.log(
                 updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
-                      Thumb,
+                      Thumb: Info[1],
                     },
                     WGID: serverEvent.WGID,
                     ...(result &&
@@ -1059,7 +1098,7 @@ const App = () => {
                   WG: {
                     ID: serverEvent.ID,
                     Properties: {
-                      Thumb,
+                      Thumb: Thumb,
                     },
                     WGID: serverEvent.WGID,
                     ...(result &&
@@ -1070,58 +1109,59 @@ const App = () => {
                   },
                 })
               );
-            }
+            } else if (Type == "Splitter") {
+              console.log("Coming in form but splitter");
 
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-            const { Info } = Event;
+              const { Posn } = Properties;
+              const supportedProperties = ["Posn", "Size"];
 
-            console.log(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: {
-                    Thumb: Info[1],
-                  },
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-            return webSocket.send(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: {
-                    Thumb: Thumb,
-                  },
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-          } else if (Type == "Splitter") {
-            console.log("Coming in form but splitter");
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
 
-            const { Posn } = Properties;
-            const supportedProperties = ["Posn", "Size"];
+              if (!localStorage.getItem(serverEvent.ID)) {
+                const serverPropertiesObj = {};
+                serverEvent.Properties.map((key) => {
+                  return (serverPropertiesObj[key] = Properties[key]);
+                });
 
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
+                console.log(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: serverPropertiesObj,
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+                return webSocket.send(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: serverPropertiesObj,
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+              }
 
-            if (!localStorage.getItem(serverEvent.ID)) {
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
+              const { Info, Size } = Event;
+
               const serverPropertiesObj = {};
               serverEvent.Properties.map((key) => {
-                return (serverPropertiesObj[key] = Properties[key]);
+                return (serverPropertiesObj[key] = key == "Posn" ? Info : Size);
               });
 
               console.log(
@@ -1152,71 +1192,102 @@ const App = () => {
                   },
                 })
               );
-            }
+            } else if (Type == "SubForm") {
+              console.log("Coming in form but suss");
+              const supportedProperties = ["Posn", "Size"];
 
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-            const { Info, Size } = Event;
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
+              console.log("Valuuuuuuuu", result);
+              console.log("Servere event is ", serverEvent, serverEvent.ID)
+              const sanitizedID = serverEvent.ID.split('.')[0]; // Get 'FsCShSpec' from 'FsCShSpec.O'
 
-            const serverPropertiesObj = {};
-            serverEvent.Properties.map((key) => {
-              return (serverPropertiesObj[key] = key == "Posn" ? Info : Size);
-            });
-
-            console.log(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-            return webSocket.send(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-          } else if (Type == "SubForm") {
-            console.log("Coming in form but suss");
-            const supportedProperties = ["Posn", "Size"];
-
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-            console.log("Valuuuuuuuu", result);
-            console.log("Servere event is ", serverEvent,serverEvent.ID)
-            const sanitizedID = serverEvent.ID.split('.')[0]; // Get 'FsCShSpec' from 'FsCShSpec.O'
-
-            console.log("Sanitized ID:", sanitizedID); 
+              console.log("Sanitized ID:", sanitizedID);
 
 
 
-            if (!localStorage.getItem(serverEvent.ID)) {
-              console.log("Coming in form but su1");
+              if (!localStorage.getItem(serverEvent.ID)) {
+                console.log("Coming in form but su1");
+
+                const serverPropertiesObj = {};
+                console.log("Properiessss", serverEvent.Properties, Properties)
+
+                serverEvent.Properties.map((key) => {
+                  console.log("Propertiesss2", Properties[key])
+                  return (serverPropertiesObj[key] = Properties[key]);
+                });
+                console.log("Server propertoes aew,", serverPropertiesObj)
+
+                console.log(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: serverPropertiesObj,
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+                return webSocket.send(
+                  updateAndStringify({
+                    WG: {
+                      ID: serverEvent.ID,
+                      Properties: serverPropertiesObj,
+                      WGID: serverEvent.WGID,
+                      ...(result &&
+                        result.NotSupported &&
+                        result.NotSupported.length > 0
+                        ? { NotSupported: result.NotSupported }
+                        : null),
+                    },
+                  })
+                );
+              }
+              console.log("Coming in form but su2");
 
               const serverPropertiesObj = {};
-              console.log("Properiessss", serverEvent.Properties, Properties)
+              console.log("Serverrrrrr", serverEvent.ID)
+              const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+              // const storedSubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+
+              // const baseID = serverEvent.ID.split('.')[0];
+
+              console.log("Value of subform is as", SubForm);
+              // let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+              // console.log("+====>", !SubForm, SubForm)
+
+              // if (SubForm.length === 0) {
+              //   console.log("+====>1", SubForm.length)
+
+              // }
+
+
+              // if (SubForm) {
+              //   // Retrieve data from "TabControlData" if SubForm is empty
+              //   const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
+
+              //   if (tabControlData) {
+              //     SubForm = tabControlData;
+              //     console.log("SubForm was empty. Assigned TabControlData to SubForm.");
+              //   } else {
+              //     console.warn("Both SubForm and TabControlData are empty.");
+              //   }
+              // } else {
+              //   console.log("Value of SubForm is:", SubForm);
+              // }
 
               serverEvent.Properties.map((key) => {
-                console.log("Propertiesss2", Properties[key])
-                return (serverPropertiesObj[key] = Properties[key]);
+                console.log("Keyyy", key)
+                return (serverPropertiesObj[key] = SubForm[key]);
               });
-              console.log("Server propertoes aew,", serverPropertiesObj)
+              console.log("Server properties are", serverPropertiesObj)
+              // console.log("Server properties are1", localStorage.getItem("formDimension"));
 
               console.log(
                 updateAndStringify({
@@ -1232,6 +1303,7 @@ const App = () => {
                   },
                 })
               );
+
               return webSocket.send(
                 updateAndStringify({
                   WG: {
@@ -1246,96 +1318,55 @@ const App = () => {
                   },
                 })
               );
-            }
-            console.log("Coming in form but su2");
+            } else if (Type == "Button") {
+              console.log("Coming here in buttons")
+              const { State } = Properties;
+              const supportedProperties = ["State", "Posn", "Size"];
 
-            const serverPropertiesObj = {};
-            console.log("Serverrrrrr", serverEvent.ID)
-            const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-            // const storedSubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
 
-            // const baseID = serverEvent.ID.split('.')[0];
+              if (!localStorage.getItem(serverEvent.ID)) {
+                const serverPropertiesObj = {};
+                serverEvent.Properties.map((key) => {
+                  return (serverPropertiesObj[key] =
+                    key == "State" ? (State ? State : 0) : Properties[key]);
+                });
 
-            console.log("Value of subform is as", SubForm);
-            // let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-            // console.log("+====>", !SubForm, SubForm)
+                delete serverPropertiesObj['Size'];
+                delete serverPropertiesObj['Posn'];
 
-            // if (SubForm.length === 0) {
-            //   console.log("+====>1", SubForm.length)
+                const event = updateAndStringify({
+                  WG: {
+                    ID: serverEvent.ID,
+                    Properties: serverPropertiesObj,
+                    WGID: serverEvent.WGID,
+                    ...(result &&
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
+                      ? { NotSupported: result.NotSupported }
+                      : null),
+                  },
+                });
 
-            // }
+                console.log(event);
+                return webSocket.send(event);
+              }
 
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
+              const { Value } = Event;
 
-            // if (SubForm) {
-            //   // Retrieve data from "TabControlData" if SubForm is empty
-            //   const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
-
-            //   if (tabControlData) {
-            //     SubForm = tabControlData;
-            //     console.log("SubForm was empty. Assigned TabControlData to SubForm.");
-            //   } else {
-            //     console.warn("Both SubForm and TabControlData are empty.");
-            //   }
-            // } else {
-            //   console.log("Value of SubForm is:", SubForm);
-            // }
-
-            serverEvent.Properties.map((key) => {
-              console.log("Keyyy", key)
-              return (serverPropertiesObj[key] = SubForm[key]);
-            });
-            console.log("Server properties are", serverPropertiesObj)
-            // console.log("Server properties are1", localStorage.getItem("formDimension"));
-
-            console.log(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-
-            return webSocket.send(
-              updateAndStringify({
-                WG: {
-                  ID: serverEvent.ID,
-                  Properties: serverPropertiesObj,
-                  WGID: serverEvent.WGID,
-                  ...(result &&
-                    result.NotSupported &&
-                    result.NotSupported.length > 0
-                    ? { NotSupported: result.NotSupported }
-                    : null),
-                },
-              })
-            );
-          } else if (Type == "Button") {
-            console.log("Coming here in buttons")
-            const { State } = Properties;
-            const supportedProperties = ["State", "Posn", "Size"];
-
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-
-            if (!localStorage.getItem(serverEvent.ID)) {
               const serverPropertiesObj = {};
+
               serverEvent.Properties.map((key) => {
                 return (serverPropertiesObj[key] =
-                  key == "State" ? (State ? State : 0) : Properties[key]);
+                  key == "State" ? Value : Event[key]);
               });
 
               delete serverPropertiesObj['Size'];
               delete serverPropertiesObj['Posn'];
-
               const event = updateAndStringify({
                 WG: {
                   ID: serverEvent.ID,
@@ -1350,437 +1381,412 @@ const App = () => {
               });
 
               console.log(event);
+
               return webSocket.send(event);
-            }
+            } else if (Type == "TreeView") {
+              const supportedProperties = ["SelItems"];
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
+              const { SelItems } = Event;
 
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-            const { Value } = Event;
-
-            const serverPropertiesObj = {};
-
-            serverEvent.Properties.map((key) => {
-              return (serverPropertiesObj[key] =
-                key == "State" ? Value : Event[key]);
-            });
-
-              delete serverPropertiesObj['Size'];
-              delete serverPropertiesObj['Posn'];
-            const event = updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                Properties: serverPropertiesObj,
-                WGID: serverEvent.WGID,
-                ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
-                  ? { NotSupported: result.NotSupported }
-                  : null),
-              },
-            });
-
-            console.log(event);
-
-            return webSocket.send(event);
-          } else if (Type == "TreeView") {
-            const supportedProperties = ["SelItems"];
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-            const { SelItems } = Event;
-
-            const event = updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                Properties: {
-                  SelItems,
+              const event = updateAndStringify({
+                WG: {
+                  ID: serverEvent.ID,
+                  Properties: {
+                    SelItems,
+                  },
+                  WGID: serverEvent.WGID,
+                  ...(result &&
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
+                    ? { NotSupported: result.NotSupported }
+                    : null),
                 },
-                WGID: serverEvent.WGID,
-                ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
-                  ? { NotSupported: result.NotSupported }
-                  : null),
-              },
-            });
+              });
 
-            console.log(event);
-            return webSocket.send(event);
-          } else if (Type == "Timer") {
-            const supportedProperties = ["FireOnce"];
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-            const { FireOnce } = Event;
+              console.log(event);
+              return webSocket.send(event);
+            } else if (Type == "Timer") {
+              const supportedProperties = ["FireOnce"];
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
+              const { FireOnce } = Event;
 
-            const event = updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                Properties: {
-                  FireOnce,
+              const event = updateAndStringify({
+                WG: {
+                  ID: serverEvent.ID,
+                  Properties: {
+                    FireOnce,
+                  },
+                  WGID: serverEvent.WGID,
+                  ...(result &&
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
+                    ? { NotSupported: result.NotSupported }
+                    : null),
                 },
-                WGID: serverEvent.WGID,
-                ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
-                  ? { NotSupported: result.NotSupported }
-                  : null),
-              },
-            });
-            console.log(event);
-            return webSocket.send(event);
-          } else if (Type == "ListView") {
-            const supportedProperties = ["SelItems"];
-            const result = checkSupportedProperties(
-              supportedProperties,
-              serverEvent?.Properties
-            );
-            const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
+              });
+              console.log(event);
+              return webSocket.send(event);
+            } else if (Type == "ListView") {
+              const supportedProperties = ["SelItems"];
+              const result = checkSupportedProperties(
+                supportedProperties,
+                serverEvent?.Properties
+              );
+              const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
 
-            const { SelItems } = Event;
-            const event = updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                Properties: {
-                  SelItems,
+              const { SelItems } = Event;
+              const event = updateAndStringify({
+                WG: {
+                  ID: serverEvent.ID,
+                  Properties: {
+                    SelItems,
+                  },
+                  WGID: serverEvent.WGID,
+                  ...(result &&
+                    result.NotSupported &&
+                    result.NotSupported.length > 0
+                    ? { NotSupported: result.NotSupported }
+                    : null),
                 },
-                WGID: serverEvent.WGID,
-                ...(result &&
-                  result.NotSupported &&
-                  result.NotSupported.length > 0
-                  ? { NotSupported: result.NotSupported }
-                  : null),
-              },
-            });
+              });
 
-            console.log(event);
-            return webSocket.send(event);
-          } else if (Type === "ApexChart") {
-            const supportedProperties = ["SVG"];
-            const { SVG } = Properties;
-            const data = JSON.parse(
-              getObjectById(dataRef.current, serverEvent.ID)
-            );
+              console.log(event);
+              return webSocket.send(event);
+            } else if (Type === "ApexChart") {
+              const supportedProperties = ["SVG"];
+              const { SVG } = Properties;
+              const data = JSON.parse(
+                getObjectById(dataRef.current, serverEvent.ID)
+              );
 
-            const event = updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                WGID: serverEvent.WGID,
-                Properties: {
-                  SVG: SVG,
+              const event = updateAndStringify({
+                WG: {
+                  ID: serverEvent.ID,
+                  WGID: serverEvent.WGID,
+                  Properties: {
+                    SVG: SVG,
+                  },
                 },
-              },
-            });
+              });
 
-            // console.log(event);
-            return webSocket.send(event);
+              // console.log(event);
+              return webSocket.send(event);
 
-          } else if (Type === "Upload") {
-            // TODO size and posn
-            return Upload.WG(wsSend, serverEvent);
-          } else {
-            const replyProps = {};
-            for (const prop in serverEvent.Properties) {
-              if (refData.Properties[prop]) {
-                replyProps[prop] = refData[prop];
-              }
-            }
-
-            return webSocket.send(updateAndStringify({
-              WG: {
-                ID: serverEvent.ID,
-                Properties: replyProps,
-                WGID: serverEvent.WGID,
-              }
-            }));
-          }
-        } catch (e) {
-          // There should be a proper error response here, but for now, we just log.
-          // This is because we know something failed, but APL doesn't and
-          // just waits 3s to mark the WG as failed.
-          console.error("WG Error: ", e);
-          // wsSend({...});
-        }
-      } else if (keys[0] == "NQ") {
-        const nqEvent = evData.NQ;
-        console.log("300", nqEvent, nqEvent.ID, nqEvent.Event, nqEvent.Info);
-        const { Event, ID, Info, NoCallback = 0 } = nqEvent;
-
-        const existingData = JSON.parse(getObjectById(dataRef.current, ID));
-
-        const appElement = getObjectById(dataRef.current, ID);
-
-        // Do nothing unless NoCallback=0 (default)
-        const nqCallback = NoCallback !== 0 ? ()=>{} : (ev)=>{ webSocket.send(JSON.stringify({ Event: ev })) };
-        const prevSuppressingCallbacks = Globals.set('suppressingCallbacks', NoCallback === 1);
-
-        try {
-          if (Event && Event == "Configure") {
-            handleData(
-              {
-                ID: ID,
-                Properties: {
-                  ...appElement?.Properties,
-                  Posn: [Info[0], Info[1]],
-                  Size: [Info[2], Info[3]],
-                },
-              },
-              "WS"
-            );
-            nqCallback({
-              EventName: Event,
-              ID: ID,
-              Info: Info,
-            });
-          } else if (Event == "SetPing") {
-            window.EWC.pingMS = Info[0] * 1000;
-            return;
-          } else if (
-            (Event && Event == "ItemDown") ||
-            (Event && Event == "GotFocus")
-          ) {
-            if (Event && Event == "GotFocus") {
-              localStorage.setItem("current-focus", ID);
-              const el = document.getElementById(ID);
-              if (el) el.focus();
-            }
-
-            const existingData = JSON.parse(getObjectById(dataRef.current, ID));
-
-            const exists =
-              existingData?.Properties?.Event &&
-              existingData?.Properties?.Event.some((item) => item[0] === Event);
-
-            if (!exists) return; // TODO shouldn't this still report back?!
-            nqCallback({
-              EventName: Event,
-              ID,
-              Info,
-            });
-          } else if (Event == "KeyPress") {
-            // ch is often going to be a character, but it may be a code such as
-            // 'LC' for ArrowLeft
-            // There should be only one element
-            // IMPORTANT:
-            // We try to imitate ⎕WC as much as possible, but this behaves in a
-            // slightly odd fashion, so this is done largely from experimentation.
-            // 
-            // Example of keycodes:
-            //   * DB (Delete backspace)
-            //   * DI (Delete Item) *does* do forward delete or deletes the selection
-            //   * DK (Delete blocK) will remove to the end of the line
-            //   * HT (Horizontal tab) which needs to be able to move from element
-            //     to element
-            // Some keycodes have no noticeable effect in ⎕WC...
-            // ...so we blindly echo any KeyPress event to the server, and we
-            // implement handlers for the subset of codes we are interested in.
-            const ch = Info[0];
-
-            if (ch.length == 1) {
-              // Single character insert
-              const el = document.getElementById(ID);
-              el.dispatchEvent(new KeyboardEvent("keydown", { key: ch }));
+            } else if (Type === "Upload") {
+              // TODO size and posn
+              return Upload.WG(wsSend, serverEvent);
             } else {
-              const kph = keypressHandlers[ch];
-              if (kph) {
-                const globalState = {
-                  pendingKeypressEvent,
-                  socketData,
-                  nqEvents,
-                  proceed,
-                  proceedEventArray
-                };
-                kph(handleData, ID, existingData?.Properties, globalState);
+              const replyProps = {};
+              for (const prop in serverEvent.Properties) {
+                if (refData.Properties[prop]) {
+                  replyProps[prop] = refData[prop];
+                }
               }
-            }
 
-            nqCallback({
-              EventName: "KeyPress",
-              ID: ID,
-              Info: Info,
-            });
-          } else if (Event == "CellMove") {
-            console.log("296", { nqEvent });
-            setNqEvents([...nqEvents, nqEvent]);
-            localStorage.setItem(
-              ID,
-              JSON.stringify({
-                Event: {
-                  CurCell: [Info[0], Info[1]],
+              return webSocket.send(updateAndStringify({
+                WG: {
+                  ID: serverEvent.ID,
+                  Properties: replyProps,
+                  WGID: serverEvent.WGID,
+                }
+              }));
+            }
+          } catch (e) {
+            // There should be a proper error response here, but for now, we just log.
+            // This is because we know something failed, but APL doesn't and
+            // just waits 3s to mark the WG as failed.
+            console.error("WG Error: ", e);
+            // wsSend({...});
+          }
+        } else if (keys[0] == "NQ") {
+          const nqEvent = evData.NQ;
+          console.log("300", nqEvent, nqEvent.ID, nqEvent.Event, nqEvent.Info);
+          const { Event, ID, Info, NoCallback = 0 } = nqEvent;
+
+          const existingData = JSON.parse(getObjectById(dataRef.current, ID));
+
+          const appElement = getObjectById(dataRef.current, ID);
+
+          // Do nothing unless NoCallback=0 (default)
+          const nqCallback = NoCallback !== 0 ? () => { } : (ev) => { webSocket.send(JSON.stringify({ Event: ev })) };
+          const prevSuppressingCallbacks = Globals.set('suppressingCallbacks', NoCallback === 1);
+
+          try {
+            if (Event && Event == "Configure") {
+              handleData(
+                {
+                  ID: ID,
+                  Properties: {
+                    ...appElement?.Properties,
+                    Posn: [Info[0], Info[1]],
+                    Size: [Info[2], Info[3]],
+                  },
                 },
-              })
-            );
-            localStorage.setItem(
-              "nqCurCell",
-              JSON.stringify({
+                "WS"
+              );
+              nqCallback({
+                EventName: Event,
+                ID: ID,
+                Info: Info,
+              });
+            } else if (Event == "SetPing") {
+              window.EWC.pingMS = Info[0] * 1000;
+              return;
+            } else if (
+              (Event && Event == "ItemDown") ||
+              (Event && Event == "GotFocus")
+            ) {
+              if (Event && Event == "GotFocus") {
+                localStorage.setItem("current-focus", ID);
+                const el = document.getElementById(ID);
+                if (el) el.focus();
+              }
+
+              const existingData = JSON.parse(getObjectById(dataRef.current, ID));
+
+              const exists =
+                existingData?.Properties?.Event &&
+                existingData?.Properties?.Event.some((item) => item[0] === Event);
+
+              if (!exists) return; // TODO shouldn't this still report back?!
+              nqCallback({
+                EventName: Event,
                 ID,
                 Info,
-              })
-            );
-          } else if (Event == "Select") {
-            const element = document.getElementById(nqEvent.ID);
-            if (element) element.click();
-            nqCallback({
-              EventName: "Select",
-              ID: ID,
-            });
-          } else if (Event == "Scroll") {
-            const thumbValue = Info[1];
-            console.log("300", { thumbValue });
-            handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
-            const element = document.getElementById(nqEvent.ID);
-            element && element.focus();
-            nqCallback({
-              EventName: "Scroll",
-              ID: ID,
-              Info: [Info[0], Info[1]],
-            });
-          } else {
-            // All other NoCallback = 0 events should be echoed!
-            nqCallback({
-              EventName: Event,
-              ID: ID,
-              Info: Info,
-            });
-          }
-          return;
-        } finally {
-          Globals.set('suppressingCallbacks', prevSuppressingCallbacks);
-        }
-      } else if (keys[0] == "EC") {
-        const serverEvent = evData.EC;
+              });
+            } else if (Event == "KeyPress") {
+              // ch is often going to be a character, but it may be a code such as
+              // 'LC' for ArrowLeft
+              // There should be only one element
+              // IMPORTANT:
+              // We try to imitate ⎕WC as much as possible, but this behaves in a
+              // slightly odd fashion, so this is done largely from experimentation.
+              // 
+              // Example of keycodes:
+              //   * DB (Delete backspace)
+              //   * DI (Delete Item) *does* do forward delete or deletes the selection
+              //   * DK (Delete blocK) will remove to the end of the line
+              //   * HT (Horizontal tab) which needs to be able to move from element
+              //     to element
+              // Some keycodes have no noticeable effect in ⎕WC...
+              // ...so we blindly echo any KeyPress event to the server, and we
+              // implement handlers for the subset of codes we are interested in.
+              const ch = Info[0];
 
-        const { EventID, Proceed } = serverEvent;
-        setProceedEventArray((prev) => {
-          console.log("use effect", currentEventRef.current);
-          // console.log("hello 1", currentEvent.curEvent)
-          const hasEventID = Object.keys(prev).some((key) =>
-            key.includes(EventID)
-          );
-          return {
-            ...prev,
-            [`${EventID}${currentEventRef.current.curEvent}`]: Proceed,
-          };
-        });
-        // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
-        setProceed(Proceed);
-        
-        // Clear the pending keypress event flag when we receive the EC response
-        if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
-          setPendingKeypressEvent(null);
-        }
-        
-        // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
-      } else if (keys[0] == "EX") {
-        const serverEvent = evData.EX;
+              if (ch.length == 1) {
+                // Single character insert
+                const el = document.getElementById(ID);
+                el.dispatchEvent(new KeyboardEvent("keydown", { key: ch }));
+              } else {
+                const kph = keypressHandlers[ch];
+                if (kph) {
+                  const globalState = {
+                    pendingKeypressEvent,
+                    socketData,
+                    nqEvents,
+                    proceed,
+                    proceedEventArray
+                  };
+                  kph(handleData, ID, existingData?.Properties, globalState);
+                }
+              }
 
-        deleteObjectsById(dataRef.current, serverEvent?.ID);
-      } else if (keys[0] == "WX") {
-        const serverEvent = evData.WX;
-        const { Method, Info, WGID, ID } = serverEvent;
-        // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
-
-        if (Method == "GetTextSize") {
-          // Certain code re-encloses Info - if we can get to two values, we do that
-          // A real example: [[[["This is a text","This is a text"],"#.FntSys"]]]
-          let myInfo = Info;
-          while (Array.isArray(myInfo) && myInfo.length === 1) {
-            myInfo = myInfo[0];
-          }
-          // We failed to get to 2, so we have to just trust whatever the original was:
-          if (myInfo.length !== 2) {
-            myInfo = Info;
-          }
-          const strings = myInfo && myInfo[0];
-          const font = JSON.parse(
-            getObjectById(dataRef.current, myInfo && myInfo[1])
-          );
-          const textDimensions = Text.calculateTextDimensions(strings, font);
-          const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
-          // console.log(event);
-          return webSocket.send(event);
-        } else if (Method == "OnlyDQ") {
-          let event;
-          if (!!Info?.[0]) {
-            event = JSON.stringify({
-              WX: { Info: [[ID, 150, 300]], WGID: WGID },
-            });
-          } else {
-            event = JSON.stringify({ WX: { Info: [], WGID: WGID } });
-          }
-          webSocket.send(event);
-        } else if (Method == "GetFocus") {
-          const focusedID = localStorage.getItem("current-focus");
-          const event = JSON.stringify({
-            WX: { Info: !focusedID ? [] : [focusedID], WGID },
-          });
-          console.log(event);
-          webSocket.send(event);
-        } else if (Method == "SetCookie") {
-          Info.forEach((c) => {
-            document.cookie = c;
-          });
-          webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
-        } else if (Method == "GetCookie") {
-          const found = document.cookie
-            .split("; ")
-            .map((c) => c.split("="))
-            .filter((c) => Info.includes(c[0]));
-          webSocket.send(JSON.stringify({ WX: { Info: found, WGID } }));
-        } else if (Method == "SetTitle") {
-          document.title = Info[0];
-          webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
-        } else if (Method == "GetTitle") {
-          webSocket.send(
-            JSON.stringify({ WX: { Info: [document.title], WGID } })
-          );
-        } else if (Method == "EvalJS") {
-          // Here be dragons!
-          const results = Info.map((code) => {
-            try {
-              return [0, eval?.(code)];
-            } catch (e) {
-              return [-1, e.toString()];
+              nqCallback({
+                EventName: "KeyPress",
+                ID: ID,
+                Info: Info,
+              });
+            } else if (Event == "CellMove") {
+              console.log("296", { nqEvent });
+              setNqEvents([...nqEvents, nqEvent]);
+              localStorage.setItem(
+                ID,
+                JSON.stringify({
+                  Event: {
+                    CurCell: [Info[0], Info[1]],
+                  },
+                })
+              );
+              localStorage.setItem(
+                "nqCurCell",
+                JSON.stringify({
+                  ID,
+                  Info,
+                })
+              );
+            } else if (Event == "Select") {
+              const element = document.getElementById(nqEvent.ID);
+              if (element) element.click();
+              nqCallback({
+                EventName: "Select",
+                ID: ID,
+              });
+            } else if (Event == "Scroll") {
+              const thumbValue = Info[1];
+              console.log("300", { thumbValue });
+              handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+              const element = document.getElementById(nqEvent.ID);
+              element && element.focus();
+              nqCallback({
+                EventName: "Scroll",
+                ID: ID,
+                Info: [Info[0], Info[1]],
+              });
+            } else {
+              // All other NoCallback = 0 events should be echoed!
+              nqCallback({
+                EventName: Event,
+                ID: ID,
+                Info: Info,
+              });
             }
-          });
-          webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
-        }
-      } else if (keys[0] == "Options") {
-        handleData(evData.Options, "WC");
-        console.log("label", evData.Options);
+            return;
+          } finally {
+            Globals.set('suppressingCallbacks', prevSuppressingCallbacks);
+          }
+        } else if (keys[0] == "EC") {
+          const serverEvent = evData.EC;
 
-        evData.Options.ID == "Fonts" &&
-          setFontScale(evData.Options.Properties.Scale);
-        evData.Options.ID == "Fonts" &&
-          console.log("label", evData.Options.Properties.Scale);
-        evData.Options.ID == "Mode" &&
-          setOptions(evData.Options.Properties);
-        if (evData.Options.ID == "Colors")
-          setColorFunc(evData.Options.Properties.Standard);
-      } else if (keys[0] == "FormatCell") {
-        const formatCellEvent = evData;
-        const { FormatCell } = formatCellEvent;
-        const refData = JSON.parse(
-          getObjectById(dataRef.current, FormatCell?.ID)
-        );
-        const { Properties } = refData;
-        const updatedFormattedValues = Properties?.FormattedValues;
-        updatedFormattedValues[FormatCell.Cell[0] - 1][FormatCell.Cell[1] - 1] =
-          FormatCell?.FormattedValue;
-        handleData(
-          {
-            ID: FormatCell?.ID,
-            Properties: {
-              ...refData?.Properties,
-              FormattedValues: updatedFormattedValues,
+          const { EventID, Proceed } = serverEvent;
+          setProceedEventArray((prev) => {
+            console.log("use effect", currentEventRef.current);
+            // console.log("hello 1", currentEvent.curEvent)
+            const hasEventID = Object.keys(prev).some((key) =>
+              key.includes(EventID)
+            );
+            return {
+              ...prev,
+              [`${EventID}${currentEventRef.current.curEvent}`]: Proceed,
+            };
+          });
+          // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
+          setProceed(Proceed);
+
+          // Clear the pending keypress event flag when we receive the EC response
+          if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
+            setPendingKeypressEvent(null);
+          }
+
+          // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
+        } else if (keys[0] == "EX") {
+          const serverEvent = evData.EX;
+
+          deleteObjectsById(dataRef.current, serverEvent?.ID);
+        } else if (keys[0] == "WX") {
+          const serverEvent = evData.WX;
+          const { Method, Info, WGID, ID } = serverEvent;
+          // const calculateTextDimensions = (wordsArray, fontSize = 11) => {
+
+          if (Method == "GetTextSize") {
+            // Certain code re-encloses Info - if we can get to two values, we do that
+            // A real example: [[[["This is a text","This is a text"],"#.FntSys"]]]
+            let myInfo = Info;
+            while (Array.isArray(myInfo) && myInfo.length === 1) {
+              myInfo = myInfo[0];
+            }
+            // We failed to get to 2, so we have to just trust whatever the original was:
+            if (myInfo.length !== 2) {
+              myInfo = Info;
+            }
+            const strings = myInfo && myInfo[0];
+            const font = JSON.parse(
+              getObjectById(dataRef.current, myInfo && myInfo[1])
+            );
+            const textDimensions = Text.calculateTextDimensions(strings, font);
+            const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
+            // console.log(event);
+            return webSocket.send(event);
+          } else if (Method == "OnlyDQ") {
+            let event;
+            if (!!Info?.[0]) {
+              event = JSON.stringify({
+                WX: { Info: [[ID, 150, 300]], WGID: WGID },
+              });
+            } else {
+              event = JSON.stringify({ WX: { Info: [], WGID: WGID } });
+            }
+            webSocket.send(event);
+          } else if (Method == "GetFocus") {
+            const focusedID = localStorage.getItem("current-focus");
+            const event = JSON.stringify({
+              WX: { Info: !focusedID ? [] : [focusedID], WGID },
+            });
+            console.log(event);
+            webSocket.send(event);
+          } else if (Method == "SetCookie") {
+            Info.forEach((c) => {
+              document.cookie = c;
+            });
+            webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
+          } else if (Method == "GetCookie") {
+            const found = document.cookie
+              .split("; ")
+              .map((c) => c.split("="))
+              .filter((c) => Info.includes(c[0]));
+            webSocket.send(JSON.stringify({ WX: { Info: found, WGID } }));
+          } else if (Method == "SetTitle") {
+            document.title = Info[0];
+            webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
+          } else if (Method == "GetTitle") {
+            webSocket.send(
+              JSON.stringify({ WX: { Info: [document.title], WGID } })
+            );
+          } else if (Method == "EvalJS") {
+            // Here be dragons!
+            const results = Info.map((code) => {
+              try {
+                return [0, eval?.(code)];
+              } catch (e) {
+                return [-1, e.toString()];
+              }
+            });
+            webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
+          }
+        } else if (keys[0] == "Options") {
+          handleData(evData.Options, "WC");
+          console.log("label", evData.Options);
+
+          evData.Options.ID == "Fonts" &&
+            setFontScale(evData.Options.Properties.Scale);
+          evData.Options.ID == "Fonts" &&
+            console.log("label", evData.Options.Properties.Scale);
+          evData.Options.ID == "Mode" &&
+            setOptions(evData.Options.Properties);
+          if (evData.Options.ID == "Colors")
+            setColorFunc(evData.Options.Properties.Standard);
+        } else if (keys[0] == "FormatCell") {
+          const formatCellEvent = evData;
+          const { FormatCell } = formatCellEvent;
+          const refData = JSON.parse(
+            getObjectById(dataRef.current, FormatCell?.ID)
+          );
+          const { Properties } = refData;
+          const updatedFormattedValues = Properties?.FormattedValues;
+          updatedFormattedValues[FormatCell.Cell[0] - 1][FormatCell.Cell[1] - 1] =
+            FormatCell?.FormattedValue;
+          handleData(
+            {
+              ID: FormatCell?.ID,
+              Properties: {
+                ...refData?.Properties,
+                FormattedValues: updatedFormattedValues,
+              },
             },
-          },
-          "WS"
-        );
+            "WS"
+          );
+        }
       }
+      requestAnimationFrame(() => {
+        setTimeout(handleMessage, 1);
+      });
     };
   };
 
