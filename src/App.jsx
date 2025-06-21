@@ -1782,7 +1782,14 @@ const App = () => {
                 if (handlerKey && keypressHandlers[handlerKey]) {
                   // Use the appropriate keypress handler for special keys
                   console.log('ECDBG: Applying special key handler:', handlerKey, 'for key:', matchingEvent.key);
-                  keypressHandlers[handlerKey](handleData, matchingEvent.componentId, componentData);
+                  
+                  // For handlers that need cursor position (like DB), use captured SelText
+                  const handlerData = { 
+                    ...componentData, 
+                    SelText: matchingEvent.selText 
+                  };
+                  console.log('ECDBG: Calling handler with SelText:', matchingEvent.selText);
+                  keypressHandlers[handlerKey](handleData, matchingEvent.componentId, handlerData);
                 } else if (matchingEvent.key.length === 1) {
                   // Handle regular character input
                   const start = editElement.selectionStart;

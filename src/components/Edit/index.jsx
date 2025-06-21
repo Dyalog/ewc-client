@@ -416,11 +416,17 @@ const Edit = ({
     // Set pending keypress flag for HT handler, but only for non-modifier keys
     const modifierKeys = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock'];
     if (!modifierKeys.includes(e.key)) {
+      // Capture current cursor position for handlers that need it (like DB)
+      const currentSelStart = inputRef.current?.selectionStart || 0;
+      const currentSelEnd = inputRef.current?.selectionEnd || 0;
+      const currentSelText = [currentSelStart + 1, currentSelEnd + 1]; // Convert to 1-indexed for APL
+      
       const pendingEvent = { 
         key: e.key, 
         eventId, 
         componentId: data?.ID,
-        shiftKey: e.shiftKey 
+        shiftKey: e.shiftKey,
+        selText: currentSelText
       };
       console.log('ECDBG: Adding pendingKeypressEvent to queue for non-modifier key:', pendingEvent);
       addPendingKeypressEvent(pendingEvent);
