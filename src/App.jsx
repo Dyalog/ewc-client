@@ -532,6 +532,7 @@ const App = () => {
       }
       
       const handleMessage = function() {
+        console.log('ECDBG: Processing message:', keys[0], evData);
         if (keys[0] == "WC") {
           let windowCreationEvent = evData.WC;
           if (windowCreationEvent?.Properties?.Type == "Form") {
@@ -1747,7 +1748,7 @@ const App = () => {
           setProceed(Proceed);
 
           // Handle pending keypress based on Proceed value
-          console.log('EC handler: EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvent =', pendingKeypressEvent);
+          console.log('ECDBG: EC handler - EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvent =', pendingKeypressEvent);
           if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
             if (Proceed === 1) {
               // Apply the pending keystroke to the Edit field
@@ -1768,7 +1769,7 @@ const App = () => {
                 
                 if (handlerKey && keypressHandlers[handlerKey]) {
                   // Use the appropriate keypress handler for special keys
-                  console.log('Applying special key handler:', handlerKey, 'for key:', pendingKeypressEvent.key);
+                  console.log('ECDBG: Applying special key handler:', handlerKey, 'for key:', pendingKeypressEvent.key);
                   keypressHandlers[handlerKey](handleData, pendingKeypressEvent.componentId, componentData);
                 } else if (pendingKeypressEvent.key.length === 1) {
                   // Handle regular character input
@@ -1791,13 +1792,13 @@ const App = () => {
                     },
                   }, "WS");
                   
-                  console.log('Applied character keystroke:', pendingKeypressEvent.key, 'new value:', newValue);
+                  console.log('ECDBG: Applied character keystroke:', pendingKeypressEvent.key, 'new value:', newValue);
                 } else {
-                  console.log('Unknown key, not applying:', pendingKeypressEvent.key);
+                  console.log('ECDBG: Unknown key, not applying:', pendingKeypressEvent.key);
                 }
               }
             } else {
-              console.log('Keystroke rejected by APL, not applying:', pendingKeypressEvent.key);
+              console.log('ECDBG: Keystroke rejected by APL, not applying:', pendingKeypressEvent.key);
             }
             setPendingKeypressEvent(null);
           }
