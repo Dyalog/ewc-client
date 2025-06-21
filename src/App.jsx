@@ -719,8 +719,13 @@ const App = () => {
             const globalText = refData?.Properties?.Text;
             const globalValue = refData?.Properties?.Value;
             const globalSelText = refData?.Properties?.SelText;
+            
+            // Also check what DOM says for comparison
+            const input = document.getElementById(serverEvent.ID);
+            const domCursor = input ? [input.selectionStart + 1, input.selectionEnd + 1] : null;
 
-            console.log('ARGH WG reading from global tree:', { globalText, globalValue, globalSelText });
+            console.log('ARGH WG reading - global tree:', { globalText, globalValue, globalSelText });
+            console.log('ARGH WG reading - DOM cursor (1-indexed):', domCursor);
 
             if (!localStorage.getItem(serverEvent.ID)) {
               // Prefer global tree data over component props

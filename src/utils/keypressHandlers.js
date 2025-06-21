@@ -81,15 +81,24 @@ export default {
     const el = document.getElementById(id);
     let start = data.SelText[0]-1;
     let end = data.SelText[1]-1;
+    console.log('ARGH DB handler: initial SelText from APL:', data.SelText, 'converted to:', start, end);
     if (start < 0) start = 0;
     if (end < 0) end = 0;
+    
+    console.log('ARGH DB handler: before deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
+    
     if (start === end && start > 0) {
       el.value = el.value.slice(0, start - 1) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start - 1;
+      console.log('ARGH DB handler: single cursor case, set cursor to:', start - 1);
     } else {
       el.value = el.value.slice(0, start) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start;
+      console.log('ARGH DB handler: selection case, set cursor to:', start);
     }
+    
+    console.log('ARGH DB handler: after deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
+    
     // Update internal model too
     handleData(
       {
@@ -97,12 +106,23 @@ export default {
         Properties: {
           ...data,
           Text: el.value,
-          Value: el.Value,
+          Value: el.value,
+          SelText: [el.selectionStart + 1, el.selectionEnd + 1], // Convert to 1-indexed
         },
       },
       "WS"
     );
 
+    console.log('ARGH DB handler: after handleData, cursor:', el.selectionStart, el.selectionEnd);
+    
+    // Add a delayed check to see if cursor gets moved after we return
+    setTimeout(() => {
+      console.log('ARGH DB handler: cursor 10ms later:', el.selectionStart, el.selectionEnd);
+    }, 10);
+    setTimeout(() => {
+      console.log('ARGH DB handler: cursor 50ms later:', el.selectionStart, el.selectionEnd);
+    }, 50);
+    
     return true;
   },
 };
