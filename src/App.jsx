@@ -1749,6 +1749,9 @@ const App = () => {
 
           // Handle pending keypress based on Proceed value
           console.log('ECDBG: EC handler - EventID =', EventID, 'Proceed =', Proceed, 'pendingKeypressEvent =', pendingKeypressEvent);
+          if (pendingKeypressEvent) {
+            console.log('ECDBG: EventID match check:', EventID, '===', pendingKeypressEvent.eventId, '?', EventID === pendingKeypressEvent.eventId);
+          }
           if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
             if (Proceed === 1) {
               // Apply the pending keystroke to the Edit field
