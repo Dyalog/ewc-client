@@ -41,7 +41,7 @@ const Edit = ({
     handleData,
     fontScale,
     inheritedProperties,
-    setPendingKeypressEvent
+    pendingKeypressEventRef
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -413,13 +413,17 @@ const Edit = ({
     const eventId = uuidv4();
     setEventId(eventId);
     
+    console.log('CLAUDE: Setting pending keypress event:', eventId, e.key, data?.ID);
+    
     // Set pending keypress flag for HT handler
-    setPendingKeypressEvent({ 
+    pendingKeypressEventRef.current = { 
       key: e.key, 
       eventId, 
       componentId: data?.ID,
       shiftKey: e.shiftKey 
-    });
+    };
+    
+    console.log('CLAUDE: Pending keypress event set, about to send to APL');
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;

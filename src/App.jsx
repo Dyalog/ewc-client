@@ -38,7 +38,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
-  const [pendingKeypressEvent, setPendingKeypressEvent] = useState(null);
+  const pendingKeypressEventRef = useRef(null);
   const [nqEvents, setNqEvents] = useState([]);
   const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
@@ -1732,6 +1732,8 @@ const App = () => {
           const serverEvent = evData.EC;
 
           const { EventID, Proceed } = serverEvent;
+          console.log('CLAUDE: Received EC event:', { EventID, Proceed, pendingKeypressEventRef: pendingKeypressEventRef.current });
+          
           setProceedEventArray((prev) => {
             console.log("use effect", currentEventRef.current);
             // console.log("hello 1", currentEvent.curEvent)
@@ -1746,43 +1748,54 @@ const App = () => {
           // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
           setProceed(Proceed);
 
-          // Handle pending keypress based on Proceed value
-          if (pendingKeypressEvent && pendingKeypressEvent.eventId === EventID) {
+          // Handle pending keypress based on Proceed value - use ref instead of state
+          const currentPendingEvent = pendingKeypressEventRef.current;
+          if (currentPendingEvent && currentPendingEvent.eventId === EventID) {
+            console.log('CLAUDE: Found matching pending keypress event:', currentPendingEvent);
+            
             if (Proceed === 1) {
+              console.log('CLAUDE: APL approved keystroke, applying...');
               // Apply the pending keystroke to the Edit field
-              const editElement = document.getElementById(pendingKeypressEvent.componentId);
+              const editElement = document.getElementById(currentPendingEvent.componentId);
+              console.log('CLAUDE: Found edit element:', editElement, 'with value:', editElement?.value);
+              
               if (editElement) {
-                const componentData = JSON.parse(getObjectById(dataRef.current, pendingKeypressEvent.componentId));
+                const componentData = JSON.parse(getObjectById(dataRef.current, currentPendingEvent.componentId));
+                console.log('CLAUDE: Component data:', componentData);
                 
                 // Map JavaScript key names to keypressHandler names
                 const keyMap = {
                   'Tab': 'HT',
-                  'ArrowLeft': pendingKeypressEvent.shiftKey ? 'Lc' : 'LC',
-                  'ArrowRight': pendingKeypressEvent.shiftKey ? 'Rc' : 'RC', 
+                  'ArrowLeft': currentPendingEvent.shiftKey ? 'Lc' : 'LC',
+                  'ArrowRight': currentPendingEvent.shiftKey ? 'Rc' : 'RC', 
                   'Backspace': 'DB',
                   'Delete': 'DI'
                 };
                 
-                const handlerKey = keyMap[pendingKeypressEvent.key];
+                const handlerKey = keyMap[currentPendingEvent.key];
                 
                 if (handlerKey && keypressHandlers[handlerKey]) {
                   // Use the appropriate keypress handler for special keys
-                  console.log('Applying special key handler:', handlerKey, 'for key:', pendingKeypressEvent.key);
-                  keypressHandlers[handlerKey](handleData, pendingKeypressEvent.componentId, componentData);
-                } else if (pendingKeypressEvent.key.length === 1) {
+                  console.log('CLAUDE: Applying special key handler:', handlerKey, 'for key:', currentPendingEvent.key);
+                  keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData);
+                } else if (currentPendingEvent.key.length === 1) {
                   // Handle regular character input
                   const start = editElement.selectionStart;
                   const end = editElement.selectionEnd;
                   const currentValue = editElement.value;
-                  const newValue = currentValue.slice(0, start) + pendingKeypressEvent.key + currentValue.slice(end);
+                  console.log('CLAUDE: Before update - start:', start, 'end:', end, 'currentValue:', currentValue);
+                  
+                  const newValue = currentValue.slice(0, start) + currentPendingEvent.key + currentValue.slice(end);
+                  console.log('CLAUDE: Calculated newValue:', newValue);
                   
                   // Update the DOM
                   editElement.value = newValue;
                   editElement.setSelectionRange(start + 1, start + 1);
+                  console.log('CLAUDE: Updated DOM - element.value:', editElement.value, 'selection:', editElement.selectionStart, editElement.selectionEnd);
                   
                   // Update the global tree so WG requests see the new value
                   handleData({
-                    ID: pendingKeypressEvent.componentId,
+                    ID: currentPendingEvent.componentId,
                     Properties: {
                       Text: newValue,
                       Value: newValue,
@@ -1790,15 +1803,24 @@ const App = () => {
                     },
                   }, "WS");
                   
-                  console.log('Applied character keystroke:', pendingKeypressEvent.key, 'new value:', newValue);
+                  console.log('CLAUDE: Applied character keystroke:', currentPendingEvent.key, 'new value:', newValue);
                 } else {
-                  console.log('Unknown key, not applying:', pendingKeypressEvent.key);
+                  console.log('CLAUDE: Unknown key, not applying:', currentPendingEvent.key);
                 }
+              } else {
+                console.log('CLAUDE: ERROR - Could not find edit element with ID:', currentPendingEvent.componentId);
               }
             } else {
-              console.log('Keystroke rejected by APL, not applying:', pendingKeypressEvent.key);
+              console.log('CLAUDE: Keystroke rejected by APL, not applying:', currentPendingEvent.key);
             }
-            setPendingKeypressEvent(null);
+            pendingKeypressEventRef.current = null;
+          } else {
+            console.log('CLAUDE: No matching pending keypress event found');
+            if (pendingKeypressEventRef.current) {
+              console.log('CLAUDE: Pending event ID:', pendingKeypressEventRef.current.eventId, 'vs received:', EventID);
+            } else {
+              console.log('CLAUDE: No pending keypress event at all');
+            }
           }
 
           // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
@@ -1895,8 +1917,7 @@ const App = () => {
           setProceed,
           proceedEventArray,
           setProceedEventArray,
-          pendingKeypressEvent,
-          setPendingKeypressEvent,
+          pendingKeypressEventRef,
           colors,
           fontScale,
           nqEvents,
