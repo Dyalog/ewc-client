@@ -413,8 +413,6 @@ const Edit = ({
     const eventId = uuidv4();
     setEventId(eventId);
     
-    console.log('CLAUDE: Setting pending keypress event:', eventId, e.key, data?.ID);
-    
     // Set pending keypress flag for HT handler
     pendingKeypressEventRef.current = { 
       key: e.key, 
@@ -422,8 +420,6 @@ const Edit = ({
       componentId: data?.ID,
       shiftKey: e.shiftKey 
     };
-    
-    console.log('CLAUDE: Pending keypress event set, about to send to APL');
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;
