@@ -1766,11 +1766,11 @@ const App = () => {
                   'Delete': 'DI'
                 };
                 
-                const handlerKey = keyMap[currentPendingEvent.key];
+                const handlerKey = keyMap[currentPendingEvent.key] || currentPendingEvent.key;
                 
                 if (handlerKey && keypressHandlers[handlerKey]) {
                   // Use the appropriate keypress handler for special keys
-                  keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData);
+                  keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData.Properties);
                 } else if (currentPendingEvent.key.length === 1) {
                   // Handle regular character input
                   const start = editElement.selectionStart;

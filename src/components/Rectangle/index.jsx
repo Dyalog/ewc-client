@@ -1,7 +1,5 @@
 import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
-import Canvas from '../Canvas';
-import { Chart, ChartSeries, ChartSeriesItem } from '@progress/kendo-react-charts';
 
 const Rectangle = ({
   data,

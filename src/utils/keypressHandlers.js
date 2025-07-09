@@ -1,11 +1,9 @@
 // Return true/false, in order to decide on sending a default response
 // Return an object to send a customised response
 
-// function startEnd(el, selText)
-
 export default {
   // Left Cursor
-  'LC': function(handleData, id, data) {
+  'LC': function(handleData, id, props) {
     const el = document.getElementById(id);
     if (el.selectionStart > 0) {
       el.selectionStart = el.selectionEnd = el.selectionStart - 1;
@@ -23,7 +21,7 @@ export default {
     return true;
   },
   // Right Cursor  
-  'RC': function(handleData, id, data) {
+  'RC': function(handleData, id, props) {
     const el = document.getElementById(id);
     if (el.selectionStart < el.value.length) {
       el.selectionStart = el.selectionEnd = el.selectionStart + 1;
@@ -38,7 +36,7 @@ export default {
     return true;
   },
   // Left Cursor with Shift (extend selection left)
-  'Lc': function(handleData, id, data) {
+  'Lc': function(handleData, id, props) {
     const el = document.getElementById(id);
     if (el.selectionStart > 0) {
       el.selectionStart = el.selectionStart - 1;
@@ -54,7 +52,7 @@ export default {
     return true;
   },
   // Right Cursor with Shift (extend selection right)
-  'Rc': function(handleData, id, data) {
+  'Rc': function(handleData, id, props) {
     const el = document.getElementById(id);
     if (el.selectionEnd < el.value.length) {
       el.selectionEnd = el.selectionEnd + 1;
@@ -70,7 +68,7 @@ export default {
     return true;
   },
   // Horizontal Tab
-  'HT': function(handleData, id, data, globalState) {
+  'HT': function(handleData, id, props) {
     const currentElement = document.getElementById(id);
     
     // Get commonly focusable elements plus any with explicit tabindex
@@ -116,7 +114,7 @@ export default {
     return false;
   },
   // Delete Item
-  'DI': function(handleData, id, data) {
+  'DI': function(handleData, id, props) {
     const el = document.getElementById(id);
     let value = el.value;
     const cursorPos = el.selectionStart; // Save cursor position
@@ -140,7 +138,7 @@ export default {
     handleData({
       ID: id,
       Properties: {
-        ...data,
+        ...props,
         Value: value,
         Text: value,
         SelText: [clampedStart, clampedEnd],
@@ -156,27 +154,21 @@ export default {
     // TODO as above, requires fixes to Edit fields for setting Value and Text!!!
   },
   // Delete Backspace
-  'DB': function(handleData, id, data) {
+  'DB': function(handleData, id, props) {
+    console.log('ARGHWTF', id, props)
     const el = document.getElementById(id);
-    let start = data.SelText[0]-1;
-    let end = data.SelText[1]-1;
-    console.log('ARGH DB handler: initial SelText from APL:', data.SelText, 'converted to:', start, end);
+    let start = props.SelText[0]-1;
+    let end = props.SelText[1]-1;
     if (start < 0) start = 0;
     if (end < 0) end = 0;
-    
-    console.log('ARGH DB handler: before deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
     
     if (start === end && start > 0) {
       el.value = el.value.slice(0, start - 1) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start - 1;
-      console.log('ARGH DB handler: single cursor case, set cursor to:', start - 1);
     } else {
       el.value = el.value.slice(0, start) + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start;
-      console.log('ARGH DB handler: selection case, set cursor to:', start);
     }
-    
-    console.log('ARGH DB handler: after deletion, value:', el.value, 'cursor:', el.selectionStart, el.selectionEnd);
     
     // Update internal model too
     const textLength = el.value.length;
@@ -186,7 +178,7 @@ export default {
       {
         ID: id,
         Properties: {
-          ...data,
+          ...props,
           Text: el.value,
           Value: el.value,
           SelText: [clampedStart, clampedEnd],
@@ -194,16 +186,6 @@ export default {
       },
       "WS"
     );
-
-    console.log('ARGH DB handler: after handleData, cursor:', el.selectionStart, el.selectionEnd);
-    
-    // Add a delayed check to see if cursor gets moved after we return
-    setTimeout(() => {
-      console.log('ARGH DB handler: cursor 10ms later:', el.selectionStart, el.selectionEnd);
-    }, 10);
-    setTimeout(() => {
-      console.log('ARGH DB handler: cursor 50ms later:', el.selectionStart, el.selectionEnd);
-    }, 50);
     
     return true;
   },

@@ -404,7 +404,9 @@ const Edit = ({
     // - the problem is that we can end up in a loop here, with certain code,
     // so we set a global flag for the duration of an NQ'd KeyPress with
     // NoCallback set to 1.
-    if (Globals.get('suppressingCallbacks')) return;
+    if (Globals.get('suppressingCallbacks')) {
+      return;
+    }
 
     // Prevent default behavior for keys that APL might handle
     console.log('ARGH preventDefault called for:', e.key, 'inputValue:', inputValue, 'focused:', document.activeElement === inputRef.current);
