@@ -155,7 +155,6 @@ export default {
   },
   // Delete Backspace
   'DB': function(handleData, id, props) {
-    console.log('ARGHWTF', id, props)
     const el = document.getElementById(id);
     let start = props.SelText[0]-1;
     let end = props.SelText[1]-1;

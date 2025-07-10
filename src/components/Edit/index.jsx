@@ -154,7 +154,6 @@ const Edit = ({
     const clampedStart = Math.max(1, Math.min(rawStart, textLength + 1));
     const clampedEnd = Math.max(1, Math.min(rawEnd, textLength + 1));
     
-    console.log('ARGH updateSelText: DOM cursor (0-indexed):', el.selectionStart, el.selectionEnd, 'converted to 1-indexed:', clampedStart, clampedEnd);
     
     // Update global tree for WG requests
     handleData(
@@ -195,75 +194,78 @@ const Edit = ({
     decideInputValue();
   }, [decideInputValue]);
 
-  // Debug: log any data prop changes
-  useEffect(() => {
-    console.log('ARGH Data prop changed:', data);
-  }, [data]);
 
-  // Listen for Text/Value updates from APL via WS messages
+  // Single Properties observer to handle all property changes atomically
   useEffect(() => {
-    const textFromAPL = data?.Properties?.Text;
-    const valueFromAPL = data?.Properties?.Value;
+    const textFromProperties = data?.Properties?.Text;
+    const valueFromProperties = data?.Properties?.Value;
+    const selTextFromProperties = data?.Properties?.SelText;
     
-    console.log('ARGH Edit WS update check:', { textFromAPL, valueFromAPL, currentInputValue: inputValue, currentEmitValue: emitValue });
     
-    // APL is source of truth - always update when APL sends new Text/Value
-    if (textFromAPL !== undefined) {
-      console.log('ARGH Updating inputValue from APL Text:', textFromAPL);
-      
-      // Check if this update is from a keystroke operation (DB handler already updated DOM)
-      const input = inputRef.current;
-      const currentDOMValue = input?.value;
-      
-      if (currentDOMValue === textFromAPL) {
-        console.log('ARGH Skipping React state update - DOM already has correct value from keystroke handler');
-        // Just update React state silently - don't call setState which would trigger re-render
-        // The DB handler already updated the DOM correctly
-        return;
-      } else {
-        console.log('ARGH Updating React state - this is a real APL update');
-        setInputValue(textFromAPL);
-        setEmitValue(textFromAPL);
-      }
-    } else if (valueFromAPL !== undefined) {
-      console.log('ARGH Updating inputValue from APL Value:', valueFromAPL);
-      setInputValue(valueFromAPL);
-      setEmitValue(valueFromAPL);
+    const input = inputRef.current;
+    if (!input) return;
+    
+    // Determine what text value to use
+    let newTextValue = undefined;
+    if (textFromProperties !== undefined) {
+      newTextValue = textFromProperties;
+    } else if (valueFromProperties !== undefined) {
+      newTextValue = valueFromProperties;
     }
-  }, [data?.Properties?.Text, data?.Properties?.Value]);
-
-  // Listen for SelText updates from APL via WS messages
-  useEffect(() => {
-    const selTextFromAPL = data?.Properties?.SelText;
     
-    if (selTextFromAPL && Array.isArray(selTextFromAPL) && selTextFromAPL.length === 2) {
-      console.log('ARGH SelText WS update from APL:', selTextFromAPL);
+    // Handle text changes
+    if (newTextValue !== undefined) {
+      const currentDOMValue = input.value;
       
-      const input = inputRef.current;
-      if (input) {
-        // Convert from 1-indexed APL to 0-indexed JS
-        const start = Math.max(0, selTextFromAPL[0] - 1);
-        const end = Math.max(0, selTextFromAPL[1] - 1);
-        
-        // Clamp to valid range
-        const textLength = input.value.length;
-        const clampedStart = Math.min(start, textLength);
-        const clampedEnd = Math.min(end, textLength);
-        
-        // Only update cursor if it's actually different from current position
-        // This prevents overriding cursor movements from arrow keys or other operations
-        const currentStart = input.selectionStart;
-        const currentEnd = input.selectionEnd;
-        
-        if (currentStart !== clampedStart || currentEnd !== clampedEnd) {
-          console.log('ARGH Setting cursor from APL SelText:', selTextFromAPL, 'converted to 0-indexed:', clampedStart, clampedEnd, 'current:', currentStart, currentEnd);
-          input.setSelectionRange(clampedStart, clampedEnd);
-        } else {
-          console.log('ARGH Skipping SelText update - cursor already at correct position:', clampedStart, clampedEnd);
+      if (currentDOMValue === newTextValue) {
+        // DOM is already correct, just update React state without re-render
+        if (inputValue !== newTextValue) {
+          setInputValue(newTextValue);
+          setEmitValue(newTextValue);
         }
+      } else {
+        
+        // Save current cursor position before React re-render
+        const savedStart = input.selectionStart;
+        const savedEnd = input.selectionEnd;
+        
+        setInputValue(newTextValue);
+        setEmitValue(newTextValue);
+        
+        // Schedule cursor restoration after React updates DOM
+        setTimeout(() => {
+          if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
+            // Use SelText from Properties if available
+            const start = Math.max(0, selTextFromProperties[0] - 1);
+            const end = Math.max(0, selTextFromProperties[1] - 1);
+            const textLength = input.value.length;
+            const clampedStart = Math.min(start, textLength);
+            const clampedEnd = Math.min(end, textLength);
+            
+            input.setSelectionRange(clampedStart, clampedEnd);
+          } else {
+            // Restore previous cursor position
+            input.setSelectionRange(savedStart, savedEnd);
+          }
+        }, 0);
+      }
+    } else if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
+      // Handle SelText-only updates (no text change)
+      const start = Math.max(0, selTextFromProperties[0] - 1);
+      const end = Math.max(0, selTextFromProperties[1] - 1);
+      const textLength = input.value.length;
+      const clampedStart = Math.min(start, textLength);
+      const clampedEnd = Math.min(end, textLength);
+      
+      const currentStart = input.selectionStart;
+      const currentEnd = input.selectionEnd;
+      
+      if (currentStart !== clampedStart || currentEnd !== clampedEnd) {
+        input.setSelectionRange(clampedStart, clampedEnd);
+      } else {
       }
     }
-  }, [data?.Properties?.SelText]);
+  }, [data?.Properties?.Text, data?.Properties?.Value, data?.Properties?.SelText]);
 
   // Update global tree when input changes (for WG requests)
   useEffect(() => {
@@ -409,7 +411,6 @@ const Edit = ({
     }
 
     // Prevent default behavior for keys that APL might handle
-    console.log('ARGH preventDefault called for:', e.key, 'inputValue:', inputValue, 'focused:', document.activeElement === inputRef.current);
     e.preventDefault();
     
     const eventId = uuidv4();
