@@ -1,0 +1,133 @@
+[@babel/runtime@7.23.2](https://github.com/babel/babel) - MIT
+[@popperjs/core@2.11.8](https://github.com/popperjs/popper-core) - MIT
+[@progress/kendo-charts@2.4.1](https://github.com/telerik/kendo-charts) - Custom: http://www.telerik.com/kendo-angular-ui/
+[@progress/kendo-data-query@1.7.0](https://github.com/telerik/kendo-data-query) - Custom: https://www.telerik.com/kendo-angular-ui/
+[@progress/kendo-date-math@1.5.13](https://github.com/telerik/kendo-date-math) - Custom: https://www.telerik.com/kendo-angular-ui/
+[@progress/kendo-draggable-common@0.2.3](https://github.com/telerik/kendo-draggable-common) - Custom: https://www.telerik.com/kendo-angular-ui/
+[@progress/kendo-drawing@1.20.2](https://github.com/telerik/kendo-drawing) - Custom: https://www.telerik.com/kendo-angular-ui/
+[@progress/kendo-inputs-common@3.1.1](https://github.com/telerik/kendo-inputs-common) - Custom: https://www.telerik.com/kendo-angular-ui/
+[@progress/kendo-intl@3.1.2](https://github.com/telerik/kendo-intl) - Apache-2.0
+[@progress/kendo-licensing@1.3.5](https://github.com/telerik/kendo-licensing) - Custom: https://www.telerik.com/kendo-ui
+[@progress/kendo-popup-common@1.9.2](https://github.com/telerik/kendo-popup-common) - Apache-2.0
+[@progress/kendo-react-animation@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-buttons@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-charts@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-common@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-data-tools@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-dateinputs@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-dialogs@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-dropdowns@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-grid@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-inputs@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-intl@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-labels@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-layout@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-popup@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-progressbars@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-react-treeview@8.2.0](https://github.com/telerik/kendo-react) - Custom: https://www.telerik.com/kendo-react-ui
+[@progress/kendo-svg-icons@3.0.0](https://github.com/telerik/kendo-icons) - Apache-2.0
+[@progress/kendo-theme-core@9.0.0](https://github.com/telerik/kendo-themes) - Apache-2.0
+[@progress/kendo-theme-default@9.0.0](https://github.com/telerik/kendo-themes) - Apache-2.0
+[@progress/kendo-theme-utils@9.0.0](https://github.com/telerik/kendo-themes) - Apache-2.0
+[@progress/pako-esm@1.0.1](https://github.com/telerik/pako-esm) - MIT*
+[@yr/monotone-cubic-spline@1.0.3](https://github.com/YR/monotone-cubic-spline) - MIT
+[apexcharts@3.52.0](https://github.com/apexcharts/apexcharts.js) - MIT
+[asap@2.0.6](https://github.com/kriskowal/asap) - MIT
+[bootstrap@5.3.3](https://github.com/twbs/bootstrap) - MIT
+[buffer-equal-constant-time@1.0.1](https://github.com/goinstant/buffer-equal-constant-time) - BSD-3-Clause
+[bufferutil@4.0.7](https://github.com/websockets/bufferutil) - MIT
+[classnames@2.3.2](https://github.com/JedWatson/classnames) - MIT
+[clsx@2.1.0](https://github.com/lukeed/clsx) - MIT
+[csstype@3.1.2](https://github.com/frenic/csstype) - MIT
+[d@1.0.1](https://github.com/medikoo/d) - ISC
+[dayjs@1.11.13](https://github.com/iamkun/dayjs) - MIT
+[debug@2.6.9](https://github.com/visionmedia/debug) - MIT
+[demo-jswc@0.0.0](undefined) - UNLICENSED
+[disposables@1.0.2](https://github.com/gaearon/disposables) - Apache-2.0
+[dnd-core@2.6.0](https://github.com/react-dnd/react-dnd) - BSD-3-Clause
+[dom-helpers@5.2.1](https://github.com/react-bootstrap/dom-helpers) - MIT
+[ecdsa-sig-formatter@1.0.11](https://github.com/Brightspace/node-ecdsa-sig-formatter) - Apache-2.0
+[es5-ext@0.10.64](https://github.com/medikoo/es5-ext) - ISC
+[es6-iterator@2.0.3](https://github.com/medikoo/es6-iterator) - MIT
+[es6-symbol@3.1.3](https://github.com/medikoo/es6-symbol) - ISC
+[esniff@2.0.1](https://github.com/medikoo/esniff) - ISC
+[event-emitter@0.3.5](https://github.com/medikoo/event-emitter) - MIT
+[ext@1.7.0](https://github.com/medikoo/es5-ext.git#ext) - ISC
+[hoist-non-react-statics@2.5.5](https://github.com/mridgway/hoist-non-react-statics) - BSD-3-Clause
+[invariant@2.2.4](https://github.com/zertosh/invariant) - MIT
+[is-typedarray@1.0.0](https://github.com/hughsk/is-typedarray) - MIT
+[js-tokens@4.0.0](https://github.com/lydell/js-tokens) - MIT
+[jsonwebtoken@9.0.2](https://github.com/auth0/node-jsonwebtoken) - MIT
+[jwa@1.4.1](https://github.com/brianloveswords/node-jwa) - MIT
+[jws@3.2.2](https://github.com/brianloveswords/node-jws) - MIT
+[lodash-es@4.17.21](https://github.com/lodash/lodash) - MIT
+[lodash.includes@4.3.0](https://github.com/lodash/lodash) - MIT
+[lodash.isboolean@3.0.3](https://github.com/lodash/lodash) - MIT
+[lodash.isinteger@4.0.4](https://github.com/lodash/lodash) - MIT
+[lodash.isnumber@3.0.3](https://github.com/lodash/lodash) - MIT
+[lodash.isplainobject@4.0.6](https://github.com/lodash/lodash) - MIT
+[lodash.isstring@4.0.1](https://github.com/lodash/lodash) - MIT
+[lodash.once@4.1.1](https://github.com/lodash/lodash) - MIT
+[lodash@4.17.21](https://github.com/lodash/lodash) - MIT
+[loose-envify@1.4.0](https://github.com/zertosh/loose-envify) - MIT
+[ms@2.0.0](https://github.com/zeit/ms) - MIT
+[ms@2.1.2](https://github.com/zeit/ms) - MIT
+[next-tick@1.1.0](https://github.com/medikoo/next-tick) - ISC
+[node-gyp-build@4.6.1](https://github.com/prebuild/node-gyp-build) - MIT
+[object-assign@4.1.1](https://github.com/sindresorhus/object-assign) - MIT
+[prop-types@15.8.1](https://github.com/facebook/prop-types) - MIT
+[rc-motion@2.9.0](https://github.com/react-component/motion) - MIT
+[rc-resize-observer@1.3.1](https://github.com/react-component/resize-observer) - MIT
+[rc-tree@5.8.8](https://github.com/react-component/tree) - MIT
+[rc-util@5.38.0](https://github.com/react-component/util) - MIT
+[rc-virtual-list@3.11.2](https://github.com/react-component/virtual-list) - MIT
+[react-apexcharts@1.4.1](undefined) - MIT
+[react-bootstrap-ribbon@4.0.1](https://github.com/lgkonline/react-bootstrap-ribbon) - MIT
+[react-contextmenu@2.14.0](https://github.com/vkbansal/react-contextmenu) - MIT
+[react-data-grid-addons@7.0.0-alpha.24](https://github.com/adazzle/react-data-grid) - MIT
+[react-data-grid@7.0.0-beta.46](https://github.com/adazzle/react-data-grid) - MIT
+[react-dnd-html5-backend@2.6.0](https://github.com/react-dnd/react-dnd) - BSD-3-Clause
+[react-dnd@2.6.0](https://github.com/react-dnd/react-dnd) - BSD-3-Clause
+[react-dom@16.14.0](https://github.com/facebook/react) - MIT
+[react-dom@18.3.1](https://github.com/facebook/react) - MIT
+[react-fast-compare@3.2.2](https://github.com/FormidableLabs/react-fast-compare) - MIT
+[react-icons@4.12.0](https://github.com/react-icons/react-icons) - MIT
+[react-input-autosize@2.2.2](https://github.com/JedWatson/react-input-autosize) - MIT
+[react-is@16.13.1](https://github.com/facebook/react) - MIT
+[react-is@18.2.0](https://github.com/facebook/react) - MIT
+[react-number-format@5.4.1](https://github.com/s-yadav/react-number-format) - MIT
+[react-popper@2.3.0](https://github.com/popperjs/react-popper) - MIT
+[react-select@1.3.0](https://github.com/JedWatson/react-select) - MIT
+[react-transition-group@4.4.5](https://github.com/reactjs/react-transition-group) - BSD-3-Clause
+[react@16.14.0](https://github.com/facebook/react) - MIT
+[react@18.3.1](https://github.com/facebook/react) - MIT
+[reactstrap@9.2.2](https://github.com/reactstrap/reactstrap) - MIT
+[redux@3.7.2](https://github.com/reactjs/redux) - MIT
+[regenerator-runtime@0.14.0](https://github.com/facebook/regenerator/tree/main/packages/runtime) - MIT
+[reselect@4.1.8](https://github.com/reduxjs/reselect) - MIT
+[resize-observer-polyfill@1.5.1](https://github.com/que-etc/resize-observer-polyfill) - MIT
+[safe-buffer@5.2.1](https://github.com/feross/safe-buffer) - MIT
+[scheduler@0.19.1](https://github.com/facebook/react) - MIT
+[scheduler@0.23.2](https://github.com/facebook/react) - MIT
+[semver@7.6.3](https://github.com/npm/node-semver) - ISC
+[split-pane-react@0.1.3](https://github.com/yyllff/split-pane-react) - MIT
+[svg.draggable.js@2.2.2](https://github.com/svgdotjs/svg.draggable.js) - MIT
+[svg.easing.js@2.0.0](https://github.com/wout/svg.easing.js) - MIT
+[svg.filter.js@2.0.2](https://github.com/wout/svg.filter.js) - MIT
+[svg.js@2.7.1](https://github.com/svgdotjs/svg.js) - MIT
+[svg.pathmorphing.js@0.1.3](https://github.com/svgdotjs/svg.pathmorphing.js) - MIT
+[svg.resize.js@1.4.3](https://github.com/svgdotjs/svg.resize.js) - MIT
+[svg.select.js@2.1.2](https://github.com/svgdotjs/svg.select.js) - MIT
+[svg.select.js@3.0.1](https://github.com/svgdotjs/svg.select.js) - MIT
+[symbol-observable@1.2.0](https://github.com/blesh/symbol-observable) - MIT
+[tslib@1.14.1](https://github.com/Microsoft/tslib) - 0BSD
+[tslib@2.7.0](https://github.com/Microsoft/tslib) - 0BSD
+[type@1.2.0](https://github.com/medikoo/type) - ISC
+[type@2.7.2](https://github.com/medikoo/type) - ISC
+[typedarray-to-buffer@3.1.5](https://github.com/feross/typedarray-to-buffer) - MIT
+[utf-8-validate@5.0.10](https://github.com/websockets/utf-8-validate) - MIT
+[uuid@10.0.0](https://github.com/uuidjs/uuid) - MIT
+[warning@4.0.3](https://github.com/BerkeleyTrue/warning) - MIT
+[websocket@1.0.35](https://github.com/theturtle32/WebSocket-Node) - Apache-2.0
+[yaeti@0.0.6](https://github.com/ibc/yaeti) - MIT
+
