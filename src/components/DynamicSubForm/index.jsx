@@ -136,7 +136,8 @@ const SubForm = ({ data }) => {
             : data?.Properties.hasOwnProperty("Flex")
               ? "flex"
               : "block",
-        background: BCol && rgbColor(BCol),
+        background: BCol ? rgbColor(BCol) : "#F0F0F0",
+        zIndex: 1,
         ...updatedStyles,
         // height: Size && Size[0],
         // width: Size && Size[1],

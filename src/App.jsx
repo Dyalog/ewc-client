@@ -247,12 +247,21 @@ const App = () => {
           parent[givenKey].Properties.State = data.Properties.State;
         }
 
+        // TF1: SubForms must always pop to the top when Visible: 1 is set.
+        //      We do this by deleting and letting it be reinserted. JS uses
+        //      insertion order when iterating over the string keys of the
+        //      data state, so this makes it last to render.
+        const cur = currentLevel[finalKey];
+        if (data.Properties?.Visible == 1) {
+          delete currentLevel[finalKey];
+        }
+
         // Merge the existing object with new properties
         currentLevel[finalKey] = {
           ID: data.ID,
-          ...currentLevel[finalKey],
+          ...cur,
           Properties: {
-            ...(currentLevel[finalKey].Properties || {}),
+            ...(cur.Properties || {}),
             ...(data.Properties || {}),
           },
         };
@@ -325,25 +334,19 @@ const App = () => {
           localStorage.setItem("FormData", JSON.stringify(tabControlData1));
         }
         else if (data?.Properties?.Type === "SubForm" && data?.Properties?.TabObj) {
-          console.log("Data we are geting is as", data, localStorage.getItem("FormData"), localStorage.getItem("TabControlData"))
-          
           let name = JSON.parse(localStorage.getItem("TabControlData"))
           let name1 = JSON.parse(localStorage.getItem("FormData"))
-          console.log("Datta id isssss",data?.ID,name.Size,name.Posn)
           localStorage.setItem("TabControlInSubForm", 1);
+
           newData = {
             ...data,
             Properties: {
               ...data.Properties,
               Size: name.Size || name1.Size,
               Posn: name.Posn || [0, 0]
-
             }
           }
-          console.log("Newwwwwwwwwwwwwwssss",newData)
         }
-
-
       } catch (error) {
         console.log({ error });
       }
