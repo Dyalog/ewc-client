@@ -137,7 +137,8 @@ const SubForm = ({ data }) => {
               ? "flex"
               : "block",
         background: BCol ? rgbColor(BCol) : "#F0F0F0",
-        zIndex: 1,
+        // Must have a z-index, this is important
+        zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
         // height: Size && Size[0],
         // width: Size && Size[1],

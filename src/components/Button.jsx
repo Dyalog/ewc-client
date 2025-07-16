@@ -448,7 +448,7 @@ const Button = ({
           <div
             style={{ fontSize: "12px", position: "absolute", top: 0, left: 0 }}
           >
-            <label for={data?.ID}>{Caption}</label>
+            <label style={{whiteSpace: "nowrap"}} for={data?.ID}>{Caption}</label>
           </div>
         ) : null}
 
@@ -477,7 +477,7 @@ const Button = ({
               ...fontStyles
             }}
           >
-            <label for={data?.ID}>{Caption}</label>
+            <label style={{whiteSpace: "nowrap"}} for={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>
@@ -609,7 +609,7 @@ const Button = ({
               ...fontStyles
             }}
           >
-            <label for={data?.ID}>{Caption}</label>
+            <label style={{whiteSpace: "nowrap"}} for={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>
