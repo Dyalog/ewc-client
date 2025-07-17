@@ -458,6 +458,8 @@ const App = () => {
     webSocket.onmessage = (event) => {
       const evData = JSON.parse(event.data);
       const keys = Object.keys(evData);
+
+      console.log('EVDATA', evData)
       
       // Handle WX messages immediately - APL expects immediate response
       if (keys[0] == "WX") {

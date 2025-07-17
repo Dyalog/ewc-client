@@ -168,10 +168,13 @@ const Button = ({
     }
   };
 
-
+//// YOUAREHERE ////
   useEffect(() => {
+    console.log('RESIZESTART', {parentSize, position, parentOldDimensions});
     if (!position) return;
     if (!parentOldDimensions) return;
+    
+    console.log('RESIZE', position, parentOldDimensions, dimensions);
 
     let calculateLeft =
       position && position.left && parentOldDimensions && parentOldDimensions[1]
@@ -187,6 +190,10 @@ const Button = ({
 
     calculateTop = Math.max(0, Math.min(calculateTop, dimensions.height));
 
+    console.log('RESIZED', {
+      top: Math.round(calculateTop),
+      left: Math.round(calculateLeft),
+    })
     setPosition({
       top: Math.round(calculateTop),
       left: Math.round(calculateLeft),
