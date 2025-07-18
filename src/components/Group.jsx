@@ -37,12 +37,13 @@ const Group = ({ data }) => {
   const [width, setWidth] = useState(Size[1]);
   const [height, setHeight] = useState(Size[0]);
 
-  useEffect(() => {
-    if (!Size.length) {
-      setWidth(dimensions?.width - 47);
-      setHeight(dimensions?.height - 47);
-    }
-  }, [dimensions]);
+  // TODO B1: This was known wrong already! Fix
+  // useEffect(() => {
+  //   if (!Size.length) {
+  //     setWidth(dimensions?.width - 47);
+  //     setHeight(dimensions?.height - 47);
+  //   }
+  // }, [dimensions]);
 
   const ImageData = findCurrentData(Picture && Picture[0]);
 

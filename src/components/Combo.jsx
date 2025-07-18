@@ -141,6 +141,8 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   };
 
   useEffect(() => {
+    // TODO B1: Fix up resize logic!
+    return;
     if (!position) return;
     if (!parentOldDimensions) return;
 

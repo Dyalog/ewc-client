@@ -66,13 +66,11 @@ const Form = ({ data }) => {
       },
     });
     const exists = Event && Event.some((item) => item[0] === "Configure");
-    console.log("Event is as in Form",event);
     if (!exists) return;
     socket.send(event);
   };
 
   const sendDeviceCapabilities = () => {
-    console.log("Coming here in devive capabilities");
     let zoom = Math.round(window.devicePixelRatio * 100);
     let event = JSON.stringify({
       DeviceCapabilities: {
@@ -82,7 +80,6 @@ const Form = ({ data }) => {
         PPI: 200,
       },
     });
-    console.log("Event sent is as",event);
     socket.send(event);
   };
 
@@ -135,18 +132,7 @@ const Form = ({ data }) => {
   useEffect(() => {
     sendConfigureEvent();
     sendDeviceCapabilities();
-   
   }, [dimensions]);
-
-  // console.log("App Form", {
-  //   formStyles,
-  //   styles,
-  //   data,
-  //   updatedStyles,
-  //   flexDirection: updatedStyles.flexDirection,
-  // });
-
-  // console.log("App Form stringify", JSON.stringify(updatedStyles));
 
   return (
     <div
