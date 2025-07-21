@@ -56,9 +56,9 @@ const Edit = ({
   const [inputType, setInputType] = useState("text");
   const [inputValue, setInputValue] = useState("");
   const [emitValue, setEmitValue] = useState("");
-  const [initialValue, setInitialValue] = useState("");
   const [prevFocused, setprevFocused] = useState("⌈");
   const [eventId, setEventId] = useState(null);
+  const prevInputValueRef = useRef("");
 
   const {
     FieldType,
@@ -93,39 +93,31 @@ const Edit = ({
     if (location === "inGrid") {
       if (FieldType === "Date") {
         setEmitValue(value);
-        setInitialValue(value);
         const date = calculateDateAfterDays(value); // Custom function to calculate date
         return setInputValue(dayjs(date).format(ShortDate));
       }
 
       if (FieldType === "LongNumeric") {
         setEmitValue(value);
-        setInitialValue(value);
         return setInputValue(value);
       }
 
       setEmitValue(value);
-      setInitialValue(value);
       return setInputValue(value);
     }
 
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
       setEmitValue(propsValue);
-      setInitialValue(propsValue);
       return setInputValue(propsValue);
     }
 
     if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
-        setInitialValue(
-          generateAsteriskString(propsValue.length)
-        ); // Custom function to generate asterisks
         setEmitValue(propsValue);
         return setInputValue(
           generateAsteriskString(propsValue.length)
         );
       } else {
-        setInitialValue(propsValue);
         setEmitValue(propsValue);
         return setInputValue(propsValue);
       }
@@ -269,7 +261,8 @@ const Edit = ({
 
   // Update global tree when input changes (for WG requests)
   useEffect(() => {
-    if (inputValue !== undefined) {
+    if (inputValue !== undefined && inputValue !== prevInputValueRef.current) {
+      prevInputValueRef.current = inputValue;
       handleData(
         {
           ID: data?.ID,

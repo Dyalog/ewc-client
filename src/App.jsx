@@ -1587,12 +1587,10 @@ const App = () => {
           }
         } else if (keys[0] == "NQ") {
           const nqEvent = evData.NQ;
-          console.log("300", nqEvent, nqEvent.ID, nqEvent.Event, nqEvent.Info);
           const { Event, ID, Info, NoCallback = 0 } = nqEvent;
 
-          const existingData = JSON.parse(getObjectById(dataRef.current, ID));
-
           const appElement = getObjectById(dataRef.current, ID);
+          const existingData = JSON.parse(appElement);
 
           // Do nothing unless NoCallback=0 (default)
           const nqCallback = NoCallback !== 0 ? () => { } : (ev) => { webSocket.send(JSON.stringify({ Event: ev })) };

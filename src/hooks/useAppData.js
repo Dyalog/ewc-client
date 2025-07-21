@@ -3,11 +3,16 @@ import { useContext } from 'react';
 import { flattenJsonToArray } from './../utils/index';
 import { parentId } from "../utils";
 
+// Generate a single windowId for this app instance
+const windowId = Math.random().toString(16).substr(2, 6);
+
 const useAppData = () => {
 
-  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, pendingKeypressEventRef, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef, isDesktop} =
-
-    useContext(AppDataContext);
+  const {
+    socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray,
+    setProceedEventArray, pendingKeypressEventRef, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,
+    currentEventRef, isDesktop,
+  } = useContext(AppDataContext);
 
   const findDesiredData = (ID) => {
     const findData = socketData?.find((obj) => obj.ID == ID);
@@ -64,6 +69,18 @@ const useAppData = () => {
     return findData?.Properties?.Type;
   };
 
+  const sendLog = (...args) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const logMessage = JSON.stringify({
+        Log: {
+          windowId: windowId,
+          Info: args
+        }
+      });
+      socket.send(logMessage);
+    }
+  };
+
   
 
   return {
@@ -89,7 +106,8 @@ const useAppData = () => {
     updateCurrentEvent,currentEventRef,
     isDesktop,
     inheritedProperty,
-    inheritedProperties
+    inheritedProperties,
+    sendLog
   };
 };
 export default useAppData;
