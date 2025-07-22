@@ -173,7 +173,7 @@ const Form = ({ data }) => {
 
         ...imageStyles,
         ...styles,
-        // overflow: 'hidden',
+        overflow: 'clip',
       }}
       onKeyDown={(e) => {
         // handleKeyPressUtils(e, socket, Event, data?.ID);

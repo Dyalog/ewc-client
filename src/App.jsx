@@ -3,7 +3,6 @@ import { AppDataContext } from "./context";
 import { SelectComponent } from "./components";
 import {
   getObjectById,
-  getObjectByIdObject,
   checkSupportedProperties,
   findFormParentID,
   deleteFormAndSiblings,
