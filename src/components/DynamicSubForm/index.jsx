@@ -54,15 +54,17 @@ const SubForm = ({ data }) => {
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
-
-
-  let updatedStyles = { ...styles, ...imageStyles, ...flexStyles,...fontStyles };
-
+  let updatedStyles = {
+    overflow: 'clip',
+    ...styles,
+    ...imageStyles,
+    ...flexStyles,
+    ...fontStyles
+  };
 
   const name = localStorage.getItem("TabControlInSubForm")
-  console.log("nmsmsmsmsmsmsmsmsmsmmsmsms", name)
-
   console.log("App Subform", {
+    name,
     styles,
     data,
     updatedStyles,

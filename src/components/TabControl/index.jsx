@@ -35,7 +35,12 @@ const TabControl = ({ data }) => {
   return (
     <div
       id={data?.ID}
-      style={{ ...updatedStyles,...customStyles,...fontStyles}}
+      style={{
+        overflow: 'clip',
+        ...updatedStyles,
+        ...customStyles,
+        ...fontStyles
+      }}
     >
       {/* Render the Buttons */}
       <div style={{ display: 'flex', alignItems: 'end', marginLeft: '3px' }}>
