@@ -355,6 +355,9 @@ export const getObjectByIdObject = (jsonData, targetId) => {
 
   function searchObject(node, idToFind) {
     if (typeof node === "object") {
+      if (!node.hasOwnProperty('ID')) {
+        console.error('ARGH', node, idToFind)
+      }
       if (node.ID === idToFind) {
         return node;
       }
