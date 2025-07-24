@@ -354,22 +354,28 @@ export const getObjectByIdObject = (jsonData, targetId) => {
   const data = jsonData;
 
   function searchObject(node, idToFind) {
-    if (typeof node === "object") {
-      if (!node.hasOwnProperty('ID')) {
-        console.error('ARGH', node, idToFind)
-      }
-      if (node.ID === idToFind) {
-        return node;
-      }
-      for (const key in node) {
-        const result = searchObject(node[key], idToFind);
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        if (item === null || item === undefined) {
+          console.error('ARGH1', node, item, idToFind)
+          continue;
+        }
+        const result = searchObject(item, idToFind);
         if (result) {
           return result;
         }
       }
-    } else if (Array.isArray(node)) {
-      for (const item of node) {
-        const result = searchObject(item, idToFind);
+    } else if (typeof node === "object") {
+      if (node.ID === idToFind) {
+        return node;
+      }
+      for (const key in node) {
+        const v = node[key];
+        if (v === null || v === undefined) {
+          console.error('ARGH2', node, key, idToFind)
+          continue;
+        }
+        const result = searchObject(node[key], idToFind);
         if (result) {
           return result;
         }
