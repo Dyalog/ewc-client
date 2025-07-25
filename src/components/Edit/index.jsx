@@ -640,7 +640,8 @@ const Edit = ({
       Event: {
         EventName: "GotFocus",
         ID: data?.ID,
-        Info: !previousFocusedId ? [""] : [previousFocusedId],
+        // TODO TEMPORARILY DISABLED
+        Info: [""]//, !previousFocusedId ? [""] : [previousFocusedId],
       },
     });
     localStorage.setItem("current-focus", data?.ID);
