@@ -19,7 +19,7 @@ import { values } from "lodash";
 const GridEdit = ({ data, onKeyDown1 }) => {
   // console.log("grid data", {data})
   const inputRef = useRef(null);
-  console.log("Inpitb reew",inputRef)
+//   console.log("Inpitb reew",inputRef)
   const dateRef = useRef(null);
   const divRef = useRef(null);
   const [isEditable, setIsEditable] = useState(false);
@@ -71,7 +71,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     ) {
       const [start, end] = SelText;
       const textNode = divRef.current.firstChild;
-      console.log({ textNode });
+//       console.log({ textNode });
 
       // Check if textNode is wrapped in an object
       const actualTextNode = textNode?.nodeType ? textNode : textNode?.textNode;
@@ -85,12 +85,12 @@ const GridEdit = ({ data, onKeyDown1 }) => {
 
         const parent = actualTextNode.parentNode;
         const content = parent.textContent.trim();
-        console.log("use effect238983", { content: data?.formattedValue });
+//         console.log("use effect238983", { content: data?.formattedValue });
 
         if (data?.formattedValue) {
-          console.log("content", {
-            index: findFirstNonSpaceIndex(data?.formattedValue),
-          });
+//           console.log("content", {
+//             index: findFirstNonSpaceIndex(data?.formattedValue),
+//           });
           const reqIndex = findFirstNonSpaceIndex(data?.formattedValue);
           range.setStart(
             actualTextNode,
@@ -115,16 +115,16 @@ const GridEdit = ({ data, onKeyDown1 }) => {
   }, [SelText, isEditable, data.focused]);
 
   const handleSelect = (event) => {
-    console.log("select");
-    console.log({ event });
+//     console.log("select");
+//     console.log({ event });
     const input = event.target;
     const start = input.selectionStart + 1;
     const end = input.selectionEnd + 1;
     const selectedText = input.value.substring(start, end);
-    console.log({ data, input, start, end });
+//     console.log({ data, input, start, end });
     setSelected(!!selectedText);
 
-    console.log("select", !!selectedText);
+//     console.log("select", !!selectedText);
 
     if (!!selectedText) {
       localStorage.setItem(
@@ -162,15 +162,15 @@ const GridEdit = ({ data, onKeyDown1 }) => {
   };
   const handleKeyDown = (event) => {
     event.stopPropagation();
-    console.log("Key down event triggered:", event.target, { event });
+//     console.log("Key down event triggered:", event.target, { event });
 
     const input = event.target;
     const start = input.selectionStart;
     const end = input.selectionEnd;
-    console.log("Value of event key ",event.key);
+//     console.log("Value of event key ",event.key);
     if (event.key === "Enter") {
       setIsEditable(false);
-      console.log("Value of event key",valueState);
+//       console.log("Value of event key",valueState);
       if (valueState) {
         setValueState(false);
         socket.send(
@@ -184,7 +184,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
         );
       }
       if (onKeyDown1) {
-        console.log("On key down is ")
+//         console.log("On key down is ")
         onKeyDown1(event);
         handleKeyPress(event);
       }
@@ -217,7 +217,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
 
       // Adjust the start and end based on actual content length
       const startIndex = content.indexOf(actualTextNode.textContent);
-      console.log({ startIndex });
+//       console.log({ startIndex });
       start -= startIndex;
       end -= startIndex;
 
@@ -278,9 +278,9 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       data?.gridEvent &&
       data?.gridEvent.some((item) => item[0] === "CellChanged");
     if (!exists) return;
-    console.log(cellChangedEvent);
+//     console.log(cellChangedEvent);
     socket.send(cellChangedEvent);
-    console.log("Input value")
+//     console.log("Input value")
     localStorage.setItem(
       "isChanged",
       JSON.stringify({
@@ -290,7 +290,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     );
     if (!data?.formatString) return;
 
-    console.log(formatCellEvent);
+//     console.log(formatCellEvent);
     socket.send(formatCellEvent);
   };
 
@@ -301,11 +301,11 @@ const GridEdit = ({ data, onKeyDown1 }) => {
   }, [data.focused]);
 
   useEffect(() => {
-    console.log("select useEffect", { selected });
+//     console.log("select useEffect", { selected });
     if (selected) {
       return;
     }
-    console.log("select useEffect 2", { selected });
+//     console.log("select useEffect 2", { selected });
     localStorage.setItem(
       data?.typeObj?.ID,
       JSON.stringify({ Event: { Info: [1, 1] } })
@@ -320,7 +320,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       "WS"
     );
     return () => {
-      console.log("select unmount");
+//       console.log("select unmount");
     };
   }, [data.focused]);
 
@@ -344,25 +344,25 @@ const GridEdit = ({ data, onKeyDown1 }) => {
     const exists = data?.typeObj?.Properties?.Event?.some(
       (item) => item[0] === "KeyPress"
     );
-    console.log(
-      "Value of event is as",
-      exists,
-      data?.typeObj?.Properties?.Event
-    );
+//     console.log(
+//       "Value of event is as",
+//       exists,
+//       data?.typeObj?.Properties?.Event
+//     );
     if (!exists) {
-      console.log("Coming here in exists");
+//       console.log("Coming here in exists");
       return;
     }
 
-    console.log(
-      JSON.stringify({
-        Event: {
-          EventName: "KeyPress",
-          ID: data?.typeObj?.ID,
-          Info: [e.key, charCode, e.keyCode, shiftState],
-        },
-      })
-    );
+//     console.log(
+//       JSON.stringify({
+//         Event: {
+//           EventName: "KeyPress",
+//           ID: data?.typeObj?.ID,
+//           Info: [e.key, charCode, e.keyCode, shiftState],
+//         },
+//       })
+//     );
 
     socket.send(
       JSON.stringify({
@@ -384,18 +384,18 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       setSelectedDate(event.target.value);
 
       const selectedDate = dayjs(event.target.value).format(ShortDate);
-      console.log("date picker", {
-        input: event.target.value,
-        ShortDate,
-        selectedDate,
-      });
+//       console.log("date picker", {
+//         input: event.target.value,
+//         ShortDate,
+//         selectedDate,
+//       });
       let value = calculateDaysFromDate(event.target.value) + 1;
       setInputValue(selectedDate);
       setDateFormattedValue(value);
     };
 
     const handleInputChange = (event) => {
-      console.log("Innn nisaokdmwisjk")
+//       console.log("Innn nisaokdmwisjk")
       setInputValue(event.target.value);
     };
 
@@ -492,7 +492,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
       </>
     );
   }
-  console.log("gridEdit", Event, data);
+//   console.log("gridEdit", Event, data);
 
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
     return (
@@ -502,7 +502,7 @@ const GridEdit = ({ data, onKeyDown1 }) => {
             ref={divRef}
             // onMouseUp={handleDivSelect}
             onDoubleClick={(e) => {
-              console.log("ckckmcdkd")
+//               console.log("ckckmcdkd")
               setIsEditable(true);
             }}
             // onMouseDown={(e) => {

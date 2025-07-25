@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
   const { findCurrentData, socket , isDesktop} = useAppData();
-  console.log("Desktop is as",!isDesktop);
+//   console.log("Desktop is as",!isDesktop);
 
   const [formStyles, setFormStyles] = useState({});
 
@@ -39,11 +39,11 @@ const Form = ({ data }) => {
     FontObj
   } = data?.Properties;
 
-  console.log("Dtaa is as",data,Posn);
+//   console.log("Dtaa is as",data,Posn);
   
   const styles = parseFlexStyles(CSS);
 
-  console.log("form after parsing", { styles, CSS, Flex });
+//   console.log("form after parsing", { styles, CSS, Flex });
   const updatedData = excludeKeys(data);
   const ImageData = findCurrentData(Picture && Picture[0]);
 

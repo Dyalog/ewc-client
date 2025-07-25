@@ -189,7 +189,7 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
   if (data?.Properties?.Type == 'Div') return <Div data={data} />;
 
-  console.log("UNKNOWN: " + data?.Properties?.Type);
+//   console.log("UNKNOWN: " + data?.Properties?.Type);
 };
 
 export default SelectComponent;

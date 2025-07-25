@@ -37,7 +37,7 @@ const Button = ({
   const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
-  console.log("data Button", data);
+//   console.log("data Button", data);
 
   const customStyles = parseFlexStyles(CSS);
 
@@ -122,27 +122,27 @@ const Button = ({
     }
     document.getElementById(localStorage.getItem("current-focus"))?.blur();
     if (buttonEvent) {
-      console.log(
-        JSON.stringify({
-          Event: {
-            EventName: buttonEvent[0],
-            ID: data?.ID,
-          },
-        })
-      );
+//       console.log(
+//         JSON.stringify({
+//           Event: {
+//             EventName: buttonEvent[0],
+//             ID: data?.ID,
+//           },
+//         })
+//       );
       if (
         localStorage.getItem("current-focus") &&
         localStorage.getItem("shouldChangeEvent") === "true"
       ) {
-        console.log( 
-          JSON.stringify({
-            Event: {
-              EventName: "Change",
-              ID: localStorage.getItem("current-focus"),
-              Info: [data?.ID],
-            },
-          })
-        );
+//         console.log( 
+//           JSON.stringify({
+//             Event: {
+//               EventName: "Change",
+//               ID: localStorage.getItem("current-focus"),
+//               Info: [data?.ID],
+//             },
+//           })
+//         );
 
         socket.send(
           JSON.stringify({
@@ -290,8 +290,8 @@ const Button = ({
     );
     const exists = event && event.some((item) => item[0] === "CellChanged");
     if (!exists) return;
-    console.log(triggerEvent);
-    console.log(formatCellEvent);
+//     console.log(triggerEvent);
+//     console.log(formatCellEvent);
     socket.send(formatCellEvent);
     socket.send(triggerEvent);
   };
@@ -309,7 +309,7 @@ const Button = ({
     localStorage.setItem(data?.ID, triggerEvent);
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     const event = JSON.stringify({
       Event: {
         EventName: "Select",
@@ -339,7 +339,7 @@ const Button = ({
     });
     const exists = event && event.some((item) => item[0] === "CellMove");
     if (!exists) return;
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
 
@@ -374,7 +374,7 @@ const Button = ({
   };
   const handleLeftArrow = () => {
     if (location !== "inGrid") return;
-    console.log(inputRef);
+//     console.log(inputRef);
     const parent = inputRef.current.parentElement;
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;
@@ -425,7 +425,7 @@ const Button = ({
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;
-    console.log(gotFocusEvent);
+//     console.log(gotFocusEvent);
     socket.send(gotFocusEvent);
   };
 
@@ -516,7 +516,7 @@ const Button = ({
           ID: data?.ID,
         },
       });
-      console.log(emitEvent);
+//       console.log(emitEvent);
 
       socket.send(event);
     };

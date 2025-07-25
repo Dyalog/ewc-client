@@ -54,7 +54,7 @@ const GridSelect = ({ data }) => {
     const exists = data?.gridEvent?.some((item) => item[0] === 'CellChanged');
     if (!exists) return;
 
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     socket.send(triggerEvent);
     localStorage.setItem(
       'isChanged',

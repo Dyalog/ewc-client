@@ -54,8 +54,8 @@ const {socket} = useAppData()
     const rx = Size && Size[1] / 2;
     const ry = Size && Size[0] / 2;
 
-    console.log({ Start });
-    console.log({ End });
+//     console.log({ Start });
+//     console.log({ End });
 
     const paths = [];
 

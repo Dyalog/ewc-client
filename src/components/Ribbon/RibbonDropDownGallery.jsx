@@ -11,7 +11,7 @@ const RibbonGallery = ({ data }) => {
   const updatedCols = Cols && Cols + 1;
 
 
-  console.log("Collllllsss", updatedCols)
+//   console.log("Collllllsss", updatedCols)
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
@@ -52,7 +52,7 @@ const RibbonGallery = ({ data }) => {
     });
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(selectEvent);
+//     console.log(selectEvent);
     socket.send(selectEvent);
     setIsDropdownOpen(false);
   };
@@ -64,20 +64,20 @@ const RibbonGallery = ({ data }) => {
         let widestWidth = 0;
 
         // Debugging: Log child elements
-        console.log("Child elements for maxWidth calculation:", childElements);
+//         console.log("Child elements for maxWidth calculation:", childElements);
 
         // Find the maximum width of all child items
         Array.from(childElements).forEach((child, index) => {
           const childWidth = child.getBoundingClientRect().width;
 
           // Debugging: Log each child's width
-          console.log(`Child ${index} width:`, childWidth);
+//           console.log(`Child ${index} width:`, childWidth);
 
           widestWidth = Math.max(widestWidth, childWidth);
         });
 
         // Debugging: Log the calculated maxWidth
-        console.log("Calculated widest width:", widestWidth);
+//         console.log("Calculated widest width:", widestWidth);
 
         setMaxWidth(widestWidth);
       }
@@ -109,7 +109,7 @@ const RibbonGallery = ({ data }) => {
   const itemWidth = maxWidth || ItemWidth || 50;
   const itemHeight = ItemHeight || 40;
 
-  console.log("Final maxWidth value:", maxWidth, maxWidth * updatedCols + updatedCols * 5 + 22);
+//   console.log("Final maxWidth value:", maxWidth, maxWidth * updatedCols + updatedCols * 5 + 22);
 
   return (
     // <div

@@ -63,15 +63,15 @@ const SubForm = ({ data }) => {
   };
 
   const name = localStorage.getItem("TabControlInSubForm")
-  console.log("App Subform", {
-    name,
-    styles,
-    data,
-    updatedStyles,
-    flexStyles,
-    Size,
-    Posn,
-  });
+//   console.log("App Subform", {
+//     name,
+//     styles,
+//     data,
+//     updatedStyles,
+//     flexStyles,
+//     Size,
+//     Posn,
+//   });
   useEffect(() => {
     let existingData;
     if (data.ID === "F1.SCALE") {
@@ -95,14 +95,14 @@ const SubForm = ({ data }) => {
       );
     }
     else if (name) {
-      console.log("Coming in name");
+//       console.log("Coming in name");
       let name = JSON.parse(localStorage.getItem("TabControlData"))
       let name1=JSON.parse(localStorage.getItem("FormData"))
       // console.log("nmmmmmm",name,name.Posn)
       if(name.Size1){
-        console.log("undeffffff");
+//         console.log("undeffffff");
       }
-      console.log("Wr are getting id is a",data.ID);
+//       console.log("Wr are getting id is a",data.ID);
       localStorage.setItem(
         data.ID,
         // JSON.parse(localStorage.getItem())

@@ -72,7 +72,7 @@ const ListView = ({ data }) => {
     localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === eventName);
     if (!exists) return;
-    console.log(event);
+//     console.log(event);
     socket.send(event);
   };
 
