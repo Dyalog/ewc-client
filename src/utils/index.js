@@ -350,6 +350,7 @@ export const generateHeader = (length) => {
   return result;
 };
 
+// TODO overused? We should always have a path to an object!
 export const getObjectByIdObject = (jsonData, targetId) => {
   const data = jsonData;
 
@@ -372,7 +373,7 @@ export const getObjectByIdObject = (jsonData, targetId) => {
       for (const key in node) {
         const v = node[key];
         if (v === null || v === undefined) {
-          console.error('ARGH2', node, key, idToFind)
+          console.error('ARGH2', JSON.stringify(node), node, key, idToFind)
           continue;
         }
         const result = searchObject(node[key], idToFind);

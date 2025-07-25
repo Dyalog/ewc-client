@@ -501,6 +501,7 @@ const Edit = ({
 
     const prevFocusedID = JSON.parse(localStorage.getItem(prevFocused));
 
+    // TODO I'm pretty sure this change logic is wrong
     if (!!data.Properties.hasOwnProperty("Event")) {
       const event1 = JSON.stringify({
         Event: {
@@ -522,6 +523,7 @@ const Edit = ({
 
       if (
         prevFocused &&
+        prevFocusedID &&
         prevFocusedID.Event.EventName !== "Select" &&
         originalValue !== emitValue &&
         prevFocused !== data.ID
