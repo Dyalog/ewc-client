@@ -70,7 +70,7 @@ const useAppData = () => {
   };
 
   const sendLog = (...args) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+    if (socket && socket.readyState === 1 /* WebSocket.OPEN */) {
       const logMessage = JSON.stringify({
         Log: {
           windowId: windowId,
