@@ -1809,8 +1809,8 @@ const App = () => {
 
           evData.Options.ID == "Fonts" &&
             setFontScale(evData.Options.Properties.Scale);
-          evData.Options.ID == "Fonts" &&
-            console.log("label", evData.Options.Properties.Scale);
+//          evData.Options.ID == "Fonts" &&
+//            console.log("label", evData.Options.Properties.Scale);
           evData.Options.ID == "Mode" &&
             setOptions(evData.Options.Properties);
           if (evData.Options.ID == "Colors")

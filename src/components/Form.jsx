@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
-  const { findCurrentData, socket , isDesktop} = useAppData();
+  const { findCurrentData, socket , isDesktop } = useAppData();
 //   console.log("Desktop is as",!isDesktop);
 
   const [formStyles, setFormStyles] = useState({});
