@@ -119,7 +119,7 @@ const CustomRibbonButton = ({ data }) => {
     });
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(selectEvent);
+//     console.log(selectEvent);
     socket.send(selectEvent);
   };
 

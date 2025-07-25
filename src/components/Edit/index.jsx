@@ -83,7 +83,7 @@ const Edit = ({
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS)
   
-  console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
+//   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
     let propsValue = data?.Properties?.Value;
     if (propsValue === undefined) {
@@ -308,7 +308,7 @@ const Edit = ({
 
     const exists = event && event.some((item) => item[0] === "CellMove");
     if (!exists) return;
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
 
@@ -422,16 +422,16 @@ const Edit = ({
     const charCode = e.key.charCodeAt(0);
     let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
-    console.log(
-      JSON.stringify({
-        Event: {
-          EventName: "KeyPress",
-          ID: data?.ID,
-          EventID: eventId,
-          Info: [e.key, charCode, e.keyCode, shiftState],
-        },
-      })
-    );
+//     console.log(
+//       JSON.stringify({
+//         Event: {
+//           EventName: "KeyPress",
+//           ID: data?.ID,
+//           EventID: eventId,
+//           Info: [e.key, charCode, e.keyCode, shiftState],
+//         },
+//       })
+//     );
 
     socket.send(
       JSON.stringify({
@@ -512,13 +512,13 @@ const Edit = ({
       const originalValue =
         data?.Properties?.Text || data?.Properties?.Value || "";
 
-      console.log(
-        "value focused",
-        { value, emitValue, originalValue },
-        prevFocusedID,
-        prevFocusedID.Event.EventName !== "Select",
-        originalValue !== emitValue
-      );
+//       console.log(
+//         "value focused",
+//         { value, emitValue, originalValue },
+//         prevFocusedID,
+//         prevFocusedID.Event.EventName !== "Select",
+//         originalValue !== emitValue
+//       );
 
       if (
         prevFocused &&
@@ -526,12 +526,12 @@ const Edit = ({
         originalValue !== emitValue &&
         prevFocused !== data.ID
       ) {
-        console.log(
-          "focused",
-          prevFocusedID,
-          prevFocusedID.Event.EventName !== "Select",
-          originalValue !== emitValue
-        );
+//         console.log(
+//           "focused",
+//           prevFocusedID,
+//           prevFocusedID.Event.EventName !== "Select",
+//           originalValue !== emitValue
+//         );
         socket.send(event1);
       }
     }
@@ -598,12 +598,12 @@ const Edit = ({
     // localStorage.setItem(extractStringUntilSecondPeriod(data?.ID), cellChangedEvent);
     const exists = event && event.some((item) => item[0] === "CellChanged");
     if (!exists) return;
-    console.log(cellChangedEvent);
+//     console.log(cellChangedEvent);
     socket.send(cellChangedEvent);
 
     if (!formatString) return;
 
-    console.log(formatCellEvent);
+//     console.log(formatCellEvent);
     socket.send(formatCellEvent);
   };
 
@@ -645,7 +645,7 @@ const Edit = ({
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;
-    console.log(gotFocusEvent);
+//     console.log(gotFocusEvent);
     socket.send(gotFocusEvent);
   };
 

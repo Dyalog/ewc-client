@@ -32,7 +32,7 @@ export const handleMouseDown = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseDown");
   if (!exists) return;
-  console.log(mousedownEvent);
+//   console.log(mousedownEvent);
   socket.send(mousedownEvent);
 };
 
@@ -53,7 +53,7 @@ export const handleMouseUp = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseUp");
   if (!exists) return;
-  console.log(mouseUpEvent);
+//   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
 };
 
@@ -74,7 +74,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseDblClick");
   if (!exists) return;
-  console.log(mouseUpEvent);
+//   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
 };
 
@@ -91,7 +91,7 @@ export const handleMouseEnter = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseEnter");
   if (!exists) return;
-  console.log("mouseEnter", mouseEnterEvent);
+//   console.log("mouseEnter", mouseEnterEvent);
   socket.send(mouseEnterEvent);
 };
 
@@ -108,7 +108,7 @@ export const handleMouseLeave = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseLeave");
   if (!exists) return;
-  console.log(mouseLeaveEvent);
+//   console.log(mouseLeaveEvent);
   socket.send(mouseLeaveEvent);
 };
 
@@ -155,7 +155,7 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseWheel");
   if (!exists) return;
-  console.log(mouseWheelEvent);
+//   console.log(mouseWheelEvent);
   socket.send(mouseWheelEvent);
 };
 
@@ -172,16 +172,16 @@ export const handleKeyPressUtils = (e, socket, Event, ID) => {
 
   if (!exists) return;
 
-  console.log(
-    JSON.stringify({
-      Event: {
-        EventName: "KeyPress",
-        ID: ID,
-        EventID: eventId,
-        Info: [e.key, charCode, e.keyCode, shiftState],
-      },
-    })
-  );
+//   console.log(
+//     JSON.stringify({
+//       Event: {
+//         EventName: "KeyPress",
+//         ID: ID,
+//         EventID: eventId,
+//         Info: [e.key, charCode, e.keyCode, shiftState],
+//       },
+//     })
+//   );
 
   socket.send(
     JSON.stringify({
@@ -498,7 +498,7 @@ export const rgbColor = (rgbArray) => {
 
     return `rgb(${r}, ${g}, ${b})`;
   } catch (error) {
-    console.log("rgb error", error);
+//     console.log("rgb error", error);
     return null;
   }
 };

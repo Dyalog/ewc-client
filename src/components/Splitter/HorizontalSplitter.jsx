@@ -167,7 +167,7 @@ const HorizontalSplitter = ({ data }) => {
         const { Size, ...event } = customEvent;
         const exists = Event && Event?.some((item) => item[0] === 'EndSplit');
         if (!exists) return;
-        console.log(JSON.stringify({ Event: { ...event } }));
+//         console.log(JSON.stringify({ Event: { ...event } }));
         socket.send(JSON.stringify({ Event: { ...event } }));
       }
     };

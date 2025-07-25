@@ -14,9 +14,9 @@ const RibbonDropDownButton = ({ data }) => {
   const fontProperties = font && font?.Properties;
   const { Icon, Caption, ImageIndex, CSS, ImageListObj } = data?.Properties;
   const [captionWrap, setCaptionWrap] = useState(false);
-  console.log("Caption is as", Caption);
+//   console.log("Caption is as", Caption);
   const captionParts = Caption ? Caption.split(" ") : [];
-  console.log("Caption parurur", captionParts)
+//   console.log("Caption parurur", captionParts)
 
   useEffect(() => {
     if (captionParts.length > 2) {
@@ -42,7 +42,7 @@ const RibbonDropDownButton = ({ data }) => {
     });
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(selectEvent);
+//     console.log(selectEvent);
     socket.send(selectEvent);
     setDropdownOpen(false);
   };

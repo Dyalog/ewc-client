@@ -8,7 +8,7 @@ const useWindowDimensions = () => {
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  console.log("New height is",viewport);
+//   console.log("New height is",viewport);
 
 
   const resizeTimeoutRef = useRef(null);
@@ -39,7 +39,7 @@ const useWindowDimensions = () => {
             PPI: 200,
           },
         });
-        console.log({ event });
+//         console.log({ event });
         socket.send(event);
 
       }, 1000);
