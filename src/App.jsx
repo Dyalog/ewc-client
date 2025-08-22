@@ -1271,6 +1271,7 @@ const App = () => {
                 })
               );
             } else if (Type == "SubForm") {
+              console.log("SubForm WG:", serverEvent.ID, "requesting:", serverEvent.Properties);
 //               console.log("Coming in form but suss");
               const supportedProperties = ["Posn", "Size"];
 
@@ -1280,13 +1281,9 @@ const App = () => {
               );
 //               console.log("Valuuuuuuuu", result);
 //               console.log("Servere event is ", serverEvent, serverEvent.ID)
-              const sanitizedID = serverEvent.ID.split('.')[0]; // Get 'FsCShSpec' from 'FsCShSpec.O'
-
-//               console.log("Sanitized ID:", sanitizedID);
-
-
 
               if (!localStorage.getItem(serverEvent.ID)) {
+                console.log("SubForm branch 1: No localStorage for", serverEvent.ID);
 //                 console.log("Coming in form but su1");
 
                 const serverPropertiesObj = {};
@@ -1327,46 +1324,15 @@ const App = () => {
                   })
                 );
               }
-//               console.log("Coming in form but su2");
 
               const serverPropertiesObj = {};
-//               console.log("Serverrrrrr", serverEvent.ID)
-              const SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-              // const storedSubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-
-              // const baseID = serverEvent.ID.split('.')[0];
-
-//               console.log("Value of subform is as", SubForm);
-              // let SubForm = JSON.parse(localStorage.getItem(serverEvent.ID));
-              // console.log("+====>", !SubForm, SubForm)
-
-              // if (SubForm.length === 0) {
-              //   console.log("+====>1", SubForm.length)
-
-              // }
-
-
-              // if (SubForm) {
-              //   // Retrieve data from "TabControlData" if SubForm is empty
-              //   const tabControlData = JSON.parse(localStorage.getItem("TabControlData"));
-
-              //   if (tabControlData) {
-              //     SubForm = tabControlData;
-              //     console.log("SubForm was empty. Assigned TabControlData to SubForm.");
-              //   } else {
-              //     console.warn("Both SubForm and TabControlData are empty.");
-              //   }
-              // } else {
-              //   console.log("Value of SubForm is:", SubForm);
-              // }
+              const localStorageData = localStorage.getItem(serverEvent.ID);
+              console.log("SubForm branch 2: localStorage data:", localStorageData);
+              const SubForm = JSON.parse(localStorageData);
 
               serverEvent.Properties.map((key) => {
-//                 console.log("Keyyy", key)
                 return (serverPropertiesObj[key] = SubForm[key]);
               });
-//               console.log("Server properties are", serverPropertiesObj)
-              // console.log("Server properties are1", localStorage.getItem("formDimension"));
-
 //               console.log(
 //                 updateAndStringify({
 //                   WG: {
