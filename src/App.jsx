@@ -672,6 +672,8 @@ const App = () => {
           // serverEvent.ID == "F1.LEFTRIGHT" && console.log("horizontal ws ", {WSThumbValue: evData.WS.Properties.Thumb})
           handleData(evData.WS, "WS");
         } else if (keys[0] == "WG") {
+          alert('WG'+JSON.stringify(evData.WG))
+          console.log(evData.WG)
           const doWG = () => {
             const serverEvent = evData.WG;
 
@@ -756,6 +758,8 @@ const App = () => {
                         : null),
                     },
                   });
+
+                  alert('Form: '+event)
 
                   webSocket.send(event);
                   return;
@@ -1232,6 +1236,18 @@ const App = () => {
                 //                 })
                 //               );
 
+                alert('SubForm: ' + updateAndStringify({
+                  WG: {
+                    ID: serverEvent.ID,
+                    Properties: serverPropertiesObj,
+                    WGID: serverEvent.WGID,
+                    ...(result &&
+                      result.NotSupported &&
+                      result.NotSupported.length > 0
+                      ? { NotSupported: result.NotSupported }
+                      : null),
+                  },
+                }))
                 return webSocket.send(
                   updateAndStringify({
                     WG: {
@@ -1419,6 +1435,15 @@ const App = () => {
                   }
                 }
 
+                const payload = updateAndStringify({
+                  WG: {
+                    ID: serverEvent.ID,
+                    Properties: replyProps,
+                    WGID: serverEvent.WGID,
+                  }
+                });
+                console.log('Sending', payload)
+                alert('Sending: '+payload)
                 return webSocket.send(updateAndStringify({
                   WG: {
                     ID: serverEvent.ID,
