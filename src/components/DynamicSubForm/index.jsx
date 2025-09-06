@@ -62,18 +62,11 @@ const SubForm = ({ data }) => {
     ...fontStyles
   };
 
+  // TODO this is extremely suspect and looks to be for one purpose!
   const name = localStorage.getItem("TabControlInSubForm")
-//   console.log("App Subform", {
-//     name,
-//     styles,
-//     data,
-//     updatedStyles,
-//     flexStyles,
-//     Size,
-//     Posn,
-//   });
   useEffect(() => {
     let existingData;
+    // TODO this is extremely suspect and looks to be for one purpose!
     if (data.ID === "F1.SCALE") {
       setTimeout(() => {
         existingData = JSON.parse(localStorage.getItem(data.ID));
@@ -85,6 +78,7 @@ const SubForm = ({ data }) => {
           };
         }
       }, 500);
+      // TODO this is extremely suspect and looks to be for one purpose!
     } else if (data.ID === "F1.BX") {
       localStorage.setItem(
         data.ID,
@@ -95,31 +89,20 @@ const SubForm = ({ data }) => {
       );
     }
     else if (name) {
-//       console.log("Coming in name");
-      let name = JSON.parse(localStorage.getItem("TabControlData"))
-      let name1=JSON.parse(localStorage.getItem("FormData"))
-      // console.log("nmmmmmm",name,name.Posn)
-      if(name.Size1){
-//         console.log("undeffffff");
-      }
-//       console.log("Wr are getting id is a",data.ID);
+      // TODO this is extremely suspect and looks to be for one purpose!
+      let name  = JSON.parse(localStorage.getItem("TabControlData"))
+      let name1 = JSON.parse(localStorage.getItem("FormData"))
       localStorage.setItem(
         data.ID,
-        // JSON.parse(localStorage.getItem())
         JSON.stringify({
-          Size:name.Size||name1.Size,
-          Posn:name.Posn||[0,0]
+          Size:name?.Size || name1?.Size,
+          Posn:name?.Posn || [0,0]
         })
-        // localStorage.getItem("TabControlData")
       );
     }
     else {
-
-      // let name=localStorage.getItem("TabControlData",JSON)
       localStorage.setItem(
         data.ID,
-        // JSON.parse(localStorage.getItem())
-        // localStorage.getItem("TabControlData")
         JSON.stringify({
           Size: Size && Size,
           Posn: Posn && Posn,
@@ -142,10 +125,10 @@ const SubForm = ({ data }) => {
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
-        // height: Size && Size[0],
-        // width: Size && Size[1],
-        // top: Posn && Posn[0],
-        // left: Posn && Posn[1],
+        height: Size && Size[0],
+        width: Size && Size[1],
+        top: Posn && Posn[0],
+        left: Posn && Posn[1],
         // position: 'absolute',
       }}
       ref={observedDiv}

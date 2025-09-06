@@ -22,7 +22,12 @@ export function getGrid({
   if (!localStorage.getItem(serverEvent.ID)) {
     const serverPropertiesObj = {};
     serverEvent.Properties.map((key) => {
-      return (serverPropertiesObj[key] = Properties[key]);
+      if (key === "Values") {
+        // Ensure Values is returned from the current grid state
+        serverPropertiesObj[key] = Values || Properties[key] || [];
+      } else {
+        serverPropertiesObj[key] = Properties[key];
+      }
     });
 
     const event = JSON.stringify({
@@ -46,6 +51,9 @@ export function getGrid({
   serverEvent.Properties.map((key) => {
     if (key === "CurCell") {
       serverPropertiesObj[key] = CurCell;
+    } else if (key === "Values") {
+      // Ensure Values is returned from the current grid state
+      serverPropertiesObj[key] = Values || refData?.Properties?.Values || [];
     } else {
       serverPropertiesObj[key] =
         Event[key] || refData?.Properties?.[key];
