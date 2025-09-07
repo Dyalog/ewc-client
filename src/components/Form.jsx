@@ -179,9 +179,42 @@ const Form = ({ data }) => {
         // handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
     >
-      {Object.keys(updatedData).map((key, i) => {
-        return <SelectComponent data={updatedData[key]} key={i} />;
-      })}
+      {(() => {
+        const hasMenuBar = Object.keys(updatedData).some(
+          key => updatedData[key]?.Properties?.Type === 'MenuBar'
+        );
+        // TODO: This needs to be determined by menubar styling and font size, etc
+        const menuBarOffset = hasMenuBar ? 25 : 0;
+        
+        return (
+          <>
+            {/* We separate the MenuBar out, whenever you declare it */}
+            {hasMenuBar && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+                {Object.keys(updatedData).filter(key => 
+                  updatedData[key]?.Properties?.Type === 'MenuBar'
+                ).map((key, i) => (
+                  <SelectComponent data={updatedData[key]} key={`menubar-${i}`} />
+                ))}
+              </div>
+            )}
+            
+            <div style={{ 
+              position: 'absolute', 
+              top: menuBarOffset, 
+              left: 0, 
+              right: 0, 
+              bottom: 0 
+            }}>
+              {Object.keys(updatedData).filter(key => 
+                updatedData[key]?.Properties?.Type !== 'MenuBar'
+              ).map((key, i) => (
+                <SelectComponent data={updatedData[key]} key={`content-${i}`} />
+              ))}
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };
