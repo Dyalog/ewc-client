@@ -25,15 +25,30 @@ const useAppData = () => {
     return findData;
   };
 
-  const inheritedProperty = (data, prop) => {
+  const inheritedProperty = (data, prop, allowedTypes = null) => {
+    // Check if current component has the property
     if (data?.Properties.hasOwnProperty(prop)) {
-      return data.Properties[prop];
-    } else {
-      const pid = parentId(data.ID);
-      if (pid) {
-        return inheritedProperty(findCurrentData(pid), prop);
+      // If allowedTypes is specified, only return if this component's type is allowed
+      if (allowedTypes) {
+        const currentType = data.Properties?.Type;
+        if (allowedTypes.includes(currentType)) {
+          return data.Properties[prop];
+        }
+      } else {
+        // No type restriction, return the property
+        return data.Properties[prop];
       }
     }
+    
+    // Look up the parent hierarchy
+    const pid = parentId(data.ID);
+    if (pid) {
+      const parentData = findCurrentData(pid);
+      if (parentData) {
+        return inheritedProperty(parentData, prop, allowedTypes);
+      }
+    }
+    
     return null;
   };
 

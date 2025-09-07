@@ -20,7 +20,7 @@ import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
 const SubForm = ({ data }) => {
-  const { findCurrentData, socket, dataRef } = useAppData();
+  const { findCurrentData, socket, dataRef, inheritedProperty } = useAppData();
   const {
     Size,
     Posn,
@@ -121,7 +121,7 @@ const SubForm = ({ data }) => {
             : data?.Properties.hasOwnProperty("Flex")
               ? "flex"
               : "block",
-        background: BCol ? rgbColor(BCol) : "#F0F0F0",
+        background: rgbColor(inheritedProperty(data, 'BCol', ['Form', 'SubForm'])) || "#F0F0F0",
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
