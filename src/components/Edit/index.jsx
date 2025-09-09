@@ -106,6 +106,18 @@ const Edit = ({
       return setInputValue(value);
     }
 
+    // Handle Date fields outside of grids
+    if (FieldType === "Date" && propsValue !== undefined && propsValue !== "") {
+      setEmitValue(propsValue);
+      // If the value is a number (days since epoch), convert it to a formatted date
+      if (typeof propsValue === 'number' || !isNaN(propsValue)) {
+        const date = calculateDateAfterDays(propsValue);
+        return setInputValue(dayjs(date).format(ShortDate));
+      }
+      // Otherwise assume it's already a formatted date string
+      return setInputValue(propsValue);
+    }
+
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
       setEmitValue(propsValue);
       return setInputValue(propsValue);
@@ -137,6 +149,9 @@ const Edit = ({
   const updateSelText = () => {
     const el = document.getElementById(data.ID);
     if (!el) return;
+    
+    // Date inputs don't support selection
+    if (el.type === 'date') return;
     
     const textLength = el.value.length;
     const rawStart = el.selectionStart + 1; // Convert to 1-indexed
@@ -217,32 +232,34 @@ const Edit = ({
         }
       } else {
         
-        // Save current cursor position before React re-render
-        const savedStart = input.selectionStart;
-        const savedEnd = input.selectionEnd;
+        // Save current cursor position before React re-render (not for date inputs)
+        const savedStart = input.type !== 'date' ? input.selectionStart : 0;
+        const savedEnd = input.type !== 'date' ? input.selectionEnd : 0;
         
         setInputValue(newTextValue);
         setEmitValue(newTextValue);
         
         // Schedule cursor restoration after React updates DOM
-        setTimeout(() => {
-          if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
-            // Use SelText from Properties if available
-            const start = Math.max(0, selTextFromProperties[0] - 1);
-            const end = Math.max(0, selTextFromProperties[1] - 1);
-            const textLength = input.value.length;
-            const clampedStart = Math.min(start, textLength);
-            const clampedEnd = Math.min(end, textLength);
-            
-            input.setSelectionRange(clampedStart, clampedEnd);
-          } else {
-            // Restore previous cursor position
-            input.setSelectionRange(savedStart, savedEnd);
-          }
-        }, 0);
+        if (input.type !== 'date') {
+          setTimeout(() => {
+            if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
+              // Use SelText from Properties if available
+              const start = Math.max(0, selTextFromProperties[0] - 1);
+              const end = Math.max(0, selTextFromProperties[1] - 1);
+              const textLength = input.value.length;
+              const clampedStart = Math.min(start, textLength);
+              const clampedEnd = Math.min(end, textLength);
+              
+              input.setSelectionRange(clampedStart, clampedEnd);
+            } else {
+              // Restore previous cursor position
+              input.setSelectionRange(savedStart, savedEnd);
+            }
+          }, 0);
+        }
       }
-    } else if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
-      // Handle SelText-only updates (no text change)
+    } else if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2 && input.type !== 'date') {
+      // Handle SelText-only updates (no text change) - not for date inputs
       const start = Math.max(0, selTextFromProperties[0] - 1);
       const end = Math.max(0, selTextFromProperties[1] - 1);
       const textLength = input.value.length;
