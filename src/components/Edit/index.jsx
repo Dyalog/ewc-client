@@ -628,7 +628,7 @@ const Edit = ({
 
   const handleBlur = () => {
     updateSelText(); // Update global tree with final selection
-    if (Event && Event.some((item) => item[0] === "LostFocus")) {
+    if (false && Event && Event.some((item) => item[0] === "LostFocus")) {
       socket.send(JSON.stringify({
         Event: {
           EventName: "LostFocus",
@@ -665,7 +665,7 @@ const Edit = ({
 
     if (!exists || previousFocusedId == data?.ID) return;
 //     console.log(gotFocusEvent);
-    socket.send(gotFocusEvent);
+    // socket.send(gotFocusEvent);
   };
 
   // updating the styles depending upon the FontObj
