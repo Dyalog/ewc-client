@@ -633,7 +633,7 @@ const Edit = ({
         Event: {
           EventName: "LostFocus",
           ID: data?.ID,
-          Info: [], // TODO?
+          Info: [""],
         },
       }));
     }
