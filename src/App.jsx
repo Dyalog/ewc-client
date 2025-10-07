@@ -132,6 +132,32 @@ const App = () => {
     };
   }, []);
 
+  // Handle window focus/blur to manage current-focus
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      // When window gets focus, set current-focus to the mounted Form (if there is one)
+      const formParentID = findFormParentID(dataRef.current);
+      if (formParentID) {
+        console.log('WINDOWFOCUS', formParentID)
+        localStorage.setItem("current-focus", formParentID);
+      }
+    };
+
+    const handleWindowBlur = () => {
+      // When window loses focus, clear current-focus
+      console.log('WINDOWBLUR', localStorage.getItem('current-focus'))
+      localStorage.setItem("current-focus", "");
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, []);
+
   if (fontScale) {
     Globals.set('fontScale', fontScale);
   }
