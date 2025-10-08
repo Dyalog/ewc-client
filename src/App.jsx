@@ -3,6 +3,7 @@ import { AppDataContext } from "./context";
 import { SelectComponent } from "./components";
 import {
   getObjectById,
+  getObjectByIdObject,
   checkSupportedProperties,
   findFormParentID,
   deleteFormAndSiblings,
@@ -522,9 +523,35 @@ const App = () => {
           }
           return webSocket.send(event);
         } else if (Method == "GetFocus") {
-          const focusedID = localStorage.getItem("current-focus");
+          // 1. Check if window is focused
+          if (!document.hasFocus()) {
+            return webSocket.send(JSON.stringify({ WX: { Info: [''], WGID }, }));
+          }
+
+          // 2. Find focused element and walk up DOM to find valid component
+          const focusableTypes = new Set([ 'Edit', 'Button', 'Combo', 'Grid',
+            'List', 'Link', 'Upload', ]);
+          let element = document.activeElement;
+          let foundID = null;
+
+          while (element && element !== document.body) {
+            if (element.id) {
+              const objData = getObjectByIdObject(dataRef.current, element.id);
+              if (objData?.Properties?.Type && focusableTypes.has(objData.Properties.Type)) {
+                foundID = element.id;
+                break;
+              }
+            }
+            element = element.parentElement;
+          }
+
+          // 3. If no focused element found, return top-level form ID
+          if (!foundID) {
+            foundID = findFormParentID(dataRef.current);
+          }
+
           const event = JSON.stringify({
-            WX: { Info: !focusedID ? [] : [focusedID], WGID },
+            WX: { Info: foundID ? [foundID] : [''], WGID },
           });
           return webSocket.send(event);
         } else if (Method == "SetCookie") {
