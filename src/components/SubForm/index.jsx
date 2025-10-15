@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   excludeKeys,
@@ -20,16 +20,12 @@ import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
 const SubForm = ({ data }) => {
-  const { findCurrentData, socket, dataRef, inheritedProperty } = useAppData();
+  const { findCurrentData, socket, inheritedProperty } = useAppData();
   const {
     Size,
     Posn,
     Picture,
     Visible,
-    BCol,
-    FlexDirection,
-    JustifyContent,
-    Display,
     FontObj,
     Flex = 0,
     CSS,
@@ -48,22 +44,22 @@ const SubForm = ({ data }) => {
   const imageStyles = getImageStyles(
     Picture && Picture[1],
     ImageData,
-    data?.Properties                            
+    data?.Properties
   );
 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   let updatedStyles = {
-    overflow: 'clip',
+    overflow: "clip",
     ...styles,
     ...imageStyles,
     ...flexStyles,
-    ...fontStyles
+    ...fontStyles,
   };
 
   // TODO this is extremely suspect and looks to be for one purpose!
-  const name = localStorage.getItem("TabControlInSubForm")
+  const name = localStorage.getItem("TabControlInSubForm");
   useEffect(() => {
     let existingData;
     // TODO this is extremely suspect and looks to be for one purpose!
@@ -87,20 +83,18 @@ const SubForm = ({ data }) => {
           Posn: Posn || [50, 50], // Default position if none provided
         })
       );
-    }
-    else if (name) {
+    } else if (name) {
       // TODO this is extremely suspect and looks to be for one purpose!
-      let name  = JSON.parse(localStorage.getItem("TabControlData"))
-      let name1 = JSON.parse(localStorage.getItem("FormData"))
+      let name = JSON.parse(localStorage.getItem("TabControlData"));
+      let name1 = JSON.parse(localStorage.getItem("FormData"));
       localStorage.setItem(
         data.ID,
         JSON.stringify({
-          Size:name?.Size || name1?.Size,
-          Posn:name?.Posn || [0,0]
+          Size: name?.Size || name1?.Size,
+          Posn: name?.Posn || [0, 0],
         })
       );
-    }
-    else {
+    } else {
       localStorage.setItem(
         data.ID,
         JSON.stringify({
@@ -111,8 +105,8 @@ const SubForm = ({ data }) => {
     }
   }, [data]);
 
-  const inheritedSize=inheritedProperty(data, 'Size', ['Form', 'SubForm'])
-  const inheritedBCol=inheritedProperty(data, 'BCol', ['Form', 'SubForm'])
+  const inheritedSize = inheritedProperty(data, "Size", ["Form", "SubForm"]);
+  const inheritedBCol = inheritedProperty(data, "BCol", ["Form", "SubForm"]);
 
   return (
     <div
@@ -122,8 +116,8 @@ const SubForm = ({ data }) => {
           Visible == 0
             ? "none"
             : data?.Properties.hasOwnProperty("Flex")
-              ? "flex"
-              : "block",
+            ? "flex"
+            : "block",
         background: rgbColor(inheritedBCol) || "#F0F0F0",
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
