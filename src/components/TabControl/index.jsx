@@ -1,5 +1,5 @@
 import { setStyle,getFontStyles, excludeKeys, getLastTabButton, rgbColor, parseFlexStyles } from '../../utils';
-import SubForm from '../DynamicSubForm';
+import SubForm from '../SubForm';
 import TabButton from '../TabButton';
 import { useAppData } from '../../hooks';
 import { useEffect, useState } from 'react';

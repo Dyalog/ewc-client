@@ -53,7 +53,7 @@ const calculateTextDimensions = (lines, font) => {
 
   // TODO remove references to 12px everywhere
   let lineHeight = '12px';
-  if (font && font?.Properties && font.Properties?.Size) {
+  if (font?.Properties?.Size) {
     lineHeight = (font.Properties.Size * scale) + 'px';
   }
 
@@ -72,7 +72,7 @@ const calculateTextDimensions = (lines, font) => {
   const width = container.offsetWidth;
   const height = container.offsetHeight;
   document.body.removeChild(container);
-  return [height, width];
+  return {height, width};
 };
 
 const Text = ({ data, fontProperties }) => {
@@ -145,6 +145,8 @@ const Text = ({ data, fontProperties }) => {
 
             return (
               <g key={index}>
+                {BCol
+                ? 
                 <rect
                   x={points && points[0]}
                   y={points && points[1]}
@@ -159,6 +161,8 @@ const Text = ({ data, fontProperties }) => {
                   })`}
                   fill={BCol ? rgbColor(BCol) : "transparent"} // Set your desired background color here
                 />
+                :
+                <></>}
                 <text
                   id={`${data?.ID}-t${index + 1}`}
                   dominantBaseline="hanging"
