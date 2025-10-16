@@ -29,7 +29,7 @@ import Circle from './Circle';
 import Text from './Text';
 import Timer from './Timer';
 import ListView from './ListView';
-import SubForm from './DynamicSubForm';
+import SubForm from './SubForm';
 import Image from './Image';
 import { useAppData } from '../hooks';
 import Chart from './Chart';
