@@ -92,7 +92,7 @@ const Text = ({ data, fontProperties }) => {
   const pointsArray =
     newPoints && newPoints[0].map((y, i) => [newPoints[1][i], y]);
 
-  const rotationDegrees = fontProperties?.Rotate ? fontProperties.Rotate * (180 / Math.PI) : 0;
+  const rotationDegrees = fontProperties?.Rotate ? -(fontProperties.Rotate * (180 / Math.PI)) : 0;
 
   return (
     <>
@@ -103,27 +103,6 @@ const Text = ({ data, fontProperties }) => {
           top: 0,
           left: 0,
           pointerEvents: 'none',
-        }}
-        onMouseDown={(e) => {
-          handleMouseDown(e, socket, Event, data?.ID);
-        }}
-        onMouseUp={(e) => {
-          handleMouseUp(e, socket, Event, data?.ID);
-        }}
-        onMouseEnter={(e) => {
-          handleMouseEnter(e, socket, Event, data?.ID);
-        }}
-        onMouseMove={(e) => {
-          handleMouseMove(e, socket, Event, data?.ID);
-        }}
-        onMouseLeave={(e) => {
-          handleMouseLeave(e, socket, Event, data?.ID);
-        }}
-        onWheel={(e) => {
-          handleMouseWheel(e, socket, Event, data?.ID);
-        }}
-        onDoubleClick={(e) => {
-          handleMouseDoubleClick(e, socket, Event, data?.ID);
         }}
       >
         {Text?.map((text, index) => {
@@ -143,7 +122,11 @@ const Text = ({ data, fontProperties }) => {
             ? `${fontProperties.Size * fontScale}px`
             : `${12 * fontScale}px`;
 
-          const textColor = FCol ? rgbColor(FCol[index]) : "black";
+          // Check if FCol is a single color [R,G,B] or array of colors [[R,G,B], [R,G,B], ...]
+          const isFColArray = FCol && Array.isArray(FCol[0]);
+          const textColor = FCol
+            ? rgbColor(isFColArray ? FCol[index] : FCol)
+            : "black";
           const bgColor = BCol ? rgbColor(BCol) : "transparent";
 
           const fontStyle = fontProperties?.Italic == 1 ? "italic" : "normal";
@@ -158,6 +141,9 @@ const Text = ({ data, fontProperties }) => {
                 position: "absolute",
                 top: `${points[1]}px`,
                 left: `${points[0]}px`,
+                // TODO
+                // height: textHeight,
+                // width: textWidth,
                 transform: `rotate(${rotationDegrees}deg)`,
                 transformOrigin: '0 0',
                 pointerEvents: 'auto',
@@ -171,6 +157,27 @@ const Text = ({ data, fontProperties }) => {
                 whiteSpace: 'pre',
                 ...customStyles,
                 ...fontStyles
+              }}
+              onMouseDown={(e) => {
+                handleMouseDown(e, socket, Event, data?.ID);
+              }}
+              onMouseUp={(e) => {
+                handleMouseUp(e, socket, Event, data?.ID);
+              }}
+              onMouseEnter={(e) => {
+                handleMouseEnter(e, socket, Event, data?.ID);
+              }}
+              onMouseMove={(e) => {
+                handleMouseMove(e, socket, Event, data?.ID);
+              }}
+              onMouseLeave={(e) => {
+                handleMouseLeave(e, socket, Event, data?.ID);
+              }}
+              onWheel={(e) => {
+                handleMouseWheel(e, socket, Event, data?.ID);
+              }}
+              onDoubleClick={(e) => {
+                handleMouseDoubleClick(e, socket, Event, data?.ID);
               }}
             >
               {text}
