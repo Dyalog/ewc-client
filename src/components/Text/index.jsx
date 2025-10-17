@@ -87,12 +87,12 @@ const Text = ({ data, fontProperties }) => {
 
   const { reRender } = useForceRerender();
 
-  const parentSize = JSON.parse(localStorage.getItem("formDimension"));
-
   const newPoints = flattenIfThreeLevels(Points);
 
   const pointsArray =
     newPoints && newPoints[0].map((y, i) => [newPoints[1][i], y]);
+
+  const rotationDegrees = fontProperties?.Rotate ? fontProperties.Rotate * (180 / Math.PI) : 0;
 
   return (
     <>
@@ -126,92 +126,57 @@ const Text = ({ data, fontProperties }) => {
           handleMouseDoubleClick(e, socket, Event, data?.ID);
         }}
       >
-        <svg
-          height={parentSize && parentSize[0]}
-          width={parentSize && parentSize[1]}
-        >
-          {Text?.map((text, index) => {
-            const dimensions = calculateTextDimensions(
-              [text],
-              fontProperties
-            );
-            const textWidth = dimensions?.width;
-            const textHeight = dimensions?.height;
+        {Text?.map((text, index) => {
+          const dimensions = calculateTextDimensions(
+            [text],
+            fontProperties
+          );
+          const textWidth = dimensions?.width;
+          const textHeight = dimensions?.height;
 
-            const points = pointsArray[index] || [
-              pointsArray?.[index - 1]?.[0],
-              pointsArray?.[index - 1]?.[1] + 10,
-            ];
+          const points = pointsArray[index] || [
+            pointsArray?.[index - 1]?.[0],
+            pointsArray?.[index - 1]?.[1] + 10,
+          ];
 
-            return (
-              <g key={index}>
-                {BCol
-                ? 
-                <rect
-                  x={points && points[0]}
-                  y={points && points[1]}
-                  width={textWidth}
-                  height={textHeight}
-                  transform={`translate(${points && points[0]}, ${
-                    points && points[1]
-                  }) rotate(${
-                    fontProperties?.Rotate * (180 / Math.PI)
-                  }) translate(${points && -points[0]}, ${
-                    points && -points[1]
-                  })`}
-                  fill={BCol ? rgbColor(BCol) : "transparent"} // Set your desired background color here
-                />
-                :
-                <></>}
-                <text
-                  id={`${data?.ID}-t${index + 1}`}
-                  dominantBaseline="hanging"
-                  dy="0em"
-                  x={points && points[0]}
-                  y={points && points[1]}
-                  fontFamily={fontProperties?.PName}
-                  fontSize={
-                    fontProperties?.Size
-                      ? `${fontProperties.Size * fontScale}px`
-                      : `${12 * fontScale}px`
-                  }
-                  fill={FCol ? rgbColor(FCol[index]) : "black"}
-                  fontStyle={
-                    !fontProperties?.Italic
-                      ? "none"
-                      : fontProperties?.Italic == 1
-                      ? "italic"
-                      : "none"
-                  }
-                  fontWeight={
-                    !fontProperties?.Weight ? 0 : fontProperties?.Weight
-                  }
-                  textDecoration={
-                    !fontProperties?.Underline
-                      ? "none"
-                      : fontProperties?.Underline == 1
-                      ? "underline"
-                      : "none"
-                  }
-                  transform={`translate(${points && points[0]}, ${
-                    points && points[1]
-                  }) rotate(${
-                    fontProperties?.Rotate * (180 / Math.PI)
-                  }) translate(${points && -points[0]}, ${
-                    points && -points[1]
-                  })`}
-                  style={{
-                    pointerEvents: 'auto',
-                    ...customStyles,
-                    ...fontStyles
-                  }}
-                >
-                  {text /*text.replace(/ /g, "\u00A0")*/}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+          const fontSize = fontProperties?.Size
+            ? `${fontProperties.Size * fontScale}px`
+            : `${12 * fontScale}px`;
+
+          const textColor = FCol ? rgbColor(FCol[index]) : "black";
+          const bgColor = BCol ? rgbColor(BCol) : "transparent";
+
+          const fontStyle = fontProperties?.Italic == 1 ? "italic" : "normal";
+          const fontWeight = fontProperties?.Weight || "normal";
+          const textDecoration = fontProperties?.Underline == 1 ? "underline" : "none";
+
+          return (
+            <div
+              key={index}
+              id={`${data?.ID}-t${index + 1}`}
+              style={{
+                position: "absolute",
+                top: `${points[1]}px`,
+                left: `${points[0]}px`,
+                transform: `rotate(${rotationDegrees}deg)`,
+                transformOrigin: '0 0',
+                pointerEvents: 'auto',
+                fontFamily: fontProperties?.PName,
+                fontSize: fontSize,
+                color: textColor,
+                backgroundColor: bgColor,
+                fontStyle: fontStyle,
+                fontWeight: fontWeight,
+                textDecoration: textDecoration,
+                whiteSpace: 'pre',
+                ...customStyles,
+                ...fontStyles
+              }}
+            >
+              {text}
+            </div>
+          );
+        })}
       </div>
     </>
   );
