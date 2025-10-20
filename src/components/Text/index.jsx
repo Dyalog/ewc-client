@@ -50,6 +50,7 @@ const calculateTextDimensions = (lines, font) => {
   container.style.position = 'fixed';
   container.style.top = '0';
   container.style.left = '0';
+  container.style.whiteSpace = 'pre';
 
   // TODO remove references to 12px everywhere
   let lineHeight = '12px';
@@ -85,8 +86,6 @@ const Text = ({ data, fontProperties }) => {
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
-  const { reRender } = useForceRerender();
-
   const newPoints = flattenIfThreeLevels(Points);
 
   const pointsArray =
@@ -97,18 +96,16 @@ const Text = ({ data, fontProperties }) => {
   return (
     <>
       <div
+        id={data?.ID}
         style={{
           position: "absolute",
           display: Visible == 0 ? "none" : "block",
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
         }}
       >
         {Text?.map((text, index) => {
           const dimensions = calculateTextDimensions(
             [text],
-            fontProperties
+            font
           );
           const textWidth = dimensions?.width;
           const textHeight = dimensions?.height;
@@ -133,6 +130,10 @@ const Text = ({ data, fontProperties }) => {
           const fontWeight = fontProperties?.Weight || "normal";
           const textDecoration = fontProperties?.Underline == 1 ? "underline" : "none";
 
+          const lineHeight = fontProperties?.Size
+            ? `${fontProperties.Size * fontScale}px`
+            : `${12 * fontScale}px`;
+
           return (
             <div
               key={index}
@@ -141,20 +142,24 @@ const Text = ({ data, fontProperties }) => {
                 position: "absolute",
                 top: `${points[1]}px`,
                 left: `${points[0]}px`,
-                // TODO
-                // height: textHeight,
-                // width: textWidth,
+                height: textHeight,
+                width: textWidth,
                 transform: `rotate(${rotationDegrees}deg)`,
                 transformOrigin: '0 0',
                 pointerEvents: 'auto',
                 fontFamily: fontProperties?.PName,
                 fontSize: fontSize,
+                lineHeight: lineHeight,
                 color: textColor,
                 backgroundColor: bgColor,
                 fontStyle: fontStyle,
                 fontWeight: fontWeight,
                 textDecoration: textDecoration,
                 whiteSpace: 'pre',
+                margin: 0,
+                padding: 0,
+                display: 'inline-block',
+                overflow: 'hidden',
                 ...customStyles,
                 ...fontStyles
               }}
