@@ -124,7 +124,12 @@ const Text = ({ data, fontProperties }) => {
           const textColor = FCol
             ? rgbColor(isFColArray ? FCol[index] : FCol)
             : "black";
-          const bgColor = BCol ? rgbColor(BCol) : "transparent";
+
+          // Check if BCol is a single color [R,G,B] or array of colors [[R,G,B], [R,G,B], ...]
+          const isBColArray = BCol && Array.isArray(BCol[0]);
+          const bgColor = BCol
+            ? rgbColor(isBColArray ? BCol[index] : BCol)
+            : "transparent";
 
           const fontStyle = fontProperties?.Italic == 1 ? "italic" : "normal";
           const fontWeight = fontProperties?.Weight || "normal";
