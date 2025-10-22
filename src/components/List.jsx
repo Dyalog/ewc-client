@@ -30,7 +30,8 @@ const List = ({ data }) => {
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
-  const [width, setWidth] = useState(Size[1]);
+  
+  const width = Size ? {width: Size[1]} : {};
   const [isFocused, setIsFocused] = useState(false);
 
   // SelItems is used as the state, but the internal state of 'items' is used
@@ -74,10 +75,6 @@ const List = ({ data }) => {
       window.removeEventListener('blur', f, true);
     };
   }, []);
-
-  // useEffect(() => {
-  //   setWidth(dimensions?.width - 50);
-  // }, [dimensions]);
 
   const selectedStyles = {
     background: "#1264FF",
@@ -258,7 +255,7 @@ const List = ({ data }) => {
       ref={ref}
       style={{
         ...styles,
-        width,
+        ...width,
         border: "1px solid " + (isFocused ? "black" : "darkgrey"),
         display: Visible === 0 ? "none" : "block",
       }}
