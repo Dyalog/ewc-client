@@ -24,7 +24,7 @@ import CustomRibbonButton from './Ribbon/RibbonButton';
 import CustomRibbonButtonGroup from './Ribbon/RibbonButtonGroup';
 import Poly from './Polygon';
 import Rectangle from './Rectangle';
-import Ecllipse from './Ecllipse';
+import Ellipse from './Ellipse';
 import Circle from './Circle';
 import Text from './Text';
 import Timer from './Timer';
@@ -179,7 +179,7 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Timer') return <Timer data={data} />;
   if (data?.Properties?.Type == 'ListView') return <ListView data={data} />;
   if (data?.Properties?.Type == 'Image') return <Image data={data} />;
-  if (data?.Properties?.Type == 'Ellipse') return <Ecllipse data={data} />;
+  if (data?.Properties?.Type == 'Ellipse') return <Ellipse data={data} />;
   if (data?.Properties?.Type == 'Circle') return <Circle data={data} />;
   if (data?.Properties?.Type == 'ApexChart') return <Chart data={data} />;
   if (data?.Properties?.Type == 'MsgBox') return <MessageBox data= {data} />;
