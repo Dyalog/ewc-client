@@ -122,11 +122,10 @@ const SubForm = ({ data }) => {
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
-        height: Size ? Size[0] : inheritedSize[0],
-        width: Size ? Size[1] : inheritedSize[1],
+        height: Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined,
+        width:  Size ? Size[1] : inheritedSize ? inheritedSize[1] : undefined,
         top: Posn && Posn[0],
         left: Posn && Posn[1],
-        // position: 'absolute',
       }}
       ref={observedDiv}
       onMouseDown={(e) => {
