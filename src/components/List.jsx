@@ -116,7 +116,7 @@ const List = ({ data }) => {
     const length = items.length;
     let updatedArray = [...items];
 
-    if (event.metaKey && isMulti) {
+    if ((event.ctrlKey || event.metaKey) && isMulti) {
       updatedArray[index] = updatedArray[index] ? 0 : 1;
       setCurStartIndex(index);
     } else if (event.shiftKey && isMulti) {
