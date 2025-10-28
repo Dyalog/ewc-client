@@ -39,7 +39,6 @@ const App = () => {
   const [proceedEventArray, setProceedEventArray] = useState([]);
   const pendingKeypressEventRef = useRef(null);
   const [nqEvents, setNqEvents] = useState([]);
-  const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
   const [focusedElement, setFocusedElement] = useState(null);
   const { reRender } = useForceRerender();
@@ -115,7 +114,7 @@ const App = () => {
         webSocketRef.current.close();
       }
     };
-  }, [layout]);
+  }, []);
 
   useEffect(() => {
     const container = appRef.current;
@@ -444,7 +443,7 @@ const App = () => {
       // webSocket.send(layout);
 
       const eventInit = JSON.stringify({
-        [layout]: {
+        "Initialise": {
           Version: version.version,
           Name: version.name,
           URL: window.location.href,
