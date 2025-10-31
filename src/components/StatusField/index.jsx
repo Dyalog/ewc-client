@@ -2,7 +2,7 @@ import { parseFlexStyles, getFontStyles, rgbColor, handleMouseDown, handleMouseU
 import { useAppData } from "../../hooks";
 
 const StatusField = ({ data }) => {
-    const { Caption, Text, Posn, Size, CSS, Event } = data?.Properties;
+    const { Caption, Text, Size, CSS, Event } = data?.Properties;
 
     const { socket, findCurrentData, inheritedProperties } = useAppData();
     let { BCol, FCol, FontObj } = inheritedProperties(data, 'BCol', 'FCol', 'FontObj');
@@ -23,6 +23,8 @@ const StatusField = ({ data }) => {
         borderRight: '1px solid #ccc',
         backgroundColor: BCol,
         color: FCol,
+        width: !Size ? 'auto' : Size[1],
+        height: !Size ? '100%' : Size[0],
         ...fontStyles,
         ...parseFlexStyles(CSS)
     };
