@@ -9,9 +9,17 @@ const StatusBar = ({ data }) => {
         console.error("StatusBar with Align other than Bottom is not supported yet.");
     }
     const { findCurrentData, inheritedProperties } = useAppData();
-    const { BCol, FCol, FontObj } = inheritedProperties(data, 'BCol', 'FCol', 'FontObj');
+    let { BCol, FCol, FontObj } = inheritedProperties(data, 'BCol', 'FCol', 'FontObj');
     const font = findCurrentData(FontObj);
     const fontStyles = getFontStyles(font, 12);
+
+    if (Array.isArray(BCol)) {
+        BCol = rgbColor(BCol);
+    }
+
+    if (Array.isArray(FCol)) {
+        FCol = rgbColor(FCol);
+    }
 
     const styles = {
         position: 'absolute',
