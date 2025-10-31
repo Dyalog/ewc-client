@@ -1,8 +1,11 @@
 import { parseFlexStyles, getFontStyles, rgbColor, handleMouseDown, handleMouseUp, handleMouseMove } from "../../utils";
 import { useAppData } from "../../hooks";
+import { useState } from "react";
 
 const StatusField = ({ data }) => {
-    const { Caption, Text, Size, CSS, Event } = data?.Properties;
+    const { Caption, Text, Size, CSS, Event, HTML } = data?.Properties;
+
+    let html=useState(HTML);
 
     const { socket, findCurrentData, inheritedProperties } = useAppData();
     let { BCol, FCol, FontObj } = inheritedProperties(data, 'BCol', 'FCol', 'FontObj');
@@ -28,25 +31,25 @@ const StatusField = ({ data }) => {
         ...fontStyles,
         ...parseFlexStyles(CSS)
     };
-
     return (
         <div
             id={data?.ID}
             style={styles}
             onMouseUp={(e) => {
-                console.log("Mouse up in status field");
                 handleMouseUp(e, socket, Event, data?.ID);
             }}
             onMouseDown={(e) => {
-                console.log("Mouse down in status field");
                 handleMouseDown(e, socket, Event, data?.ID);
             }}
             onMouseMove={(e) => {
-                console.log("Mouse move in status field");
                 handleMouseMove(e, socket, Event, data?.ID);
             }}
-            >
-            {Caption}{Text}
+        >
+            {
+                html!=[] ? (
+                    <div dangerouslySetInnerHTML={{ __html: HTML }} />
+                ) : <div>{Caption}{Text}</div>
+            }
         </div>
     );
 }
