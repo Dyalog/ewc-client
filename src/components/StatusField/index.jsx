@@ -4,9 +4,6 @@ import { useState } from "react";
 
 const StatusField = ({ data }) => {
     const { Caption, Text, Size, CSS, Event, HTML } = data?.Properties;
-
-    let html=useState(HTML);
-
     const { socket, findCurrentData, inheritedProperties } = useAppData();
     let { BCol, FCol, FontObj } = inheritedProperties(data, 'BCol', 'FCol', 'FontObj');
 
@@ -46,12 +43,37 @@ const StatusField = ({ data }) => {
             }}
         >
             {
-                html!=[] ? (
-                    <div dangerouslySetInnerHTML={{ __html: HTML }} />
-                ) : <div>{Caption}{Text}</div>
+                !HTML ? (
+                    <div>{Caption}{Text}</div>
+                )
+                    :
+                    (<div dangerouslySetInnerHTML={{ __html: HTML }} />)
             }
         </div>
     );
+}
+
+StatusField.WS = (send, serverEvent, data) => {
+    if (serverEvent?.Properties.HTML) {
+        data.Properties.HTML = serverEvent.Properties.HTML;
+        delete data?.Properties?.Caption;
+        delete data?.Properties?.Text;
+        delete serverEvent?.Properties?.Caption;
+        delete serverEvent?.Properties?.Text;
+
+        data.Properties = {
+            ...data?.Properties,
+            ...serverEvent?.Properties
+        };
+    } else {
+        delete data?.Properties?.HTML;
+
+        data.Properties = {
+            ...data?.Properties,
+            ...serverEvent?.Properties
+        };
+    }
+    return
 }
 
 export default StatusField;
