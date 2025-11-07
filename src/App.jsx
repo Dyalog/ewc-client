@@ -21,8 +21,8 @@ import { getGrid } from "./components/Grid/getGrid";
 import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
 import keypressHandlers from "./utils/keypressHandlers";
-import hasEventCallback from "./utils/hasEventCallback";
 import {size, posn} from "./utils/sizeposn"
+import StatusField from "./components/StatusField";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -39,7 +39,6 @@ const App = () => {
   const [proceedEventArray, setProceedEventArray] = useState([]);
   const pendingKeypressEventRef = useRef(null);
   const [nqEvents, setNqEvents] = useState([]);
-  const [layout, setLayout] = useState("Initialise");
   const webSocketRef = useRef(null);
   const [focusedElement, setFocusedElement] = useState(null);
   const { reRender } = useForceRerender();
@@ -115,7 +114,7 @@ const App = () => {
         webSocketRef.current.close();
       }
     };
-  }, [layout]);
+  }, []);
 
   useEffect(() => {
     const container = appRef.current;
@@ -224,6 +223,10 @@ const App = () => {
           });
         }
 
+        if(currentLevel[finalKey]?.Properties?.Type === 'StatusField'){
+          StatusField.WS(wsSend, data, currentLevel[finalKey]);
+          return;
+        }
         // Special logic for radio buttons! This goes up to the parent, and sets
         // all other radio buttons within the container to false.
         // N.B. the assumption is that radios are always within a container of
@@ -444,7 +447,7 @@ const App = () => {
       // webSocket.send(layout);
 
       const eventInit = JSON.stringify({
-        [layout]: {
+        "Initialise": {
           Version: version.version,
           Name: version.name,
           URL: window.location.href,
@@ -674,33 +677,17 @@ const App = () => {
         } else if (keys[0] == "WG") {
           const doWG = () => {
             const serverEvent = evData.WG;
-
             const updateAndStringify = (resp) => {
-              if (!resp.WG?.Properties) return JSON.stringify(resp);
-              // const error = () => webSocket.send(JSON.stringify({
-              //   WG: {
-              //     ID: serverEvent?.ID,
-              //     Error: {
-              //       Code: 2,
-              //       Message: "ID '" + serverEvent?.ID + "' has no Size or Posn. Is this a non-rendering component?",
-              //       WGID: serverEvent?.WGID,
-              //     },
-              //   },
-              // }));
               if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-                const p = resp.WG.Properties['Posn'] = posn(serverEvent.ID);
-                // if (p === null) return error();
+                resp.WG.Properties['Posn'] = posn(serverEvent.ID);
               }
               if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-                const s = resp.WG.Properties['Size'] = size(serverEvent.ID);
-                // if (s === null) return error();
+                resp.WG.Properties['Size'] = size(serverEvent.ID);
               }
               return JSON.stringify(resp);
             };
 
             try {
-              // console.log({serverEvent})
-
               const refData = JSON.parse(
                 getObjectById(dataRef.current, serverEvent?.ID)
               );
@@ -1413,11 +1400,14 @@ const App = () => {
                 return Upload.WG(wsSend, serverEvent);
               } else {
                 const replyProps = {};
-                for (const prop in serverEvent.Properties) {
+
+                serverEvent.Properties.forEach((prop) => {
                   if (refData.Properties[prop]) {
-                    replyProps[prop] = refData[prop];
+                    replyProps[prop] = refData.Properties[prop];
+                  }else{
+                    replyProps[prop] = []; // [] is zilde(⍬) in EWC
                   }
-                }
+                });
 
                 return webSocket.send(updateAndStringify({
                   WG: {
@@ -1787,6 +1777,3 @@ const App = () => {
 };
 
 export default App;
-
-// {
-//   JSON.stringify(updatedData[formParentID]?.['LEFT']?.Properties);
