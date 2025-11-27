@@ -23,7 +23,7 @@ const MenuBar = ({ data }) => {
 
     >
       {Object.keys(updatedData).map((key) => {
-        return <SelectComponent data={updatedData[key]} />;
+        return <SelectComponent key={data[key]?.ID} data={updatedData[key]} />;
       })}
     </div>
   );

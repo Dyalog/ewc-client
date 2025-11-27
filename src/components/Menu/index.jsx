@@ -1,6 +1,6 @@
 import { excludeKeys, isEmpty, setStyle,getFontStyles, parseFlexStyles } from '../../utils';
 import { useAppData } from '../../hooks';
-import Dropdown from '../Dropdown';
+import DropDown from '../DropDown';
 import './Menu.css';
 
 const Menu = ({ data }) => {
@@ -14,8 +14,6 @@ const Menu = ({ data }) => {
 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
-
-  // Render the Caption if the Object didn't have any Keys
 
   if (empty) {
     return (
@@ -43,8 +41,9 @@ const Menu = ({ data }) => {
   // Render the DropDown if the Object have Menu Items
   // style and customStyles are passed on as-is
   return (
-    <Dropdown
+    <DropDown
       data={updatedData}
+      parentData={data}
       style={style}
       customStyles={customStyles}
       title={
