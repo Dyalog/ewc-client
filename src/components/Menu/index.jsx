@@ -1,6 +1,6 @@
 import { excludeKeys, isEmpty, setStyle,getFontStyles, parseFlexStyles } from '../../utils';
 import { useAppData } from '../../hooks';
-import Dropdown from '../DropDown';
+import Dropdown from '../Dropdown';
 import './Menu.css';
 
 const Menu = ({ data }) => {
