@@ -7,7 +7,7 @@ import "react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css";
 
 const CustomRibbonGroup = ({ data }) => {
   const { findCurrentData, fontScale, handleData,dataRef } = useAppData();
-  console.log("Dattatatatatatta",dataRef.current.F1);
+//   console.log("Dattatatatatatta",dataRef.current.F1);
   
 
   const updatedData = excludeKeys(data);
@@ -29,7 +29,7 @@ const CustomRibbonGroup = ({ data }) => {
  
 
   useEffect(() => {
-    console.log("Coming hereeeeeeeeee in ss");
+//     console.log("Coming hereeeeeeeeee in ss");
     const updateDimensions = () => {
       setTimeout(() => {
         const titleElement = document.getElementById(data.ID + "-title");
@@ -43,11 +43,11 @@ const CustomRibbonGroup = ({ data }) => {
         ribbonElements.forEach((element) => {
           const ribbonText = element.textContent.trim();
           if (ribbonText === "") {
-            console.log("Ribbon element has empty text. Excluding from DOM or calculations.", element);
+//             console.log("Ribbon element has empty text. Excluding from DOM or calculations.", element);
         
             element.remove();
           } else {
-            console.log("Ribbon Element Text:", ribbonText);
+//             console.log("Ribbon Element Text:", ribbonText);
         
           }
         });
@@ -89,7 +89,7 @@ const CustomRibbonGroup = ({ data }) => {
           ribbonElementsWithoutId.forEach((element) => {
             const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
             // element.style.height = `${maxHeight + titleDivHeight + 20}px`;
-            console.log("Maxxxx value seeeeettt", maxHeight, titleDivHeight, element.style.height, data.ID, data.id);
+//             console.log("Maxxxx value seeeeettt", maxHeight, titleDivHeight, element.style.height, data.ID, data.id);
           });
         }, 100); // Add a delay to ensure state update
       }, 300);
@@ -202,7 +202,7 @@ const CustomRibbonGroup = ({ data }) => {
   //   return () => window.removeEventListener("resize", updateDimensions);
   // }, [data.ID, data.id]);
 
-console.log("Updated Data is as",updatedData);
+// console.log("Updated Data is as",updatedData);
 
   return (
     <div id={data?.ID} style={{
@@ -225,7 +225,7 @@ console.log("Updated Data is as",updatedData);
         className="row"
       >
         {Object.keys(updatedData).map((key, index) => {
-          console.log("Updated key is aszzzzzzzzzzzzzzzzzzzzzzzzzzzz",updatedData[key])
+//           console.log("Updated key is aszzzzzzzzzzzzzzzzzzzzzzzzzzzz",updatedData[key])
           return (
             <SelectComponent
               key={index}

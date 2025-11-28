@@ -33,15 +33,15 @@ const Button = ({
   );
 
   const styles = setStyle(data?.Properties);
-  const { socket, findDesiredData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+  const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
   const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
-  console.log("data Button", data);
+//   console.log("data Button", data);
 
   const customStyles = parseFlexStyles(CSS);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   const inputRef = useRef();
@@ -62,7 +62,7 @@ const Button = ({
 
   const isRadio = data?.Properties?.Style && data?.Properties?.Style == "Radio";
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const buttonEvent = data.Properties.Event && data?.Properties?.Event[0];
 
@@ -122,27 +122,27 @@ const Button = ({
     }
     document.getElementById(localStorage.getItem("current-focus"))?.blur();
     if (buttonEvent) {
-      console.log(
-        JSON.stringify({
-          Event: {
-            EventName: buttonEvent[0],
-            ID: data?.ID,
-          },
-        })
-      );
+//       console.log(
+//         JSON.stringify({
+//           Event: {
+//             EventName: buttonEvent[0],
+//             ID: data?.ID,
+//           },
+//         })
+//       );
       if (
         localStorage.getItem("current-focus") &&
         localStorage.getItem("shouldChangeEvent") === "true"
       ) {
-        console.log( 
-          JSON.stringify({
-            Event: {
-              EventName: "Change",
-              ID: localStorage.getItem("current-focus"),
-              Info: [data?.ID],
-            },
-          })
-        );
+//         console.log( 
+//           JSON.stringify({
+//             Event: {
+//               EventName: "Change",
+//               ID: localStorage.getItem("current-focus"),
+//               Info: [data?.ID],
+//             },
+//           })
+//         );
 
         socket.send(
           JSON.stringify({
@@ -168,10 +168,13 @@ const Button = ({
     }
   };
 
-
   useEffect(() => {
+    // TODO B1: Fix up resize logic!
+    return;
+    // console.log('RESIZESTART', {parentSize, position, parentOldDimensions});
     if (!position) return;
     if (!parentOldDimensions) return;
+    // console.log('RESIZE', position, parentOldDimensions, dimensions);
 
     let calculateLeft =
       position && position.left && parentOldDimensions && parentOldDimensions[1]
@@ -187,6 +190,10 @@ const Button = ({
 
     calculateTop = Math.max(0, Math.min(calculateTop, dimensions.height));
 
+    // console.log('RESIZED', {
+    //   top: Math.round(calculateTop),
+    //   left: Math.round(calculateLeft),
+    // })
     setPosition({
       top: Math.round(calculateTop),
       left: Math.round(calculateLeft),
@@ -237,7 +244,7 @@ const Button = ({
   }, [dimensions]);
 
   const handleCellChangedEvent = (value) => {
-    const gridEvent = findDesiredData(extractStringUntilLastPeriod(data?.ID));
+    const gridEvent = findCurrentData(extractStringUntilLastPeriod(data?.ID));
     (values[parseInt(row) - 1][parseInt(column) - 1] = value ? 1 : 0),
       handleData(
         {
@@ -283,8 +290,8 @@ const Button = ({
     );
     const exists = event && event.some((item) => item[0] === "CellChanged");
     if (!exists) return;
-    console.log(triggerEvent);
-    console.log(formatCellEvent);
+//     console.log(triggerEvent);
+//     console.log(formatCellEvent);
     socket.send(formatCellEvent);
     socket.send(triggerEvent);
   };
@@ -302,7 +309,7 @@ const Button = ({
     localStorage.setItem(data?.ID, triggerEvent);
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     const event = JSON.stringify({
       Event: {
         EventName: "Select",
@@ -332,7 +339,7 @@ const Button = ({
     });
     const exists = event && event.some((item) => item[0] === "CellMove");
     if (!exists) return;
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
 
@@ -367,7 +374,7 @@ const Button = ({
   };
   const handleLeftArrow = () => {
     if (location !== "inGrid") return;
-    console.log(inputRef);
+//     console.log(inputRef);
     const parent = inputRef.current.parentElement;
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;
@@ -418,7 +425,7 @@ const Button = ({
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;
-    console.log(gotFocusEvent);
+//     console.log(gotFocusEvent);
     socket.send(gotFocusEvent);
   };
 
@@ -436,6 +443,7 @@ const Button = ({
 
     return (
       <div
+        id={data.ID + ".$CONTAINER"}
         onKeyDown={(e) => handleKeyPress(e)}
         style={{
           ...styles,
@@ -447,7 +455,7 @@ const Button = ({
           <div
             style={{ fontSize: "12px", position: "absolute", top: 0, left: 0 }}
           >
-            {Caption}
+            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
         ) : null}
 
@@ -476,7 +484,7 @@ const Button = ({
               ...fontStyles
             }}
           >
-            {Caption}
+            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>
@@ -508,7 +516,7 @@ const Button = ({
           ID: data?.ID,
         },
       });
-      console.log(emitEvent);
+//       console.log(emitEvent);
 
       socket.send(event);
     };
@@ -562,6 +570,7 @@ const Button = ({
 
     return (
       <div
+        id={data?.ID + ".$CONTAINER"}
         style={{
           ...styles,
           zIndex: 1,
@@ -607,7 +616,7 @@ const Button = ({
               ...fontStyles
             }}
           >
-            <label for={data?.ID}>{Caption}</label>
+            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>

@@ -52,15 +52,15 @@ const GridLabel = ({ data }) => {
     const exists = data?.typeObj?.Properties?.Event?.some((item) => item[0] === 'KeyPress');
     if (!exists) return;
 
-    console.log(
-      JSON.stringify({
-        Event: {
-          EventName: 'KeyPress',
-          ID: data?.ID,
-          Info: [e.key, charCode, e.keyCode, shiftState],
-        },
-      })
-    );
+//     console.log(
+//       JSON.stringify({
+//         Event: {
+//           EventName: 'KeyPress',
+//           ID: data?.ID,
+//           Info: [e.key, charCode, e.keyCode, shiftState],
+//         },
+//       })
+//     );
 
     socket.send(
       JSON.stringify({

@@ -33,9 +33,9 @@ const Treeview = ({ data }) => {
 
   const [nodeData, setNodeData] = useState([]);
 
-  const { dataRef, socket, findDesiredData } = useAppData();
+  const { dataRef, socket, findCurrentData } = useAppData();
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
 
@@ -72,7 +72,7 @@ const Treeview = ({ data }) => {
         );
       if (!exists) return;
 
-      console.log(expandEvent);
+//       console.log(expandEvent);
       socket.send(expandEvent);
     } else if (treeState.length < nodeData.length) {
       const missingPart = nodeData.filter((item) => !treeState.includes(item));
@@ -95,10 +95,10 @@ const Treeview = ({ data }) => {
       const exists = Event && Event.some((item) => item[0] === "Retracting");
       if (!exists) return;
 
-      console.log(retractEvent);
+//       console.log(retractEvent);
       socket.send(retractEvent);
     } else {
-      console.log("Equal");
+//       console.log("Equal");
     }
     setNodeData(treeState);
   };
@@ -175,7 +175,7 @@ const Treeview = ({ data }) => {
     localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === "ItemDown");
     if (!exists) return;
-    console.log(event);
+//     console.log(event);
     socket.send(event);
   };
 
@@ -214,7 +214,7 @@ const Treeview = ({ data }) => {
     localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === "ItemDblClick");
     if (!exists) return;
-    console.log(event);
+//     console.log(event);
     socket.send(event);
   };
 

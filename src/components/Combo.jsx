@@ -9,7 +9,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   const inputRef = useRef();
 
-  const { socket, handleData, findDesiredData, reRender, dataRef, inheritedProperties } = useAppData();
+  const { socket, handleData, findCurrentData, reRender, dataRef, inheritedProperties } = useAppData();
 
   const { CSS } = data.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
@@ -21,10 +21,10 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
-  console.log("this event", { Event })
+//   console.log("this event", { Event })
   const [comboInput, setComboInput] = useState('+');
   const [position, setPosition] = useState({ top: Posn && Posn[0], left: Posn && Posn[1] });
 
@@ -86,7 +86,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     const exists = event && event.some((item) => item[0] === 'CellChanged');
     if (!exists) return;
 
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     socket.send(triggerEvent);
   };
 
@@ -125,7 +125,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     localStorage.setItem(data?.ID, triggerEvent);
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     socket.send(event);
   };
 
@@ -141,6 +141,8 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   };
 
   useEffect(() => {
+    // TODO B1: Fix up resize logic!
+    return;
     if (!position) return;
     if (!parentOldDimensions) return;
 
@@ -208,7 +210,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   }, [dimensions]);
 
   const triggerCellMoveEvent = (row, column, mouseClick, value) => {
-    console.log("265 combo")
+//     console.log("265 combo")
     const isKeyboard = !mouseClick ? 1 : 0;
     const Event = JSON.stringify({
       Event: {
@@ -220,13 +222,13 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
     const exists = event && event.some((item) => item[0] === 'CellMove');
     if (!exists) return;
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
 
   const handleRightArrow = (value) => {
     if (location !== 'inGrid') return;
-    console.log(inputRef);
+//     console.log(inputRef);
     const parent = inputRef.current.parentElement;
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.nextSibling;
@@ -234,7 +236,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
     triggerCellMoveEvent(row, column + 1, 0, value);
     const element = nextSibling?.querySelectorAll(querySelector);
-    console.log({ element });
+//     console.log({ element });
 
     if (querySelector == 'select') return element && element[0].focus();
 
@@ -242,7 +244,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   };
   const handleLeftArrow = (value) => {
     if (location !== 'inGrid') return;
-    console.log(inputRef);
+//     console.log(inputRef);
     const parent = inputRef.current.parentElement;
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;

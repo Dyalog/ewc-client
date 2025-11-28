@@ -1,10 +1,11 @@
 export const getFontStyles = (fontObj, defaultSize = 12) => { // TODO remove defaultSize
+    const dflt = { fontSize: `${defaultSize}px` };
     // TODO! no fontScale used?!
-    if (!fontObj) return {};
+    if (!fontObj) return dflt;
   
     const fontProperties = fontObj?.Properties;
   
-    if (!fontProperties) return {};
+    if (!fontProperties) return dflt;
   
     return {
       fontFamily: fontProperties.PName || "inherit",

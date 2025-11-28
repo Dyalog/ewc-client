@@ -17,7 +17,7 @@ import {
 import { useAppData } from "../../hooks";
 
 const ListView = ({ data }) => {
-  const { findDesiredData, socket } = useAppData();
+  const { findCurrentData, socket } = useAppData();
 
   const {
     View,
@@ -35,7 +35,7 @@ const ListView = ({ data }) => {
 
   const styles = setStyle(data?.Properties);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ const ListView = ({ data }) => {
     localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === eventName);
     if (!exists) return;
-    console.log(event);
+//     console.log(event);
     socket.send(event);
   };
 
@@ -161,7 +161,7 @@ const ListView = ({ data }) => {
   };
 
   if (View && View == "Icon") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[0]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[0]);
     const Images = ImageData?.Properties?.Files;
     const ImageSize = ImageData && ImageData?.Properties?.Size;
     return (
@@ -178,7 +178,7 @@ const ListView = ({ data }) => {
   }
 
   if (View && View == "SmallIcon") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[1]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[1]);
     const Images = ImageData?.Properties?.Files;
     const ImageSize = ImageData?.Properties?.Size;
     return (
@@ -193,7 +193,7 @@ const ListView = ({ data }) => {
     );
   }
   if (View && View == "List") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[1]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[1]);
     const Images = ImageData?.Properties?.Files;
     const ImageSize = ImageData?.Properties?.Size;
     return (
@@ -209,7 +209,7 @@ const ListView = ({ data }) => {
     );
   }
   if (View && View == "Report") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[1]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[1]);
     const Images = ImageData?.Properties?.Files;
 
     const reportsData = createListViewObjects(

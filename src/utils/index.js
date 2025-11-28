@@ -7,12 +7,20 @@ export * from "./locateInDataRef";
 export * from "./getFontStyles"
 import { v4 as uuidv4 } from "uuid";
 
+// 1,4,2 is what quad-WC uses and annoyingly what e.buttons uses in JS, but
+// 0,1,2 is what e.button (NB no s) uses in JS
+const buttonCode = {
+  0: 1, // Left click
+  1: 4, // Middle click
+  2: 2, // Right click
+};
+
 export const handleMouseDown = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
-  const button = e.button;
+  const button = buttonCode[e.button];
 
   const mousedownEvent = JSON.stringify({
     Event: {
@@ -24,7 +32,7 @@ export const handleMouseDown = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseDown");
   if (!exists) return;
-  console.log(mousedownEvent);
+//   console.log(mousedownEvent);
   socket.send(mousedownEvent);
 };
 
@@ -33,7 +41,7 @@ export const handleMouseUp = (e, socket, Event, ID) => {
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
-  const button = e.button;
+  const button = buttonCode[e.button];
 
   const mouseUpEvent = JSON.stringify({
     Event: {
@@ -45,7 +53,7 @@ export const handleMouseUp = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseUp");
   if (!exists) return;
-  console.log(mouseUpEvent);
+//   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
 };
 
@@ -54,7 +62,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
   const rect = e.currentTarget.getBoundingClientRect();
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
-  const button = e.button;
+  const button = buttonCode[e.button];
 
   const mouseUpEvent = JSON.stringify({
     Event: {
@@ -66,7 +74,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseDblClick");
   if (!exists) return;
-  console.log(mouseUpEvent);
+//   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
 };
 
@@ -83,7 +91,7 @@ export const handleMouseEnter = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseEnter");
   if (!exists) return;
-  console.log("mouseEnter", mouseEnterEvent);
+//   console.log("mouseEnter", mouseEnterEvent);
   socket.send(mouseEnterEvent);
 };
 
@@ -100,7 +108,7 @@ export const handleMouseLeave = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseLeave");
   if (!exists) return;
-  console.log(mouseLeaveEvent);
+//   console.log(mouseLeaveEvent);
   socket.send(mouseLeaveEvent);
 };
 
@@ -147,7 +155,7 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
 
   const exists = Event && Event.some((item) => item[0] === "MouseWheel");
   if (!exists) return;
-  console.log(mouseWheelEvent);
+//   console.log(mouseWheelEvent);
   socket.send(mouseWheelEvent);
 };
 
@@ -164,16 +172,16 @@ export const handleKeyPressUtils = (e, socket, Event, ID) => {
 
   if (!exists) return;
 
-  console.log(
-    JSON.stringify({
-      Event: {
-        EventName: "KeyPress",
-        ID: ID,
-        EventID: eventId,
-        Info: [e.key, charCode, e.keyCode, shiftState],
-      },
-    })
-  );
+//   console.log(
+//     JSON.stringify({
+//       Event: {
+//         EventName: "KeyPress",
+//         ID: ID,
+//         EventID: eventId,
+//         Info: [e.key, charCode, e.keyCode, shiftState],
+//       },
+//     })
+//   );
 
   socket.send(
     JSON.stringify({
@@ -227,16 +235,24 @@ export const setStyle = (Properties, position = "absolute", Flex = 0) => {
     };
   }
 
+  // [] (zilde or ⍬) means omit in Size - it allows setting only one of height
+  // or width instead of forcing a none or all situation.
+  let size = {};
+  if (Properties?.Size) {
+    let s = Properties?.Size;
+    if (!Array.isArray(s[0]) || s[0].length !== 0) {
+      size.height = s[0];
+    }
+    if (!Array.isArray(s[1]) || s[1].length !== 0) {
+      size.width = s[1];
+    }
+  }
+
   return {
     ...(Properties?.hasOwnProperty("Posn")
       ? { position: "absolute" }
       : { position: "relative" }),
-    // position: Properties?.Posn ? 'absolute' : 'relative',
-
-    ...(Properties?.Size && {
-      height: Properties?.Size && Properties?.Size[0],
-      width: Properties?.Size && Properties?.Size[1],
-    }),
+    ...size,
     ...(Properties?.Posn && {
       top: Properties?.Posn && Properties?.Posn[0],
       left: Properties?.Posn && Properties?.Posn[1],
@@ -334,23 +350,31 @@ export const generateHeader = (length) => {
   return result;
 };
 
-export const getObjectById = (jsonData, targetId) => {
+// TODO overused? We should always have a path to an object!
+export const getObjectByIdObject = (jsonData, targetId) => {
   const data = jsonData;
 
   function searchObject(node, idToFind) {
-    if (typeof node === "object") {
-      if (node.ID === idToFind) {
-        return node;
-      }
-      for (const key in node) {
-        const result = searchObject(node[key], idToFind);
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        if (item === null || item === undefined) {
+          continue;
+        }
+        const result = searchObject(item, idToFind);
         if (result) {
           return result;
         }
       }
-    } else if (Array.isArray(node)) {
-      for (const item of node) {
-        const result = searchObject(item, idToFind);
+    } else if (typeof node === "object") {
+      if (node.ID === idToFind) {
+        return node;
+      }
+      for (const key in node) {
+        const v = node[key];
+        if (v === null || v === undefined) {
+          continue;
+        }
+        const result = searchObject(node[key], idToFind);
         if (result) {
           return result;
         }
@@ -360,6 +384,11 @@ export const getObjectById = (jsonData, targetId) => {
   }
 
   const result = searchObject(data, targetId);
+  return result;
+};
+
+export const getObjectById = (jsonData, targetId) => {
+  const result = getObjectByIdObject(jsonData, targetId);
   return result ? JSON.stringify(result, null, 2) : null;
 };
 
@@ -468,7 +497,7 @@ export const rgbColor = (rgbArray) => {
 
     return `rgb(${r}, ${g}, ${b})`;
   } catch (error) {
-    console.log("rgb error", error);
+//     console.log("rgb error", error);
     return null;
   }
 };

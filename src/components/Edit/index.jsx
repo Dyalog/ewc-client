@@ -21,6 +21,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
+import * as Globals from "../../Globals";
 
 const Edit = ({
   data,
@@ -36,9 +37,11 @@ const Edit = ({
     socket,
     dataRef,
     findDesiredData,
+    findCurrentData,
     handleData,
     fontScale,
-    inheritedProperties
+    inheritedProperties,
+    pendingKeypressEventRef
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -53,13 +56,10 @@ const Edit = ({
   const [inputType, setInputType] = useState("text");
   const [inputValue, setInputValue] = useState("");
   const [emitValue, setEmitValue] = useState("");
-  const [initialValue, setInitialValue] = useState("");
   const [prevFocused, setprevFocused] = useState("⌈");
   const [eventId, setEventId] = useState(null);
-  const dateInputRef = useRef();
+  const prevInputValueRef = useRef("");
 
-
-  
   const {
     FieldType,
     MaxLength,
@@ -79,65 +79,59 @@ const Edit = ({
   const hasValueProperty = data?.Properties.hasOwnProperty("Value");
   const isPassword = data?.Properties.hasOwnProperty("Password");
   const inputRef = useRef(null);
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS)
   
-  console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
+//   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
+    let propsValue = data?.Properties?.Value;
+    if (propsValue === undefined) {
+      propsValue = data?.Properties?.Text;
+    }
 
     if (location === "inGrid") {
       if (FieldType === "Date") {
         setEmitValue(value);
-        setInitialValue(value);
         const date = calculateDateAfterDays(value); // Custom function to calculate date
         return setInputValue(dayjs(date).format(ShortDate));
       }
 
       if (FieldType === "LongNumeric") {
         setEmitValue(value);
-        setInitialValue(value);
         return setInputValue(value);
       }
 
       setEmitValue(value);
-      setInitialValue(value);
       return setInputValue(value);
     }
 
+    // Handle Date fields outside of grids
+    if (FieldType === "Date" && propsValue !== undefined && propsValue !== "") {
+      setEmitValue(propsValue);
+      // If the value is a number (days since epoch), convert it to a formatted date
+      if (typeof propsValue === 'number' || !isNaN(propsValue)) {
+        const date = calculateDateAfterDays(propsValue);
+        return setInputValue(dayjs(date).format(ShortDate));
+      }
+      // Otherwise assume it's already a formatted date string
+      return setInputValue(propsValue);
+    }
+
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
-
-      // if (isPassword) {
-      //   console.log("ISSSSSSS PASS1",data?.Properties?.Text,data?.Properties)
-
-      //   setInitialValue(data?.Properties?.Text?.length); // Custom function to generate asterisks
-
-      //   setEmitValue(data?.Properties?.Text);
-      //   console.log("ISSSSSSS PASS",isPassword,data?.Properties?.Text)
-
-      //   return setInputValue(data?.Properties?.Text
-      //   );
-      // } else {
-
-        setEmitValue(data?.Properties?.Text);
-        setInitialValue(data?.Properties?.Text);
-        return setInputValue(data?.Properties?.Text);
-      // }
+      setEmitValue(propsValue);
+      return setInputValue(propsValue);
     }
 
     if (data?.Properties?.FieldType?.includes("Numeric")) {
       if (isPassword) {
-        setInitialValue(
-          generateAsteriskString(data?.Properties?.Value?.length)
-        ); // Custom function to generate asterisks
-        setEmitValue(data?.Properties?.Value);
+        setEmitValue(propsValue);
         return setInputValue(
-          generateAsteriskString(data?.Properties?.Value?.length)
+          generateAsteriskString(propsValue.length)
         );
       } else {
-        setInitialValue(data?.Properties?.Value||data?.Properties?.Text);
-        setEmitValue(data?.Properties?.Value||data?.Properties?.Text);
-        return setInputValue(data?.Properties?.Value||data?.Properties?.Text);
+        setEmitValue(propsValue);
+        return setInputValue(propsValue);
       }
     }
   }, [
@@ -151,12 +145,42 @@ const Edit = ({
     hasValueProperty,
   ]);
 
+  // We need to update SelText whenever we can
+  const updateSelText = () => {
+    const el = document.getElementById(data.ID);
+    if (!el) return;
+    
+    // Date inputs don't support selection
+    if (el.type === 'date') return;
+    
+    const textLength = el.value.length;
+    const rawStart = el.selectionStart + 1; // Convert to 1-indexed
+    const rawEnd = el.selectionEnd + 1;     // Convert to 1-indexed
+    
+    // Clamp to valid range [1, textLength+1] like native APL controls
+    const clampedStart = Math.max(1, Math.min(rawStart, textLength + 1));
+    const clampedEnd = Math.max(1, Math.min(rawEnd, textLength + 1));
+    
+    
+    // Update global tree for WG requests
+    handleData(
+      {
+        ID: data?.ID,
+        Properties: {
+          SelText: [clampedStart, clampedEnd],
+        },
+      },
+      "WS"
+    );
+  };
+
   // check that the Edit is in the Grid or not
 
   const handleInputClick = () => {
-    if (inputRef.current) {
-      inputRef.current.select();
-    }
+    // Don't auto-select all text - let user click to position cursor normally
+    // if (inputRef.current) {
+    //   inputRef.current.select();
+    // }
   };
 
   const decideInputType = useCallback(() => {
@@ -176,6 +200,99 @@ const Edit = ({
   useEffect(() => {
     decideInputValue();
   }, [decideInputValue]);
+
+
+  // Single Properties observer to handle all property changes atomically
+  useEffect(() => {
+    const textFromProperties = data?.Properties?.Text;
+    const valueFromProperties = data?.Properties?.Value;
+    const selTextFromProperties = data?.Properties?.SelText;
+    
+    
+    const input = inputRef.current;
+    if (!input) return;
+    
+    // Determine what text value to use
+    let newTextValue = undefined;
+    if (textFromProperties !== undefined) {
+      newTextValue = textFromProperties;
+    } else if (valueFromProperties !== undefined) {
+      newTextValue = valueFromProperties;
+    }
+    
+    // Handle text changes
+    if (newTextValue !== undefined) {
+      const currentDOMValue = input.value;
+      
+      if (currentDOMValue === newTextValue) {
+        // DOM is already correct, just update React state without re-render
+        if (inputValue !== newTextValue) {
+          setInputValue(newTextValue);
+          setEmitValue(newTextValue);
+        }
+      } else {
+        
+        // Save current cursor position before React re-render (not for date inputs)
+        const savedStart = input.type !== 'date' ? input.selectionStart : 0;
+        const savedEnd = input.type !== 'date' ? input.selectionEnd : 0;
+        
+        setInputValue(newTextValue);
+        setEmitValue(newTextValue);
+        
+        // Schedule cursor restoration after React updates DOM
+        if (input.type !== 'date') {
+          setTimeout(() => {
+            if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
+              // Use SelText from Properties if available
+              const start = Math.max(0, selTextFromProperties[0] - 1);
+              const end = Math.max(0, selTextFromProperties[1] - 1);
+              const textLength = input.value.length;
+              const clampedStart = Math.min(start, textLength);
+              const clampedEnd = Math.min(end, textLength);
+              
+              input.setSelectionRange(clampedStart, clampedEnd);
+            } else {
+              // Restore previous cursor position
+              input.setSelectionRange(savedStart, savedEnd);
+            }
+          }, 0);
+        }
+      }
+    } else if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2 && input.type !== 'date') {
+      // Handle SelText-only updates (no text change) - not for date inputs
+      const start = Math.max(0, selTextFromProperties[0] - 1);
+      const end = Math.max(0, selTextFromProperties[1] - 1);
+      const textLength = input.value.length;
+      const clampedStart = Math.min(start, textLength);
+      const clampedEnd = Math.min(end, textLength);
+      
+      const currentStart = input.selectionStart;
+      const currentEnd = input.selectionEnd;
+      
+      if (currentStart !== clampedStart || currentEnd !== clampedEnd) {
+        input.setSelectionRange(clampedStart, clampedEnd);
+      } else {
+      }
+    }
+  }, [data?.Properties?.Text, data?.Properties?.Value, data?.Properties?.SelText]);
+
+  // Update global tree when input changes (for WG requests)
+  useEffect(() => {
+    if (inputValue !== undefined && inputValue !== prevInputValueRef.current) {
+      prevInputValueRef.current = inputValue;
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            Text: inputValue,
+            Value: inputValue,
+          },
+        },
+        "WS"
+      );
+    }
+  }, [inputValue]);
+
 
   // Checks for the Styling of the Edit Field
 
@@ -208,7 +325,7 @@ const Edit = ({
 
     const exists = event && event.some((item) => item[0] === "CellMove");
     if (!exists) return;
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
 
@@ -287,6 +404,7 @@ const Edit = ({
   };
 
   const handleKeyPress = (e) => {
+    updateSelText(); // Update global tree with current selection
     if (e.key == "ArrowRight") handleRightArrow();
     else if (e.key == "ArrowLeft") handleLeftArrow();
     else if (e.key == "ArrowDown") handleCellMove();
@@ -294,25 +412,43 @@ const Edit = ({
     else if (e.key == "ArrowUp") handleUpArrow();
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
+    // We utilise the browser for certain events (eg HT is just a dispatchEvent)
+    // - the problem is that we can end up in a loop here, with certain code,
+    // so we set a global flag for the duration of an NQ'd KeyPress with
+    // NoCallback set to 1.
+    if (Globals.get('suppressingCallbacks')) {
+      return;
+    }
 
+    // Prevent default behavior for keys that APL might handle
+    e.preventDefault();
+    
     const eventId = uuidv4();
     setEventId(eventId);
+    
+    // Set pending keypress flag for HT handler
+    pendingKeypressEventRef.current = { 
+      key: e.key, 
+      eventId, 
+      componentId: data?.ID,
+      shiftKey: e.shiftKey 
+    };
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
     const isShiftPressed = e.shiftKey ? 1 : 0;
     const charCode = e.key.charCodeAt(0);
     let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
-    console.log(
-      JSON.stringify({
-        Event: {
-          EventName: "KeyPress",
-          ID: data?.ID,
-          EventID: eventId,
-          Info: [e.key, charCode, e.keyCode, shiftState],
-        },
-      })
-    );
+//     console.log(
+//       JSON.stringify({
+//         Event: {
+//           EventName: "KeyPress",
+//           ID: data?.ID,
+//           EventID: eventId,
+//           Info: [e.key, charCode, e.keyCode, shiftState],
+//         },
+//       })
+//     );
 
     socket.send(
       JSON.stringify({
@@ -382,6 +518,7 @@ const Edit = ({
 
     const prevFocusedID = JSON.parse(localStorage.getItem(prevFocused));
 
+    // TODO I'm pretty sure this change logic is wrong
     if (!!data.Properties.hasOwnProperty("Event")) {
       const event1 = JSON.stringify({
         Event: {
@@ -393,26 +530,27 @@ const Edit = ({
       const originalValue =
         data?.Properties?.Text || data?.Properties?.Value || "";
 
-      console.log(
-        "value focused",
-        { value, emitValue, originalValue },
-        prevFocusedID,
-        prevFocusedID.Event.EventName !== "Select",
-        originalValue !== emitValue
-      );
+//       console.log(
+//         "value focused",
+//         { value, emitValue, originalValue },
+//         prevFocusedID,
+//         prevFocusedID.Event.EventName !== "Select",
+//         originalValue !== emitValue
+//       );
 
       if (
         prevFocused &&
+        prevFocusedID &&
         prevFocusedID.Event.EventName !== "Select" &&
         originalValue !== emitValue &&
         prevFocused !== data.ID
       ) {
-        console.log(
-          "focused",
-          prevFocusedID,
-          prevFocusedID.Event.EventName !== "Select",
-          originalValue !== emitValue
-        );
+//         console.log(
+//           "focused",
+//           prevFocusedID,
+//           prevFocusedID.Event.EventName !== "Select",
+//           originalValue !== emitValue
+//         );
         socket.send(event1);
       }
     }
@@ -479,16 +617,17 @@ const Edit = ({
     // localStorage.setItem(extractStringUntilSecondPeriod(data?.ID), cellChangedEvent);
     const exists = event && event.some((item) => item[0] === "CellChanged");
     if (!exists) return;
-    console.log(cellChangedEvent);
+//     console.log(cellChangedEvent);
     socket.send(cellChangedEvent);
 
     if (!formatString) return;
 
-    console.log(formatCellEvent);
+//     console.log(formatCellEvent);
     socket.send(formatCellEvent);
   };
 
   const handleBlur = () => {
+    updateSelText(); // Update global tree with final selection
     if (Event && Event.some((item) => item[0] === "LostFocus")) {
       socket.send(JSON.stringify({
         Event: {
@@ -525,7 +664,7 @@ const Edit = ({
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;
-    console.log(gotFocusEvent);
+//     console.log(gotFocusEvent);
     socket.send(gotFocusEvent);
   };
 

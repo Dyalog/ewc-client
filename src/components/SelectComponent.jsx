@@ -24,18 +24,20 @@ import CustomRibbonButton from './Ribbon/RibbonButton';
 import CustomRibbonButtonGroup from './Ribbon/RibbonButtonGroup';
 import Poly from './Polygon';
 import Rectangle from './Rectangle';
-import Ecllipse from './Ecllipse';
+import Ellipse from './Ellipse';
 import Circle from './Circle';
 import Text from './Text';
 import Timer from './Timer';
 import ListView from './ListView';
-import SubForm from './DynamicSubForm';
+import SubForm from './SubForm';
 import Image from './Image';
 import { useAppData } from '../hooks';
 import Chart from './Chart';
 import MessageBox from './MessageBox';
 import Link from './Link';
 import Upload from './Upload';
+import Div from './Div';
+import StatusBar from './StatusBar';
 
 import KendoChart from './KendoChart';
 import KendoGrid from './KendoGrid';
@@ -178,7 +180,7 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Timer') return <Timer data={data} />;
   if (data?.Properties?.Type == 'ListView') return <ListView data={data} />;
   if (data?.Properties?.Type == 'Image') return <Image data={data} />;
-  if (data?.Properties?.Type == 'Ellipse') return <Ecllipse data={data} />;
+  if (data?.Properties?.Type == 'Ellipse') return <Ellipse data={data} />;
   if (data?.Properties?.Type == 'Circle') return <Circle data={data} />;
   if (data?.Properties?.Type == 'ApexChart') return <Chart data={data} />;
   if (data?.Properties?.Type == 'MsgBox') return <MessageBox data= {data} />;
@@ -186,8 +188,9 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'KendoGrid') return <KendoGrid data={data} />;
   if (data?.Properties?.Type == 'Link') return <Link data={data} />;
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
-
-  console.log("UNKNOWN: " + data?.Properties?.Type);
+  if (data?.Properties?.Type == 'Div') return <Div data={data} />;
+  if (data?.Properties?.Type == 'StatusBar') return <StatusBar data={data} />;
+//   console.log("UNKNOWN: " + data?.Properties?.Type);
 };
 
 export default SelectComponent;

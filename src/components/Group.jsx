@@ -29,7 +29,7 @@ const Group = ({ data }) => {
     Event,
     FontObj,
   } = data?.Properties;
-  const { findDesiredData, socket } = useAppData();
+  const { findCurrentData, socket } = useAppData();
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
@@ -37,20 +37,21 @@ const Group = ({ data }) => {
   const [width, setWidth] = useState(Size[1]);
   const [height, setHeight] = useState(Size[0]);
 
-  useEffect(() => {
-    if (!Size.length) {
-      setWidth(dimensions?.width - 47);
-      setHeight(dimensions?.height - 47);
-    }
-  }, [dimensions]);
+  // TODO B1: This was known wrong already! Fix
+  // useEffect(() => {
+  //   if (!Size.length) {
+  //     setWidth(dimensions?.width - 47);
+  //     setHeight(dimensions?.height - 47);
+  //   }
+  // }, [dimensions]);
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
   const flexStyles = parseFlexStyles(CSS);
 
-   const font = findDesiredData(FontObj && FontObj);
+   const font = findCurrentData(FontObj);
     const fontStyles = getFontStyles(font, 12);
 
   const updatedData = excludeKeys(data);

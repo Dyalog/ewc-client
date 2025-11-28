@@ -22,6 +22,7 @@ import GridButton from "./GridButton";
 import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
+import GridDiv from "./GridDiv";
 
 const Component = ({ data,onKeyDown1 }) => {
   if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
@@ -30,12 +31,14 @@ const Component = ({ data,onKeyDown1 }) => {
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
+  else if (data?.type == "Div") return <GridDiv data={data} />;
 };
 
 const Grid = ({ data }) => {
   const gridId = data?.ID;
   const {
     findDesiredData,
+    findCurrentData,
     socket,
     proceed,
     setProceed,
@@ -78,8 +81,8 @@ const Grid = ({ data }) => {
     TitleHeight,
     TitleWidth,
     FormatString,
-    VScroll = 0,
-    HScroll = 0,
+    VScroll,
+    HScroll,
     Attach,
     Event,
     CSS,
@@ -90,13 +93,17 @@ const Grid = ({ data }) => {
   const [width, setWidth] = useState(Size[1]);
   const [rows, setRows] = useState(0);
   const [columns, setColumns] = useState(0);
-  const [selectedRow, setSelectedRow] = useState(
-    !CurCell ? (ColTitles?.length > 0 ? 1 : 0) : CurCell[0]
-  );
-  const [selectedColumn, setSelectedColumn] = useState(
-    !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
-  );
 
+  // The Grid is treated as an entire Grid, including column and row headers -
+  // this has led to some complexity in converting between current cell position
+  // as far as JS is concerned and as far as APL is concerned.
+  // If the Title* is set to 0, no title should be shown, so the origin of the
+  // first data cell is 0 in that dimension.
+  // CurCell is 1-based, but we want 0-based, hence the little dance below.
+  const originY = TitleHeight === 0 ? 0 : 1;
+  const originX = TitleWidth === 0 ? 0 : 1;
+  const [selectedRow, setSelectedRow] = useState((CurCell ? CurCell[0] : 1)+originY-1);
+  const [selectedColumn, setSelectedColumn] = useState((CurCell ? CurCell[1] : 1)+originX-1);
  
   const [clickData, setClickData] = useState({ isClicked: false, row: selectedRow, column: selectedColumn })
 
@@ -108,26 +115,20 @@ const Grid = ({ data }) => {
   }, [Size]);
 
   useEffect(() => {
-    gridRef.current.focus();
+    // TODO TEMPORARILY disabled as it's causing havoc; just changing CurCell
+    // should ONLY refocus if we want it to. eg an action outside of the Grid
+    // that moves it around, should keep the focus on the outside component.
+    // If the focus was already in the Grid and we eg clicked on a ScrollBar,
+    // then that needs to be handled there...
+    // gridRef.current.focus();
     if (CurCell) {  
       let defaultRow
       let defaultCol
-      // if (curCell) {
-      //   const {Info} = curCell
-      //   defaultRow = !curCell ? (RowTitles?.length > 0 ? 1 : 0) : Info[0];
-      //   defaultCol = !curCell ? (TitleWidth === 0 ? 1 : 0) : Info[1];
-      //   setSelectedRow((prev) => (prev !== Info[0] ? defaultRow : prev));
-      //   setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
-      // }
-      // else {
-      gridRef.current.focus();
+      // gridRef.current.focus();
       defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
       defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
       setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
       setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
-      // }
-
-
     }
   }, [CurCell]);
 
@@ -453,7 +454,7 @@ const Grid = ({ data }) => {
         width: !TitleWidth ? 100 : TitleWidth,
         height: !TitleHeight ? 20 : TitleHeight,
       };
-      TitleWidth === 0 ? null : header.push(emptyobj)
+      TitleWidth === 0 ? null : header.push(emptyobj);
 
       for (let i = 0; i < ColTitles?.length; i++) {
         let obj = {
@@ -489,13 +490,13 @@ const Grid = ({ data }) => {
     // Make the body the Grid Like if it have Input Array that means it have types
     if (!Input) {
       for (let i = 0; i < Values?.length; i++) {
-        let cellType = CellTypes && CellTypes[i][0];
+        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
         const backgroundColor = BCol && BCol[cellType - 1];
         let body = [];
         let obj = {
           type: "rowTitle",
           value: RowTitles ? RowTitles[i] : i + 1,
-          width: RowTitles ? (!TitleWidth ? 100 : TitleWidth) : 100,
+          width: !TitleWidth ? 100 : TitleWidth,
           height: !CellHeights
             ? 20
             : Array.isArray(CellHeights)
@@ -534,7 +535,7 @@ const Grid = ({ data }) => {
     } else if (Input) {
       for (let i = 0; i < Values?.length; i++) {
         let body = [];
-        let cellType = CellTypes && CellTypes[i][0];
+        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
         const backgroundColor = BCol && BCol[cellType - 1];
 
         // Decide to add the RowTitles If the TitleWidth is Greater than 0
@@ -558,7 +559,7 @@ const Grid = ({ data }) => {
             : body.push(obj);
 
         for (let j = 0; j < columns; j++) {
-          let cellType = CellTypes && CellTypes[i][j];
+          let cellType = CellTypes && CellTypes[i] && CellTypes[i][j];
           const type = findAggregatedPropertiesData(
             Input?.length > 1 ? Input && Input[cellType - 1] : Input[0]
           );
@@ -628,8 +629,22 @@ const Grid = ({ data }) => {
   const gridData = modifyGridData();
   const customStyles = parseFlexStyles(CSS);
 
-  const font = findDesiredData(FontObj && FontObj);
+  const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
+
+  // Returns the right overflow for HScroll and VScroll.
+  const overflowFor = (scroll) => {
+    if (scroll !== undefined) {
+      return {
+        '0': 'hidden',
+        '-1': 'auto',
+        '-2': 'auto',
+        '-3': 'scroll',
+      }['' + scroll];
+    } else {
+      return 'auto';
+    }
+  };
 
   return (
     <>
@@ -664,21 +679,13 @@ const Grid = ({ data }) => {
           height,
           width,
           border: "1px solid black",
-          overflow: !ColTitles ? "auto" : "hidden",
           background: "white",
           display: Visible == 0 ? "none" : "block",
-          overflowX:
-            HScroll == -3
-              ? "scroll"
-              : HScroll == -1 || HScroll == -2
-                ? "auto"
-                : "auto",
-          overflowY:
-            VScroll == -3
-              ? "scroll"
-              : VScroll == -1 || HScroll == -2
-                ? "auto"
-                : "auto",
+          // Default to auto - it should be ignored if overflowX or overflowY
+          // are defined below.
+          overflow: "auto",
+          overflowX: overflowFor(HScroll),
+          overflowY: overflowFor(VScroll),
           ...customStyles,
           ...fontStyles,
         }}

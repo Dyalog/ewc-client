@@ -64,7 +64,7 @@ const Chart = ({ data }) => {
         Info: [JSON.stringify(obj)],
       },
     });
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
   
@@ -140,7 +140,7 @@ const Chart = ({ data }) => {
   //   ],
   // };
 
-  console.log("chart",chartSvg)
+//   console.log("chart",chartSvg)
   // console.log("chart", data)
 
 

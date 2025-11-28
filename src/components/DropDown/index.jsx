@@ -1,31 +1,8 @@
-import { useState, useEffect } from 'react';
-import './Dropdown.css';
+import { useEffect } from 'react';
 import { useAppData } from '../../hooks';
-import { setStyle, parseFlexStyles } from '../../utils';
 
-const Dropdown = ({ title, data, style, customStyles }) => {
+const DropDown = ({ title, data, style, customStyles, parentData }) => {
   const { socket } = useAppData();
-
-  useEffect(() => {
-    const style = document.createElement("style");
-
-    style.innerHTML = `
-.dropdown-item {
-  display: flex;
-  flex-direction: co⌈lumn;
-  align-items: start;
-  cursor: pointer;
-  width: 'fit-content';
-  height: auto;
-
-}
-      `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, [data]);
-
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -56,8 +33,22 @@ const Dropdown = ({ title, data, style, customStyles }) => {
     });
     const exists = Event && Event.some((item) => item[0] === 'Select');
     if (!exists) return;
-    console.log(selectEvent);
     socket.send(selectEvent);
+  };
+
+  const handleDropDownEvent = () => {
+    console.log('data', data, 'parentData', parentData);
+    const { Event, ID } = parentData?.Properties || {};
+
+    const exists = Event && Event.some((item) => item[0] === 'DropDown');
+    if (!exists) return;
+
+    socket.send(JSON.stringify({
+      Event: {
+        EventName: 'DropDown',
+        ID: ID || parentData?.ID,
+      },
+    }));
   };
 
   return (
@@ -69,7 +60,8 @@ const Dropdown = ({ title, data, style, customStyles }) => {
         ...style,
         ...customStyles
       }}
-      className='menu-item'>
+      className='menu-item'
+      onMouseEnter={handleDropDownEvent}>
       {title}
       <div className='dropdown'>
         {Object.keys(data).map((key) => (
@@ -87,4 +79,4 @@ const Dropdown = ({ title, data, style, customStyles }) => {
   );
 };
 
-export default Dropdown;
+export default DropDown;
