@@ -21,7 +21,7 @@ const useWindowDimensions = () => {
         height: window.innerHeight,
       };
 
-      let zoom = Math.round(window.devicePixelRatio * 100);
+      // let zoom = Math.round(window.devicePixelRatio * 100);
       setViewport(newViewport);
 
       if (resizeTimeoutRef.current) {
@@ -35,7 +35,7 @@ const useWindowDimensions = () => {
           DeviceCapabilities: {
             ViewPort: [newViewport.height, newViewport.width],
             ScreenSize: [window.screen.height, window.screen.width],
-            DPR: zoom / 100,
+            DPR: 1, // window.devicePixelRatio
             PPI: 200,
           },
         });

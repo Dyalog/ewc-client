@@ -71,12 +71,12 @@ const Form = ({ data }) => {
   };
 
   const sendDeviceCapabilities = () => {
-    let zoom = Math.round(window.devicePixelRatio * 100);
+    // let zoom = Math.round(window.devicePixelRatio * 100);
     let event = JSON.stringify({
       DeviceCapabilities: {
         ViewPort: [window.innerHeight, window.innerWidth],
         ScreenSize: [window.screen.height, window.screen.width],
-        DPR: zoom / 100,
+        DPR: 1, // window.devicePixelRatio
         PPI: 200,
       },
     });
@@ -93,9 +93,9 @@ const Form = ({ data }) => {
   useEffect(() => {
     const hasSize = data?.Properties?.hasOwnProperty("Size");
 
-    const halfViewportWidth = Math.round(window.innerWidth / 2);
+    const halfViewportWidth = window.innerWidth;
 
-    const halfViewportHeight = Math.round(window.innerHeight / 2);
+    const halfViewportHeight = window.innerHeight;
 
     localStorage.setItem(
       "formDimension",
@@ -131,7 +131,10 @@ const Form = ({ data }) => {
 
   useEffect(() => {
     sendConfigureEvent();
-    sendDeviceCapabilities();
+    // triggers a loop with scaling turned on
+    if(!isDesktop){
+      sendDeviceCapabilities();
+    }
   }, [dimensions]);
 
   return (
