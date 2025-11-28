@@ -420,7 +420,6 @@ const App = () => {
   }
 
   const fetchData = () => {
-    let zoom = Math.round(window.devicePixelRatio * 100);
     const envUrl = getCurrentUrl();
     const url = URL.parse(envUrl);
 
@@ -439,7 +438,7 @@ const App = () => {
         DeviceCapabilities: {
           ViewPort: [window.innerHeight, window.innerWidth],
           ScreenSize: [window.screen.height, window.screen.width],
-          DPR: zoom / 100,
+          DPR: window.devicePixelRatio,
           PPI: 200,
         },
       });
