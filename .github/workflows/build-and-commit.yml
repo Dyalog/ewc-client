@@ -1,6 +1,11 @@
 name: Build and Commit Dist
 
-on: push
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'README'
+      - 'docs/**'
 
 permissions:
   contents: write
