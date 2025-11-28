@@ -1,5 +1,6 @@
 import {
   setStyle,
+  getFontStyles,
   extractStringUntilLastPeriod,
   getObjectTypeById,
   handleMouseMove,
@@ -32,14 +33,17 @@ const Button = ({
   );
 
   const styles = setStyle(data?.Properties);
-  const { socket, findDesiredData, dataRef, handleData, reRender } =
-    useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS } =
-    data?.Properties;
+  const { socket, findDesiredData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   console.log("data Button", data);
 
   const customStyles = parseFlexStyles(CSS);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
   const inputRef = useRef();
   const buttonRef = useRef();
 
@@ -91,7 +95,7 @@ const Button = ({
     const handleShortcut = (event) => {
       if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
        
-            handleButtonClick(); 
+            handleButtonClick(e); 
       }
     };
     document.addEventListener("keydown", handleShortcut);
@@ -102,7 +106,7 @@ const Button = ({
     if (data?.Properties?.Default === 1) {
       const handleKeyPress = (e) => {
         if (e.key === "Enter") {
-          handleButtonClick();
+          handleButtonClick(e);
         }
       };
       document.addEventListener("keydown", handleKeyPress);
@@ -111,7 +115,11 @@ const Button = ({
   }, [data, buttonEvent]);
 
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (e) => {
+    if (Active === 0) {
+      e.preventDefault();
+      return;
+    }
     document.getElementById(localStorage.getItem("current-focus"))?.blur();
     if (buttonEvent) {
       console.log(
@@ -451,6 +459,7 @@ const Button = ({
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
+          disabled={Active === 0}
           onChange={(e) => {
             setCheckInput(e.target.checked);
             handleCheckBoxEvent(e.target.checked);
@@ -464,6 +473,7 @@ const Button = ({
               top: 0,
               left: 16,
               ...customStyles,
+              ...fontStyles
             }}
           >
             {Caption}
@@ -557,6 +567,7 @@ const Button = ({
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
           ...customStyles,
+          ...fontStyles
         }}
       >
         {Align && Align == "Left" ? (
@@ -567,6 +578,7 @@ const Button = ({
               top: 2,
               left: 0,
               ...customStyles,
+              ...fontStyles
             }}
           >
             {Caption}
@@ -579,6 +591,7 @@ const Button = ({
           checked={radioValue}
           type="radio"
           value={Caption}
+          disabled={Active === 0}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
           }}
@@ -591,6 +604,7 @@ const Button = ({
               top: 2,
               left: 16,
               ...customStyles,
+              ...fontStyles
             }}
           >
             <label for={data?.ID}>{Caption}</label>
@@ -625,51 +639,8 @@ const Button = ({
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
       ref={buttonRef}
-      onClick={() => {
-        handleButtonClick()
-        // console.log(
-        //   JSON.stringify({
-        //     Event: {
-        //       EventName: buttonEvent[0],
-        //       ID: data?.ID,
-        //     },
-        //   })
-        // );
-        // if (
-        //   localStorage.getItem("current-focus") &&
-        //   localStorage.getItem("shouldChangeEvent") === "true"
-        // ) {
-        //   console.log(
-        //     JSON.stringify({
-        //       Event: {
-        //         EventName: "Change",
-        //         ID: localStorage.getItem("current-focus"),
-        //         Info: [data?.ID],
-        //       },
-        //     })
-        //   );
-
-        //   socket.send(
-        //     JSON.stringify({
-        //       Event: {
-        //         EventName: "Change",
-        //         ID: localStorage.getItem("current-focus"),
-        //         Info: [data?.ID],
-        //       },
-        //     })
-        //   );
-        // }
-
-        // socket.send(
-        //   JSON.stringify({
-        //     Event: {
-        //       EventName: buttonEvent[0],
-        //       ID: data?.ID,
-        //     },
-        //   })
-        // );
-
-        // handleGotFocus();
+      onClick={(e) => {
+        handleButtonClick(e)
       }}
       style={{
         ...styles,
@@ -681,9 +652,12 @@ const Button = ({
         borderRadius: "4px",
         borderColor: "#ccc",
         fontSize: "12px",
+        color: Active === 0 ? "#838383" : "black",
         // fontSize: '11px',
         cursor: "pointer",
         zIndex: 1,
+        paddingLeft: '3px',
+        paddingRight: '3px',
         display: Visible == 0 ? "none" : "flex",
         ...(data?.Properties?.hasOwnProperty("Posn")
           ? { top: position?.top }
@@ -692,6 +666,7 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
+        ...fontStyles
       }}
     >
       {ImageData ? (

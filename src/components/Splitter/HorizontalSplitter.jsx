@@ -3,6 +3,8 @@ import { useAppData, useResizeObserver } from '../../hooks';
 import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
 
 const HorizontalSplitter = ({ data }) => {
+  const elementRef = useRef(null);
+
   const { Size: SubformSize, Posn: SubFormPosn } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
   );
@@ -10,7 +12,7 @@ const HorizontalSplitter = ({ data }) => {
 
   const { Posn, SplitObj1, SplitObj2, Event, Size, CSS } = data?.Properties;
   const style = setStyle(data.Properties)
-  
+
   const customStyles = parseFlexStyles(CSS)
 
   const [position, setPosition] = useState({ top: Posn && Posn[0] });
@@ -184,6 +186,11 @@ const HorizontalSplitter = ({ data }) => {
     setResizing(true);
   };
 
+  useEffect(() => {
+    elementRef.current.style.top = `${position.top}px`;
+  }, [position?.top]);
+
+
   let horizontalStyles = {
     width: '100%',
     height: '3px',
@@ -196,7 +203,7 @@ const HorizontalSplitter = ({ data }) => {
     ...customStyles
   };
 
-  return <div id={data?.ID} style={horizontalStyles} onMouseDown={(e) => handleMouseDown(e)}></div>;
+  return <div ref={elementRef} id={data?.ID} style={horizontalStyles} onMouseDown={(e) => handleMouseDown(e)}></div>;
 };
 
 export default HorizontalSplitter;

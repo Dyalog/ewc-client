@@ -2,8 +2,8 @@ import React from 'react'
 import { useAppData } from '../../hooks';
 import { getCurrentUrl } from '../../utils';
 
-const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, ItemHeight, ItemWidth }) => {
-    const { findDesiredData } = useAppData();
+const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, ItemHeight, ItemWidth, fontProperties }) => {
+    const { findDesiredData, fontScale } = useAppData();
 
     const { Caption, Event, ImageIndex, ImageListObj } = data.Properties
     const ImageData = findDesiredData(ImageListObj);
@@ -22,11 +22,16 @@ const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, Item
             onClick={() =>
                 handleSelectEvent(data.ID, Event)
             }
+            style={{minWidth:"max-content",backgroundColor:"#d3e5f7",height:(ItemHeight-20)+'px'}}
+            id={"gallery-Item"}
             title={Caption}
         >
             <div className="item-preview" style={{
+                minWidth:"max-content",
                 width: ItemWidth + "px",
-                height: ItemHeight + "px"
+                backgroundColor:"#d3e5f7",
+                border:"2px #d3e5f7",
+                height: (ItemHeight-20) + "px"
             }}>
                 {imageUrl && (
                     <img src={imageUrl} style={{
@@ -34,7 +39,12 @@ const RibbonGalleyItem = ({ data, startIndex, handleSelectEvent, className, Item
                         height: size[1],
                     }} />
                 )}
-                <div className="">{Caption}</div>
+                <div style={{
+                    fontFamily: fontProperties?.PName,
+                    fontSize: fontProperties?.Size
+                        ? `${fontProperties.Size * fontScale}px`
+                        : `${12 * fontScale}px`,
+                }}>{Caption}</div>
             </div>
         </div>
     )

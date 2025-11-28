@@ -6,42 +6,46 @@ import './RibbonStyles.css';
 
 import SelectComponent from '../SelectComponent';
 import { useAppData } from '../../hooks';
-import { useEffect } from 'react';
 
 const CustomRibbon = ({ data }) => {
   const updatedData = excludeKeys(data);
   const { dataRef } = useAppData();
-  const { Visible, Size, ImageListObj, CSS } = data?.Properties;
+  const { Visible, Size, ImageListObj, CSS, FontObj } = data?.Properties;
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
-
   const customStyles = parseFlexStyles(CSS)
+  const ID = getStringafterPeriod(ImageListObj);
+  const height = data?.Properties?.BodyHeight;
+  console.log("Dtaatataat is as", dataRef, data?.Properties?.BodyHeight)
+  const ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
 
-  useEffect(() => {
-    const ID = getStringafterPeriod(ImageListObj);
-    const ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
 
-    if (ImageList) {
-      localStorage.setItem('ImageList', JSON.stringify(ImageList));
-    } else {
-      localStorage.removeItem('ImageList');
-    }
-  }, [data]);
-
-  // console.log({ ImageList });
   return (
-    <div
-      id={data?.ID}
-      className='row'
-      style={{
-        height: !Size ? '8rem' : Size[0],
-        width: !Size ? parentSize && parentSize[1] : Size && Size[1],
-        display: Visible == 0 ? 'none' : 'flex',
-        ...customStyles
-      }}
-    >
-      {Object.keys(updatedData).map((key) => {
-        return <SelectComponent data={updatedData[key]} />;
-      })}
+    <div className="w-full" style={{
+     backgroundColor: "rgb(134,171,220)", width:"100vw"
+
+    }}>
+      <div
+        id={data?.ID}
+        className='row'
+        style={{
+          // height: !Size ? '9rem' : Size[0],
+          // border: "2px solid black",
+          height: height ? `${height}px` : "97px",
+
+          // maxWidth:data?.Properties?.ma
+          whiteSpace: 'nowrap',
+          minWidth:"max-content",
+
+          // width: !Size ? parentSize && parentSize[1] : Size && Size[1],
+          display: Visible == 0 ? 'none' : 'flex',
+          ...customStyles
+
+        }}
+      >
+        {Object.keys(updatedData).map((key, index) => {
+          return <SelectComponent key={index} data={{ ...updatedData[key], FontObj, id: index, ImageList }} />;
+        })}
+      </div>
     </div>
   );
 };

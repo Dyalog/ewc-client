@@ -1,40 +1,114 @@
+// import * as Icons from "./RibbonIcons";
+// import { Row, Col } from "reactstrap";
+// import { useAppData } from "../../hooks";
+// import { MdOutlineQuestionMark } from "react-icons/md";
+// import { getCurrentUrl, getImageFromData, parseFlexStyles, setStyle } from "../../utils";
+
+// const CustomRibbonButton = ({ data }) => {
+//   const ImageList = data.ImageList
+//   const { socket, fontScale, findCurrentData } = useAppData();
+//   const { Icon, Caption, Event, ImageIndex, CSS, ImageListObj } = data?.Properties;
+//   const customStyles = parseFlexStyles(CSS)
+//   const font = findCurrentData(data.FontObj && data.FontObj);
+//   const fontProperties = font && font?.Properties;
+//   const ImageListObjCurrent = findCurrentData(ImageListObj)
+
+
+//   const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex);
+//   console.log("mnnssssssssssssssssssssssssssssssssss",ImageData)
+
+
+
+
+//   const handleSelectEvent = () => {
+//     const selectEvent = JSON.stringify({
+//       Event: {
+//         EventName: "Select",
+//         ID: data?.ID,
+//       },
+//     });
+//     const exists = Event && Event.some((item) => item[0] === "Select");
+//     if (!exists) return;
+//     console.log(selectEvent);
+//     socket.send(selectEvent);
+//   };
+
+//   const handleButtonEvent = () => {
+//     handleSelectEvent();
+//   };
+
+//   const IconComponent = Icons[Icon] ? Icons[Icon] : MdOutlineQuestionMark;
+
+//   return (
+//     <div style={{ display: "flex", alignItems: "flex-start", marginTop: "5px", 
+//       // height: "100%"
+//       border:"2px solid red"
+//     }}>
+//       <Row>
+//         <Col>
+//           <div
+//             id={data?.ID}
+//             className="d-flex align-items-center flex-column justify-content-center"
+//             onClick={handleButtonEvent}
+//             style={{ cursor: "pointer", ...customStyles }}
+//           >
+//             {ImageData ? (
+//               <img
+//                 style={{
+//                   width: ImageData.imageSize[1],
+//                   height: ImageData.imageSize[0],
+//                 }}
+//                 src={`${getCurrentUrl()}${ImageData.imageUrl}`}
+//                 alt="Image"
+//               />
+//             ) : ImageIndex ? (
+//               <img
+//                 style={{
+//                   width:
+//                     ImageList?.Properties?.Size && ImageList?.Properties?.Size[1],
+//                   height:
+//                     ImageList?.Properties?.Size && ImageList?.Properties?.Size[0],
+//                 }}
+//                 src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+//                   }`}
+//                 alt="Image"
+//               />
+//             ) : (
+//               <IconComponent size={35} />
+//             )}
+//             <div className="text-center" style={{
+//               fontFamily: fontProperties?.PName,
+//               fontSize: fontProperties?.Size
+//                 ? `${fontProperties.Size * fontScale}px`
+//                 : `${12 * fontScale}px`,
+//             }}>
+//               {Caption}
+//             </div>
+//           </div>
+//         </Col>
+//       </Row>
+//     </div>
+//   );
+// };
+
+// export default CustomRibbonButton;
 import * as Icons from "./RibbonIcons";
-import { Row, Col } from "reactstrap";
+import { useEffect } from "react";
+import { Row } from "reactstrap";
 import { useAppData } from "../../hooks";
 import { MdOutlineQuestionMark } from "react-icons/md";
-import { getCurrentUrl, parseFlexStyles, setStyle } from "../../utils";
+import { getCurrentUrl, getImageFromData, parseFlexStyles } from "../../utils";
 
 const CustomRibbonButton = ({ data }) => {
-  const ImageList = JSON.parse(localStorage.getItem("ImageList"));
-  const ImagesData = JSON.parse(localStorage.getItem("ImagesData"));
-  const { socket } = useAppData();
+  const ImageList = data.ImageList;
+  const { socket, fontScale, findCurrentData } = useAppData();
+  const { Icon, Caption, Event, ImageIndex, CSS, ImageListObj } = data?.Properties;
+  const customStyles = parseFlexStyles(CSS);
+  const font = findCurrentData(data.FontObj && data.FontObj);
+  const fontProperties = font && font?.Properties;
+  const ImageListObjCurrent = findCurrentData(ImageListObj);
 
-  const { Icon, Caption, Event, ImageIndex, CSS } = data?.Properties;
-  const customStyles = parseFlexStyles(CSS)
-
-
-  const getImageFromData = (data) => {
-    if (data.Properties && data?.Properties.ImageListObj) {
-      const imageListObj = data?.Properties.ImageListObj;
-      const imageListData = ImagesData?.find(
-        (imageData) => imageData.ID === imageListObj
-      );
-
-      if (imageListData) {
-        const imageIndex = data?.Properties.ImageIndex;
-        const imageUrl = imageListData?.Properties.Files[imageIndex - 1];
-        const imageSize = imageListData.Properties.Size;
-
-        return {
-          imageUrl: imageUrl,
-          imageSize: imageSize,
-        };
-      }
-    }
-    return null;
-  };
-
-  const ImageData = getImageFromData(data);
+  const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex);
 
   const handleSelectEvent = () => {
     const selectEvent = JSON.stringify({
@@ -55,20 +129,50 @@ const CustomRibbonButton = ({ data }) => {
 
   const IconComponent = Icons[Icon] ? Icons[Icon] : MdOutlineQuestionMark;
 
+  const isSmallImage =
+    ImageData &&
+    ImageData.imageSize[0] === 16 &&
+    ImageData.imageSize[1] === 16;
+
+
+
+  // if(isSmallImage){
+  //   console.log("+++++++++++++++",data?.Properties,ImageData);
+  //   localStorage.setItem("SmallImageDetail",JSON.stringify(data?.Properties));
+  //   return;
+  // }
+
   return (
-    <Row>
-      <Col md={12}>
+    <div
+      style={{
+        display: isSmallImage ? "flex" : "block",
+        flexDirection: isSmallImage ? "row" : "column",
+        margin: "2px",
+        alignItems: isSmallImage ? "flex-start" : "center", // Align items at the top for small images
+        justifyContent: "flex-start", // Prevent center alignment
+        flexWrap: "wrap",
+        marginTop: isSmallImage ? "15px" : "5px",
+        height: "auto",
+      }}
+    >
+      <Row>
         <div
-          id={data?.ID}
-          className="d-flex align-items-center flex-column justify-content-center"
+          className="d-flex align-items-center"
           onClick={handleButtonEvent}
-          style={{ cursor: "pointer" ,   ...customStyles}}
+          style={{
+            cursor: "pointer",
+            flexDirection: isSmallImage ? "row" : "column",
+            justifyContent: isSmallImage ? "flex-start" : "center", // Align horizontally at the start for small images
+            alignItems: isSmallImage ? "flex-start" : "center", // Align items at the top for small images
+            ...customStyles,
+          }}
         >
           {ImageData ? (
             <img
               style={{
                 width: ImageData.imageSize[1],
                 height: ImageData.imageSize[0],
+                marginRight: isSmallImage ? "4px" : "0",
               }}
               src={`${getCurrentUrl()}${ImageData.imageUrl}`}
               alt="Image"
@@ -77,24 +181,105 @@ const CustomRibbonButton = ({ data }) => {
             <img
               style={{
                 width:
-                  ImageList?.Properties?.Size && ImageList?.Properties?.Size[1],
+                  ImageList?.Properties?.Size &&
+                  ImageList?.Properties?.Size[1],
                 height:
-                  ImageList?.Properties?.Size && ImageList?.Properties?.Size[0],
+                  ImageList?.Properties?.Size &&
+                  ImageList?.Properties?.Size[0],
+                marginRight: isSmallImage ? "4px" : "0",
               }}
-              src={`${getCurrentUrl()}${
-                ImageList?.Properties?.Files[ImageIndex - 1]
-              }`}
+              src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+                }`}
               alt="Image"
             />
           ) : (
             <IconComponent size={35} />
           )}
-          <div className="text-center" style={{ fontSize: "12px" }}>
+          <div
+            className="text-center"
+            style={{
+              fontFamily: fontProperties?.PName,
+              fontSize: fontProperties?.Size
+                ? `${fontProperties.Size * fontScale}px`
+                : `${12 * fontScale}px`,
+            }}
+          >
             {Caption}
           </div>
         </div>
-      </Col>
-    </Row>
+      </Row>
+    </div>
+
+
+    // <div
+    //   style={{
+    //     display: isSmallImage ? "flex" : "block",
+    //     flexDirection: isSmallImage? "row" : "column",
+    //     // border: "2px solid red",
+    //     margin:"2px",
+    //     alignItems: "center",
+    //     flexWrap: "wrap",
+    //     marginTop: "5px",
+    //     height: "auto",
+    //   }}
+    // >
+    //   <Row>
+    //     <div
+    //       className="d-flex align-items-center"
+    //       onClick={handleButtonEvent}
+    //       style={{
+    //         cursor: "pointer",
+    //         flexDirection: isSmallImage ? "row" : "column",
+    //         justifyContent: "flex-start",
+    //         alignItems: isSmallImage?"flex-start":"center",
+
+    //         // border: "2px solid green",
+    //         ...customStyles,
+    //       }}
+    //     >
+    //       {ImageData ? (
+    //         <img
+    //           style={{
+    //             width: ImageData.imageSize[1],
+    //             height: ImageData.imageSize[0],
+    //             marginRight: isSmallImage ? "4px" : "0",
+    //           }}
+    //           src={`${getCurrentUrl()}${ImageData.imageUrl}`}
+    //           alt="Image"
+    //         />
+    //       ) : ImageIndex ? (
+    //         <img
+    //           style={{
+    //             width:
+    //               ImageList?.Properties?.Size &&
+    //               ImageList?.Properties?.Size[1],
+    //             height:
+    //               ImageList?.Properties?.Size &&
+    //               ImageList?.Properties?.Size[0],
+    //             marginRight: isSmallImage ? "4px" : "0",
+    //           }}
+    //           src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
+    //             }`}
+    //           alt="Image"
+    //         />
+    //       ) : (
+    //         <IconComponent size={35} />
+    //       )}
+    //       <div
+    //         className="text-center"
+    //         style={{
+    //           fontFamily: fontProperties?.PName,
+    //           fontSize: fontProperties?.Size
+    //             ? `${fontProperties.Size * fontScale}px`
+    //             : `${12 * fontScale}px`,
+    //         }}
+    //       >
+    //         {Caption}
+    //       </div>
+    //     </div>
+    //   </Row>
+    // </div>
+
   );
 };
 

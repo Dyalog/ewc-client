@@ -37,8 +37,8 @@ const Edit = ({
     dataRef,
     findDesiredData,
     handleData,
-    addChangeEvent,
     fontScale,
+    inheritedProperties
   } = useAppData();
 
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
@@ -67,12 +67,13 @@ const Edit = ({
     Decimal,
     Visible,
     Event,
-    FontObj,
     Size,
     EdgeStyle,
     Border = 0,
     CSS,
+    Active,
   } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const hasTextProperty = data?.Properties.hasOwnProperty("Text");
   const hasValueProperty = data?.Properties.hasOwnProperty("Value");
@@ -84,6 +85,7 @@ const Edit = ({
   
   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
+
     if (location === "inGrid") {
       if (FieldType === "Date") {
         setEmitValue(value);
@@ -104,17 +106,23 @@ const Edit = ({
     }
 
     if (!data?.Properties?.FieldType?.includes("Numeric")) {
-      if (isPassword) {
-        setInitialValue(generateAsteriskString(data?.Properties?.Text?.length)); // Custom function to generate asterisks
-        setEmitValue(data?.Properties?.Text);
-        return setInputValue(
-          generateAsteriskString(data?.Properties?.Text?.length)
-        );
-      } else {
+
+      // if (isPassword) {
+      //   console.log("ISSSSSSS PASS1",data?.Properties?.Text,data?.Properties)
+
+      //   setInitialValue(data?.Properties?.Text?.length); // Custom function to generate asterisks
+
+      //   setEmitValue(data?.Properties?.Text);
+      //   console.log("ISSSSSSS PASS",isPassword,data?.Properties?.Text)
+
+      //   return setInputValue(data?.Properties?.Text
+      //   );
+      // } else {
+
         setEmitValue(data?.Properties?.Text);
         setInitialValue(data?.Properties?.Text);
         return setInputValue(data?.Properties?.Text);
-      }
+      // }
     }
 
     if (data?.Properties?.FieldType?.includes("Numeric")) {
@@ -127,9 +135,9 @@ const Edit = ({
           generateAsteriskString(data?.Properties?.Value?.length)
         );
       } else {
-        setInitialValue(data?.Properties?.Value);
-        setEmitValue(data?.Properties?.Value);
-        return setInputValue(data?.Properties?.Value);
+        setInitialValue(data?.Properties?.Value||data?.Properties?.Text);
+        setEmitValue(data?.Properties?.Value||data?.Properties?.Text);
+        return setInputValue(data?.Properties?.Value||data?.Properties?.Text);
       }
     }
   }, [
@@ -286,6 +294,7 @@ const Edit = ({
     else if (e.key == "ArrowUp") handleUpArrow();
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
+
     const eventId = uuidv4();
     setEventId(eventId);
     const isAltPressed = e.altKey ? 4 : 0;
@@ -318,30 +327,53 @@ const Edit = ({
   };
 
   const triggerChangeEvent = () => {
-    const focusedId = localStorage.getItem("current-focus");
+    // TODO as far as I can tell, this is how we are storing the last value, so
+    // we can fetch it again for WG.
+    // *Not* setting this value in localStorage causes problems.
+    let event2;
 
-    const event2 = JSON.stringify({
-      Event: {
-        EventName: "Change",
-        ID: data?.ID,
-        Info:
-          (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
-            ? parseInt(emitValue)
-            : emitValue,
-      },
-    });
-    // console.log({event2})
-    handleData(
-      {
-        ID: data?.ID,
-        Properties: {
-          ...(FieldType === "LongNumeric" || FieldType === "Numeric"
-            ? { Value: parseInt(emitValue) }
-            : { Text: emitValue })
+    if (FieldType === "Date") {
+      event2 = JSON.stringify({
+        Event: {
+          EventName: "Change",
+          ID: data?.ID,
+          Info: emitValue,
         },
-      },
-      "WS"
-    );
+      });
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            Value: emitValue,
+            Text: inputValue,
+          },
+        },
+        "WS"
+      )
+    } else {
+      event2 = JSON.stringify({
+        Event: {
+          EventName: "Change",
+          ID: data?.ID,
+          Info:
+            (FieldType && FieldType == "LongNumeric") || FieldType == "Numeric"
+              ? parseInt(emitValue)
+              : emitValue,
+        },
+      });
+      // console.log({event2})
+      handleData(
+        {
+          ID: data?.ID,
+          Properties: {
+            ...(FieldType === "LongNumeric" || FieldType === "Numeric"
+              ? { Value: parseInt(emitValue) }
+              : { Text: emitValue })
+          },
+        },
+        "WS"
+      );
+    }
     localStorage.setItem(data?.ID, event2);
     localStorage.setItem(
       "shouldChangeEvent",
@@ -456,7 +488,17 @@ const Edit = ({
     socket.send(formatCellEvent);
   };
 
-  const handleEditEvents = () => {
+  const handleBlur = () => {
+    if (Event && Event.some((item) => item[0] === "LostFocus")) {
+      socket.send(JSON.stringify({
+        Event: {
+          EventName: "LostFocus",
+          ID: data?.ID,
+          Info: [], // TODO?
+        },
+      }));
+    }
+
     // check that the Edit is inside the Grid
     if (location == "inGrid") {
       if (value != emitValue) {
@@ -466,6 +508,7 @@ const Edit = ({
     } else {
       triggerChangeEvent();
     }
+
   };
 
   const handleGotFocus = () => {
@@ -529,18 +572,19 @@ const Edit = ({
           style={{
             ...styles,
             borderRadius: "2px",
+            border: "0px",
             fontSize: "12px",
             zIndex: 1,
             display: Visible == 0 ? "none" : "block",
             paddingLeft: "5px",
-            ...customStyles
+            ...customStyles,
           }}
           value={inputValue}
           type="text"
           readOnly
           onClick={handleTextClick}
           onBlur={() => {
-            handleEditEvents();
+            handleBlur();
           }}
           onKeyDown={(e) => handleKeyPress(e)}
           onMouseDown={(e) => {
@@ -566,10 +610,11 @@ const Edit = ({
           }}
         />
         <input
-          id={data?.ID}
+          id={data?.ID + '.Picker'}
           type="date"
           ref={inputRef}
           onChange={handleDateChange}
+          disabled={Active === 0}
           style={{
             ...styles,
             position: "absolute",
@@ -591,6 +636,7 @@ const Edit = ({
         getInputRef={inputRef}
         onClick={handleInputClick}
         id={data?.ID}
+        disabled={Active === 0}
         style={{
           ...styles,
           width: !Size ? "100%" : Size[1],
@@ -616,7 +662,7 @@ const Edit = ({
         value={inputValue}
         decimalSeparator={decimalSeparator}
         thousandSeparator={FieldType == "LongNumeric" && Thousand}
-        onBlur={() => handleEditEvents()}
+        onBlur={handleBlur}
         onKeyDown={(e) => handleKeyPress(e)}
         onFocus={handleGotFocus}
         onMouseDown={(e) => {
@@ -651,6 +697,7 @@ const Edit = ({
       value={inputValue}
       onClick={handleInputClick}
       type={inputType}
+      disabled={Active === 0}
       onChange={(e) => {
         if (FieldType == "Char") {
           setEmitValue(e.target.value);
@@ -661,9 +708,7 @@ const Edit = ({
           setInputValue(e.target.value);
         }
       }}
-      onBlur={() => {
-        handleEditEvents();
-      }}
+      onBlur={handleBlur}
       onKeyDown={(e) => handleKeyPress(e)}
       style={{
         ...styles,
@@ -676,7 +721,11 @@ const Edit = ({
           (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
             ? "1px solid #6A6A6A"
             : "none",
-        ...customStyles
+        ...(Active === 0 ? {
+          backgroundColor: "field",
+          color: "#838383",
+        } : {}),
+        ...customStyles,
       }}
       maxLength={MaxLength}
       onFocus={handleGotFocus}

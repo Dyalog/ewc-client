@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import {
+  getFontStyles,
   setStyle,
   excludeKeys,
   getImageStyles,
@@ -26,6 +27,7 @@ const Group = ({ data }) => {
     Flex = 0,
     CSS,
     Event,
+    FontObj,
   } = data?.Properties;
   const { findDesiredData, socket } = useAppData();
   const dimensions = useResizeObserver(
@@ -47,6 +49,9 @@ const Group = ({ data }) => {
   const imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
   const flexStyles = parseFlexStyles(CSS);
+
+   const font = findDesiredData(FontObj && FontObj);
+    const fontStyles = getFontStyles(font, 12);
 
   const updatedData = excludeKeys(data);
 
@@ -101,6 +106,7 @@ const Group = ({ data }) => {
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,
+        ...fontStyles
       }}
       id={data?.ID}
       // !!! TODO !!!

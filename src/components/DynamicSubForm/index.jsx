@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import {
   excludeKeys,
   setStyle,
+  getFontStyles,
   getImageStyles,
   rgbColor,
   parseFlexStyles,
@@ -19,7 +20,7 @@ import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
 const SubForm = ({ data }) => {
-  const { findDesiredData, socket } = useAppData();
+  const { findDesiredData, socket, dataRef } = useAppData();
   const {
     Size,
     Posn,
@@ -29,6 +30,7 @@ const SubForm = ({ data }) => {
     FlexDirection,
     JustifyContent,
     Display,
+    FontObj,
     Flex = 0,
     CSS,
     Event,
@@ -46,10 +48,19 @@ const SubForm = ({ data }) => {
   const imageStyles = getImageStyles(
     Picture && Picture[1],
     ImageData,
-    data?.Properties
+    data?.Properties                            
   );
 
-  let updatedStyles = { ...styles, ...imageStyles, ...flexStyles };
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
+
+
+  let updatedStyles = { ...styles, ...imageStyles, ...flexStyles,...fontStyles };
+
+
+  const name = localStorage.getItem("TabControlInSubForm")
+  console.log("nmsmsmsmsmsmsmsmsmsmmsmsms", name)
 
   console.log("App Subform", {
     styles,
@@ -80,9 +91,33 @@ const SubForm = ({ data }) => {
           Posn: Posn || [50, 50], // Default position if none provided
         })
       );
-    } else {
+    }
+    else if (name) {
+      console.log("Coming in name");
+      let name = JSON.parse(localStorage.getItem("TabControlData"))
+      let name1=JSON.parse(localStorage.getItem("FormData"))
+      // console.log("nmmmmmm",name,name.Posn)
+      if(name.Size1){
+        console.log("undeffffff");
+      }
+      console.log("Wr are getting id is a",data.ID);
       localStorage.setItem(
         data.ID,
+        // JSON.parse(localStorage.getItem())
+        JSON.stringify({
+          Size:name.Size||name1.Size,
+          Posn:name.Posn||[0,0]
+        })
+        // localStorage.getItem("TabControlData")
+      );
+    }
+    else {
+
+      // let name=localStorage.getItem("TabControlData",JSON)
+      localStorage.setItem(
+        data.ID,
+        // JSON.parse(localStorage.getItem())
+        // localStorage.getItem("TabControlData")
         JSON.stringify({
           Size: Size && Size,
           Posn: Posn && Posn,
@@ -99,8 +134,8 @@ const SubForm = ({ data }) => {
           Visible == 0
             ? "none"
             : data?.Properties.hasOwnProperty("Flex")
-            ? "flex"
-            : "block",
+              ? "flex"
+              : "block",
         background: BCol && rgbColor(BCol),
         ...updatedStyles,
         // height: Size && Size[0],

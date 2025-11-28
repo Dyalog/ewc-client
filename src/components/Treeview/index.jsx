@@ -4,6 +4,7 @@ import {
   getObjectById,
   calculateSumFromString,
   findParentIndex,
+  getFontStyles,
   extractStringUntilLastPeriod,
   handleMouseDown,
   handleMouseUp,
@@ -24,14 +25,19 @@ import "rc-tree/assets/index.css";
 import "./TreeView.css";
 
 const Treeview = ({ data }) => {
-  const { Depth, Items, ImageListObj, ImageIndex, Visible, Event, CSS } =
+  const { Depth, Items, ImageListObj, ImageIndex, Visible, Event, CSS,FontObj } =
     data?.Properties;
 
   const customStyles = parseFlexStyles(CSS);
 
+
   const [nodeData, setNodeData] = useState([]);
 
   const { dataRef, socket, findDesiredData } = useAppData();
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
 
   const styles = setStyle(data?.Properties);
   const treeData = [];
@@ -247,6 +253,7 @@ const Treeview = ({ data }) => {
         paddingTop: "3px",
         display: Visible == 0 ? "none" : "block",
         overflowY: "scroll",
+        ...fontStyles,
         ...customStyles,
       }}
       onMouseDown={(e) => {

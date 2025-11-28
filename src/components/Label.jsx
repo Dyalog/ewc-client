@@ -4,20 +4,15 @@ import { useAppData } from "../hooks";
 
 const Label = ({ data, gridValue }) => {
   let styles = setStyle(data?.Properties);
-  
 
-
-  const { findDesiredData, fontScale, socket } = useAppData();
+  const { inheritedProperties, findDesiredData, fontScale, socket } = useAppData();
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
-  const { Visible, FontObj, Caption, Size, BCol, Event, CSS } = data?.Properties;
-
-  console.log("data Label", data)
+  const { Visible, Caption, Size, BCol, Event, CSS } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS)
-
-  // console.log("label", {data, BCol, Caption,  background: rgbColor(BCol)})
 
   if (haveColor) {
     styles = {

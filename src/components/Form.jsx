@@ -1,4 +1,5 @@
 import {
+  getFontStyles,
   setStyle,
   excludeKeys,
   rgbColor,
@@ -19,7 +20,9 @@ import { useEffect, useState } from "react";
 
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
-  const { findDesiredData, socket } = useAppData();
+  const { findDesiredData, socket , isDesktop} = useAppData();
+  console.log("Desktop is as",!isDesktop);
+
   const [formStyles, setFormStyles] = useState({});
 
   const dimensions = useResizeObserver(document.getElementById(data?.ID));
@@ -33,7 +36,11 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
+    FontObj
   } = data?.Properties;
+
+  console.log("Dtaa is as",data,Posn);
+  
   const styles = parseFlexStyles(CSS);
 
   console.log("form after parsing", { styles, CSS, Flex });
@@ -41,6 +48,9 @@ const Form = ({ data }) => {
   const ImageData = findDesiredData(Picture && Picture[0]);
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
+
+  const font = findDesiredData(FontObj && FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   const sendConfigureEvent = () => {
     const event = JSON.stringify({
@@ -56,12 +66,13 @@ const Form = ({ data }) => {
       },
     });
     const exists = Event && Event.some((item) => item[0] === "Configure");
-    console.log(event);
+    console.log("Event is as in Form",event);
     if (!exists) return;
     socket.send(event);
   };
 
   const sendDeviceCapabilities = () => {
+    console.log("Coming here in devive capabilities");
     let zoom = Math.round(window.devicePixelRatio * 100);
     let event = JSON.stringify({
       DeviceCapabilities: {
@@ -71,7 +82,7 @@ const Form = ({ data }) => {
         PPI: 200,
       },
     });
-    console.log(event);
+    console.log("Event sent is as",event);
     socket.send(event);
   };
 
@@ -124,6 +135,7 @@ const Form = ({ data }) => {
   useEffect(() => {
     sendConfigureEvent();
     sendDeviceCapabilities();
+   
   }, [dimensions]);
 
   // console.log("App Form", {
@@ -162,7 +174,7 @@ const Form = ({ data }) => {
       id={data?.ID}
       style={{
         ...formStyles,
-        ...styles,
+        ...fontStyles,
         background: BCol ? rgbColor(BCol) : "#F0F0F0",
         position: "relative",
         border: "1px solid #F0F0F0",
@@ -174,6 +186,7 @@ const Form = ({ data }) => {
             : "block",
 
         ...imageStyles,
+        ...styles,
         // overflow: 'hidden',
       }}
       onKeyDown={(e) => {
