@@ -71,12 +71,11 @@ const Form = ({ data }) => {
   };
 
   const sendDeviceCapabilities = () => {
-    // let zoom = Math.round(window.devicePixelRatio * 100);
     let event = JSON.stringify({
       DeviceCapabilities: {
         ViewPort: [window.innerHeight, window.innerWidth],
         ScreenSize: [window.screen.height, window.screen.width],
-        DPR: 1, // window.devicePixelRatio
+        DPR: window.devicePixelRatio,
         PPI: 200,
       },
     });
