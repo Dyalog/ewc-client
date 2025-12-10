@@ -1,9 +1,21 @@
 import { useAppData } from '../../hooks';
 
-import '@progress/kendo-theme-default/dist/all.css';
-import { Chart, ChartCategoryAxis, ChartCategoryAxisItem, ChartLegend, ChartLegendItem, ChartSeries, ChartSeriesItem, ChartValueAxis, ChartValueAxisItem } from '@progress/kendo-react-charts';
+let kendoAvailable = false;
+let Chart, ChartSeries, ChartSeriesItem;
+
+try {
+  await import("@progress/kendo-theme-default/dist/all.css");
+  ({ Chart, ChartSeries, ChartSeriesItem } = await import("@progress/kendo-react-charts"));
+  kendoAvailable = true;
+} catch {
+  // Kendo packages not installed
+}
 
 const KendoChart = ({ data }) => {
+  if (!kendoAvailable) {
+    throw new Error("KendoChart requires @progress/kendo-react-charts and @progress/kendo-theme-default packages to be installed");
+  }
+
   const { Options, Posn, Series, Size, ChartType, Event } = data?.Properties;
   const { socket } = useAppData(); // TODO! callbacks to APL on interaction
 
@@ -26,7 +38,7 @@ const KendoChart = ({ data }) => {
       >
         <ChartSeries>
           {
-            Series.map((s, i) => 
+            Series.map((s, i) =>
               <ChartSeriesItem key={i} data={s.data} type="column" name={"series-" + i} />
             )
           }

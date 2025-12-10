@@ -1,14 +1,26 @@
 import { useState } from "react";
-import { filterBy, orderBy } from "@progress/kendo-data-query";
-import { Grid, GridColumn } from "@progress/kendo-react-grid";
-import "@progress/kendo-theme-default/dist/all.css";
-import { Button } from "@progress/kendo-react-buttons";
-
 import { pairsToObject } from "../../utils/pairsToObject";
 import { getCurrentUrl } from "../../utils";
 
+let kendoAvailable = false;
+let filterBy, orderBy, Grid, GridColumn, Button;
+
+try {
+  ({ filterBy, orderBy } = await import("@progress/kendo-data-query"));
+  ({ Grid, GridColumn } = await import("@progress/kendo-react-grid"));
+  ({ Button } = await import("@progress/kendo-react-buttons"));
+  await import("@progress/kendo-theme-default/dist/all.css");
+  kendoAvailable = true;
+} catch {
+  // Kendo packages not installed
+}
+
 // ColTitles and Values must be indexed the same
 const KendoGrid = ({ data }) => {
+  if (!kendoAvailable) {
+    throw new Error("KendoGrid requires @progress/kendo-react-grid, @progress/kendo-react-buttons, @progress/kendo-data-query, and @progress/kendo-theme-default packages to be installed");
+  }
+
   const { ColTitles, Values, Posn, Options } = data?.Properties;
 
   const gridData = Values.map((row) => {
