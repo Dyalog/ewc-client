@@ -3,7 +3,6 @@ import { useAppData } from "../../hooks";
 import { excludeKeys, parseFlexStyles, rgbColor } from "../../utils";
 import SelectComponent from "../SelectComponent";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css";
 
 const CustomRibbonGroup = ({ data }) => {
   const { findCurrentData, fontScale, handleData,dataRef } = useAppData();

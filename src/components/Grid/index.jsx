@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { v4 as uuidv4 } from "uuid";
 import {
   setStyle,
   getFontStyles,
@@ -179,7 +178,7 @@ const Grid = ({ data }) => {
     // localStorage.setItem("current-event", "CellMove")
     if (column > columns || column <= 0) return;
     const isKeyboard = !mouseClick ? 1 : 0;
-    const eventId = uuidv4();
+    const eventId = crypto.randomUUID();
     setEventId(eventId);
     // localStorage.setItem("keyPressEventId", eventId)
     // if (clickData.isClicked) {
@@ -235,7 +234,7 @@ const Grid = ({ data }) => {
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
     const charCode = event.key.charCodeAt(0);
-    const eventId = uuidv4();
+    const eventId = crypto.randomUUID();
     setEventId(eventId);
     updateCurrentEvent({
       curEvent: "KeyPress",
