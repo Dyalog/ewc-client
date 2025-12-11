@@ -16,7 +16,6 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
 } from "../../utils";
-import { v4 as uuidv4 } from "uuid";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
@@ -423,7 +422,7 @@ const Edit = ({
     // Prevent default behavior for keys that APL might handle
     e.preventDefault();
     
-    const eventId = uuidv4();
+    const eventId = crypto.randomUUID();
     setEventId(eventId);
     
     // Set pending keypress flag for HT handler
