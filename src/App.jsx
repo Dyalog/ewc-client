@@ -460,14 +460,10 @@ const App = () => {
       const evData = JSON.parse(event.data);
       const keys = Object.keys(evData);
 
-      // console.log('EVDATA', evData)
-      
       // Handle WX messages immediately - APL expects immediate response
       if (keys[0] == "WX") {
         const serverEvent = evData.WX;
         const { Method, Info, WGID, ID } = serverEvent;
-//         console.log("WX Method Call (immediate):", Method, Info);
-
         if (Method == "GetTextSize") {
           // Certain code re-encloses Info - if we can get to two values, we do that
           // A real example: [[[["This is a text","This is a text"],"#.FntSys"]]]
@@ -484,8 +480,7 @@ const App = () => {
             getObjectById(dataRef.current, myInfo && myInfo[1])
           );
           const textDimensions = Text.calculateTextDimensions(strings, font);
-          const event = JSON.stringify({ WX: { Info: textDimensions, WGID } });
-//           console.log("WX Response (immediate):", event);
+          const event = JSON.stringify({ WX: { Info: [textDimensions.height, textDimensions.width], WGID } });
           return webSocket.send(event);
         } else if (Method == "OnlyDQ") {
           let event;

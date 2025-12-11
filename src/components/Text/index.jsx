@@ -42,6 +42,13 @@ const flattenIfThreeLevels = (arr) => {
 };
 
 const calculateTextDimensions = (lines, font) => {
+  // Handle empty or invalid input
+  if (!lines || (Array.isArray(lines) && lines.length === 0)) {
+    return { height: 0, width: 0 };
+  }
+  // Ensure lines is an array
+  const linesArray = Array.isArray(lines) ? lines : [lines];
+
   // Create a hidden div element to calculate text dimensions
   const scale = Globals.get('fontScale');
   const container = document.createElement('div');
@@ -58,7 +65,7 @@ const calculateTextDimensions = (lines, font) => {
     lineHeight = (font.Properties.Size * scale) + 'px';
   }
 
-  lines.forEach(line => {
+  linesArray.forEach(line => {
     const lineDiv = document.createElement('div');
     lineDiv.style.margin = '0';
     lineDiv.style.padding = '0';
