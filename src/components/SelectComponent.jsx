@@ -39,8 +39,6 @@ import Upload from './Upload';
 import Div from './Div';
 import StatusBar from './StatusBar';
 
-import KendoChart from './KendoChart';
-import KendoGrid from './KendoGrid';
 import RibbonDropDownButton from './Ribbon/RibbonDropDownButton';
 import RibbonDropDownGallery from './Ribbon/RibbonDropDownGallery';
 
@@ -184,8 +182,6 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Circle') return <Circle data={data} />;
   if (data?.Properties?.Type == 'ApexChart') return <Chart data={data} />;
   if (data?.Properties?.Type == 'MsgBox') return <MessageBox data= {data} />;
-  if (data?.Properties?.Type == 'KendoChart') return <KendoChart data={data} />;
-  if (data?.Properties?.Type == 'KendoGrid') return <KendoGrid data={data} />;
   if (data?.Properties?.Type == 'Link') return <Link data={data} />;
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
   if (data?.Properties?.Type == 'Div') return <Div data={data} />;
