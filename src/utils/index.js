@@ -5,7 +5,6 @@ export * from "./getType";
 export * from "./getLastTabButton";
 export * from "./locateInDataRef";
 export * from "./getFontStyles"
-import { v4 as uuidv4 } from "uuid";
 
 // 1,4,2 is what quad-WC uses and annoyingly what e.buttons uses in JS, but
 // 0,1,2 is what e.button (NB no s) uses in JS
@@ -160,7 +159,7 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
 };
 
 export const handleKeyPressUtils = (e, socket, Event, ID) => {
-   const eventId = uuidv4();
+   const eventId = crypto.randomUUID();
   const isAltPressed = e?.altKey ? 4 : 0;
   const isCtrlPressed = e?.ctrlKey ? 2 : 0;
   const isShiftPressed = e?.shiftKey ? 1 : 0;

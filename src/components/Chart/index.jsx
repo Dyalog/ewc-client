@@ -1,9 +1,22 @@
-import ReactApexChart from 'react-apexcharts';
 import { useAppData } from '../../hooks';
 import { parseFlexStyles, setStyle } from '../../utils';
 import { useEffect, useRef, useState } from 'react';
 
+let apexAvailable = false;
+let ReactApexChart;
+
+try {
+  ({ default: ReactApexChart } = await import('react-apexcharts'));
+  apexAvailable = true;
+} catch {
+  // ApexCharts not installed
+}
+
 const Chart = ({ data }) => {
+  if (!apexAvailable) {
+    throw new Error("Chart requires react-apexcharts package to be installed");
+  }
+
   const { Options, Posn, Series, Size, ChartType, Event, CSS } = data?.Properties;
 
   const [chartSvg, setChartSvg] = useState(null);
@@ -27,7 +40,7 @@ const Chart = ({ data }) => {
   useEffect(() => {
     if (chartRef.current) {
       setTimeout(() => {
-        const chartInstance = chartRef.current.chart.paper(); 
+        const chartInstance = chartRef.current.chart.paper();
         const svg = chartInstance.svg();
         if (svg) {
           setChartSvg(svg);
@@ -42,10 +55,10 @@ const Chart = ({ data }) => {
             'WS'
           );
         }
-      }, 500); 
+      }, 500);
     }
   }, [chartRef.current]);
-  
+
 
   const sendEvent = (event, chartContext, config, chartConfig) => {
     const obj = {
@@ -67,7 +80,7 @@ const Chart = ({ data }) => {
 //     console.log(Event);
     socket.send(Event);
   };
-  
+
   // const options = {
   //   chart: {
   //     parentHeightOffset: 0,
@@ -149,7 +162,7 @@ const Chart = ({ data }) => {
   //   MOVAVG:"straight",
   // }
 
-  
+
 
   const options = {
     ...Options,
