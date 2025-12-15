@@ -586,8 +586,6 @@ const Button = ({
               position: "absolute",
               top: 2,
               left: 0,
-              ...customStyles,
-              ...fontStyles
             }}
           >
             {Caption}
@@ -612,8 +610,6 @@ const Button = ({
               position: "absolute",
               top: 2,
               left: 16,
-              ...customStyles,
-              ...fontStyles
             }}
           >
             <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>

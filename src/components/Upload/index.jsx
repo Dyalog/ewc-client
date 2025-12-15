@@ -1,9 +1,37 @@
 import wgResponse from "../../utils/wgResponse";
+import { setStyle, getFontStyles, parseFlexStyles } from "../../utils";
+import { useAppData } from "../../hooks";
 
 const Upload = ({ data }) => {
+  const { findCurrentData, inheritedProperties } = useAppData();
+
+  const styles = setStyle(data?.Properties);
+  const { CSS, Visible } = data?.Properties || {};
+  const { FontObj } = inheritedProperties(data, 'FontObj');
+
+  const customStyles = parseFlexStyles(CSS);
+  const font = findCurrentData(FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
   return (
-    <div>
-      <input id={data.ID} type="file" />
+    <div
+      id={data.ID + ".$CONTAINER"}
+      style={{
+        ...styles,
+        display: Visible === 0 ? "none" : "block",
+        ...customStyles,
+        ...fontStyles,
+      }}
+    >
+      <input
+        id={data.ID}
+        type="file"
+        style={{
+          width: "100%",
+          height: "100%",
+          font: "inherit",
+        }}
+      />
     </div>
   );
 };
