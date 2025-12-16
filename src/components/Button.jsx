@@ -453,7 +453,7 @@ const Button = ({
       >
         {Align && Align == "Left" ? (
           <div
-            style={{ fontSize: "12px", position: "absolute", top: 0, left: 0 }}
+            style={{ position: "absolute", top: 0, left: 0, ...customStyles, ...fontStyles }}
           >
             <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
@@ -582,10 +582,11 @@ const Button = ({
         {Align && Align == "Left" ? (
           <div
             style={{
-              fontSize: "12px",
               position: "absolute",
               top: 2,
               left: 0,
+              ...customStyles,
+              ...fontStyles,
             }}
           >
             {Caption}
@@ -606,10 +607,11 @@ const Button = ({
         {!Align || Align == "Right" ? (
           <div
             style={{
-              fontSize: "12px",
               position: "absolute",
               top: 2,
               left: 16,
+              ...customStyles,
+              ...fontStyles,
             }}
           >
             <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>

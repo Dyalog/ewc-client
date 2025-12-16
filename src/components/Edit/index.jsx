@@ -15,6 +15,7 @@ import {
   parseFlexStyles,
   handleMouseWheel,
   handleMouseDoubleClick,
+  getFontStyles,
 } from "../../utils";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
@@ -80,7 +81,8 @@ const Edit = ({
   const inputRef = useRef(null);
   const font = findCurrentData(FontObj);
   const fontProperties = font && font?.Properties;
-  const customStyles = parseFlexStyles(CSS)
+  const customStyles = parseFlexStyles(CSS);
+  const fontStyles = getFontStyles(font, 12);
   
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
@@ -711,11 +713,11 @@ const Edit = ({
             ...styles,
             borderRadius: "2px",
             border: "0px",
-            fontSize: "12px",
             zIndex: 1,
             display: Visible == 0 ? "none" : "block",
             paddingLeft: "5px",
             ...customStyles,
+            ...fontStyles,
           }}
           value={inputValue}
           type="text"
@@ -789,7 +791,8 @@ const Edit = ({
           verticalAlign: "text-top",
           paddingBottom: "6px",
           paddingRight: "2px",
-          ...customStyles
+          ...customStyles,
+          ...fontStyles,
         }}
         onValueChange={(value) => {
           const { formattedValue } = value;
@@ -864,6 +867,7 @@ const Edit = ({
           color: "#838383",
         } : {}),
         ...customStyles,
+        ...fontStyles,
       }}
       maxLength={MaxLength}
       onFocus={handleGotFocus}
