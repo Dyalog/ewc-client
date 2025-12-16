@@ -27,6 +27,7 @@ const Link = ({data}) => {
                 href={data.Properties?.Href}
                 target={data.Properties?.Target || '_blank'}
                 download={data.Properties?.Download === 1}
+                style={{ font: 'inherit' }}
             >
                 {data.Properties?.Label !== undefined ? data.Properties.Label : data.Properties?.Href}
             </a>
