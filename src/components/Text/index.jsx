@@ -46,6 +46,7 @@ const calculateTextDimensions = (lines, font) => {
   if (!lines || (Array.isArray(lines) && lines.length === 0)) {
     return { height: 0, width: 0 };
   }
+  //console.log('calculateTextDimensions input:', { lines, font, fontPName: font?.Properties?.PName, fontSize: font?.Properties?.Size });
   // Ensure lines is an array
   const linesArray = Array.isArray(lines) ? lines : [lines];
 
@@ -65,6 +66,7 @@ const calculateTextDimensions = (lines, font) => {
     lineHeight = (font.Properties.Size * scale) + 'px';
   }
 
+  const fontStyles = getFontStyles(font);
   linesArray.forEach(line => {
     const lineDiv = document.createElement('div');
     lineDiv.style.margin = '0';
@@ -72,7 +74,12 @@ const calculateTextDimensions = (lines, font) => {
     lineDiv.textContent = line;
     lineDiv.style.display = 'block'; // Start each on a new line
     lineDiv.style.lineHeight = lineHeight;
-    Object.assign(lineDiv.style, getFontStyles(font));
+    if (font?.Properties?.Size) {
+      fontStyles.fontSize = (font.Properties.Size * scale) + 'px';
+    } else {
+      fontStyles.fontSize = (12 * scale) + 'px';
+    }
+    Object.assign(lineDiv.style, fontStyles);
     container.appendChild(lineDiv);
   });
 
