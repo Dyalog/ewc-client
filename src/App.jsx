@@ -475,10 +475,19 @@ const App = () => {
           if (myInfo.length !== 2) {
             myInfo = Info;
           }
-          const strings = myInfo && myInfo[0];
-          const font = JSON.parse(
-            getObjectById(dataRef.current, myInfo && myInfo[1])
-          );
+          // Check if myInfo[1] is a valid font reference or just another text line
+          // If it's not found as an object, treat the whole array as text (no font)
+          let strings, font;
+          const possibleFont = getObjectById(dataRef.current, myInfo && myInfo[1]);
+          if (possibleFont) {
+            // myInfo[1] is a valid font reference
+            strings = myInfo[0];
+            font = JSON.parse(possibleFont);
+          } else {
+            // myInfo[1] is not a font - treat whole array as text lines
+            strings = myInfo;
+            font = null;
+          }
           const textDimensions = Text.calculateTextDimensions(strings, font);
           const event = JSON.stringify({ WX: { Info: [textDimensions.height, textDimensions.width], WGID } });
           return webSocket.send(event);
