@@ -83,7 +83,27 @@ const Edit = ({
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS);
   const fontStyles = getFontStyles(font, 12);
-  
+
+  const getEdgeStyleBorder = (edgeStyle) => {
+    if (!edgeStyle) return 'none';
+    switch (edgeStyle) {
+      case 'Ridge':
+        return '2px ridge #E9E9E9';
+      case 'Groove':
+        return '2px groove #E9E9E9';
+      case 'Recess':
+        return '2px inset #E9E9E9';
+      case 'Plinth':
+        return '2px outset #E9E9E9';
+      case 'Shadow':
+        return '1px solid #E9E9E9';
+      case 'None':
+        return 'none';
+      default:
+        return 'none';
+    }
+  };
+
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
     let propsValue = data?.Properties?.Value;
@@ -783,10 +803,10 @@ const Edit = ({
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
 
-          border:
-            (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
-              ? "1px solid #6A6A6A"
-              : "none",
+          border: EdgeStyle
+            ? getEdgeStyleBorder(EdgeStyle)
+            : (Border && Border == "1" ? "1px solid #6A6A6A" : "none"),
+          ...(EdgeStyle === 'Shadow' && { boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' }),
           textAlign: "right",
           verticalAlign: "text-top",
           paddingBottom: "6px",
@@ -858,10 +878,10 @@ const Edit = ({
         zIndex: 1,
         display: Visible == 0 ? "none" : "block",
         paddingLeft: "5px",
-        border:
-          (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
-            ? "1px solid #6A6A6A"
-            : "none",
+        border: EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : (Border && Border == "1" ? "1px solid #6A6A6A" : "none"),
+        ...(EdgeStyle === 'Shadow' && { boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' }),
         ...(Active === 0 ? {
           backgroundColor: "field",
           color: "#838383",

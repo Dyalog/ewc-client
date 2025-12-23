@@ -28,6 +28,7 @@ const Group = ({ data }) => {
     CSS,
     Event,
     FontObj,
+    EdgeStyle,
   } = data?.Properties;
   const { findCurrentData, socket } = useAppData();
   const dimensions = useResizeObserver(
@@ -53,6 +54,26 @@ const Group = ({ data }) => {
 
    const font = findCurrentData(FontObj);
     const fontStyles = getFontStyles(font, 12);
+
+  const getEdgeStyleBorder = (edgeStyle) => {
+    if (!edgeStyle) return {};
+    switch (edgeStyle) {
+      case 'Ridge':
+        return { borderWidth: '2px', borderStyle: 'ridge', borderColor: '#E9E9E9' };
+      case 'Groove':
+        return { borderWidth: '2px', borderStyle: 'groove', borderColor: '#E9E9E9' };
+      case 'Recess':
+        return { borderWidth: '2px', borderStyle: 'inset', borderColor: '#E9E9E9' };
+      case 'Plinth':
+        return { borderWidth: '2px', borderStyle: 'outset', borderColor: '#E9E9E9' };
+      case 'Shadow':
+        return { border: '1px solid #E9E9E9', boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' };
+      case 'None':
+        return { border: 'none' };
+      default:
+        return {};
+    }
+  };
 
   const updatedData = excludeKeys(data);
 
@@ -103,7 +124,10 @@ const Group = ({ data }) => {
         ...styles,
         width,
         height,
-        border: Border == 0 ? "none" : "1px solid #E9E9E9",
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+        ),
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,

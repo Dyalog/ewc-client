@@ -17,7 +17,7 @@ import { useAppData, useResizeObserver } from "../hooks";
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
   const styles = setStyle(data?.Properties);
-  const { Items, SelItems, Visible, Size, Event, CSS } = data?.Properties;
+  const { Items, SelItems, Visible, Size, Event, CSS, EdgeStyle, Border } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
   const customStyles = parseFlexStyles(CSS);
 
@@ -80,6 +80,26 @@ const List = ({ data }) => {
     background: "#1264FF",
     color: "white",
     cursor: "pointer",
+  };
+
+  const getEdgeStyleBorder = (edgeStyle) => {
+    if (!edgeStyle) return {};
+    switch (edgeStyle) {
+      case 'Ridge':
+        return { borderWidth: '2px', borderStyle: 'ridge', borderColor: '#E9E9E9' };
+      case 'Groove':
+        return { borderWidth: '2px', borderStyle: 'groove', borderColor: '#E9E9E9' };
+      case 'Recess':
+        return { borderWidth: '2px', borderStyle: 'inset', borderColor: '#E9E9E9' };
+      case 'Plinth':
+        return { borderWidth: '2px', borderStyle: 'outset', borderColor: '#E9E9E9' };
+      case 'Shadow':
+        return { border: '1px solid #E9E9E9', boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' };
+      case 'None':
+        return { border: 'none' };
+      default:
+        return {};
+    }
   };
 
   // Meta-click and plain click both reset this state, and then it is used for
@@ -256,7 +276,12 @@ const List = ({ data }) => {
       style={{
         ...styles,
         ...width,
-        border: "1px solid " + (isFocused ? "black" : "darkgrey"),
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : Border !== undefined
+            ? { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+            : { border: "1px solid " + (isFocused ? "black" : "darkgrey") }
+        ),
         display: Visible === 0 ? "none" : "block",
       }}
       tabIndex={0}

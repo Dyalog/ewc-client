@@ -9,7 +9,7 @@ const Label = ({ data, gridValue }) => {
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
-  const { Visible, Caption, Size, Font, FCol, BCol, Justify, Event, CSS } = data?.Properties;
+  const { Visible, Caption, Size, Font, FCol, BCol, Justify, Event, CSS, EdgeStyle, Border = 0 } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS)
@@ -74,11 +74,38 @@ const Label = ({ data, gridValue }) => {
     background: BCol && rgbColor(BCol),
   }
 
+  const getEdgeStyleBorder = (edgeStyle) => {
+    if (!edgeStyle) return {};
+    switch (edgeStyle) {
+      case 'Ridge':
+        return { borderWidth: '2px', borderStyle: 'ridge', borderColor: '#E9E9E9' };
+      case 'Groove':
+        return { borderWidth: '2px', borderStyle: 'groove', borderColor: '#E9E9E9' };
+      case 'Recess':
+        return { borderWidth: '2px', borderStyle: 'inset', borderColor: '#E9E9E9' };
+      case 'Plinth':
+        return { borderWidth: '2px', borderStyle: 'outset', borderColor: '#E9E9E9' };
+      case 'Shadow':
+        return { border: '1px solid #E9E9E9', boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' };
+      case 'None':
+        return { border: 'none' };
+      default:
+        return {};
+    }
+  };
 
   return (
     <div
       id={data?.ID}
-      style={{ ...styles, display: Visible == 0 ? "none" : "block" ,...customStyles}}
+      style={{
+        ...styles,
+        display: Visible == 0 ? "none" : "block",
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+        ),
+        ...customStyles
+      }}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}

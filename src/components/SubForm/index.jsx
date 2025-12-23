@@ -30,6 +30,8 @@ const SubForm = ({ data }) => {
     Flex = 0,
     CSS,
     Event,
+    EdgeStyle,
+    Border = 0,
   } = data?.Properties;
 
   const observedDiv = useRef(null);
@@ -50,12 +52,36 @@ const SubForm = ({ data }) => {
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
+  const getEdgeStyleBorder = (edgeStyle) => {
+    if (!edgeStyle) return {};
+    switch (edgeStyle) {
+      case 'Ridge':
+        return { borderWidth: '2px', borderStyle: 'ridge', borderColor: '#E9E9E9' };
+      case 'Groove':
+        return { borderWidth: '2px', borderStyle: 'groove', borderColor: '#E9E9E9' };
+      case 'Recess':
+        return { borderWidth: '2px', borderStyle: 'inset', borderColor: '#E9E9E9' };
+      case 'Plinth':
+        return { borderWidth: '2px', borderStyle: 'outset', borderColor: '#E9E9E9' };
+      case 'Shadow':
+        return { border: '1px solid #E9E9E9', boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' };
+      case 'None':
+        return { border: 'none' };
+      default:
+        return {};
+    }
+  };
+
   let updatedStyles = {
     overflow: "clip",
     ...styles,
     ...imageStyles,
     ...flexStyles,
     ...fontStyles,
+    ...(EdgeStyle
+      ? getEdgeStyleBorder(EdgeStyle)
+      : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+    ),
   };
 
   // TODO this is extremely suspect and looks to be for one purpose!
