@@ -108,6 +108,14 @@ const SubForm = ({ data }) => {
   const inheritedSize = inheritedProperty(data, "Size", ["Form", "SubForm"]);
   const inheritedBCol = inheritedProperty(data, "BCol", ["Form", "SubForm"]);
 
+  // Zilde is no background, otherwise inherited, otherwise default
+  let background;
+  if (Array.isArray(inheritedBCol) && inheritedBCol.length === 0) {
+    background = undefined;
+  } else {
+    background = rgbColor(inheritedBCol) || "#F0F0F0"
+  }
+
   return (
     <div
       id={data.ID}
@@ -118,7 +126,7 @@ const SubForm = ({ data }) => {
             : data?.Properties.hasOwnProperty("Flex")
             ? "flex"
             : "block",
-        background: rgbColor(inheritedBCol) || "#F0F0F0",
+        background: background,
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
