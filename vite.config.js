@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
 		// minify: false,
+		target: 'es2022',
 		rollupOptions: {
 			output: {
 				manualChunks: () => 'index',
