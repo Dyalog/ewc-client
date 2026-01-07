@@ -844,8 +844,9 @@ const App = () => {
                   );
                 }
 
-                const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-                const { Info } = Event;
+                const storedData = JSON.parse(localStorage.getItem(serverEvent?.ID)) || {};
+                const Event = storedData.Event || {};
+                const Info = Event.Info;
                 const serverPropertiesObj = {};
                 serverEvent.Properties.forEach((key) => {
                   if (key === "Value") {
@@ -1072,8 +1073,9 @@ const App = () => {
                   );
                 }
 
-                const { Event } = JSON.parse(localStorage.getItem(serverEvent?.ID));
-                const { Info } = Event;
+                const storedData = JSON.parse(localStorage.getItem(serverEvent?.ID)) || {};
+                const Event = storedData.Event || {};
+                const Info = Event.Info;
 
                 return webSocket.send(
                   updateAndStringify({
