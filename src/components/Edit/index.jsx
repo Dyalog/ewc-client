@@ -17,6 +17,7 @@ import {
   handleMouseDoubleClick,
   getFontStyles,
 } from "../../utils";
+import { getEdgeStyleBorder } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
@@ -83,26 +84,6 @@ const Edit = ({
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS);
   const fontStyles = getFontStyles(font, 12);
-
-  const getEdgeStyleBorder = (edgeStyle) => {
-    if (!edgeStyle) return 'none';
-    switch (edgeStyle) {
-      case 'Ridge':
-        return '2px ridge #E9E9E9';
-      case 'Groove':
-        return '2px groove #E9E9E9';
-      case 'Recess':
-        return '2px inset #E9E9E9';
-      case 'Plinth':
-        return '2px outset #E9E9E9';
-      case 'Shadow':
-        return '1px solid #E9E9E9';
-      case 'None':
-        return 'none';
-      default:
-        return 'none';
-    }
-  };
 
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
@@ -803,10 +784,9 @@ const Edit = ({
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
 
-          border: EdgeStyle
+          ...(EdgeStyle
             ? getEdgeStyleBorder(EdgeStyle)
-            : (Border && Border == "1" ? "1px solid #6A6A6A" : "none"),
-          ...(EdgeStyle === 'Shadow' && { boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' }),
+            : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
           textAlign: "right",
           verticalAlign: "text-top",
           paddingBottom: "6px",
@@ -878,10 +858,9 @@ const Edit = ({
         zIndex: 1,
         display: Visible == 0 ? "none" : "block",
         paddingLeft: "5px",
-        border: EdgeStyle
+        ...(EdgeStyle
           ? getEdgeStyleBorder(EdgeStyle)
-          : (Border && Border == "1" ? "1px solid #6A6A6A" : "none"),
-        ...(EdgeStyle === 'Shadow' && { boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' }),
+          : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
         ...(Active === 0 ? {
           backgroundColor: "field",
           color: "#838383",

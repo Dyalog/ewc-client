@@ -1,4 +1,5 @@
 import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
+import { getEdgeStyleBorder } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
 
@@ -74,26 +75,6 @@ const Label = ({ data, gridValue }) => {
     background: BCol && rgbColor(BCol),
   }
 
-  const getEdgeStyleBorder = (edgeStyle) => {
-    if (!edgeStyle) return {};
-    switch (edgeStyle) {
-      case 'Ridge':
-        return { borderWidth: '2px', borderStyle: 'ridge', borderColor: '#E9E9E9' };
-      case 'Groove':
-        return { borderWidth: '2px', borderStyle: 'groove', borderColor: '#E9E9E9' };
-      case 'Recess':
-        return { borderWidth: '2px', borderStyle: 'inset', borderColor: '#E9E9E9' };
-      case 'Plinth':
-        return { borderWidth: '2px', borderStyle: 'outset', borderColor: '#E9E9E9' };
-      case 'Shadow':
-        return { border: '1px solid #E9E9E9', boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' };
-      case 'None':
-        return { border: 'none' };
-      default:
-        return {};
-    }
-  };
-
   return (
     <div
       id={data?.ID}
@@ -102,7 +83,7 @@ const Label = ({ data, gridValue }) => {
         display: Visible == 0 ? "none" : "block",
         ...(EdgeStyle
           ? getEdgeStyleBorder(EdgeStyle)
-          : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+          : { border: Border == 0 ? "none" : "1px solid #6A6A6A" }
         ),
         ...customStyles
       }}
