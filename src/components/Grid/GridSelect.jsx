@@ -31,13 +31,12 @@ const GridSelect = ({ data }) => {
       'WS'
     );
 
+    // Info array: [Row, Col, Value] - APL callback receives (ID Event),Info
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: 'CellChanged',
         ID: data?.gridId,
-        Row: data?.row,
-        Col: data?.column + 1,
-        Value: value,
+        Info: [data?.row, data?.column + 1, value],
       },
     });
 
