@@ -17,6 +17,7 @@ import {
   handleMouseDoubleClick,
   getFontStyles,
 } from "../../utils";
+import { getEdgeStyleBorder } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
@@ -83,7 +84,7 @@ const Edit = ({
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS);
   const fontStyles = getFontStyles(font, 12);
-  
+
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   const decideInputValue = useCallback(() => {
     let propsValue = data?.Properties?.Value;
@@ -783,10 +784,9 @@ const Edit = ({
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
 
-          border:
-            (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
-              ? "1px solid #6A6A6A"
-              : "none",
+          ...(EdgeStyle
+            ? getEdgeStyleBorder(EdgeStyle)
+            : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
           textAlign: "right",
           verticalAlign: "text-top",
           paddingBottom: "6px",
@@ -858,10 +858,9 @@ const Edit = ({
         zIndex: 1,
         display: Visible == 0 ? "none" : "block",
         paddingLeft: "5px",
-        border:
-          (Border && Border == "1") || (EdgeStyle && EdgeStyle == "Ridge")
-            ? "1px solid #6A6A6A"
-            : "none",
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
         ...(Active === 0 ? {
           backgroundColor: "field",
           color: "#838383",

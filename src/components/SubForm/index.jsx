@@ -16,6 +16,7 @@ import {
   handleMouseDoubleClick,
   handleKeyPressUtils,
 } from "../../utils";
+import { getEdgeStyleBorder } from "../../styles/edgeStyles";
 import SelectComponent from "../SelectComponent";
 import { useAppData } from "../../hooks";
 
@@ -30,6 +31,8 @@ const SubForm = ({ data }) => {
     Flex = 0,
     CSS,
     Event,
+    EdgeStyle,
+    Border = 0,
   } = data?.Properties;
 
   const observedDiv = useRef(null);
@@ -56,6 +59,10 @@ const SubForm = ({ data }) => {
     ...imageStyles,
     ...flexStyles,
     ...fontStyles,
+    ...(EdgeStyle
+      ? getEdgeStyleBorder(EdgeStyle)
+      : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+    ),
   };
 
   // TODO this is extremely suspect and looks to be for one purpose!

@@ -11,13 +11,14 @@ import {
   parseFlexStyles,
   setStyle,
 } from "../utils";
+import { getEdgeStyleBorder } from "../styles/edgeStyles";
 import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
 
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
   const styles = setStyle(data?.Properties);
-  const { Items, SelItems, Visible, Size, Event, CSS } = data?.Properties;
+  const { Items, SelItems, Visible, Size, Event, CSS, EdgeStyle, Border } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
   const customStyles = parseFlexStyles(CSS);
 
@@ -256,7 +257,12 @@ const List = ({ data }) => {
       style={{
         ...styles,
         ...width,
-        border: "1px solid " + (isFocused ? "black" : "darkgrey"),
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : Border !== undefined
+            ? { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+            : { border: "1px solid " + (isFocused ? "black" : "darkgrey") }
+        ),
         display: Visible === 0 ? "none" : "block",
       }}
       tabIndex={0}

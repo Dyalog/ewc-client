@@ -1,4 +1,5 @@
 import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
+import { getEdgeStyleBorder } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
 
@@ -9,7 +10,7 @@ const Label = ({ data, gridValue }) => {
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
-  const { Visible, Caption, Size, Font, FCol, BCol, Justify, Event, CSS } = data?.Properties;
+  const { Visible, Caption, Size, Font, FCol, BCol, Justify, Event, CSS, EdgeStyle, Border = 0 } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS)
@@ -74,11 +75,18 @@ const Label = ({ data, gridValue }) => {
     background: BCol && rgbColor(BCol),
   }
 
-
   return (
     <div
       id={data?.ID}
-      style={{ ...styles, display: Visible == 0 ? "none" : "block" ,...customStyles}}
+      style={{
+        ...styles,
+        display: Visible == 0 ? "none" : "block",
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : { border: Border == 0 ? "none" : "1px solid #6A6A6A" }
+        ),
+        ...customStyles
+      }}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}
