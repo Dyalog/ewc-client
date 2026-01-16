@@ -1,13 +1,22 @@
 import { setStyle, getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { useAppData, useResizeObserver } from '../hooks';
-import { useState, useRef } from 'react';
-import { useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
 
   const inputRef = useRef();
+
+  // Custom dropdown state and refs
+  const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [searchString, setSearchString] = useState('');
+  const searchTimeoutRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const listRef = useRef(null);
+  const triggerRef = useRef(null);
+  const optionRefs = useRef([]);
 
   const { socket, handleData, findCurrentData, reRender, dataRef, inheritedProperties } = useAppData();
 
@@ -16,7 +25,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   const customStyles = parseFlexStyles(CSS)
   const styles = setStyle(data?.Properties);
-  const { Items, SelItems, Event, Visible, Posn, Size } = data?.Properties;
+
+  const { Items, SelItems, Event, Visible, Posn, Size, Rows } = data?.Properties;
+
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
@@ -24,8 +35,16 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
 
-//   console.log("this event", { Event })
-  const [comboInput, setComboInput] = useState('+');
+  // Initialize with selected item, or Text property, or first item
+  const initialSelected = () => {
+    const index = SelItems?.findIndex((element) => element == 1);
+    if (index !== undefined && index !== -1 && Items) {
+      return Items[index];
+    }
+    // No selection - use Text property if set, otherwise first item
+    return data?.Properties?.Text || (Items?.[0]) || '';
+  };
+  const [comboInput, setComboInput] = useState(initialSelected);
   const [position, setPosition] = useState({ top: Posn && Posn[0], left: Posn && Posn[1] });
 
   const [parentOldDimensions, setParentOldDimensions] = useState(parentSize?.Size);
@@ -50,7 +69,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   }, [data]);
 
   const handleCellChangeEvent = (value) => {
-    const gridEvent = findDesiredData(extractStringUntilLastPeriod(data?.ID));
+    const gridEvent = findCurrentData(extractStringUntilLastPeriod(data?.ID));
     values[parseInt(row) - 1][parseInt(column) - 1] = value;
     handleData(
       {
@@ -64,13 +83,12 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       'WS'
     );
 
+    // Info array: [Row, Col, Value] - APL callback receives (ID Event),Info
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: 'CellChanged',
         ID: extractStringUntilLastPeriod(data?.ID),
-        Row: parseInt(row),
-        Col: parseInt(column),
-        Value: value,
+        Info: [parseInt(row), parseInt(column), value],
       },
     });
 
@@ -103,41 +121,20 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       },
       "WS"
     );
+    // Info array: [index, text] - APL callback receives (ID Event),Info
+    // So args = ID Event index text
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: "Select",
         ID: data?.ID,
-        Info: parseInt(value + 1),
-        Text: Items && Items[value],
-        SelItems: NewSelItems,
-        Posn: [position?.top, position?.left],
-        Size: [Size && Size[0], Size && Size[1]],
-      },
-    });
-
-    const event = JSON.stringify({
-      Event: {
-        EventName: "Select",
-        ID: data?.ID,
+        Info: [parseInt(value + 1), Items ? Items[value] : ''],
       },
     });
 
     localStorage.setItem(data?.ID, triggerEvent);
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-//     console.log(triggerEvent);
-    socket.send(event);
-  };
-
-  const handleSelItemsEvent = (value) => {
-    const index = Items.indexOf(value);
-
-    if (location == 'inGrid') {
-      handleSelectEvent(index);
-      handleCellChangeEvent(value);
-    } else {
-      handleSelectEvent(index);
-    }
+    socket.send(triggerEvent);
   };
 
   useEffect(() => {
@@ -208,6 +205,104 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
     reRender();
   }, [dimensions]);
+
+  // Click-outside detection to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Reset highlighted index when opening dropdown
+  useEffect(() => {
+    if (isOpen) {
+      const currentValue = value || comboInput;
+      const currentIndex = Items?.indexOf(currentValue) ?? -1;
+      setHighlightedIndex(currentIndex);
+    }
+  }, [isOpen]);
+
+  // Scroll highlighted option into view
+  useEffect(() => {
+    if (isOpen && highlightedIndex >= 0 && optionRefs.current[highlightedIndex]) {
+      optionRefs.current[highlightedIndex].scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [highlightedIndex, isOpen]);
+
+  // Toggle dropdown open/close
+  const toggleDropdown = useCallback((e) => {
+    e?.stopPropagation();
+    setIsOpen(prev => !prev);
+    // Ensure button keeps focus for keyboard events
+    triggerRef.current?.focus();
+  }, []);
+
+  // Handle option click - fires event EVERY time including reselect
+  const handleOptionClick = useCallback((item, index, e) => {
+    e?.stopPropagation();
+    setComboInput(item);
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+
+    // ALWAYS fire Select event, even when reselecting same value
+    if (location === 'inGrid') {
+      handleSelectEvent(index);
+      handleCellChangeEvent(item);
+    } else {
+      handleSelectEvent(index);
+    }
+  }, [location, handleSelectEvent, handleCellChangeEvent]);
+
+  // Calculate dropdown position (fixed positioning for grid context)
+  const getDropdownPosition = useCallback(() => {
+    if (!triggerRef.current) return {};
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    // Calculate max height based on Rows property (default 8 rows, ~24px per item)
+    const itemHeight = 24;
+    const visibleRows = Rows || Math.min(Items?.length || 8, 8);
+    const dropdownMaxHeight = visibleRows * itemHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // Determine if dropdown should appear above or below
+    const showAbove = spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow;
+
+    if (location === 'inGrid') {
+      // Fixed positioning for grid context to escape cell boundaries
+      return {
+        position: 'fixed',
+        top: showAbove ? 'auto' : rect.bottom,
+        bottom: showAbove ? (viewportHeight - rect.top) : 'auto',
+        left: rect.left,
+        width: rect.width,
+        maxHeight: dropdownMaxHeight,
+        zIndex: 9999
+      };
+    } else {
+      // Absolute positioning for standalone combo
+      return {
+        position: 'absolute',
+        top: showAbove ? 'auto' : '100%',
+        bottom: showAbove ? '100%' : 'auto',
+        left: 0,
+        right: 0,
+        maxHeight: dropdownMaxHeight,
+        zIndex: 9999
+      };
+    }
+  }, [location, Rows, Items]);
 
   const triggerCellMoveEvent = (row, column, mouseClick, value) => {
 //     console.log("265 combo")
@@ -289,12 +384,128 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   const handleKeyPress = (e) => {
     e.stopPropagation();
-    e.preventDefault();
-    handleKeyPressUtils(e, socket, Event, data?.ID)
-    if (e.key == 'ArrowRight') handleRightArrow(e.target.value);
-    else if (e.key == 'ArrowLeft') handleLeftArrow(e.target.value);
-    else if (e.key == 'ArrowDown') handleCellMove(e.target.value);
-    else if (e.key == 'ArrowUp') handleUpArrow(e.target.value);
+    handleKeyPressUtils(e, socket, Event, data?.ID);
+
+    const currentValue = value || comboInput;
+
+    // Type-to-search: handle printable characters
+    const handleTypeSearch = (char) => {
+      // Clear existing timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // Append character to search string
+      const newSearch = searchString + char.toLowerCase();
+      setSearchString(newSearch);
+
+      // Find first matching item
+      if (Items) {
+        const matchIndex = Items.findIndex(item =>
+          item.toLowerCase().startsWith(newSearch)
+        );
+        if (matchIndex !== -1) {
+          setHighlightedIndex(matchIndex);
+          if (!isOpen) {
+            // Select the item if dropdown is closed
+            handleOptionClick(Items[matchIndex], matchIndex, e);
+          }
+        }
+      }
+
+      // Clear search string after 500ms of no typing
+      searchTimeoutRef.current = setTimeout(() => {
+        setSearchString('');
+      }, 500);
+    };
+
+    // Alt+Down opens dropdown, Alt+Up closes (standard accessibility shortcut)
+    if (e.altKey && e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIsOpen(true);
+      return;
+    }
+    if (e.altKey && e.key === 'ArrowUp') {
+      e.preventDefault();
+      setIsOpen(false);
+      return;
+    }
+
+    // Number of items to jump for PageUp/PageDown
+    const pageSize = 5;
+
+    if (isOpen) {
+      // Dropdown is open - navigate options
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev < (Items?.length ?? 0) - 1 ? prev + 1 : prev
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setHighlightedIndex(prev => (prev > 0 ? prev - 1 : prev));
+      } else if (e.key === 'Home') {
+        // Jump to first item
+        e.preventDefault();
+        setHighlightedIndex(0);
+      } else if (e.key === 'End') {
+        // Jump to last item
+        e.preventDefault();
+        setHighlightedIndex((Items?.length ?? 1) - 1);
+      } else if (e.key === 'PageDown') {
+        // Jump down by pageSize items
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          Math.min(prev + pageSize, (Items?.length ?? 1) - 1)
+        );
+      } else if (e.key === 'PageUp') {
+        // Jump up by pageSize items
+        e.preventDefault();
+        setHighlightedIndex(prev => Math.max(prev - pageSize, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (highlightedIndex >= 0 && Items?.[highlightedIndex]) {
+          handleOptionClick(Items[highlightedIndex], highlightedIndex, e);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+        setSearchString('');
+      } else if (e.key === 'Tab') {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+        setSearchString('');
+        // Let Tab propagate for focus management
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Printable character - type-to-search
+        e.preventDefault();
+        handleTypeSearch(e.key);
+      }
+    } else {
+      // Dropdown is closed
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setIsOpen(true);
+      } else if (location === 'inGrid') {
+        // In grid context, arrow keys navigate cells when closed
+        e.preventDefault();
+        if (e.key === 'ArrowRight') handleRightArrow(currentValue);
+        else if (e.key === 'ArrowLeft') handleLeftArrow(currentValue);
+        else if (e.key === 'ArrowDown') handleCellMove(currentValue);
+        else if (e.key === 'ArrowUp') handleUpArrow(currentValue);
+      } else {
+        // Not in grid - arrow keys open dropdown
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          setIsOpen(true);
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          // Printable character - type-to-search (selects immediately when closed)
+          e.preventDefault();
+          handleTypeSearch(e.key);
+        }
+      }
+    }
   };
 
   return (
@@ -303,8 +514,8 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         ...styles,
         borderColor: '#ccc',
         display: Visible == 0 ? 'none' : 'block',
-        top: position?.top,
-        left: position?.left,
+        top: Posn?.[0],
+        left: Posn?.[1],
       }}
       onMouseDown={(e) => {
         e.stopPropagation();
@@ -335,51 +546,140 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       }}
       onKeyDown={(e) => { handleKeyPressUtils(e, socket, Event, data?.ID); }}
     >
-      {/* <select
-        ref={inputRef}
-        onKeyDown={(e) => handleKeyPress(e)}
-        id={data?.ID}
-        value={value ? value : comboInput}
-        style={{
-          width: '100%',
-          border: 0,
-          fontSize: '12px',
-          height: location === 'inGrid' ? null : '100%',
-          zIndex: 1,
-          ...customStyles,
-          ...fontStyles
-
-        }} */}
-      <select
-       ref={inputRef}
-       onKeyDown={(e) => handleKeyPress(e)}
-       id={data?.ID}
-       value={value ? value : comboInput}
+      {/* Custom dropdown wrapper */}
+      <div
+        ref={dropdownRef}
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
-          border: 0,
-          padding: 0,
-          margin: 0,
-          fontSize: '12px',
-          lineHeight: 'normal',
-          zIndex: 1,
-          ...customStyles,
-          ...fontStyles
-        }}
-
-
-        onChange={(e) => {
-          e.stopPropagation();
-          setComboInput(e.target.value);
-          handleSelItemsEvent(e.target.value);
         }}
       >
-        {Items && Items.map((item, i) => <option value={item} key={i}>{item}</option>)}
-      </select>
+        {/* Trigger button - displays current value and dropdown arrow */}
+        <button
+          ref={triggerRef}
+          id={data?.ID}
+          type="button"
+          onClick={toggleDropdown}
+          onKeyDown={handleKeyPress}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-controls={`${data?.ID}-listbox`}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            border: '1px solid #6A6A6A',
+            borderRadius: 0,
+            padding: '0 20px 0 4px',
+            margin: 0,
+            fontSize: '12px',
+            lineHeight: 'normal',
+            textAlign: 'left',
+            backgroundColor: '#fff',
+            cursor: 'pointer',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            ...customStyles,
+            ...fontStyles
+          }}
+        >
+          {value || comboInput || ''}
+          {/* Dropdown arrow */}
+          <span
+            style={{
+              position: 'absolute',
+              right: 4,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '4px solid transparent',
+              borderRight: '4px solid transparent',
+              borderTop: '4px solid #606060',
+              pointerEvents: 'none'
+            }}
+          />
+        </button>
+
+        {/* Dropdown list */}
+        {isOpen && (
+          <div
+            style={{
+              ...getDropdownPosition(),
+              backgroundColor: '#fff',
+              border: '1px solid #6A6A6A',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              overflowY: 'auto',
+              overflowX: 'hidden'
+            }}
+          >
+            <ul
+              ref={listRef}
+              id={`${data?.ID}-listbox`}
+              role="listbox"
+              aria-label="Options"
+              style={{
+                listStyle: 'none',
+                margin: 0,
+                padding: 0
+              }}
+            >
+              {Items && Items.length > 0 ? (
+                Items.map((item, index) => {
+                  const isSelected = item === (value || comboInput);
+                  const isHighlighted = index === highlightedIndex;
+
+                  return (
+                    <li
+                      key={index}
+                      ref={el => optionRefs.current[index] = el}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={(e) => handleOptionClick(item, index, e)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      style={{
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        backgroundColor: isHighlighted
+                          ? '#0078D7'
+                          : isSelected
+                            ? '#E5F3FF'
+                            : '#fff',
+                        color: isHighlighted ? '#fff' : '#000',
+                        fontSize: '12px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        ...fontStyles
+                      }}
+                    >
+                      {item}
+                    </li>
+                  );
+                })
+              ) : (
+                <li
+                  style={{
+                    padding: '4px 8px',
+                    color: '#888',
+                    fontStyle: 'italic',
+                    fontSize: '12px'
+                  }}
+                >
+                  No options
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
