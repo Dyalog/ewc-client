@@ -4,6 +4,7 @@ import Form from './Form';
 import MenuBar from './MenuBar';
 import Menu from './Menu';
 import Grid from './Grid';
+import NuGrid from './NuGrid';
 import Edit from './Edit';
 import Button from './Button';
 import Combo from './Combo';
@@ -81,6 +82,7 @@ const SelectComponent = ({
     );
   if (data?.Properties?.Type == 'Menu') return <Menu data={data} />;
   if (data?.Properties?.Type == 'Grid') return <Grid data={data} />;
+  if (data?.Properties?.Type == 'NuGrid') return <NuGrid data={data} />;
   if (data?.Properties?.Type == 'Edit' && data?.Properties?.Style !== 'Multi')
     return (
       <div
