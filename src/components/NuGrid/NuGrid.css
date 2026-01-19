@@ -35,6 +35,30 @@
   font-size: 13px;
 }
 
+/* Header styles */
+.nugrid-header-row {
+  background-color: #f5f5f5;
+}
+
+.nugrid-col-header,
+.nugrid-row-header {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  background-color: #f5f5f5;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nugrid-corner-cell {
+  border: 1px solid #ccc;
+  background-color: #f5f5f5;
+}
+
 .nugrid-empty {
   display: flex;
   align-items: center;
