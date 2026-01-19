@@ -1,15 +1,27 @@
-import { setStyle, parseFlexStyles, getObjectById } from '../../utils';
+import {
+  setStyle,
+  parseFlexStyles,
+  getObjectById,
+  handleMouseDown,
+  handleMouseUp,
+  handleMouseEnter,
+  handleMouseLeave,
+  handleMouseMove,
+  handleMouseDoubleClick,
+  handleMouseWheel,
+} from '../../utils';
 import { useAppData } from '../../hooks';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
 import useNumericFormatter from './useNumericFormatter';
 import useNuGridState from './useNuGridState';
 import useNuGridNavigation from './useNuGridNavigation';
+import useNuGridEvents from './useNuGridEvents';
 import './NuGrid.css';
 
 // NuGrid - Modern Grid reimplementation with embedded EWC components,
 // explicit type awareness, and modular architecture
 const NuGrid = ({ data }) => {
-  const { dataRef, handleData } = useAppData();
+  const { dataRef, handleData, socket } = useAppData();
 
   const {
     Size,
@@ -24,6 +36,7 @@ const NuGrid = ({ data }) => {
     CellHeights = 24,
     CurCell,
     CSS,
+    Event,
   } = data?.Properties || {};
 
   // Calculate grid dimensions for bounds checking
@@ -38,15 +51,26 @@ const NuGrid = ({ data }) => {
     moveBy, moveTo, curCell, numRows, numCols
   );
 
+  // Event handling (CellMove, KeyPress)
+  const { fireCellMove, fireKeyPress } = useNuGridEvents(socket, Event, data?.ID);
+
   // Handle keyboard events
   const handleKeyDown = (event) => {
     const newCell = navigationKeyDown(event);
     if (newCell) {
-      // Update server with new CurCell position
-      handleData({
-        ID: data?.ID,
-        Properties: { CurCell: newCell },
-      }, 'WS');
+      // Fire CellMove event if registered, otherwise just update CurCell
+      // mouseFlag=0 because keyboard was used (not mouse)
+      const eventFired = fireCellMove(newCell[0], newCell[1], 0);
+      if (!eventFired) {
+        // No CellMove handler, just update property
+        handleData({
+          ID: data?.ID,
+          Properties: { CurCell: newCell },
+        }, 'WS');
+      }
+    } else {
+      // Not a navigation key - fire KeyPress for other keys
+      fireKeyPress(event);
     }
   };
 
@@ -62,11 +86,16 @@ const NuGrid = ({ data }) => {
     // Update local state
     moveTo(row, col);
 
-    // Update CurCell property on server
-    handleData({
-      ID: data?.ID,
-      Properties: { CurCell: [row, col] },
-    }, 'WS');
+    // Fire CellMove event if registered, otherwise just update CurCell
+    // mouseFlag=1 because mouse was used
+    const eventFired = fireCellMove(row, col, 1);
+    if (!eventFired) {
+      // No CellMove handler, just update property
+      handleData({
+        ID: data?.ID,
+        Properties: { CurCell: [row, col] },
+      }, 'WS');
+    }
   };
 
   // Get locale separators from EWC's Locale object
@@ -128,6 +157,13 @@ const NuGrid = ({ data }) => {
       style={styles}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
+      onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
+      onMouseEnter={(e) => handleMouseEnter(e, socket, Event, data?.ID)}
+      onMouseLeave={(e) => handleMouseLeave(e, socket, Event, data?.ID)}
+      onMouseMove={(e) => handleMouseMove(e, socket, Event, data?.ID)}
+      onDoubleClick={(e) => handleMouseDoubleClick(e, socket, Event, data?.ID)}
+      onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}
     >
       <div className="nugrid-container">
         {Values && Values.length > 0 ? (
