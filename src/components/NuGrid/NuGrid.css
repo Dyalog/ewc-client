@@ -1,0 +1,46 @@
+/* NuGrid - Modern Grid Component Styles */
+
+.nugrid {
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+
+.nugrid-container {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.nugrid-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.nugrid-row {
+  /* Row styling */
+}
+
+.nugrid-cell {
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  min-width: 60px;
+  height: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+}
+
+.nugrid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+}
