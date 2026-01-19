@@ -1,15 +1,14 @@
-import { setStyle, parseFlexStyles } from '../../utils';
+import { setStyle, parseFlexStyles, getObjectById } from '../../utils';
+import { useAppData } from '../../hooks';
+import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
+import useNumericFormatter from './useNumericFormatter';
 import './NuGrid.css';
 
-/**
- * NuGrid - A modern reimplementation of the Grid component
- *
- * Key improvements over the original Grid:
- * - Embeds actual EWC components (Edit, Button, Combo) instead of duplicated cell components
- * - Explicit type awareness for proper localization and formatting
- * - Modular architecture with hooks and context
- */
+// NuGrid - Modern Grid reimplementation with embedded EWC components,
+// explicit type awareness, and modular architecture
 const NuGrid = ({ data }) => {
+  const { dataRef } = useAppData();
+
   const {
     Size,
     Visible,
@@ -23,6 +22,11 @@ const NuGrid = ({ data }) => {
     CellHeights = 24,
     CSS,
   } = data?.Properties || {};
+
+  // Get locale separators from EWC's Locale object
+  const localeData = JSON.parse(getObjectById(dataRef.current, 'Locale') || '{}');
+  const { Thousand = ',', Decimal = '.' } = localeData?.Properties || {};
+  const { formatNumber } = useNumericFormatter(Thousand, Decimal);
 
   // Helper to get width for a column (scalar or per-column array)
   const getCellWidth = (colIndex) => {
@@ -38,6 +42,17 @@ const NuGrid = ({ data }) => {
       return CellHeights[rowIndex] ?? CellHeights[0] ?? 24;
     }
     return CellHeights || 24;
+  };
+
+  // Format cell value based on its type
+  const formatCellValue = (value, cellType) => {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (isNumericType(cellType)) {
+      return formatNumber(value);
+    }
+    return String(value);
   };
 
   const customStyles = parseFlexStyles(CSS);
@@ -104,19 +119,40 @@ const NuGrid = ({ data }) => {
                     </th>
                   )}
                   {Array.isArray(row) ? (
-                    row.map((cell, colIndex) => (
-                      <td
-                        key={colIndex}
-                        className="nugrid-cell"
-                        style={{ width: getCellWidth(colIndex), height: getCellHeight(rowIndex) }}
-                      >
-                        {cell !== null && cell !== undefined ? String(cell) : ''}
-                      </td>
-                    ))
+                    row.map((cell, colIndex) => {
+                      const cellType = inferCellType(cell);
+                      const textAlign = getAlignmentForType(cellType);
+                      return (
+                        <td
+                          key={colIndex}
+                          className="nugrid-cell"
+                          style={{
+                            width: getCellWidth(colIndex),
+                            height: getCellHeight(rowIndex),
+                            textAlign,
+                          }}
+                        >
+                          {formatCellValue(cell, cellType)}
+                        </td>
+                      );
+                    })
                   ) : (
-                    <td className="nugrid-cell" style={{ width: getCellWidth(0), height: getCellHeight(rowIndex) }}>
-                      {row !== null && row !== undefined ? String(row) : ''}
-                    </td>
+                    (() => {
+                      const cellType = inferCellType(row);
+                      const textAlign = getAlignmentForType(cellType);
+                      return (
+                        <td
+                          className="nugrid-cell"
+                          style={{
+                            width: getCellWidth(0),
+                            height: getCellHeight(rowIndex),
+                            textAlign,
+                          }}
+                        >
+                          {formatCellValue(row, cellType)}
+                        </td>
+                      );
+                    })()
                   )}
                 </tr>
               ))}
