@@ -20,14 +20,12 @@ import useNuGridEvents from './useNuGridEvents';
 import './NuGrid.css';
 
 // Map EWC scroll values to CSS overflow values
-// 0 = hidden, -1 = auto (default), -3 = always visible
+// 0 = hidden, -1/-2 = auto (default), -3 = always visible
 const getOverflowStyle = (scrollValue) => {
-  switch (scrollValue) {
-    case 0: return 'hidden';
-    case -3: return 'scroll';
-    case -1:
-    default: return 'auto';
-  }
+  const val = Number(scrollValue);
+  if (val === 0) return 'hidden';
+  if (val === -3) return 'scroll';
+  return 'auto'; // -1, -2, or any other value defaults to auto
 };
 
 // NuGrid - Modern Grid reimplementation with embedded EWC components,
@@ -196,7 +194,7 @@ const NuGrid = ({ data }) => {
     >
       <div
         ref={containerRef}
-        className="nugrid-container"
+        className={`nugrid-container${Number(VScroll) === -3 ? ' force-vscroll' : ''}${Number(HScroll) === -3 ? ' force-hscroll' : ''}`}
         style={{
           overflowX: getOverflowStyle(HScroll),
           overflowY: getOverflowStyle(VScroll),
