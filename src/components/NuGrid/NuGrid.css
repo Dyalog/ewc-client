@@ -56,9 +56,28 @@
   white-space: nowrap;
 }
 
+/* Sticky column headers - stay fixed at top during vertical scroll */
+.nugrid-col-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Sticky row headers - stay fixed at left during horizontal scroll */
+.nugrid-row-header {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+/* Corner cell - sticky in both directions, highest z-index */
 .nugrid-corner-cell {
   border: 1px solid #ccc;
   background-color: #f5f5f5;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 3;
 }
 
 .nugrid-empty {
