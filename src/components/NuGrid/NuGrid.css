@@ -13,6 +13,32 @@
   overflow: auto;
 }
 
+/* Force scrollbars to always be visible (for VScroll/HScroll = -3) */
+.nugrid-container.force-vscroll::-webkit-scrollbar,
+.nugrid-container.force-hscroll::-webkit-scrollbar {
+  -webkit-appearance: none;
+}
+
+.nugrid-container.force-vscroll::-webkit-scrollbar:vertical {
+  width: 12px;
+}
+
+.nugrid-container.force-hscroll::-webkit-scrollbar:horizontal {
+  height: 12px;
+}
+
+.nugrid-container.force-vscroll::-webkit-scrollbar-thumb,
+.nugrid-container.force-hscroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  border: 2px solid #fff;
+}
+
+.nugrid-container.force-vscroll::-webkit-scrollbar-track,
+.nugrid-container.force-hscroll::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
 .nugrid-table {
   border-collapse: collapse;
   width: 100%;
