@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import {
   setStyle,
   parseFlexStyles,
@@ -18,6 +19,17 @@ import useNuGridNavigation from './useNuGridNavigation';
 import useNuGridEvents from './useNuGridEvents';
 import './NuGrid.css';
 
+// Map EWC scroll values to CSS overflow values
+// 0 = hidden, -1 = auto (default), -3 = always visible
+const getOverflowStyle = (scrollValue) => {
+  switch (scrollValue) {
+    case 0: return 'hidden';
+    case -3: return 'scroll';
+    case -1:
+    default: return 'auto';
+  }
+};
+
 // NuGrid - Modern Grid reimplementation with embedded EWC components,
 // explicit type awareness, and modular architecture
 const NuGrid = ({ data }) => {
@@ -35,6 +47,8 @@ const NuGrid = ({ data }) => {
     CellWidths = 100,
     CellHeights = 24,
     CurCell,
+    VScroll = -1,
+    HScroll = -1,
     CSS,
     Event,
   } = data?.Properties || {};
@@ -53,6 +67,21 @@ const NuGrid = ({ data }) => {
 
   // Event handling (CellMove, KeyPress)
   const { fireCellMove, fireKeyPress } = useNuGridEvents(socket, Event, data?.ID);
+
+  // Ref for scrolling selected cell into view
+  const containerRef = useRef(null);
+
+  // Scroll the selected cell into view when curCell changes
+  useEffect(() => {
+    if (!containerRef.current || !curCell) return;
+    const [row, col] = curCell;
+    const cellElement = containerRef.current.querySelector(
+      `[data-row="${row}"][data-col="${col}"]`
+    );
+    if (cellElement) {
+      cellElement.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [curCell]);
 
   // Handle keyboard events
   const handleKeyDown = (event) => {
@@ -165,7 +194,14 @@ const NuGrid = ({ data }) => {
       onDoubleClick={(e) => handleMouseDoubleClick(e, socket, Event, data?.ID)}
       onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}
     >
-      <div className="nugrid-container">
+      <div
+        ref={containerRef}
+        className="nugrid-container"
+        style={{
+          overflowX: getOverflowStyle(HScroll),
+          overflowY: getOverflowStyle(VScroll),
+        }}
+      >
         {Values && Values.length > 0 ? (
           <table className="nugrid-table">
             {hasColTitles && (
@@ -211,6 +247,8 @@ const NuGrid = ({ data }) => {
                         <td
                           key={colIndex}
                           className={`nugrid-cell${isSelected ? ' selected' : ''}`}
+                          data-row={rowIndex + 1}
+                          data-col={colIndex + 1}
                           style={{
                             width: getCellWidth(colIndex),
                             height: getCellHeight(rowIndex),
@@ -230,6 +268,8 @@ const NuGrid = ({ data }) => {
                       return (
                         <td
                           className={`nugrid-cell${isSelected ? ' selected' : ''}`}
+                          data-row={rowIndex + 1}
+                          data-col={1}
                           style={{
                             width: getCellWidth(0),
                             height: getCellHeight(rowIndex),
