@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   setStyle,
   parseFlexStyles,
@@ -17,6 +17,7 @@ import useNumericFormatter from './useNumericFormatter';
 import useNuGridState from './useNuGridState';
 import useNuGridNavigation from './useNuGridNavigation';
 import useNuGridEvents from './useNuGridEvents';
+import NuGridCell from './NuGridCell';
 import './NuGrid.css';
 
 // Map EWC scroll values to CSS overflow values
@@ -31,7 +32,7 @@ const getOverflowStyle = (scrollValue) => {
 // NuGrid - Modern Grid reimplementation with embedded EWC components,
 // explicit type awareness, and modular architecture
 const NuGrid = ({ data }) => {
-  const { dataRef, handleData, socket } = useAppData();
+  const { dataRef, handleData, socket, findCurrentData } = useAppData();
 
   const {
     Size,
@@ -47,9 +48,17 @@ const NuGrid = ({ data }) => {
     CurCell,
     VScroll = -1,
     HScroll = -1,
+    Input,
+    CellTypes,
     CSS,
     Event,
   } = data?.Properties || {};
+
+  // Normalize Input to an array (can be single string or array of strings)
+  // useMemo ensures stable reference for useCallback dependencies
+  const inputArray = useMemo(() => {
+    return Input ? (Array.isArray(Input) ? Input : [Input]) : [];
+  }, [Input]);
 
   // Calculate grid dimensions for bounds checking
   const numRows = Values?.length || 0;
@@ -63,8 +72,54 @@ const NuGrid = ({ data }) => {
     moveBy, moveTo, curCell, numRows, numCols
   );
 
-  // Event handling (CellMove, KeyPress)
-  const { fireCellMove, fireKeyPress } = useNuGridEvents(socket, Event, data?.ID);
+  // Event handling (CellMove, KeyPress, CellChanged)
+  const { fireCellMove, fireKeyPress, fireCellChanged } = useNuGridEvents(socket, Event, data?.ID);
+
+  // Use a ref for Values to avoid recreating handleCellChange on every Values change
+  // This prevents the infinite re-render loop when embedded components update values
+  const valuesRef = useRef(Values);
+  valuesRef.current = Values;
+
+  // Get the Input component ID for a specific cell based on CellTypes matrix
+  const getInputComponentId = useCallback((rowIndex, colIndex) => {
+    if (!inputArray.length || !CellTypes) return null;
+
+    // CellTypes is a matrix of 1-based indices into the Input array
+    const cellType = CellTypes[rowIndex]?.[colIndex];
+    if (!cellType || cellType < 1) return null;
+
+    // Convert 1-based index to 0-based for array access
+    return inputArray[cellType - 1] || null;
+  }, [inputArray, CellTypes]);
+
+  // Handle cell value changes from embedded components
+  // Uses valuesRef to avoid recreating this callback when Values changes
+  const handleCellChange = useCallback((row, col, newValue) => {
+    // Validate row/col to prevent errors
+    if (typeof row !== 'number' || typeof col !== 'number' || row < 1 || col < 1) {
+      console.error('NuGrid handleCellChange: invalid row/col', { row, col, newValue });
+      return;
+    }
+
+    const currentValues = valuesRef.current;
+    if (!currentValues || !currentValues[row - 1]) {
+      console.error('NuGrid handleCellChange: invalid Values matrix', { row, col, currentValues });
+      return;
+    }
+
+    // Clone the Values matrix
+    const newValues = currentValues.map(r => [...r]);
+    newValues[row - 1][col - 1] = newValue;
+
+    // Update Values in the tree
+    handleData({
+      ID: data?.ID,
+      Properties: { Values: newValues },
+    }, 'WS');
+
+    // Fire CellChanged event if registered
+    fireCellChanged(row, col, newValue);
+  }, [data?.ID, handleData, fireCellChanged]); // Note: Values removed from deps!
 
   // Ref for scrolling selected cell into view
   const containerRef = useRef(null);
@@ -241,20 +296,40 @@ const NuGrid = ({ data }) => {
                       const cellType = inferCellType(cell);
                       const textAlign = getAlignmentForType(cellType);
                       const isSelected = isCurrentCell(rowIndex, colIndex);
+
+                      // Check if this cell has an embedded Input component
+                      const inputComponentId = getInputComponentId(rowIndex, colIndex);
+                      const inputComponentData = inputComponentId
+                        ? findCurrentData(inputComponentId)
+                        : null;
+
                       return (
                         <td
                           key={colIndex}
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inputComponentData ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={colIndex + 1}
                           style={{
                             width: getCellWidth(colIndex),
                             height: getCellHeight(rowIndex),
-                            textAlign,
+                            textAlign: inputComponentData ? undefined : textAlign,
+                            padding: inputComponentData ? 0 : undefined,
                           }}
-                          onClick={() => handleCellClick(rowIndex, colIndex)}
+                          onClick={inputComponentData ? undefined : () => handleCellClick(rowIndex, colIndex)}
                         >
-                          {formatCellValue(cell, cellType)}
+                          {inputComponentData ? (
+                            <NuGridCell
+                              row={rowIndex + 1}
+                              col={colIndex + 1}
+                              cellValue={cell}
+                              componentId={inputComponentId}
+                              componentData={inputComponentData}
+                              gridId={data?.ID}
+                              onCellChange={handleCellChange}
+                            />
+                          ) : (
+                            formatCellValue(cell, cellType)
+                          )}
                         </td>
                       );
                     })
@@ -263,19 +338,39 @@ const NuGrid = ({ data }) => {
                       const cellType = inferCellType(row);
                       const textAlign = getAlignmentForType(cellType);
                       const isSelected = isCurrentCell(rowIndex, 0);
+
+                      // Check if this cell has an embedded Input component
+                      const inputComponentId = getInputComponentId(rowIndex, 0);
+                      const inputComponentData = inputComponentId
+                        ? findCurrentData(inputComponentId)
+                        : null;
+
                       return (
                         <td
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inputComponentData ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={1}
                           style={{
                             width: getCellWidth(0),
                             height: getCellHeight(rowIndex),
-                            textAlign,
+                            textAlign: inputComponentData ? undefined : textAlign,
+                            padding: inputComponentData ? 0 : undefined,
                           }}
-                          onClick={() => handleCellClick(rowIndex, 0)}
+                          onClick={inputComponentData ? undefined : () => handleCellClick(rowIndex, 0)}
                         >
-                          {formatCellValue(row, cellType)}
+                          {inputComponentData ? (
+                            <NuGridCell
+                              row={rowIndex + 1}
+                              col={1}
+                              cellValue={row}
+                              componentId={inputComponentId}
+                              componentData={inputComponentData}
+                              gridId={data?.ID}
+                              onCellChange={handleCellChange}
+                            />
+                          ) : (
+                            formatCellValue(row, cellType)
+                          )}
                         </td>
                       );
                     })()

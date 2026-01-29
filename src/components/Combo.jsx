@@ -1,9 +1,13 @@
 import { setStyle, getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { useAppData, useResizeObserver } from '../hooks';
+import { useNuGridContext } from './NuGrid/NuGridContext';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
 const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
+  // Check if we're inside a NuGrid cell
+  const nuGridContext = useNuGridContext();
+  const isInNuGrid = !!nuGridContext;
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
 
   const inputRef = useRef();
@@ -37,6 +41,10 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   // Initialize with selected item, or Text property, or first item
   const initialSelected = () => {
+    // When in NuGrid, use cellValue from context
+    if (isInNuGrid && nuGridContext) {
+      return nuGridContext.cellValue || '';
+    }
     const index = SelItems?.findIndex((element) => element == 1);
     if (index !== undefined && index !== -1 && Items) {
       return Items[index];
@@ -45,11 +53,21 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     return data?.Properties?.Text || (Items?.[0]) || '';
   };
   const [comboInput, setComboInput] = useState(initialSelected);
+
+  // Update combo input when NuGrid cellValue changes
+  useEffect(() => {
+    if (isInNuGrid && nuGridContext) {
+      setComboInput(nuGridContext.cellValue || '');
+    }
+  }, [isInNuGrid, nuGridContext?.cellValue]);
   const [position, setPosition] = useState({ top: Posn && Posn[0], left: Posn && Posn[1] });
 
   const [parentOldDimensions, setParentOldDimensions] = useState(parentSize?.Size);
 
+  // Sync selection from SelItems - skip when in NuGrid (values come from grid context)
   useEffect(() => {
+    if (isInNuGrid) return;
+
     const index = SelItems?.findIndex((element) => element == 1);
     if (index == undefined || index == -1) {
       return;
@@ -254,6 +272,12 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     setIsOpen(false);
     setHighlightedIndex(-1);
 
+    // When in NuGrid, report change via context callback
+    if (isInNuGrid && nuGridContext) {
+      nuGridContext.onCellChange(item);
+      return;
+    }
+
     // ALWAYS fire Select event, even when reselecting same value
     if (location === 'inGrid') {
       handleSelectEvent(index);
@@ -261,7 +285,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     } else {
       handleSelectEvent(index);
     }
-  }, [location, handleSelectEvent, handleCellChangeEvent]);
+  }, [location, handleSelectEvent, handleCellChangeEvent, isInNuGrid, nuGridContext]);
 
   // Calculate dropdown position (fixed positioning for grid context)
   const getDropdownPosition = useCallback(() => {
@@ -279,7 +303,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     // Determine if dropdown should appear above or below
     const showAbove = spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow;
 
-    if (location === 'inGrid') {
+    if (location === 'inGrid' || isInNuGrid) {
       // Fixed positioning for grid context to escape cell boundaries
       return {
         position: 'fixed',
@@ -511,11 +535,17 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   return (
     <div
       style={{
-        ...styles,
+        ...(isInNuGrid ? {} : styles),
         borderColor: '#ccc',
         display: Visible == 0 ? 'none' : 'block',
-        top: Posn?.[0],
-        left: Posn?.[1],
+        ...(isInNuGrid ? {
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+        } : {
+          top: Posn?.[0],
+          left: Posn?.[1],
+        }),
       }}
       onMouseDown={(e) => {
         e.stopPropagation();
