@@ -2,8 +2,12 @@ import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, h
 import { getEdgeStyleBorder } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
+import { useNuGridContext } from "./NuGrid/NuGridContext";
 
 const Label = ({ data, gridValue }) => {
+  // Check if we're inside a NuGrid cell
+  const nuGridContext = useNuGridContext();
+  const isInNuGrid = !!nuGridContext;
   let styles = setStyle(data?.Properties);
 
   const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
@@ -17,7 +21,8 @@ const Label = ({ data, gridValue }) => {
 
   // If a newline is used anywhere, it's a wrapping, multiline label, otherwise
   // it is always a single line label
-  if (Caption.indexOf('\n') !== -1) {
+  // When in NuGrid or when Caption is undefined, use nowrap
+  if (Caption && Caption.indexOf('\n') !== -1) {
     styles.whiteSpace = 'pre-wrap';
   } else {
     styles.textWrapMode = 'nowrap';
@@ -103,7 +108,22 @@ const Label = ({ data, gridValue }) => {
         handleMouseLeave(e, socket, Event, data?.ID);
       }}
     >
-      {!Caption ? (
+      {isInNuGrid ? (
+        // In NuGrid: display cellValue from context
+        <span
+          style={{
+            display: "flex",
+            justifyContent: typeof nuGridContext.cellValue == "string" ? "start" : "end",
+            fontSize: "12px",
+            marginLeft: "5px",
+            width: "100%",
+            height: "100%",
+            alignItems: "center",
+          }}
+        >
+          {nuGridContext.cellValue}
+        </span>
+      ) : !Caption ? (
         <span
           style={{
             display: "flex",

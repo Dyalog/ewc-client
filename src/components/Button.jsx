@@ -14,6 +14,7 @@ import {
   handleKeyPressUtils,
 } from "../utils";
 import { useAppData, useResizeObserver } from "../hooks";
+import { useNuGridContext } from "./NuGrid/NuGridContext";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 import { getObjectById, getImageStyles } from "../utils";
@@ -34,6 +35,10 @@ const Button = ({
 
   const styles = setStyle(data?.Properties);
   const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+
+  // Check if we're inside a NuGrid cell
+  const nuGridContext = useNuGridContext();
+  const isInNuGrid = !!nuGridContext;
   const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, TabIndex } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
@@ -51,7 +56,7 @@ const Button = ({
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
 
-  const [checkInput, setCheckInput] = useState();
+  const [checkInput, setCheckInput] = useState(false);
 
   const [radioValue, setRadioValue] = useState(State ? State : 0);
 
@@ -76,16 +81,21 @@ const Button = ({
   );
 
   const decideInput = () => {
+    // When in NuGrid, use cellValue from context (0 or 1)
+    if (isInNuGrid && nuGridContext) {
+      return setCheckInput(nuGridContext.cellValue === 1);
+    }
     if (location == "inGrid") {
       return setCheckInput(inputValue);
     }
-    setCheckInput(State && State);
+    // Ensure we always set a boolean (not undefined) to avoid controlled/uncontrolled warning
+    setCheckInput(State === 1 || State === true);
   };
 
   useEffect(() => {
     decideInput();
     setPosition({ top: Posn && Posn[0], left: Posn && Posn[1] });
-  }, [data]);
+  }, [data, nuGridContext?.cellValue]);
 
   const shortcutKey = Caption?.includes("&")
     ? Caption?.charAt(Caption.indexOf("&") + 1).toLowerCase()
@@ -325,6 +335,11 @@ const Button = ({
   };
 
   const handleCheckBoxEvent = (value) => {
+    // When in NuGrid, report change via context callback
+    if (isInNuGrid && nuGridContext) {
+      nuGridContext.onCellChange(value ? 1 : 0);
+      return;
+    }
     if (location == "inGrid") {
       handleSelectEvent(value);
       handleCellChangedEvent(value);

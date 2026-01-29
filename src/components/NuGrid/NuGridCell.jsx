@@ -1,0 +1,63 @@
+import { useMemo, useCallback, useRef } from 'react';
+import { NuGridProvider } from './NuGridContext';
+import SelectComponent from '../SelectComponent';
+
+// NuGridCell wraps an embedded component in grid context
+// It provides the component with information about its cell position and value
+const NuGridCell = ({
+  row,           // 1-based row number
+  col,           // 1-based column number
+  cellValue,     // Value from grid's Values[row-1][col-1]
+  componentId,   // ID of the Input component (e.g., 'F.G.E1')
+  componentData, // Full data object of the Input component
+  gridId,        // ID of the grid (e.g., 'F.G')
+  onCellChange,  // Callback to update Values and fire CellChanged
+}) => {
+  // Use refs to capture current values without causing re-renders
+  // This prevents the infinite update loop
+  const onCellChangeRef = useRef(onCellChange);
+  onCellChangeRef.current = onCellChange;
+
+  // Stable callback that uses refs - won't change between renders
+  const handleCellChange = useCallback((newValue) => {
+    onCellChangeRef.current(row, col, newValue);
+  }, [row, col]); // Only recreate if row/col change (which they shouldn't for a given cell)
+
+  // Build the context value for the embedded component
+  // Note: onCellChange is NOT in dependencies - we use handleCellChange instead
+  const contextValue = useMemo(() => ({
+    isInGrid: true,
+    gridId,
+    row,
+    col,
+    cellValue,
+    componentId,
+    componentData,
+    onCellChange: handleCellChange,
+  }), [gridId, row, col, cellValue, componentId, componentData, handleCellChange]);
+
+  // Clone component data with overrides for grid embedding
+  // The embedded component will use cellValue instead of its own Text/Value/State
+  const embeddedData = useMemo(() => ({
+    ...componentData,
+    Properties: {
+      ...componentData?.Properties,
+      // Override positioning - component fills the cell
+      Posn: undefined,
+      Size: undefined,
+    },
+  }), [componentData]);
+
+  return (
+    <NuGridProvider value={contextValue}>
+      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+        <SelectComponent
+          data={embeddedData}
+          location="inNuGrid"
+        />
+      </div>
+    </NuGridProvider>
+  );
+};
+
+export default NuGridCell;

@@ -61,10 +61,30 @@ const useNuGridEvents = (socket, Event, gridId) => {
     return true;
   }, [socket, gridId, hasEvent]);
 
+  // Fire CellChanged event when a cell value is modified
+  // Info: [row, col, newValue] - matches existing Grid CellChanged pattern
+  const fireCellChanged = useCallback((row, col, newValue) => {
+    if (!hasEvent('CellChanged')) return false;
+
+    const eventId = crypto.randomUUID();
+
+    socket.send(JSON.stringify({
+      Event: {
+        EventName: 'CellChanged',
+        ID: gridId,
+        EventID: eventId,
+        Info: [row, col, newValue],
+      },
+    }));
+
+    return true;
+  }, [socket, gridId, hasEvent]);
+
   return {
     hasEvent,
     fireCellMove,
     fireKeyPress,
+    fireCellChanged,
   };
 };
 
