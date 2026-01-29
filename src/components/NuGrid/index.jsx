@@ -315,7 +315,7 @@ const NuGrid = ({ data }) => {
                             textAlign: inputComponentData ? undefined : textAlign,
                             padding: inputComponentData ? 0 : undefined,
                           }}
-                          onClick={inputComponentData ? undefined : () => handleCellClick(rowIndex, colIndex)}
+                          onClick={() => handleCellClick(rowIndex, colIndex)}
                         >
                           {inputComponentData ? (
                             <NuGridCell
@@ -356,7 +356,7 @@ const NuGrid = ({ data }) => {
                             textAlign: inputComponentData ? undefined : textAlign,
                             padding: inputComponentData ? 0 : undefined,
                           }}
-                          onClick={inputComponentData ? undefined : () => handleCellClick(rowIndex, 0)}
+                          onClick={() => handleCellClick(rowIndex, 0)}
                         >
                           {inputComponentData ? (
                             <NuGridCell
