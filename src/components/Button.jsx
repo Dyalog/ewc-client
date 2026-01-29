@@ -450,6 +450,48 @@ const Button = ({
   };
 
   if (isCheckBox) {
+    // When in NuGrid, render a centered checkbox without labels
+    if (isInNuGrid) {
+      return (
+        <div
+          id={data.ID + ".$CONTAINER"}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+          }}
+        >
+          <input
+            onFocus={handleGotFocus}
+            ref={inputRef}
+            onKeyDown={(e) => handleKeyPress(e)}
+            id={data?.ID}
+            type="checkbox"
+            checked={checkInput}
+            disabled={Active === 0}
+            onChange={(e) => {
+              setCheckInput(e.target.checked);
+              handleCheckBoxEvent(e.target.checked);
+            }}
+          />
+        </div>
+      );
+    }
+
+    let checkBoxPosition = null;
+    if (Align && Align == "Left") {
+      checkBoxPosition = { position: "absolute", right: 0, top: 3 };
+    } else if (!Align || Align == "Right") {
+      checkBoxPosition = { position: "absolute", left: 0, top: 3 };
+    }
+
+    if (location == "inGrid") {
+      checkBoxPosition = { ...checkBoxPosition, marginLeft: "5px" };
+    }
+
     return (
       <div
         id={data.ID + ".$CONTAINER"}
