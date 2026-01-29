@@ -851,10 +851,12 @@ const Edit = ({
           width: !Size ? "100%" : Size[1],
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
-
-          ...(EdgeStyle
-            ? getEdgeStyleBorder(EdgeStyle)
-            : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+          // In NuGrid: borderless like old Grid; otherwise use EdgeStyle/Border
+          ...(isInNuGrid
+            ? { border: 0, outline: 0, background: 'transparent' }
+            : (EdgeStyle
+              ? getEdgeStyleBorder(EdgeStyle)
+              : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" })),
           textAlign: "right",
           verticalAlign: "text-top",
           paddingBottom: "6px",
@@ -923,13 +925,16 @@ const Edit = ({
       style={{
         ...styles,
         width: !Size ? "100%" : Size[1],
-        borderRadius: "2px",
+        borderRadius: isInNuGrid ? 0 : "2px",
         zIndex: 1,
         display: Visible == 0 ? "none" : "block",
         paddingLeft: "5px",
-        ...(EdgeStyle
-          ? getEdgeStyleBorder(EdgeStyle)
-          : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+        // In NuGrid: borderless like old Grid; otherwise use EdgeStyle/Border
+        ...(isInNuGrid
+          ? { border: 0, outline: 0, background: 'transparent' }
+          : (EdgeStyle
+            ? getEdgeStyleBorder(EdgeStyle)
+            : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" })),
         ...(Active === 0 ? {
           backgroundColor: "field",
           color: "#838383",

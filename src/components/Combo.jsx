@@ -539,6 +539,44 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     }
   };
 
+  // In NuGrid: render a native select like old Grid (borderless, simple)
+  if (isInNuGrid) {
+    return (
+      <select
+        ref={inputRef}
+        id={data?.ID}
+        value={comboInput}
+        style={{
+          border: 0,
+          outline: 0,
+          width: '100%',
+          height: '100%',
+          background: 'transparent',
+          cursor: 'pointer',
+          fontSize: '12px',
+          ...fontStyles,
+        }}
+        onChange={(e) => {
+          const newValue = e.target.value;
+          setComboInput(newValue);
+          if (nuGridContext) {
+            nuGridContext.onCellChange(newValue);
+          }
+        }}
+        onKeyDown={(e) => {
+          // Let arrow keys work for dropdown navigation, don't propagate
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.stopPropagation();
+          }
+        }}
+      >
+        {Items && Items.map((item, index) => (
+          <option key={index} value={item}>{item}</option>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <div
       style={{
