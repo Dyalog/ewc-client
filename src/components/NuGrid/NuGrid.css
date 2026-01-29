@@ -137,3 +137,15 @@
 .nugrid:focus-visible {
   box-shadow: 0 0 0 2px #0066cc;
 }
+
+/* Cells with embedded components */
+.nugrid-cell.has-component {
+  padding: 0;
+  overflow: visible;
+}
+
+/* Ensure embedded components fill the cell */
+.nugrid-cell.has-component > div {
+  width: 100%;
+  height: 100%;
+}

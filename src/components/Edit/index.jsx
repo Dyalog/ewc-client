@@ -20,6 +20,7 @@ import {
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
+import { useNuGridContext } from "../NuGrid/NuGridContext";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
 import * as Globals from "../../Globals";
@@ -45,6 +46,10 @@ const Edit = ({
     pendingKeypressEventRef
   } = useAppData();
 
+  // Check if we're inside a NuGrid cell
+  const nuGridContext = useNuGridContext();
+  const isInNuGrid = !!nuGridContext;
+
   const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
 
   const {
@@ -60,6 +65,8 @@ const Edit = ({
   const [prevFocused, setprevFocused] = useState("⌈");
   const [eventId, setEventId] = useState(null);
   const prevInputValueRef = useRef("");
+  // Track when user is actively editing to prevent decideInputValue from overwriting
+  const [isEditing, setIsEditing] = useState(false);
 
   const {
     FieldType,
@@ -87,7 +94,26 @@ const Edit = ({
   const fontStyles = getFontStyles(font, 12);
 
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
+  // Extract cellValue to avoid stale closure issues
+  const cellValue = nuGridContext?.cellValue;
+
   const decideInputValue = useCallback(() => {
+    // When in NuGrid, use the cellValue from context
+    if (isInNuGrid && cellValue !== undefined) {
+      const cellVal = cellValue;
+      if (FieldType === "Date" && cellVal !== undefined && cellVal !== "") {
+        setEmitValue(cellVal);
+        const date = calculateDateAfterDays(cellVal);
+        return setInputValue(dayjs(date).format(ShortDate));
+      }
+      if (FieldType === "LongNumeric" || FieldType === "Numeric") {
+        setEmitValue(cellVal);
+        return setInputValue(cellVal);
+      }
+      setEmitValue(cellVal);
+      return setInputValue(cellVal);
+    }
+
     let propsValue = data?.Properties?.Value;
     if (propsValue === undefined) {
       propsValue = data?.Properties?.Text;
@@ -146,6 +172,8 @@ const Edit = ({
     isPassword,
     data,
     hasValueProperty,
+    isInNuGrid,
+    cellValue, // The extracted cellValue from context
   ]);
 
   // We need to update SelText whenever we can
@@ -201,17 +229,22 @@ const Edit = ({
   }, [decideInputType]);
 
   useEffect(() => {
+    // Don't overwrite user input while actively editing (NuGrid sets isEditing on focus)
+    if (isEditing) return;
     decideInputValue();
-  }, [decideInputValue]);
+  }, [decideInputValue, isEditing]);
 
 
   // Single Properties observer to handle all property changes atomically
+  // Skip when in NuGrid - values come from grid context, not the shared Input component
   useEffect(() => {
+    if (isInNuGrid) return;
+
     const textFromProperties = data?.Properties?.Text;
     const valueFromProperties = data?.Properties?.Value;
     const selTextFromProperties = data?.Properties?.SelText;
-    
-    
+
+
     const input = inputRef.current;
     if (!input) return;
     
@@ -280,7 +313,10 @@ const Edit = ({
   }, [data?.Properties?.Text, data?.Properties?.Value, data?.Properties?.SelText]);
 
   // Update global tree when input changes (for WG requests)
+  // Skip when in NuGrid - the grid handles value updates through onCellChange
   useEffect(() => {
+    if (isInNuGrid) return;
+
     if (inputValue !== undefined && inputValue !== prevInputValueRef.current) {
       prevInputValueRef.current = inputValue;
       handleData(
@@ -294,12 +330,22 @@ const Edit = ({
         "WS"
       );
     }
-  }, [inputValue]);
+  }, [inputValue]); // isInNuGrid is constant - no need to track it
 
 
   // Checks for the Styling of the Edit Field
 
-  if (location == "inGrid") {
+  if (isInNuGrid) {
+    // Inside NuGrid: fill the cell, no border
+    styles = {
+      ...styles,
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      border: "none",
+      color: FCol ? rgbColor(FCol) : "black",
+    };
+  } else if (location == "inGrid") {
     styles = {
       ...styles,
       border: "none",
@@ -630,6 +676,9 @@ const Edit = ({
   };
 
   const handleBlur = () => {
+    // Clear editing flag first so decideInputValue can run after blur if needed
+    if (isInNuGrid) setIsEditing(false);
+
     updateSelText(); // Update global tree with final selection
     if (Event && Event.some((item) => item[0] === "LostFocus")) {
       socket.send(JSON.stringify({
@@ -641,7 +690,20 @@ const Edit = ({
       }));
     }
 
-    // check that the Edit is inside the Grid
+    // Check if we're inside a NuGrid cell
+    if (isInNuGrid && nuGridContext) {
+      // Compare with original value from context
+      const originalValue = nuGridContext.cellValue;
+      const currentValue = (FieldType === "LongNumeric" || FieldType === "Numeric")
+        ? (emitValue !== "" ? Number(emitValue) : emitValue)
+        : emitValue;
+      if (originalValue !== currentValue) {
+        nuGridContext.onCellChange(currentValue);
+      }
+      return;
+    }
+
+    // check that the Edit is inside the old Grid
     if (location == "inGrid") {
       if (value != emitValue) {
         triggerChangeEvent();
@@ -654,6 +716,9 @@ const Edit = ({
   };
 
   const handleGotFocus = () => {
+    // Mark as editing to prevent decideInputValue from overwriting user input
+    if (isInNuGrid) setIsEditing(true);
+
     const previousFocusedId = localStorage.getItem("current-focus");
     setprevFocused(previousFocusedId);
     const gotFocusEvent = JSON.stringify({
