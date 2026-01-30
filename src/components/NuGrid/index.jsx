@@ -121,25 +121,72 @@ const NuGrid = ({ data }) => {
     fireCellChanged(row, col, newValue);
   }, [data?.ID, handleData, fireCellChanged]); // Note: Values removed from deps!
 
-  // Ref for scrolling selected cell into view
+  // Refs for the grid element and scrollable container
+  const gridRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Scroll the selected cell into view when curCell changes
+  // Blur any focused element in non-selected cells when curCell changes
+  // This ensures only the currently selected cell can be edited
   useEffect(() => {
+    if (!containerRef.current || !curCell) return;
+    const [row, col] = curCell;
+    const activeElement = document.activeElement;
+
+    // Check if the focused element is inside the grid but not in the current cell
+    if (activeElement && containerRef.current.contains(activeElement)) {
+      const cellElement = activeElement.closest('[data-row][data-col]');
+      if (cellElement) {
+        const focusedRow = parseInt(cellElement.getAttribute('data-row'), 10);
+        const focusedCol = parseInt(cellElement.getAttribute('data-col'), 10);
+        // If the focused element is in a different cell, blur it and refocus the grid
+        if (focusedRow !== row || focusedCol !== col) {
+          activeElement.blur();
+          // Focus the grid so keyboard navigation continues to work
+          gridRef.current?.focus({ preventScroll: true });
+        }
+      }
+    }
+  }, [curCell]);
+
+  // Activate the current cell's component (for Space key)
+  const activateCurrentCell = () => {
     if (!containerRef.current || !curCell) return;
     const [row, col] = curCell;
     const cellElement = containerRef.current.querySelector(
       `[data-row="${row}"][data-col="${col}"]`
     );
-    if (cellElement) {
-      cellElement.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (!cellElement) return;
+
+    // Find interactive element in the cell and click/focus it
+    const checkbox = cellElement.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+      checkbox.click();
+      return;
     }
-  }, [curCell]);
+
+    const comboButton = cellElement.querySelector('button[role="combobox"]');
+    if (comboButton) {
+      comboButton.click();
+      return;
+    }
+
+    const input = cellElement.querySelector('input');
+    if (input) {
+      input.focus();
+      return;
+    }
+  };
 
   // Handle keyboard events
   const handleKeyDown = (event) => {
-    const newCell = navigationKeyDown(event);
-    if (newCell) {
+    const result = navigationKeyDown(event);
+
+    if (result === 'activate') {
+      // Space key - activate the current cell's component
+      activateCurrentCell();
+    } else if (result) {
+      // Navigation key - result is newCell array
+      const newCell = result;
       // Fire CellMove event if registered, otherwise just update CurCell
       // mouseFlag=0 because keyboard was used (not mouse)
       const eventFired = fireCellMove(newCell[0], newCell[1], 0);
@@ -234,6 +281,7 @@ const NuGrid = ({ data }) => {
 
   return (
     <div
+      ref={gridRef}
       id={data?.ID}
       className="nugrid"
       style={styles}
