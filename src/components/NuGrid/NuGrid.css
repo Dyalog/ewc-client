@@ -1,12 +1,12 @@
-/* NuGrid - Excel-like Grid Component Styles */
+/* NuGrid - Grid Component Styles */
 
 .nugrid {
   box-sizing: border-box;
   overflow: hidden;
   background-color: #fff;
   border: 1px solid #b4b4b4;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .nugrid-container {
@@ -51,7 +51,7 @@
   /* Row styling */
 }
 
-/* Excel-like cell styles */
+/* Cell styles */
 .nugrid-cell {
   border: 1px solid #d4d4d4;
   padding: 2px 4px;
@@ -60,32 +60,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: inherit;
   cursor: cell;
   user-select: none;
   background-color: #fff;
   vertical-align: middle;
 }
 
-/* Excel-like header styles */
+/* Simple flat header styles */
 .nugrid-header-row {
-  background: linear-gradient(180deg, #f9f9f9 0%, #e8e8e8 100%);
+  background-color: #f5f5f5;
 }
 
 .nugrid-col-header,
 .nugrid-row-header {
-  border: 1px solid #b4b4b4;
-  padding: 2px 4px;
-  font-weight: 500;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
-  background: linear-gradient(180deg, #f9f9f9 0%, #e0e0e0 100%);
+  border: 1px solid #e0e0e0;
+  padding: 2px 6px;
+  font-weight: normal;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: #f5f5f5;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #333;
+  color: #666;
   vertical-align: middle;
 }
 
@@ -93,28 +93,28 @@
 .nugrid-col-header {
   position: sticky;
   top: 0;
-  z-index: 2;
-  border-bottom: 1px solid #a0a0a0;
+  z-index: 10;
+  border-bottom: 1px solid #d0d0d0;
 }
 
 /* Sticky row headers - stay fixed at left during horizontal scroll */
 .nugrid-row-header {
   position: sticky;
   left: 0;
-  z-index: 1;
-  border-right: 1px solid #a0a0a0;
+  z-index: 10;
+  border-right: 1px solid #d0d0d0;
 }
 
 /* Corner cell - sticky in both directions, highest z-index */
 .nugrid-corner-cell {
-  border: 1px solid #b4b4b4;
-  background: linear-gradient(180deg, #f9f9f9 0%, #e0e0e0 100%);
+  border: 1px solid #e0e0e0;
+  background-color: #f5f5f5;
   position: sticky;
   top: 0;
   left: 0;
-  z-index: 3;
-  border-right: 1px solid #a0a0a0;
-  border-bottom: 1px solid #a0a0a0;
+  z-index: 11;
+  border-right: 1px solid #d0d0d0;
+  border-bottom: 1px solid #d0d0d0;
 }
 
 .nugrid-empty {
@@ -123,14 +123,13 @@
   justify-content: center;
   height: 100%;
   color: #999;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: inherit;
 }
 
-/* Excel-like cell selection - green border like Excel */
+/* Cell selection - blue border matching theme */
 .nugrid-cell.selected {
-  outline: 2px solid #217346;
-  outline-offset: -2px;
+  border: 1px solid blue;
   background-color: #fff;
 }
 
@@ -139,12 +138,12 @@
   background-color: #f5f5f5;
 }
 
-/* Header highlight when row/col is selected - Excel style */
+/* Header highlight when row/col is selected - lightblue like old Grid */
 .nugrid-row-header.selected-row,
 .nugrid-col-header.selected-col {
-  background: linear-gradient(180deg, #d4e6f1 0%, #b8d4e8 100%);
-  color: #1a5276;
-  font-weight: 600;
+  background-color: lightblue;
+  color: #333;
+  font-weight: normal;
 }
 
 /* Focus styles for keyboard navigation */
@@ -153,7 +152,7 @@
 }
 
 .nugrid:focus-visible {
-  box-shadow: 0 0 0 1px #217346;
+  box-shadow: 0 0 0 1px blue;
 }
 
 /* Cells with embedded components - minimal styling */
@@ -168,55 +167,48 @@
   height: 100%;
 }
 
-/* Excel-like input styling within cells */
-.nugrid-cell input[type="text"],
-.nugrid-cell input:not([type]) {
-  border: none;
-  outline: none;
+/* All inputs within cells - no borders or focus indicators */
+.nugrid-cell input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   width: 100%;
   height: 100%;
   padding: 2px 4px;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: inherit;
   background: transparent;
   box-sizing: border-box;
 }
 
-.nugrid-cell input[type="text"]:focus,
-.nugrid-cell input:not([type]):focus {
+.nugrid-cell input:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   background-color: #fff;
 }
 
-/* Excel-like numeric input styling */
+/* Numeric inputs - right aligned */
 .nugrid-cell input.currency,
 .nugrid-cell input[type="number"] {
   text-align: right;
-  border: none;
-  outline: none;
-  width: 100%;
-  height: 100%;
-  padding: 2px 4px;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
-  background: transparent;
-  box-sizing: border-box;
 }
 
-/* Excel-like checkbox styling */
+/* Checkbox styling - blue accent to match theme */
 .nugrid-cell input[type="checkbox"] {
   width: 13px;
   height: 13px;
   margin: 0;
   cursor: pointer;
-  accent-color: #217346;
+  accent-color: #0078D7;
 }
 
-/* Excel-like dropdown/combo button styling */
+/* Dropdown/combo button styling */
 .nugrid-cell button[role="combobox"] {
   border: none;
   background: transparent;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: inherit;
   text-align: left;
   padding: 2px 18px 2px 4px;
   cursor: pointer;
@@ -228,5 +220,5 @@
 
 .nugrid-cell button[role="combobox"]:focus {
   outline: none;
-  background-color: #e8f4ea;
+  background-color: #e5f3ff;
 }
