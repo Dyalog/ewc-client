@@ -1,13 +1,19 @@
 import { useCallback } from 'react';
 
 // Keyboard navigation hook for NuGrid
-// Handles arrow keys, Tab, Enter, Home, End, Page Up/Down
+// Handles arrow keys, Tab, Enter, Home, End, Page Up/Down, Space
+// Returns: newCell array for navigation, 'activate' for Space, null for other keys
 const useNuGridNavigation = (moveBy, moveTo, curCell, numRows, numCols) => {
   const handleKeyDown = useCallback((event) => {
     let newCell = null;
     const [row, col] = curCell;
 
     switch (event.key) {
+      case ' ':
+        // Space: activate current cell (toggle checkbox, open combo, edit text)
+        event.preventDefault();
+        return 'activate';
+
       case 'ArrowUp':
         event.preventDefault();
         newCell = moveBy(-1, 0);
