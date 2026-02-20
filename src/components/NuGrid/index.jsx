@@ -185,18 +185,26 @@ const NuGrid = ({ data }) => {
       // Space key - activate the current cell's component
       activateCurrentCell();
     } else if (result) {
-      // Navigation key - result is newCell array
       const newCell = result;
-      // Fire CellMove event if registered, otherwise just update CurCell
-      // mouseFlag=0 because keyboard was used (not mouse)
-      const eventFired = fireCellMove(newCell[0], newCell[1], 0);
-      if (!eventFired) {
-        // No CellMove handler, just update property
-        handleData({
-          ID: data?.ID,
-          Properties: { CurCell: newCell },
-        }, 'WS');
+
+      // Boundary: navigation clamped at edge — blur + fire KeyPress for virtual scrolling
+      if (newCell[0] === curCell[0] && newCell[1] === curCell[1]) {
+        const activeEl = document.activeElement;
+        if (activeEl && containerRef.current?.contains(activeEl)) {
+          activeEl.blur();
+          gridRef.current?.focus({ preventScroll: true });
+        }
+        fireKeyPress(event);
+        return;
       }
+
+      // Always update data tree so server can read CurCell via eWG
+      handleData({
+        ID: data?.ID,
+        Properties: { CurCell: newCell },
+      }, 'WS');
+      // Fire CellMove event if registered (mouseFlag=0 for keyboard)
+      fireCellMove(newCell[0], newCell[1], 0);
     } else {
       // Not a navigation key - fire KeyPress for other keys
       fireKeyPress(event);
@@ -215,16 +223,13 @@ const NuGrid = ({ data }) => {
     // Update local state
     moveTo(row, col);
 
-    // Fire CellMove event if registered, otherwise just update CurCell
-    // mouseFlag=1 because mouse was used
-    const eventFired = fireCellMove(row, col, 1);
-    if (!eventFired) {
-      // No CellMove handler, just update property
-      handleData({
-        ID: data?.ID,
-        Properties: { CurCell: [row, col] },
-      }, 'WS');
-    }
+    // Always update data tree so server can read CurCell via eWG
+    handleData({
+      ID: data?.ID,
+      Properties: { CurCell: [row, col] },
+    }, 'WS');
+    // Fire CellMove event if registered (mouseFlag=1 for mouse)
+    fireCellMove(row, col, 1);
   };
 
   // Get locale separators from EWC's Locale object
