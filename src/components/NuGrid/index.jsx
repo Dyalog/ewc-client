@@ -194,7 +194,18 @@ const NuGrid = ({ data }) => {
           activeEl.blur();
           gridRef.current?.focus({ preventScroll: true });
         }
-        fireKeyPress(event);
+        // Find an Input component with KeyPress registered to use as event source
+        // (mirrors old Grid where the Edit child fires the event to the server)
+        let sourceId = null;
+        for (const id of inputArray) {
+          const inputData = findCurrentData(id);
+          const inputEvent = inputData?.Properties?.Event;
+          if (inputEvent && inputEvent.some(item => item[0] === 'KeyPress')) {
+            sourceId = id;
+            break;
+          }
+        }
+        fireKeyPress(event, sourceId);
         return;
       }
 
