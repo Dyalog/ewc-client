@@ -39,8 +39,11 @@ const useNuGridEvents = (socket, Event, gridId) => {
 
   // Fire KeyPress event
   // Info: [key, charCode, keyCode, shiftState]
-  const fireKeyPress = useCallback((event) => {
-    if (!hasEvent('KeyPress')) return false;
+  // sourceId overrides the event source ID and bypasses hasEvent check
+  // (used at boundaries for virtual scrolling, where KeyPress may be
+  // registered on a child Input rather than the grid itself)
+  const fireKeyPress = useCallback((event, sourceId) => {
+    if (!sourceId && !hasEvent('KeyPress')) return false;
 
     const eventId = crypto.randomUUID();
     const isAltPressed = event.altKey ? 4 : 0;
@@ -52,7 +55,7 @@ const useNuGridEvents = (socket, Event, gridId) => {
     socket.send(JSON.stringify({
       Event: {
         EventName: 'KeyPress',
-        ID: gridId,
+        ID: sourceId || gridId,
         EventID: eventId,
         Info: [event.key, charCode, event.keyCode, shiftState],
       },
