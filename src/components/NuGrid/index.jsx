@@ -42,9 +42,9 @@ const NuGrid = ({ data }) => {
     ColTitles,
     RowTitles,
     TitleWidth = 50,
-    TitleHeight = 24,
+    TitleHeight = 20,
     CellWidths = 100,
-    CellHeights = 24,
+    CellHeights = 20,
     CurCell,
     VScroll = -1,
     HScroll = -1,
@@ -367,21 +367,24 @@ const NuGrid = ({ data }) => {
                         ? findCurrentData(inputComponentId)
                         : null;
 
+                      const showWidget = inputComponentData && isSelected
+                            && inputComponentData?.Properties?.Type !== 'Label';
+
                       return (
                         <td
                           key={colIndex}
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inputComponentData ? ' has-component' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${showWidget ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={colIndex + 1}
                           style={{
                             width: getCellWidth(colIndex),
                             height: getCellHeight(rowIndex),
-                            textAlign: inputComponentData ? undefined : textAlign,
-                            padding: inputComponentData ? 0 : undefined,
+                            textAlign: showWidget ? undefined : textAlign,
+                            padding: showWidget ? 0 : undefined,
                           }}
                           onClick={() => handleCellClick(rowIndex, colIndex)}
                         >
-                          {inputComponentData ? (
+                          {showWidget ? (
                             <NuGridCell
                               row={rowIndex + 1}
                               col={colIndex + 1}
@@ -409,20 +412,23 @@ const NuGrid = ({ data }) => {
                         ? findCurrentData(inputComponentId)
                         : null;
 
+                      const showWidget = inputComponentData && isSelected
+                            && inputComponentData?.Properties?.Type !== 'Label';
+
                       return (
                         <td
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inputComponentData ? ' has-component' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${showWidget ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={1}
                           style={{
                             width: getCellWidth(0),
                             height: getCellHeight(rowIndex),
-                            textAlign: inputComponentData ? undefined : textAlign,
-                            padding: inputComponentData ? 0 : undefined,
+                            textAlign: showWidget ? undefined : textAlign,
+                            padding: showWidget ? 0 : undefined,
                           }}
                           onClick={() => handleCellClick(rowIndex, 0)}
                         >
-                          {inputComponentData ? (
+                          {showWidget ? (
                             <NuGridCell
                               row={rowIndex + 1}
                               col={1}
