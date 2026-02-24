@@ -850,7 +850,7 @@ const Edit = ({
           display: Visible == 0 ? "none" : "block",
           // In NuGrid: borderless, no extra padding
           ...(isInNuGrid
-            ? { border: 0, outline: 0, background: 'transparent', padding: '2px 4px', verticalAlign: 'middle' }
+            ? { border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle' }
             : {
               ...(EdgeStyle
                 ? getEdgeStyleBorder(EdgeStyle)
@@ -927,7 +927,7 @@ const Edit = ({
         display: Visible == 0 ? "none" : "block",
         // In NuGrid: borderless, consistent padding
         ...(isInNuGrid
-          ? { border: 0, outline: 0, background: 'transparent', borderRadius: 0, padding: '2px 4px' }
+          ? { border: 0, outline: 0, background: 'transparent', borderRadius: 0, padding: '0 4px' }
           : {
             borderRadius: "2px",
             paddingLeft: "5px",
