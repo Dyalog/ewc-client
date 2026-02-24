@@ -53,10 +53,9 @@
 
 /* Cell styles */
 .nugrid-cell {
-  border: 1px solid #d4d4d4;
-  padding: 2px 4px;
+  border: 1px solid #c0c0c0;
+  padding: 0 4px;
   min-width: 60px;
-  height: 20px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -65,28 +64,29 @@
   cursor: cell;
   user-select: none;
   background-color: #fff;
-  vertical-align: middle;
 }
 
 /* Simple flat header styles */
 .nugrid-header-row {
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
 }
 
 .nugrid-col-header,
 .nugrid-row-header {
-  border: 1px solid #e0e0e0;
-  padding: 2px 6px;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #a0a0a0;
+  border-bottom: 1px solid #a0a0a0;
+  padding: 0 6px;
   font-weight: normal;
   font-family: inherit;
   font-size: inherit;
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #666;
-  vertical-align: middle;
+  color: #000;
 }
 
 /* Sticky column headers - stay fixed at top during vertical scroll */
@@ -94,7 +94,6 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 1px solid #d0d0d0;
 }
 
 /* Sticky row headers - stay fixed at left during horizontal scroll */
@@ -102,19 +101,19 @@
   position: sticky;
   left: 0;
   z-index: 10;
-  border-right: 1px solid #d0d0d0;
 }
 
 /* Corner cell - sticky in both directions, highest z-index */
 .nugrid-corner-cell {
-  border: 1px solid #e0e0e0;
-  background-color: #f5f5f5;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #a0a0a0;
+  border-bottom: 1px solid #a0a0a0;
+  background-color: #f0f0f0;
   position: sticky;
   top: 0;
   left: 0;
   z-index: 11;
-  border-right: 1px solid #d0d0d0;
-  border-bottom: 1px solid #d0d0d0;
 }
 
 .nugrid-empty {
@@ -135,14 +134,14 @@
 
 /* Subtle highlight for the selected cell on hover */
 .nugrid-cell:hover:not(.selected) {
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
 }
 
-/* Header highlight when row/col is selected - lightblue like old Grid */
+/* Header highlight when row/col is selected - lightblue like ⎕WC Grid */
 .nugrid-row-header.selected-row,
 .nugrid-col-header.selected-col {
-  background-color: lightblue;
-  color: #333;
+  background-color: #b8d4e8;
+  color: #000;
   font-weight: normal;
 }
 
@@ -158,13 +157,7 @@
 /* Cells with embedded components - minimal styling */
 .nugrid-cell.has-component {
   padding: 0;
-  overflow: visible;
-}
-
-/* Ensure embedded components fill the cell */
-.nugrid-cell.has-component > div {
-  width: 100%;
-  height: 100%;
+  position: relative;
 }
 
 /* All inputs within cells - no borders or focus indicators */
@@ -174,7 +167,7 @@
   box-shadow: none !important;
   width: 100%;
   height: 100%;
-  padding: 2px 4px;
+  padding: 0 4px;
   font-family: inherit;
   font-size: inherit;
   background: transparent;

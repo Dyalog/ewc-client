@@ -50,7 +50,7 @@ const NuGridCell = ({
 
   return (
     <NuGridProvider value={contextValue}>
-      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex' }}>
         <SelectComponent
           data={embeddedData}
           location="inNuGrid"
