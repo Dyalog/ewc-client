@@ -232,7 +232,13 @@ const Edit = ({
     // Don't overwrite user input while actively editing (NuGrid sets isEditing on focus)
     if (isEditing) return;
     decideInputValue();
-  }, [decideInputValue, isEditing]);
+    // isEditing intentionally excluded: it should guard, not trigger.
+    // When ShowInput=1 and Edit stays mounted after deselection, isEditing
+    // changing to false would fire this before cellValue updates, reverting
+    // the user's edit. Instead, the cellValue update from onCellChange
+    // naturally retriggers decideInputValue with the correct value.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decideInputValue]);
 
 
   // Single Properties observer to handle all property changes atomically
