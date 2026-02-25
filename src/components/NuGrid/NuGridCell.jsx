@@ -8,6 +8,7 @@ const NuGridCell = ({
   row,           // 1-based row number
   col,           // 1-based column number
   cellValue,     // Value from grid's Values[row-1][col-1]
+  formattedValue, // Pre-formatted display string from FormattedValues
   componentId,   // ID of the Input component (e.g., 'F.G.E1')
   componentData, // Full data object of the Input component
   gridId,        // ID of the grid (e.g., 'F.G')
@@ -31,10 +32,11 @@ const NuGridCell = ({
     row,
     col,
     cellValue,
+    formattedValue,
     componentId,
     componentData,
     onCellChange: handleCellChange,
-  }), [gridId, row, col, cellValue, componentId, componentData, handleCellChange]);
+  }), [gridId, row, col, cellValue, formattedValue, componentId, componentData, handleCellChange]);
 
   // Clone component data with overrides for grid embedding
   // The embedded component will use cellValue instead of its own Text/Value/State

@@ -95,6 +95,7 @@ const Edit = ({
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   // Extract cellValue to avoid stale closure issues
   const cellValue = nuGridContext?.cellValue;
+  const formattedValue = nuGridContext?.formattedValue;
 
   const decideInputValue = useCallback(() => {
     // When in NuGrid, use the cellValue from context
@@ -107,10 +108,10 @@ const Edit = ({
       }
       if (FieldType === "LongNumeric" || FieldType === "Numeric") {
         setEmitValue(cellVal);
-        return setInputValue(cellVal);
+        return setInputValue(isEditing ? cellVal : (formattedValue ?? cellVal));
       }
       setEmitValue(cellVal);
-      return setInputValue(cellVal);
+      return setInputValue(formattedValue ?? cellVal);
     }
 
     let propsValue = data?.Properties?.Value;
@@ -173,6 +174,8 @@ const Edit = ({
     hasValueProperty,
     isInNuGrid,
     cellValue, // The extracted cellValue from context
+    formattedValue,
+    isEditing,
   ]);
 
   // We need to update SelText whenever we can
@@ -840,6 +843,39 @@ const Edit = ({
 
 
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
+    // When in NuGrid with a server-formatted value and not editing, show the
+    // pre-formatted string in a plain input. NumericFormat would re-parse it
+    // and lose the ⎕FMT formatting (custom separators, padding, etc.).
+    if (isInNuGrid && formattedValue != null && !isEditing) {
+      return (
+        <input
+          id={data?.ID}
+          ref={inputRef}
+          value={inputValue}
+          readOnly
+          style={{
+            ...styles,
+            width: !Size ? "100%" : Size[1],
+            zIndex: 1,
+            display: Visible == 0 ? "none" : "block",
+            border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle',
+            textAlign: "right",
+            ...customStyles,
+            ...fontStyles,
+          }}
+          onFocus={handleGotFocus}
+          onBlur={handleBlur}
+          onKeyDown={(e) => handleKeyPress(e)}
+          onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
+          onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
+          onMouseEnter={(e) => handleMouseEnter(e, socket, Event, data?.ID)}
+          onMouseMove={(e) => handleMouseMove(e, socket, Event, data?.ID)}
+          onMouseLeave={(e) => handleMouseLeave(e, socket, Event, data?.ID)}
+          onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}
+          onDoubleClick={(e) => handleMouseDoubleClick(e, socket, Event, data?.ID)}
+        />
+      );
+    }
     return (
       <NumericFormat
         className="currency"
