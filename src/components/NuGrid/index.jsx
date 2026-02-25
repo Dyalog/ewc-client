@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   setStyle,
   parseFlexStyles,
@@ -40,7 +40,7 @@ const NuGrid = ({ data }) => {
     Size,
     Visible,
     Posn,
-    Values,
+    Values: propsValues,
     ColTitles,
     RowTitles,
     TitleWidth = 50,
@@ -53,6 +53,8 @@ const NuGrid = ({ data }) => {
     Input,
     CellTypes,
     ShowInput = 0,
+    FormatString,
+    FormattedValues: propsFormattedValues,
     FCol,
     BCol,
     CellFonts,
@@ -63,6 +65,22 @@ const NuGrid = ({ data }) => {
     CSS,
     Event,
   } = data?.Properties || {};
+
+  // Keep Values and FormattedValues in local state so handleCellChange
+  // updates are immediately visible without depending on the App re-rendering.
+  const [Values, setValues] = useState(propsValues);
+  const prevPropsValues = useRef(propsValues);
+  if (propsValues !== prevPropsValues.current) {
+    prevPropsValues.current = propsValues;
+    setValues(propsValues);
+  }
+
+  const [FormattedValues, setFormattedValues] = useState(propsFormattedValues);
+  const prevPropsFormatted = useRef(propsFormattedValues);
+  if (propsFormattedValues !== prevPropsFormatted.current) {
+    prevPropsFormatted.current = propsFormattedValues;
+    setFormattedValues(propsFormattedValues);
+  }
 
   // Normalize Input to an array (can be single string or array of strings)
   // useMemo ensures stable reference for useCallback dependencies
@@ -89,6 +107,11 @@ const NuGrid = ({ data }) => {
   // This prevents the infinite re-render loop when embedded components update values
   const valuesRef = useRef(Values);
   valuesRef.current = Values;
+
+  const formatStringRef = useRef(FormatString);
+  formatStringRef.current = FormatString;
+  const cellTypesRef = useRef(CellTypes);
+  cellTypesRef.current = CellTypes;
 
   // Get the Input component ID for a specific cell based on CellTypes matrix
   const getInputComponentId = useCallback((rowIndex, colIndex) => {
@@ -140,7 +163,20 @@ const NuGrid = ({ data }) => {
     const newValues = currentValues.map(r => [...r]);
     newValues[row - 1][col - 1] = newValue;
 
-    // Update Values in the tree
+    // Update local state immediately — this guarantees a re-render
+    // even when App's reRender() toggle cancels out
+    setValues(newValues);
+
+    // Clear stale FormattedValue for this cell so formatCellValue
+    // falls through to the raw value until the server responds
+    setFormattedValues(prev => {
+      if (!prev || !prev[row - 1]) return prev;
+      const updated = prev.map(r => [...r]);
+      updated[row - 1][col - 1] = null;
+      return updated;
+    });
+
+    // Also update the data tree for server sync
     handleData({
       ID: data?.ID,
       Properties: { Values: newValues },
@@ -148,6 +184,19 @@ const NuGrid = ({ data }) => {
 
     // Fire CellChanged event if registered
     fireCellChanged(row, col, newValue);
+
+    // Send FormatCell to server if a format string applies to this cell
+    const fs = formatStringRef.current;
+    const ct = cellTypesRef.current;
+    if (fs && ct) {
+      const cellType = ct[row - 1]?.[col - 1];
+      const fmt = cellType ? fs[cellType - 1] : null;
+      if (fmt) {
+        socket.send(JSON.stringify({
+          FormatCell: { Cell: [row, col], ID: data?.ID, Value: newValue },
+        }));
+      }
+    }
   }, [data?.ID, handleData, fireCellChanged]); // Note: Values removed from deps!
 
   // Refs for the grid element and scrollable container
@@ -234,6 +283,12 @@ const NuGrid = ({ data }) => {
 
       // Boundary: navigation clamped at edge — fire KeyPress for virtual scrolling
       if (newCell[0] === curCell[0] && newCell[1] === curCell[1]) {
+        // Still update CurCell in data tree so the re-render picks up
+        // any Values changes made by commitActiveEdit above
+        handleData({
+          ID: data?.ID,
+          Properties: { CurCell: newCell },
+        }, 'WS');
         // Find an Input component with KeyPress registered to use as event source
         // (mirrors old Grid where the Edit child fires the event to the server)
         let sourceId = null;
@@ -308,13 +363,10 @@ const NuGrid = ({ data }) => {
   };
 
   // Format cell value based on its type
-  const formatCellValue = (value, cellType) => {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    if (isNumericType(cellType)) {
-      return formatNumber(value);
-    }
+  const formatCellValue = (value, cellType, formattedValue) => {
+    if (formattedValue != null) return formattedValue;
+    if (value === null || value === undefined) return '';
+    if (isNumericType(cellType)) return formatNumber(value);
     return String(value);
   };
 
@@ -458,13 +510,14 @@ const NuGrid = ({ data }) => {
                               row={rowIndex + 1}
                               col={colIndex + 1}
                               cellValue={cell}
+                              formattedValue={FormattedValues?.[rowIndex]?.[colIndex]}
                               componentId={inputComponentId}
                               componentData={inputComponentData}
                               gridId={data?.ID}
                               onCellChange={handleCellChange}
                             />
                           ) : (
-                            formatCellValue(cell, cellType)
+                            formatCellValue(cell, cellType, FormattedValues?.[rowIndex]?.[colIndex])
                           )}
                         </td>
                       );
@@ -514,13 +567,14 @@ const NuGrid = ({ data }) => {
                               row={rowIndex + 1}
                               col={1}
                               cellValue={row}
+                              formattedValue={FormattedValues?.[rowIndex]?.[0]}
                               componentId={inputComponentId}
                               componentData={inputComponentData}
                               gridId={data?.ID}
                               onCellChange={handleCellChange}
                             />
                           ) : (
-                            formatCellValue(row, cellType)
+                            formatCellValue(row, cellType, FormattedValues?.[rowIndex]?.[0])
                           )}
                         </td>
                       );
