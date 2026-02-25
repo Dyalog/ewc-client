@@ -3,6 +3,8 @@ import {
   setStyle,
   parseFlexStyles,
   getObjectById,
+  rgbColor,
+  getFontStyles,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -50,6 +52,14 @@ const NuGrid = ({ data }) => {
     HScroll = -1,
     Input,
     CellTypes,
+    ShowInput = 0,
+    FCol,
+    BCol,
+    CellFonts,
+    ColTitleBCol,
+    ColTitleFCol,
+    RowTitleBCol,
+    RowTitleFCol,
     CSS,
     Event,
   } = data?.Properties || {};
@@ -91,6 +101,25 @@ const NuGrid = ({ data }) => {
     // Convert 1-based index to 0-based for array access
     return inputArray[cellType - 1] || null;
   }, [inputArray, CellTypes]);
+
+  // Get the 1-based CellType index for a cell, or null if none
+  const getCellTypeIndex = useCallback((rowIndex, colIndex) => {
+    const cellType = CellTypes?.[rowIndex]?.[colIndex];
+    return (cellType && cellType >= 1) ? cellType : null;
+  }, [CellTypes]);
+
+  // Check if a cell's input widget should be shown (even when not selected)
+  const shouldShowInput = useCallback((rowIndex, colIndex) => {
+    if (ShowInput === 1) return true;
+    if (ShowInput === 0) return false;
+    if (Array.isArray(ShowInput)) {
+      const cellType = CellTypes?.[rowIndex]?.[colIndex];
+      if (cellType && cellType >= 1) {
+        return ShowInput[cellType - 1] === 1;
+      }
+    }
+    return false;
+  }, [ShowInput, CellTypes]);
 
   // Handle cell value changes from embedded components
   // Uses valuesRef to avoid recreating this callback when Values changes
@@ -348,7 +377,14 @@ const NuGrid = ({ data }) => {
                     <th
                       key={colIndex}
                       className={`nugrid-col-header${curCell[1] === colIndex + 1 ? ' selected-col' : ''}`}
-                      style={{ width: getCellWidth(colIndex), height: TitleHeight }}
+                      style={{
+                        width: getCellWidth(colIndex),
+                        height: TitleHeight,
+                        backgroundColor: curCell[1] === colIndex + 1
+                          ? '#b8d4e8'
+                          : ColTitleBCol ? rgbColor(ColTitleBCol) : undefined,
+                        color: ColTitleFCol ? rgbColor(ColTitleFCol) : undefined,
+                      }}
                     >
                       {title !== null && title !== undefined ? String(title) : ''}
                     </th>
@@ -362,7 +398,14 @@ const NuGrid = ({ data }) => {
                   {hasRowTitles && (
                     <th
                       className={`nugrid-row-header${curCell[0] === rowIndex + 1 ? ' selected-row' : ''}`}
-                      style={{ width: TitleWidth, height: getCellHeight(rowIndex) }}
+                      style={{
+                        width: TitleWidth,
+                        height: getCellHeight(rowIndex),
+                        backgroundColor: curCell[0] === rowIndex + 1
+                          ? '#b8d4e8'
+                          : RowTitleBCol ? rgbColor(RowTitleBCol) : undefined,
+                        color: RowTitleFCol ? rgbColor(RowTitleFCol) : undefined,
+                      }}
                     >
                       {rowTitlesArray[rowIndex] !== null && rowTitlesArray[rowIndex] !== undefined
                         ? String(rowTitlesArray[rowIndex])
@@ -381,8 +424,17 @@ const NuGrid = ({ data }) => {
                         ? findCurrentData(inputComponentId)
                         : null;
 
-                      const showWidget = inputComponentData && isSelected
-                            && inputComponentData?.Properties?.Type !== 'Label';
+                      const showWidget = inputComponentData
+                            && inputComponentData?.Properties?.Type !== 'Label'
+                            && (shouldShowInput(rowIndex, colIndex) || isSelected);
+
+                      // Per-cellType styling
+                      const cellTypeIdx = getCellTypeIndex(rowIndex, colIndex);
+                      const bgColor = cellTypeIdx ? rgbColor(BCol?.[cellTypeIdx - 1]) : undefined;
+                      const fgColor = FCol ? rgbColor(FCol) : undefined;
+                      const cellFontId = cellTypeIdx ? CellFonts?.[cellTypeIdx - 1] : null;
+                      const cellFontObj = cellFontId ? findCurrentData(cellFontId) : null;
+                      const cellFontStyles = cellFontObj ? getFontStyles(cellFontObj) : {};
 
                       return (
                         <td
@@ -395,6 +447,9 @@ const NuGrid = ({ data }) => {
                             height: getCellHeight(rowIndex),
                             textAlign: showWidget ? undefined : textAlign,
                             padding: showWidget ? 0 : undefined,
+                            backgroundColor: bgColor,
+                            color: fgColor,
+                            ...cellFontStyles,
                           }}
                           onClick={() => handleCellClick(rowIndex, colIndex)}
                         >
@@ -426,8 +481,17 @@ const NuGrid = ({ data }) => {
                         ? findCurrentData(inputComponentId)
                         : null;
 
-                      const showWidget = inputComponentData && isSelected
-                            && inputComponentData?.Properties?.Type !== 'Label';
+                      const showWidget = inputComponentData
+                            && inputComponentData?.Properties?.Type !== 'Label'
+                            && (shouldShowInput(rowIndex, 0) || isSelected);
+
+                      // Per-cellType styling
+                      const cellTypeIdx = getCellTypeIndex(rowIndex, 0);
+                      const bgColor = cellTypeIdx ? rgbColor(BCol?.[cellTypeIdx - 1]) : undefined;
+                      const fgColor = FCol ? rgbColor(FCol) : undefined;
+                      const cellFontId = cellTypeIdx ? CellFonts?.[cellTypeIdx - 1] : null;
+                      const cellFontObj = cellFontId ? findCurrentData(cellFontId) : null;
+                      const cellFontStyles = cellFontObj ? getFontStyles(cellFontObj) : {};
 
                       return (
                         <td
@@ -439,6 +503,9 @@ const NuGrid = ({ data }) => {
                             height: getCellHeight(rowIndex),
                             textAlign: showWidget ? undefined : textAlign,
                             padding: showWidget ? 0 : undefined,
+                            backgroundColor: bgColor,
+                            color: fgColor,
+                            ...cellFontStyles,
                           }}
                           onClick={() => handleCellClick(rowIndex, 0)}
                         >
