@@ -125,6 +125,17 @@ const NuGrid = ({ data }) => {
   const gridRef = useRef(null);
   const containerRef = useRef(null);
 
+  // Commit any in-progress cell edit by blurring the active element.
+  // Must be called synchronously BEFORE React processes curCell state changes,
+  // so the Edit's handleBlur fires while the component is still mounted.
+  const commitActiveEdit = useCallback(() => {
+    const activeEl = document.activeElement;
+    if (activeEl && containerRef.current?.contains(activeEl)) {
+      activeEl.blur();
+      gridRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
   // Blur any focused element in non-selected cells when curCell changes
   // This ensures only the currently selected cell can be edited
   useEffect(() => {
@@ -187,13 +198,13 @@ const NuGrid = ({ data }) => {
     } else if (result) {
       const newCell = result;
 
-      // Boundary: navigation clamped at edge — blur + fire KeyPress for virtual scrolling
+      // Commit any in-progress edit before the widget unmounts.
+      // This fires Edit's handleBlur synchronously while still mounted,
+      // so onCellChange updates Values before React re-renders.
+      commitActiveEdit();
+
+      // Boundary: navigation clamped at edge — fire KeyPress for virtual scrolling
       if (newCell[0] === curCell[0] && newCell[1] === curCell[1]) {
-        const activeEl = document.activeElement;
-        if (activeEl && containerRef.current?.contains(activeEl)) {
-          activeEl.blur();
-          gridRef.current?.focus({ preventScroll: true });
-        }
         // Find an Input component with KeyPress registered to use as event source
         // (mirrors old Grid where the Edit child fires the event to the server)
         let sourceId = null;
@@ -230,6 +241,9 @@ const NuGrid = ({ data }) => {
 
     // Skip if already selected
     if (curCell[0] === row && curCell[1] === col) return;
+
+    // Commit any in-progress edit before changing selection
+    commitActiveEdit();
 
     // Update local state
     moveTo(row, col);
