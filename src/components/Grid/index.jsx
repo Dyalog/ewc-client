@@ -85,6 +85,7 @@ const Grid = ({ data }) => {
     Attach,
     Event,
     CSS,
+    TabIndex,
   } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
@@ -648,7 +649,7 @@ const Grid = ({ data }) => {
   return (
     <>
       <div
-        tabIndex={0}
+        tabIndex={TabIndex ?? 0}
         ref={gridRef}
         onKeyDown={handleKeyDown}
         onMouseDown={(e) => {

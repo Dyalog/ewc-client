@@ -5,7 +5,7 @@ const Link = ({data}) => {
     const { findCurrentData, inheritedProperties } = useAppData();
 
     const styles = setStyle(data?.Properties);
-    const { CSS, Visible } = data?.Properties || {};
+    const { CSS, Visible, TabIndex } = data?.Properties || {};
     const { FontObj } = inheritedProperties(data, 'FontObj');
 
     const customStyles = parseFlexStyles(CSS);
@@ -24,6 +24,7 @@ const Link = ({data}) => {
         >
             <a
                 id={data.ID}
+                tabIndex={TabIndex}
                 href={data.Properties?.Href}
                 target={data.Properties?.Target || '_blank'}
                 download={data.Properties?.Download === 1}

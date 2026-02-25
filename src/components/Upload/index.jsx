@@ -6,7 +6,7 @@ const Upload = ({ data }) => {
   const { findCurrentData, inheritedProperties } = useAppData();
 
   const styles = setStyle(data?.Properties);
-  const { CSS, Visible } = data?.Properties || {};
+  const { CSS, Visible, TabIndex } = data?.Properties || {};
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS);
@@ -25,6 +25,7 @@ const Upload = ({ data }) => {
     >
       <input
         id={data.ID}
+        tabIndex={TabIndex}
         type="file"
         style={{
           width: "100%",

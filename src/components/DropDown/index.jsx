@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useAppData } from '../../hooks';
+import { getFontStyles, parseFlexStyles } from '../../utils';
 
 const DropDown = ({ title, data, style, customStyles, parentData }) => {
-  const { socket } = useAppData();
+  const { socket, findCurrentData } = useAppData();
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -64,16 +65,23 @@ const DropDown = ({ title, data, style, customStyles, parentData }) => {
       onMouseEnter={handleDropDownEvent}>
       {title}
       <div className='dropdown'>
-        {Object.keys(data).map((key) => (
-          <div
-            key={data[key]?.ID}
-            id={data[key]?.ID}
-            className='dropdown-item'
-            onClick={() => handleSelectEvent(data[key]?.ID, data[key]?.Properties)}
-          >
-            {data[key]?.Properties?.Caption?.replace('&', '')}
-          </div>
-        ))}
+        {Object.keys(data).map((key) => {
+          const itemProps = data[key]?.Properties;
+          const itemFont = findCurrentData(itemProps?.FontObj);
+          const itemFontStyles = itemFont ? getFontStyles(itemFont, 12) : {};
+          const itemCustomStyles = itemProps?.CSS ? parseFlexStyles(itemProps.CSS) : {};
+          return (
+            <div
+              key={data[key]?.ID}
+              id={data[key]?.ID}
+              className='dropdown-item'
+              style={{ ...itemFontStyles, ...itemCustomStyles }}
+              onClick={() => handleSelectEvent(data[key]?.ID, itemProps)}
+            >
+              {itemProps?.Caption?.replace('&', '')}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

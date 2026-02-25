@@ -26,7 +26,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   const customStyles = parseFlexStyles(CSS)
   const styles = setStyle(data?.Properties);
 
-  const { Items, SelItems, Event, Visible, Posn, Size, Rows } = data?.Properties;
+  const { Items, SelItems, Event, Visible, Posn, Size, Rows, TabIndex } = data?.Properties;
 
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
@@ -110,6 +110,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   const handleSelectEvent = (value) => {
     const NewSelItems = new Array(Items.length).fill(0);
+    NewSelItems[value] = 1;
     handleData(
       {
         ID: data?.ID,
@@ -562,6 +563,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           ref={triggerRef}
           id={data?.ID}
           type="button"
+          tabIndex={TabIndex}
           onClick={toggleDropdown}
           onKeyDown={handleKeyPress}
           role="combobox"

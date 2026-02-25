@@ -18,7 +18,7 @@ import { useAppData, useResizeObserver } from "../hooks";
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
   const styles = setStyle(data?.Properties);
-  const { Items, SelItems, Visible, Size, Event, CSS, EdgeStyle, Border } = data?.Properties;
+  const { Items, SelItems, Visible, Size, Event, CSS, EdgeStyle, Border, TabIndex } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
   const customStyles = parseFlexStyles(CSS);
 
@@ -265,7 +265,7 @@ const List = ({ data }) => {
         ),
         display: Visible === 0 ? "none" : "block",
       }}
-      tabIndex={0}
+      tabIndex={TabIndex ?? 0}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

@@ -652,20 +652,22 @@ const App = () => {
           }
 
           if (data?.Properties?.Type == "Combo") {
-            if (serverEvent?.Properties.hasOwnProperty("SelItems")) {
+            if (serverEvent?.Properties.hasOwnProperty("SelItems") || serverEvent?.Properties.hasOwnProperty("Items")) {
               setSocketData((prevData) => [
                 ...prevData,
                 evData.WS,
               ]);
-              value = serverEvent?.Properties.SelItems;
-              const indextoFind = value.indexOf(1);
-              let Text = data?.Properties?.Items[indextoFind];
+              const newItems = serverEvent?.Properties.Items || data?.Properties?.Items;
+              const newSelItems = serverEvent?.Properties.SelItems || data?.Properties?.SelItems;
+              const indextoFind = newSelItems ? newSelItems.indexOf(1) : -1;
+              let Text = indextoFind >= 0 ? newItems[indextoFind] : data?.Properties?.Text;
               return handleData(
                 {
                   ID: serverEvent.ID,
                   Properties: {
                     ...data?.Properties,
-                    SelItems: value,
+                    Items: newItems,
+                    SelItems: newSelItems,
                     Text,
                   },
                 },
@@ -943,7 +945,7 @@ const App = () => {
                       : key === "Text"
                         ? Text
                         : key === "Items"
-                          ? Items[Info]
+                          ? Items
                           : Event[key];
                 });
 
