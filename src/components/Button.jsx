@@ -297,11 +297,16 @@ const Button = ({
   };
 
   const handleSelectEvent = (value) => {
+    const newState = value ? 1 : 0;
+    handleData(
+      { ID: data?.ID, Properties: { State: newState } },
+      "WS"
+    );
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: "Select",
         ID: data?.ID,
-        Value: value ? 1 : 0,
+        Value: newState,
         Posn: [position?.top, position?.left],
         Size: [Size && Size[0], Size && Size[1]],
       },
