@@ -422,36 +422,41 @@ const RibbonGallery = ({ data }) => {
         </div>
       )}
       {isDropdownOpen && (
-        <>
-          <div
-            className="dropdown-content"
-            style={{
-              width: `${itemWidth * updatedCols}px`,
-              height: `${itemHeight}px`,
-            }}
-          >
-            <div
-              className="dropdown-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${updatedCols}, 1fr)`,
-                gap: "4px",
-              }}
-            >
-              {menuItems.map((item, index) => (
-                <RibbonGalleyItem
-                  key={index}
-                  data={item}
-                  handleSelectEvent={handleSelectEvent}
-                  startIndex={index}
-                  className="ribbon-dropdown-item"
-                  ItemWidth={itemWidth}
-                  ItemHeight={itemHeight}
-                />
-              ))}
-            </div>
-          </div>
-        </>
+        <div
+          ref={(el) => {
+            // Position fixed so the gallery dropdown escapes
+            // overflow:clip on ancestor TabControl.
+            if (el && galleryRef.current) {
+              const rect = galleryRef.current.getBoundingClientRect();
+              el.style.top = `${rect.bottom}px`;
+              el.style.left = `${rect.left}px`;
+            }
+          }}
+          style={{
+            position: "fixed",
+            zIndex: 9999,
+            display: "grid",
+            gridTemplateColumns: `repeat(${updatedCols}, 1fr)`,
+            gap: "4px",
+            padding: "10px",
+            backgroundColor: "#dcdcdc",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            maxHeight: 300,
+            overflowY: "auto",
+          }}
+        >
+          {menuItems.map((item, index) => (
+            <RibbonGalleyItem
+              key={index}
+              data={item}
+              handleSelectEvent={handleSelectEvent}
+              startIndex={index}
+              className="ribbon-dropdown-item"
+              ItemWidth={itemWidth}
+              ItemHeight={itemHeight}
+            />
+          ))}
+        </div>
       )}
     </div>
 

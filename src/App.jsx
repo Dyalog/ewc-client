@@ -657,6 +657,10 @@ const App = () => {
                 ...prevData,
                 evData.WS,
               ]);
+              // This is a little messy. It's a TODO for future cleanup. It's
+              // the 'dual sources of truth' issue, that we know about.
+              // Essentially, we are calling handleData to update state with the
+              // latest Items and SelItems.
               const newItems = serverEvent?.Properties.Items || data?.Properties?.Items;
               const newSelItems = serverEvent?.Properties.SelItems || data?.Properties?.SelItems;
               const indextoFind = newSelItems ? newSelItems.indexOf(1) : -1;

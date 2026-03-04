@@ -111,6 +111,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   const handleSelectEvent = (value) => {
     const NewSelItems = new Array(Items.length).fill(0);
     NewSelItems[value] = 1;
+    // Because of the way state is handled, we fake a WS command and pass it to
+    // handleData. Ideally this would not be the way to do it, but it works as
+    // the system is currently.
     handleData(
       {
         ID: data?.ID,
@@ -216,8 +219,10 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       }
     };
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      // Use capture phase so we see the event before any stopPropagation
+      // in other Combos' bubble-phase handlers — ensures only one is open.
+      document.addEventListener('mousedown', handleClickOutside, true);
+      return () => document.removeEventListener('mousedown', handleClickOutside, true);
     }
   }, [isOpen]);
 
@@ -269,16 +274,25 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     if (!triggerRef.current) return {};
 
     const rect = triggerRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    // Calculate max height based on Rows property (default 8 rows, ~24px per item)
+    const margin = 8;
     const itemHeight = 24;
-    const visibleRows = Rows || Math.min(Items?.length || 8, 8);
-    const dropdownMaxHeight = visibleRows * itemHeight;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
+    const contentHeight = Rows
+      ? Rows * itemHeight
+      : (Items?.length || 1) * itemHeight;
+
+    // Constrain to the containing Form rather than the full viewport,
+    // so the dropdown doesn't overflow the form's visible area.
+    const parentId = extractStringUntilLastPeriod(data?.ID);
+    const formEl = document.getElementById(parentId);
+    const container = formEl ? formEl.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+
+    const spaceBelow = container.bottom - rect.bottom - margin;
+    const spaceAbove = rect.top - container.top - margin;
 
     // Determine if dropdown should appear above or below
-    const showAbove = spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow;
+    const showAbove = spaceBelow < contentHeight && spaceAbove > spaceBelow;
+    // Fit content or fill available space, whichever is smaller
+    const maxHeight = Math.min(contentHeight, showAbove ? spaceAbove : spaceBelow);
 
     if (location === 'inGrid') {
       // Fixed positioning for grid context to escape cell boundaries
@@ -288,7 +302,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         bottom: showAbove ? (viewportHeight - rect.top) : 'auto',
         left: rect.left,
         width: rect.width,
-        maxHeight: dropdownMaxHeight,
+        maxHeight,
         zIndex: 9999
       };
     } else {
@@ -299,11 +313,11 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         bottom: showAbove ? '100%' : 'auto',
         left: 0,
         right: 0,
-        maxHeight: dropdownMaxHeight,
+        maxHeight,
         zIndex: 9999
       };
     }
-  }, [location, Rows, Items]);
+  }, [location, Items]);
 
   const triggerCellMoveEvent = (row, column, mouseClick, value) => {
 //     console.log("265 combo")
