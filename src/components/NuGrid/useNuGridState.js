@@ -13,11 +13,16 @@ const useNuGridState = (initialCurCell, numRows, numCols) => {
   });
 
   // Sync with external CurCell changes (e.g., from server)
+  // Uses functional setCurCell: returning prev when values match lets React skip the re-render,
+  // avoiding unnecessary cycles when initialCurCell is a new array ref with identical values.
   useEffect(() => {
     if (initialCurCell) {
       const clampedRow = Math.max(1, Math.min(initialCurCell[0], numRows || 1));
       const clampedCol = Math.max(1, Math.min(initialCurCell[1], numCols || 1));
-      setCurCell([clampedRow, clampedCol]);
+      setCurCell(prev => {
+        if (prev[0] === clampedRow && prev[1] === clampedCol) return prev;
+        return [clampedRow, clampedCol];
+      });
     }
   }, [initialCurCell, numRows, numCols]);
 
