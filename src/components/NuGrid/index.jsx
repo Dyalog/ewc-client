@@ -66,21 +66,20 @@ const NuGrid = ({ data }) => {
     Event,
   } = data?.Properties || {};
 
-  // Keep Values and FormattedValues in local state so handleCellChange
+  // Values and FormattedValues are kept in local state so handleCellChange
   // updates are immediately visible without depending on the App re-rendering.
+  // Server updates (FormatCell responses, server-set Values) arrive via props
+  // and are synced here.
   const [Values, setValues] = useState(propsValues);
-  const prevPropsValues = useRef(propsValues);
-  if (propsValues !== prevPropsValues.current) {
-    prevPropsValues.current = propsValues;
-    setValues(propsValues);
-  }
-
   const [FormattedValues, setFormattedValues] = useState(propsFormattedValues);
-  const prevPropsFormatted = useRef(propsFormattedValues);
-  if (propsFormattedValues !== prevPropsFormatted.current) {
-    prevPropsFormatted.current = propsFormattedValues;
+
+  useEffect(() => {
+    setValues(propsValues);
+  }, [propsValues]);
+
+  useEffect(() => {
     setFormattedValues(propsFormattedValues);
-  }
+  }, [propsFormattedValues]);
 
   // Normalize Input to an array (can be single string or array of strings)
   // useMemo ensures stable reference for useCallback dependencies
