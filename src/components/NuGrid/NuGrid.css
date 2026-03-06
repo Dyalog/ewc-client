@@ -89,6 +89,30 @@
   color: #000;
 }
 
+/* Multi-line column headers (ColTitles as arrays) */
+.nugrid-col-header.multi-line {
+  white-space: normal;
+  padding: 0;
+}
+
+.nugrid-col-header-lines {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.nugrid-col-header-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
 /* Sticky column headers - stay fixed at top during vertical scroll */
 .nugrid-col-header {
   position: sticky;
