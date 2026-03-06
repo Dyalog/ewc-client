@@ -427,7 +427,7 @@ const NuGrid = ({ data }) => {
                   {colTitlesArray.map((title, colIndex) => (
                     <th
                       key={colIndex}
-                      className={`nugrid-col-header${curCell[1] === colIndex + 1 ? ' selected-col' : ''}`}
+                      className={`nugrid-col-header${Array.isArray(title) ? ' multi-line' : ''}${curCell[1] === colIndex + 1 ? ' selected-col' : ''}`}
                       style={{
                         width: getCellWidth(colIndex),
                         height: TitleHeight,
@@ -437,7 +437,15 @@ const NuGrid = ({ data }) => {
                         color: ColTitleFCol ? rgbColor(ColTitleFCol) : undefined,
                       }}
                     >
-                      {title !== null && title !== undefined ? String(title) : ''}
+                      {Array.isArray(title)
+                        ? <div className="nugrid-col-header-lines">
+                            {title.map((line, i) => (
+                              <div key={i} className="nugrid-col-header-line">
+                                {line ? String(line) : '\u00A0'}
+                              </div>
+                            ))}
+                          </div>
+                        : (title !== null && title !== undefined ? String(title) : '')}
                     </th>
                   ))}
                 </tr>
