@@ -370,16 +370,13 @@ const NuGrid = ({ data }) => {
   };
 
   const customStyles = parseFlexStyles(CSS);
+  // setStyle handles position (absolute when Posn is set, relative otherwise),
+  // top/left from Posn, and width/height from Size.
   const baseStyles = setStyle(data?.Properties);
 
   const styles = {
     ...baseStyles,
-    position: 'absolute',
     display: Visible === 0 ? 'none' : 'block',
-    width: Size?.[1] ?? 275,
-    height: Size?.[0] ?? 225,
-    top: Posn?.[0] ?? 0,
-    left: Posn?.[1] ?? 0,
     ...customStyles,
   };
 
