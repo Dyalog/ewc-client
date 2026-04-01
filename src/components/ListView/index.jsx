@@ -29,7 +29,8 @@ const ListView = ({ data }) => {
     ReportInfo,
     Event,
     CSS,
-    FontObj
+    FontObj,
+    TabIndex,
   } = data && data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
@@ -104,6 +105,7 @@ const ListView = ({ data }) => {
     return (
       <div
         className={`d-flex flex-wrap flex-${parentOrientation}`}
+        tabIndex={TabIndex}
         style={{
           ...styles,
           border: !Border ? null : "1px solid black",

@@ -23,7 +23,7 @@ export const thumbValueInRange = (thumb, range) => {
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS, Thumb } = data?.Properties;
+  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS, Thumb, TabIndex } = data?.Properties;
   const rangedThumb = thumbValueInRange(Thumb, Range)
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(rangedThumb);
@@ -658,6 +658,7 @@ const ScrollBar = ({ data }) => {
   return (
     <div
       id={data?.ID}
+      tabIndex={TabIndex}
       onMouseEnter={handleTrackMouseEnter}
       onMouseLeave={handleTrackMouseLeave}
       onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}

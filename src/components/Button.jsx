@@ -34,7 +34,7 @@ const Button = ({
 
   const styles = setStyle(data?.Properties);
   const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active } = data?.Properties;
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, TabIndex } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
 //   console.log("data Button", data);
@@ -297,11 +297,16 @@ const Button = ({
   };
 
   const handleSelectEvent = (value) => {
+    const newState = value ? 1 : 0;
+    handleData(
+      { ID: data?.ID, Properties: { State: newState } },
+      "WS"
+    );
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: "Select",
         ID: data?.ID,
-        Value: value ? 1 : 0,
+        Value: newState,
         Posn: [position?.top, position?.left],
         Size: [Size && Size[0], Size && Size[1]],
       },
@@ -464,6 +469,7 @@ const Button = ({
           ref={inputRef}
           onKeyDown={(e) => handleKeyPress(e)}
           id={data?.ID}
+          tabIndex={TabIndex}
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
@@ -596,6 +602,7 @@ const Button = ({
           onFocus={handleGotFocus}
           name={extractStringUntilLastPeriod(data?.ID)}
           id={data?.ID}
+          tabIndex={TabIndex}
           checked={radioValue}
           type="radio"
           value={Caption}
@@ -646,6 +653,7 @@ const Button = ({
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
       ref={buttonRef}
+      tabIndex={TabIndex}
       onClick={(e) => {
         handleButtonClick(e)
       }}

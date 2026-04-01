@@ -25,7 +25,7 @@ import "rc-tree/assets/index.css";
 import "./TreeView.css";
 
 const Treeview = ({ data }) => {
-  const { Depth, Items, ImageListObj, ImageIndex, Visible, Event, CSS,FontObj } =
+  const { Depth, Items, ImageListObj, ImageIndex, Visible, Event, CSS, FontObj, TabIndex } =
     data?.Properties;
 
   const customStyles = parseFlexStyles(CSS);
@@ -245,6 +245,7 @@ const Treeview = ({ data }) => {
   return (
     <div
       id={data?.ID}
+      tabIndex={TabIndex}
       style={{
         ...styles,
         border: "1px solid black",

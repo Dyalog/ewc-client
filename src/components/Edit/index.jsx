@@ -73,6 +73,7 @@ const Edit = ({
     Border = 0,
     CSS,
     Active,
+    TabIndex,
   } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
@@ -710,6 +711,7 @@ const Edit = ({
       <>
         <input
           id={data?.ID}
+          tabIndex={TabIndex}
           style={{
             ...styles,
             borderRadius: "2px",
@@ -777,6 +779,7 @@ const Edit = ({
         getInputRef={inputRef}
         onClick={handleInputClick}
         id={data?.ID}
+        tabIndex={TabIndex}
         disabled={Active === 0}
         style={{
           ...styles,
@@ -835,6 +838,7 @@ const Edit = ({
     <input
       id={data.ID}
       ref={inputRef}
+      tabIndex={TabIndex}
       value={inputValue}
       onClick={handleInputClick}
       type={inputType}
