@@ -374,12 +374,9 @@ const NuGrid = ({ data }) => {
 
   const styles = {
     ...baseStyles,
-    position: 'absolute',
     display: Visible === 0 ? 'none' : 'block',
     width: Size?.[1] ?? 275,
     height: Size?.[0] ?? 225,
-    top: Posn?.[0] ?? 0,
-    left: Posn?.[1] ?? 0,
     ...customStyles,
   };
 
