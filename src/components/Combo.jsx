@@ -1,5 +1,6 @@
 import { setStyle, getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
+import { createPortal } from 'react-dom';
 import { useAppData, useResizeObserver } from '../hooks';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -14,6 +15,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   const [searchString, setSearchString] = useState('');
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
+  const portalRef = useRef(null);
   const listRef = useRef(null);
   const triggerRef = useRef(null);
   const optionRefs = useRef([]);
@@ -213,7 +215,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   // Click-outside detection to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const inTrigger = dropdownRef.current?.contains(event.target);
+      const inPortal = portalRef.current?.contains(event.target);
+      if (!inTrigger && !inPortal) {
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
@@ -294,29 +298,17 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     // Fit content or fill available space, whichever is smaller
     const maxHeight = Math.min(contentHeight, showAbove ? spaceAbove : spaceBelow);
 
-    if (location === 'inGrid') {
-      // Fixed positioning for grid context to escape cell boundaries
-      return {
-        position: 'fixed',
-        top: showAbove ? 'auto' : rect.bottom,
-        bottom: showAbove ? (viewportHeight - rect.top) : 'auto',
-        left: rect.left,
-        width: rect.width,
-        maxHeight,
-        zIndex: 9999
-      };
-    } else {
-      // Absolute positioning for standalone combo
-      return {
-        position: 'absolute',
-        top: showAbove ? 'auto' : '100%',
-        bottom: showAbove ? '100%' : 'auto',
-        left: 0,
-        right: 0,
-        maxHeight,
-        zIndex: 9999
-      };
-    }
+    // Always use fixed positioning so the dropdown escapes any
+    // ancestor overflow:clip/hidden (e.g. SubForm's overflow:"clip").
+    return {
+      position: 'fixed',
+      top: showAbove ? 'auto' : rect.bottom,
+      bottom: showAbove ? (window.innerHeight - rect.top) : 'auto',
+      left: rect.left,
+      width: rect.width,
+      maxHeight,
+      zIndex: 9999
+    };
   }, [location, Items]);
 
   const triggerCellMoveEvent = (row, column, mouseClick, value) => {
@@ -624,78 +616,81 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
           />
         </button>
 
-        {/* Dropdown list */}
-        {isOpen && (
-          <div
+      </div>
+
+      {/* Dropdown list - portalled to document.body to escape overflow:clip */}
+      {isOpen && createPortal(
+        <div
+          ref={portalRef}
+          style={{
+            ...getDropdownPosition(),
+            backgroundColor: '#fff',
+            border: '1px solid #6A6A6A',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            overflowY: 'auto',
+            overflowX: 'hidden'
+          }}
+        >
+          <ul
+            ref={listRef}
+            id={`${data?.ID}-listbox`}
+            role="listbox"
+            aria-label="Options"
             style={{
-              ...getDropdownPosition(),
-              backgroundColor: '#fff',
-              border: '1px solid #6A6A6A',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              overflowY: 'auto',
-              overflowX: 'hidden'
+              listStyle: 'none',
+              margin: 0,
+              padding: 0
             }}
           >
-            <ul
-              ref={listRef}
-              id={`${data?.ID}-listbox`}
-              role="listbox"
-              aria-label="Options"
-              style={{
-                listStyle: 'none',
-                margin: 0,
-                padding: 0
-              }}
-            >
-              {Items && Items.length > 0 ? (
-                Items.map((item, index) => {
-                  const isSelected = item === (value || comboInput);
-                  const isHighlighted = index === highlightedIndex;
+            {Items && Items.length > 0 ? (
+              Items.map((item, index) => {
+                const isSelected = item === (value || comboInput);
+                const isHighlighted = index === highlightedIndex;
 
-                  return (
-                    <li
-                      key={index}
-                      ref={el => optionRefs.current[index] = el}
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={(e) => handleOptionClick(item, index, e)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      style={{
-                        padding: '4px 8px',
-                        cursor: 'pointer',
-                        backgroundColor: isHighlighted
-                          ? '#0078D7'
-                          : isSelected
-                            ? '#E5F3FF'
-                            : '#fff',
-                        color: isHighlighted ? '#fff' : '#000',
-                        fontSize: '12px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        ...fontStyles
-                      }}
-                    >
-                      {item}
-                    </li>
-                  );
-                })
-              ) : (
-                <li
-                  style={{
-                    padding: '4px 8px',
-                    color: '#888',
-                    fontStyle: 'italic',
-                    fontSize: '12px'
-                  }}
-                >
-                  No options
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
-      </div>
+                return (
+                  <li
+                    key={index}
+                    ref={el => optionRefs.current[index] = el}
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={(e) => handleOptionClick(item, index, e)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    style={{
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      backgroundColor: isHighlighted
+                        ? '#0078D7'
+                        : isSelected
+                          ? '#E5F3FF'
+                          : '#fff',
+                      color: isHighlighted ? '#fff' : '#000',
+                      fontSize: '12px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      ...fontStyles
+                    }}
+                  >
+                    {item}
+                  </li>
+                );
+              })
+            ) : (
+              <li
+                style={{
+                  padding: '4px 8px',
+                  color: '#888',
+                  fontStyle: 'italic',
+                  fontSize: '12px'
+                }}
+              >
+                No options
+              </li>
+            )}
+          </ul>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
