@@ -574,6 +574,7 @@ const App = () => {
           // TODO move to a new home!
           const defaultProperties = {
             Grid: { CurCell: [1, 1] },
+            NuGrid: { CurCell: [1, 1] },
           };
           const dflts = defaultProperties[evData.WC?.Properties?.Type];
           if (dflts) {
