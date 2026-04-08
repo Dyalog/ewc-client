@@ -94,6 +94,7 @@ const NuGrid = ({ data }) => {
   // State management for current cell selection
   const { curCell, moveTo, moveBy, isCurrentCell } = useNuGridState(CurCell, numRows, numCols);
 
+
   // Keyboard navigation
   const { handleKeyDown: navigationKeyDown } = useNuGridNavigation(
     moveBy, moveTo, curCell, numRows, numCols
