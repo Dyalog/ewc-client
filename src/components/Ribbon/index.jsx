@@ -1,7 +1,6 @@
 import { excludeKeys, getObjectById, getStringafterPeriod, parseFlexStyles } from '../../utils';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
 import './RibbonStyles.css';
 
 import SelectComponent from '../SelectComponent';
@@ -15,7 +14,7 @@ const CustomRibbon = ({ data }) => {
   const customStyles = parseFlexStyles(CSS)
   const ID = getStringafterPeriod(ImageListObj);
   const height = data?.Properties?.BodyHeight;
-  console.log("Dtaatataat is as", dataRef, data?.Properties?.BodyHeight)
+//   console.log("Dtaatataat is as", dataRef, data?.Properties?.BodyHeight)
   const ImageList = ID && JSON.parse(getObjectById(dataRef.current, ID));
 
 

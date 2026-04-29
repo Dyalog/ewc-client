@@ -10,7 +10,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
   let ImageList = data.ImageList
 
   const { Captions, Icons, Event, ImageIndex, ImageListObj, CSS } = data?.Properties;
-  console.log("Values reendered arw",Captions)
+//   console.log("Values reendered arw",Captions)
 
 
   const customStyles = parseFlexStyles(CSS)
@@ -30,7 +30,7 @@ const CustomRibbonButtonGroup = ({ data }) => {
     });
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(selectEvent);
+//     console.log(selectEvent);
     socket.send(selectEvent);
   };
 

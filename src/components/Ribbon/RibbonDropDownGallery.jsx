@@ -11,7 +11,7 @@ const RibbonGallery = ({ data }) => {
   const updatedCols = Cols && Cols + 1;
 
 
-  console.log("Collllllsss", updatedCols)
+//   console.log("Collllllsss", updatedCols)
   const [startIndex, setStartIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const galleryRef = useRef(null);
@@ -52,7 +52,7 @@ const RibbonGallery = ({ data }) => {
     });
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(selectEvent);
+//     console.log(selectEvent);
     socket.send(selectEvent);
     setIsDropdownOpen(false);
   };
@@ -64,20 +64,20 @@ const RibbonGallery = ({ data }) => {
         let widestWidth = 0;
 
         // Debugging: Log child elements
-        console.log("Child elements for maxWidth calculation:", childElements);
+//         console.log("Child elements for maxWidth calculation:", childElements);
 
         // Find the maximum width of all child items
         Array.from(childElements).forEach((child, index) => {
           const childWidth = child.getBoundingClientRect().width;
 
           // Debugging: Log each child's width
-          console.log(`Child ${index} width:`, childWidth);
+//           console.log(`Child ${index} width:`, childWidth);
 
           widestWidth = Math.max(widestWidth, childWidth);
         });
 
         // Debugging: Log the calculated maxWidth
-        console.log("Calculated widest width:", widestWidth);
+//         console.log("Calculated widest width:", widestWidth);
 
         setMaxWidth(widestWidth);
       }
@@ -109,7 +109,7 @@ const RibbonGallery = ({ data }) => {
   const itemWidth = maxWidth || ItemWidth || 50;
   const itemHeight = ItemHeight || 40;
 
-  console.log("Final maxWidth value:", maxWidth, maxWidth * updatedCols + updatedCols * 5 + 22);
+//   console.log("Final maxWidth value:", maxWidth, maxWidth * updatedCols + updatedCols * 5 + 22);
 
   return (
     // <div
@@ -422,36 +422,41 @@ const RibbonGallery = ({ data }) => {
         </div>
       )}
       {isDropdownOpen && (
-        <>
-          <div
-            className="dropdown-content"
-            style={{
-              width: `${itemWidth * updatedCols}px`,
-              height: `${itemHeight}px`,
-            }}
-          >
-            <div
-              className="dropdown-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${updatedCols}, 1fr)`,
-                gap: "4px",
-              }}
-            >
-              {menuItems.map((item, index) => (
-                <RibbonGalleyItem
-                  key={index}
-                  data={item}
-                  handleSelectEvent={handleSelectEvent}
-                  startIndex={index}
-                  className="ribbon-dropdown-item"
-                  ItemWidth={itemWidth}
-                  ItemHeight={itemHeight}
-                />
-              ))}
-            </div>
-          </div>
-        </>
+        <div
+          ref={(el) => {
+            // Position fixed so the gallery dropdown escapes
+            // overflow:clip on ancestor TabControl.
+            if (el && galleryRef.current) {
+              const rect = galleryRef.current.getBoundingClientRect();
+              el.style.top = `${rect.bottom}px`;
+              el.style.left = `${rect.left}px`;
+            }
+          }}
+          style={{
+            position: "fixed",
+            zIndex: 9999,
+            display: "grid",
+            gridTemplateColumns: `repeat(${updatedCols}, 1fr)`,
+            gap: "4px",
+            padding: "10px",
+            backgroundColor: "#dcdcdc",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            maxHeight: 300,
+            overflowY: "auto",
+          }}
+        >
+          {menuItems.map((item, index) => (
+            <RibbonGalleyItem
+              key={index}
+              data={item}
+              handleSelectEvent={handleSelectEvent}
+              startIndex={index}
+              className="ribbon-dropdown-item"
+              ItemWidth={itemWidth}
+              ItemHeight={itemHeight}
+            />
+          ))}
+        </div>
       )}
     </div>
 

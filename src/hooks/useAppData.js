@@ -3,11 +3,16 @@ import { useContext } from 'react';
 import { flattenJsonToArray } from './../utils/index';
 import { parentId } from "../utils";
 
+// Generate a single windowId for this app instance
+const windowId = Math.random().toString(16).substr(2, 6);
+
 const useAppData = () => {
 
-  const { socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray, setProceedEventArray, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,currentEventRef, isDesktop} =
-
-    useContext(AppDataContext);
+  const {
+    socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray,
+    setProceedEventArray, pendingKeypressEventRef, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,
+    currentEventRef, isDesktop,
+  } = useContext(AppDataContext);
 
   const findDesiredData = (ID) => {
     const findData = socketData?.find((obj) => obj.ID == ID);
@@ -15,19 +20,35 @@ const useAppData = () => {
   };
   
   const findCurrentData = (ID) => {
+    if (!ID) return null;
     const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
     return findData;
   };
 
-  const inheritedProperty = (data, prop) => {
+  const inheritedProperty = (data, prop, allowedTypes = null) => {
+    // Check if current component has the property
     if (data?.Properties.hasOwnProperty(prop)) {
-      return data.Properties[prop];
-    } else {
-      const pid = parentId(data.ID);
-      if (pid) {
-        return inheritedProperty(findCurrentData(pid), prop);
+      // If allowedTypes is specified, only return if this component's type is allowed
+      if (allowedTypes) {
+        const currentType = data.Properties?.Type;
+        if (allowedTypes.includes(currentType)) {
+          return data.Properties[prop];
+        }
+      } else {
+        // No type restriction, return the property
+        return data.Properties[prop];
       }
     }
+    
+    // Look up the parent hierarchy
+    const pid = parentId(data.ID);
+    if (pid) {
+      const parentData = findCurrentData(pid);
+      if (parentData) {
+        return inheritedProperty(parentData, prop, allowedTypes);
+      }
+    }
+    
     return null;
   };
 
@@ -63,6 +84,18 @@ const useAppData = () => {
     return findData?.Properties?.Type;
   };
 
+  const sendLog = (...args) => {
+    if (socket && socket.readyState === 1 /* WebSocket.OPEN */) {
+      const logMessage = JSON.stringify({
+        Log: {
+          windowId: windowId,
+          Info: args
+        }
+      });
+      socket.send(logMessage);
+    }
+  };
+
   
 
   return {
@@ -78,6 +111,7 @@ const useAppData = () => {
     setProceed,
     proceedEventArray,
     setProceedEventArray,
+    pendingKeypressEventRef,
     colors,
     findAggregatedPropertiesData,
     fontScale,
@@ -87,7 +121,8 @@ const useAppData = () => {
     updateCurrentEvent,currentEventRef,
     isDesktop,
     inheritedProperty,
-    inheritedProperties
+    inheritedProperties,
+    sendLog
   };
 };
 export default useAppData;

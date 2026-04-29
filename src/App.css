@@ -44,3 +44,8 @@ select:focus-visible {
 div:focus {
   outline: none; /* This removes the outline */
 }
+
+div[tabindex]:focus-visible {
+  outline: 2px solid #0078d4;
+  outline-offset: -2px;
+}

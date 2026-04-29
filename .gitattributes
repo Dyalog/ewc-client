@@ -1,0 +1,2 @@
+# Mark dist folder as generated code to collapse in GitHub PR diffs
+dist/** linguist-generated=true

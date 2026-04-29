@@ -95,7 +95,7 @@ const TextArea = ({ data }) => {
 
   const handleMouseUpLocal = (e, type) => {
     // Handle specific mouse events
-    console.log("mousedown", Event)
+//     console.log("mousedown", Event)
     switch (type) {
       case "mouseUp":
         handleMouseUp(e, socket, Event, data?.ID);
@@ -154,8 +154,8 @@ const TextArea = ({ data }) => {
     const selText = [startLineCol, endLineCol];
 
     // Debugging logs
-    console.log("Selection Start:", selectionStart, "End:", selectionEnd);
-    console.log("Selection Line/Column:", selText);
+//     console.log("Selection Start:", selectionStart, "End:", selectionEnd);
+//     console.log("Selection Line/Column:", selText);
 
     handleData(
       {

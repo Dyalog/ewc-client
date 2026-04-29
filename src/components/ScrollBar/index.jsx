@@ -13,7 +13,6 @@ import {
   handleMouseWheel,
   parseFlexStyles
 } from '../../utils';
-import { v4 as uuidv4 } from "uuid";
 
 const arrowButtonSize = 20;
 
@@ -24,7 +23,7 @@ export const thumbValueInRange = (thumb, range) => {
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS, Thumb } = data?.Properties;
+  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS, Thumb, TabIndex } = data?.Properties;
   const rangedThumb = thumbValueInRange(Thumb, Range)
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(rangedThumb);
@@ -42,12 +41,12 @@ const ScrollBar = ({ data }) => {
   const maxValue = Range;
 
 
-  console.log("300 thumb", data, Thumb, scaledValue)
-  console.log("300 here", proceedEventArray, nqEvents)
+//   console.log("300 thumb", data, Thumb, scaledValue)
+//   console.log("300 here", proceedEventArray, nqEvents)
   // useEffect(() => {
   //   if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]  || proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]==0 ) {
   //     const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  //     const eventId = uuidv4()
+  //     const eventId = crypto.randomUUID()
   //     if (curCell) {
   //       const { Info, ID } = curCell
   //       handleData(
@@ -82,7 +81,7 @@ const ScrollBar = ({ data }) => {
   //   // else 
   //   // if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]) {
   //   //   const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  //   //   const eventId = uuidv4()
+  //   //   const eventId = crypto.randomUUID()
   //   //   // if (curCell) {
   //   //   //   const { Info, ID } = curCell
   //   //   //   handleData(
@@ -151,7 +150,7 @@ const ScrollBar = ({ data }) => {
   //   const key = keyPressEventId + "ArrowClick";
   //   if (proceedEventArray[key] || proceedEventArray[key] === 0) {
   //     const curCell = JSON.parse(localStorage.getItem("nqCurCell"));
-  //     const eventId = uuidv4();
+  //     const eventId = crypto.randomUUID();
 
   //     if (nqEvents.length) {
   //       const { Info, ID } = nqEvents.shift();
@@ -189,7 +188,7 @@ const ScrollBar = ({ data }) => {
   useEffect(() => {
     const key = keyPressEventId + "ArrowClick";
     if (proceedEventArray[key] || proceedEventArray[key] === 0) {
-      const eventId = uuidv4();
+      const eventId = crypto.randomUUID();
       if (nqEvents.length) {
         const { Info, ID } = nqEvents.shift();
         // const newCurCell = { Info, ID };
@@ -223,7 +222,7 @@ const ScrollBar = ({ data }) => {
     const key = keyPressEventId + "CellMove";
     if (proceedEventArray[key] || proceedEventArray[key] === 0) {
       if (curCell) {
-        console.log("Inside curCell", key);
+//         console.log("Inside curCell", key);
         const { Info, ID } = curCell;
         handleData(
           {
@@ -299,7 +298,7 @@ const ScrollBar = ({ data }) => {
       //   'WS'
       // );
 
-      const eventId = uuidv4();
+      const eventId = crypto.randomUUID();
       localStorage.setItem("current-event", "ArrowClick")
       localStorage.setItem("keyPressEventId", eventId)
       const scrollEvent = JSON.stringify({
@@ -342,7 +341,7 @@ const ScrollBar = ({ data }) => {
       // const maxThumbPosition = isHorizontal
       //   ? trackWidth - 50
       //   : trackHeight - 100;
-      console.log("temp scled value si as",tempScaledValue)
+//       console.log("temp scled value si as",tempScaledValue)
 
       let lastValue = tempScaledValue;
 
@@ -364,7 +363,7 @@ const ScrollBar = ({ data }) => {
       //   ] = `${newThumbPosition}px`;
       // }
 
-      const eventId = uuidv4();
+      const eventId = crypto.randomUUID();
 
 
       localStorage.setItem("current-event", "ArrowClick")
@@ -391,7 +390,7 @@ const ScrollBar = ({ data }) => {
 
       }
       else {
-        console.log("Soxket send value is as2", newScaledValue)
+//         console.log("Soxket send value is as2", newScaledValue)
         const scrollEvent = JSON.stringify({
           Event: {
             EventName: emitEvent && emitEvent[0],
@@ -406,12 +405,12 @@ const ScrollBar = ({ data }) => {
 
         const exists = Event && Event.some((item) => item[0] === "Scroll");
         if (exists) {
-          console.log("Soxket send value is as1", scrollEvent)
+//           console.log("Soxket send value is as1", scrollEvent)
           socket.send(scrollEvent);
         }
       }
 
-      console.log("Event", scrollEvent);
+//       console.log("Event", scrollEvent);
       // localStorage.setItem(data.ID, scrollEvent);
 
       // handleData(
@@ -432,17 +431,17 @@ const ScrollBar = ({ data }) => {
     if (newScaledValue <= maxValue) {
       setTempScaledValue(newScaledValue)
       // setScaledValue(newScaledValue);
-      const eventId = uuidv4();
-      console.log(
-        'Event',
-        JSON.stringify({
-          Event: {
-            EventName: emitEvent && emitEvent[0],
-            ID: data?.ID,
-            Info: [1, Math.round(newScaledValue)],
-          },
-        })
-      );
+      const eventId = crypto.randomUUID();
+//       console.log(
+//         'Event',
+//         JSON.stringify({
+//           Event: {
+//             EventName: emitEvent && emitEvent[0],
+//             ID: data?.ID,
+//             Info: [1, Math.round(newScaledValue)],
+//           },
+//         })
+//       );
 
       // console.log("horizontal increment")
       // handleData({ ID: data?.ID, Properties: { Thumb: Math.round(newScaledValue) } }, 'WS')
@@ -500,15 +499,15 @@ const ScrollBar = ({ data }) => {
     if (newScaledValue >= 1) {
       // setScaledValue(newScaledValue);
       setTempScaledValue(newScaledValue)
-      console.log(
-        JSON.stringify({
-          Event: {
-            EventName: emitEvent && emitEvent[0],
-            ID: data?.ID,
-            Info: [-1, Math.round(newScaledValue)],
-          },
-        })
-      );
+//       console.log(
+//         JSON.stringify({
+//           Event: {
+//             EventName: emitEvent && emitEvent[0],
+//             ID: data?.ID,
+//             Info: [-1, Math.round(newScaledValue)],
+//           },
+//         })
+//       );
 
       localStorage.setItem(
         data.ID,
@@ -538,7 +537,7 @@ const ScrollBar = ({ data }) => {
           })
         );
       }
-      const eventId = uuidv4();
+      const eventId = crypto.randomUUID();
       localStorage.setItem("current-event", "ArrowClick")
       localStorage.setItem("keyPressEventId", eventId)
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
@@ -659,6 +658,7 @@ const ScrollBar = ({ data }) => {
   return (
     <div
       id={data?.ID}
+      tabIndex={TabIndex}
       onMouseEnter={handleTrackMouseEnter}
       onMouseLeave={handleTrackMouseLeave}
       onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}

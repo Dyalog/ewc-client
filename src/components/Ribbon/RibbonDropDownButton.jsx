@@ -14,9 +14,9 @@ const RibbonDropDownButton = ({ data }) => {
   const fontProperties = font && font?.Properties;
   const { Icon, Caption, ImageIndex, CSS, ImageListObj } = data?.Properties;
   const [captionWrap, setCaptionWrap] = useState(false);
-  console.log("Caption is as", Caption);
+//   console.log("Caption is as", Caption);
   const captionParts = Caption ? Caption.split(" ") : [];
-  console.log("Caption parurur", captionParts)
+//   console.log("Caption parurur", captionParts)
 
   useEffect(() => {
     if (captionParts.length > 2) {
@@ -42,7 +42,7 @@ const RibbonDropDownButton = ({ data }) => {
     });
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(selectEvent);
+//     console.log(selectEvent);
     socket.send(selectEvent);
     setDropdownOpen(false);
   };
@@ -196,13 +196,21 @@ const RibbonDropDownButton = ({ data }) => {
           {dropdownOpen && (
             <div
               className="custom-dropdown-menu"
+              ref={(el) => {
+                // Position fixed relative to the trigger so the dropdown
+                // escapes overflow:clip on ancestor TabControl/Ribbon.
+                if (el && wrapperRef.current) {
+                  const rect = wrapperRef.current.getBoundingClientRect();
+                  el.style.top = `${rect.bottom}px`;
+                  el.style.left = `${rect.left}px`;
+                }
+              }}
               style={{
-                position: "absolute",
+                position: "fixed",
                 background: "#fff",
                 borderRadius: "5px",
                 boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-                marginTop: "5px",
-                zIndex: 1000,
+                zIndex: 9999,
               }}
             >
               {menuItems.map((item, index) => {

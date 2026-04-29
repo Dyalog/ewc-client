@@ -18,5 +18,5 @@ const defaults = () => {
 let globals = defaults()
 
 export function get(k)    { return globals[k] }
-export function set(k, v) { globals[k] = v; return v }
+export function set(k, v) { const prev = globals[k]; globals[k] = v; return prev }
 export function reset()   { globals = defaults() }

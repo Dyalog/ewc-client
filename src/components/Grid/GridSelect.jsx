@@ -15,28 +15,28 @@ const GridSelect = ({ data }) => {
   }, [data.focused]);
 
   const handleCellChangeEvent = (value) => {
-    const gridEvent = findDesiredData(data?.gridId);
-    const values = data?.gridValues;
-    values[data?.row - 1][data?.column] = value;
+    const gridEvent = findDesiredData(data.gridId);
+    const values = data.gridValues;
+    // 1-based to 0-based
+    values[data.row - 1][data.column - 1] = value;
     handleData(
       {
         ID: data?.gridId,
         Properties: {
           ...gridEvent.Properties,
           Values: values,
-          CurCell: [data?.row, data?.column + 1],
+          CurCell: [data.row, data.column + 1],
         },
       },
       'WS'
     );
 
+    // Info array: [Row, Col, Value] - APL callback receives (ID Event),Info
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: 'CellChanged',
         ID: data?.gridId,
-        Row: data?.row,
-        Col: data?.column + 1,
-        Value: value,
+        Info: [data?.row, data?.column + 1, value],
       },
     });
 
@@ -53,7 +53,7 @@ const GridSelect = ({ data }) => {
     const exists = data?.gridEvent?.some((item) => item[0] === 'CellChanged');
     if (!exists) return;
 
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     socket.send(triggerEvent);
     localStorage.setItem(
       'isChanged',
