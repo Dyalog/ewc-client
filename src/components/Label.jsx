@@ -1,23 +1,31 @@
 import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
+import { getEdgeStyleBorder } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
 
 const Label = ({ data, gridValue }) => {
   let styles = setStyle(data?.Properties);
-  
 
-
-  const { findDesiredData, fontScale, socket } = useAppData();
+  const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
   const haveColor = data?.Properties.hasOwnProperty("FCol");
   const haveFontProperty = data?.Properties.hasOwnProperty("Font");
 
-  const { Visible, FontObj, Caption, Size, BCol, Event, CSS } = data?.Properties;
-
-  console.log("data Label", data)
+  const { Visible, Caption, Size, Font, FCol, BCol, Justify, Event, CSS, EdgeStyle, Border = 0 } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS)
 
-  // console.log("label", {data, BCol, Caption,  background: rgbColor(BCol)})
+  // If a newline is used anywhere, it's a wrapping, multiline label, otherwise
+  // it is always a single line label
+  if (Caption.indexOf('\n') !== -1) {
+    styles.whiteSpace = 'pre-wrap';
+  } else {
+    styles.textWrapMode = 'nowrap';
+  }
+
+  // TODO this should always be set, but we have an issue where size is being
+  // incorrectly inherited from the container.
+  if (Size) styles.overflow = 'hidden';
 
   if (haveColor) {
     styles = {
@@ -26,22 +34,27 @@ const Label = ({ data, gridValue }) => {
     };
   }
 
+  // Both center and centre are allowed in ⎕WC
+  const justifications = { 'left': 'left', 'centre': 'center', 'center': 'center', 'right': 'right', };
+  if (Justify) styles.textAlign = justifications[Justify.toLowerCase()];
+
   if (haveFontProperty) {
+    if (!styles.lineHeight) styles.lineHeight= `${Font[1] * fontScale + 2}px`;
     styles = {
       ...styles,
-      fontFamily: data.Properties?.Font[0],
-      fontSize: data?.Properties?.Font[1],
+      fontFamily: Font[0],
+      fontSize: Font[1] * fontScale,
     };
   } else {
-    const font = findDesiredData(FontObj && FontObj);
+    const font = findCurrentData(FontObj);
     const fontProperties = font && font?.Properties;
+    const fontCss = fontProperties?.CSS ? parseFlexStyles(fontProperties.CSS) : {};
+    const fontSize = fontScale * (fontProperties?.Size ? fontProperties.Size : 12);
     styles = {
       ...styles,
       fontFamily: fontProperties?.PName,
-      fontSize: fontProperties?.Size
-        ? `${fontProperties.Size * fontScale}px`
-        : `${12 * fontScale}px`,
-      // fontSize: fontProperties?.Size ? `${fontProperties.Size * fontScale}px` : `${11 * fontScale}px`,
+      fontSize: `${fontSize}px`,
+      lineHeight: `${fontSize + 2}px`,
       textDecoration: !fontProperties?.Underline
         ? "none"
         : fontProperties?.Underline == 1
@@ -53,17 +66,27 @@ const Label = ({ data, gridValue }) => {
         ? "italic"
         : "none",
       fontWeight: !fontProperties?.Weight ? 0 : fontProperties?.Weight,
-      background: BCol && rgbColor(BCol),
-      // paddingLeft: '10px',
-      // paddingRight: '10px'
+      ...fontCss,
     };
   }
 
+  styles = {
+    ...styles,
+    background: BCol && rgbColor(BCol),
+  }
 
   return (
     <div
       id={data?.ID}
-      style={{ ...styles, display: Visible == 0 ? "none" : "block" ,...customStyles}}
+      style={{
+        ...styles,
+        display: Visible == 0 ? "none" : "block",
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : { border: Border == 0 ? "none" : "1px solid #6A6A6A" }
+        ),
+        ...customStyles
+      }}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}

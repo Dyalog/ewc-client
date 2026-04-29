@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import {
+  getFontStyles,
   setStyle,
   excludeKeys,
   getImageStyles,
@@ -14,6 +15,7 @@ import {
   handleMouseDown,
   handleMouseUp,
 } from "../utils";
+import { getEdgeStyleBorder } from "../styles/edgeStyles";
 import SelectComponent from "./SelectComponent";
 import { useAppData, useResizeObserver } from "../hooks";
 
@@ -26,8 +28,10 @@ const Group = ({ data }) => {
     Flex = 0,
     CSS,
     Event,
+    FontObj,
+    EdgeStyle,
   } = data?.Properties;
-  const { findDesiredData, socket } = useAppData();
+  const { findCurrentData, socket } = useAppData();
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
@@ -35,18 +39,22 @@ const Group = ({ data }) => {
   const [width, setWidth] = useState(Size[1]);
   const [height, setHeight] = useState(Size[0]);
 
-  useEffect(() => {
-    if (!Size.length) {
-      setWidth(dimensions?.width - 47);
-      setHeight(dimensions?.height - 47);
-    }
-  }, [dimensions]);
+  // TODO B1: This was known wrong already! Fix
+  // useEffect(() => {
+  //   if (!Size.length) {
+  //     setWidth(dimensions?.width - 47);
+  //     setHeight(dimensions?.height - 47);
+  //   }
+  // }, [dimensions]);
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
   const flexStyles = parseFlexStyles(CSS);
+
+   const font = findCurrentData(FontObj);
+    const fontStyles = getFontStyles(font, 12);
 
   const updatedData = excludeKeys(data);
 
@@ -97,10 +105,14 @@ const Group = ({ data }) => {
         ...styles,
         width,
         height,
-        border: Border == 0 ? "none" : "1px solid #E9E9E9",
+        ...(EdgeStyle
+          ? getEdgeStyleBorder(EdgeStyle)
+          : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
+        ),
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,
+        ...fontStyles
       }}
       id={data?.ID}
       // !!! TODO !!!

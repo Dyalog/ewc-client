@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import {
   setStyle,
+  getFontStyles,
   createListViewObjects,
   handleMouseDown,
   handleMouseUp,
@@ -16,7 +17,7 @@ import {
 import { useAppData } from "../../hooks";
 
 const ListView = ({ data }) => {
-  const { findDesiredData, socket } = useAppData();
+  const { findCurrentData, socket } = useAppData();
 
   const {
     View,
@@ -28,10 +29,15 @@ const ListView = ({ data }) => {
     ReportInfo,
     Event,
     CSS,
+    FontObj,
+    TabIndex,
   } = data && data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
   const styles = setStyle(data?.Properties);
+
+  const font = findCurrentData(FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   useEffect(() => {
     localStorage.setItem(
@@ -67,7 +73,7 @@ const ListView = ({ data }) => {
     localStorage.setItem(data?.ID, storedFocusedIndex);
     const exists = Event && Event.some((item) => item[0] === eventName);
     if (!exists) return;
-    console.log(event);
+//     console.log(event);
     socket.send(event);
   };
 
@@ -99,11 +105,13 @@ const ListView = ({ data }) => {
     return (
       <div
         className={`d-flex flex-wrap flex-${parentOrientation}`}
+        tabIndex={TabIndex}
         style={{
           ...styles,
           border: !Border ? null : "1px solid black",
           ...style,
           ...customStyles,
+          ...fontStyles,
         }}
         onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
@@ -155,7 +163,7 @@ const ListView = ({ data }) => {
   };
 
   if (View && View == "Icon") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[0]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[0]);
     const Images = ImageData?.Properties?.Files;
     const ImageSize = ImageData && ImageData?.Properties?.Size;
     return (
@@ -172,7 +180,7 @@ const ListView = ({ data }) => {
   }
 
   if (View && View == "SmallIcon") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[1]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[1]);
     const Images = ImageData?.Properties?.Files;
     const ImageSize = ImageData?.Properties?.Size;
     return (
@@ -187,7 +195,7 @@ const ListView = ({ data }) => {
     );
   }
   if (View && View == "List") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[1]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[1]);
     const Images = ImageData?.Properties?.Files;
     const ImageSize = ImageData?.Properties?.Size;
     return (
@@ -203,7 +211,7 @@ const ListView = ({ data }) => {
     );
   }
   if (View && View == "Report") {
-    const ImageData = findDesiredData(ImageListObj && ImageListObj[1]);
+    const ImageData = findCurrentData(ImageListObj && ImageListObj[1]);
     const Images = ImageData?.Properties?.Files;
 
     const reportsData = createListViewObjects(
@@ -212,7 +220,7 @@ const ListView = ({ data }) => {
       !ReportInfo ? [] : ReportInfo,
       !ImageIndex ? [] : ImageIndex
     );
-    
+
     return (
       <div
         style={{
@@ -220,6 +228,7 @@ const ListView = ({ data }) => {
           border: !Border ? null : "1px solid black",
           overflowY: "scroll",
           ...customStyles,
+          ...fontStyles,
         }}
       >
         {/* Header of the component */}

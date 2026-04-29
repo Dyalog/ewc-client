@@ -3,7 +3,7 @@ import { useAppData } from "../../hooks";
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel } from "../../utils";
 
 const GridButton = ({ data }) => {
-  console.log("GridButton", data);
+//   console.log("GridButton", data);
   const buttonRef = useRef(null);
   const { handleData, socket, findDesiredData } = useAppData();
   const [checkInput, setCheckInput] = useState(data?.value);
@@ -61,14 +61,14 @@ const GridButton = ({ data }) => {
     });
 
     localStorage.setItem(data?.gridId, updatedGridValues);
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     const exists =
       data?.gridEvent &&
       data?.gridEvent.some((item) => item[0] === "CellChanged");
     if (!exists) return;
     if (data.formatString) {
       socket.send(formatCellEvent);
-      console.log(formatCellEvent);
+//       console.log(formatCellEvent);
     }
     socket.send(triggerEvent);
     localStorage.setItem(

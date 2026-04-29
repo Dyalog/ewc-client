@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { v4 as uuidv4 } from "uuid";
 import {
   setStyle,
+  getFontStyles,
   generateHeader,
   extractStringUntilLastPeriod,
   rgbColor,
@@ -21,27 +21,33 @@ import GridButton from "./GridButton";
 import GridCell from "./GridCell";
 import Header from "./Header";
 import GridLabel from "./GridLabel";
+import GridDiv from "./GridDiv";
 
-const Component = ({ data }) => {
-  if (data?.type == "Edit") return <GridEdit data={data} />;
+const Component = ({ data,onKeyDown1 }) => {
+  if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
   else if (data?.type == "Button") return <GridButton data={data} />;
   else if (data?.type == "cell" || data?.type == "rowTitle") return <GridCell data={data} />;
   else if (data?.type == "header") return <Header data={data} />;
   else if (data?.type == "Combo") return <GridSelect data={data} />;
   else if (data?.type == "Label") return <GridLabel data={data} />;
+  else if (data?.type == "Div") return <GridDiv data={data} />;
 };
 
 const Grid = ({ data }) => {
   const gridId = data?.ID;
   const {
     findDesiredData,
+    findCurrentData,
     socket,
     proceed,
     setProceed,
     proceedEventArray,
     setProceedEventArray,
     findAggregatedPropertiesData,
-    handleData, dataRef, nqEvents
+    handleData,
+    currentEventRef,
+    updateCurrentEvent,
+    inheritedProperties,
   } = useAppData();
 
   const [eventId, setEventId] = useState(null);
@@ -49,6 +55,7 @@ const Grid = ({ data }) => {
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
+  // console.log("Dimesnions is as",dimensions)
 
 
   const gridRef = useRef(null);
@@ -73,119 +80,87 @@ const Grid = ({ data }) => {
     TitleHeight,
     TitleWidth,
     FormatString,
-    VScroll = 0,
-    HScroll = 0,
+    VScroll,
+    HScroll,
     Attach,
     Event,
     CSS,
+    TabIndex,
   } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const [height, setHeight] = useState(Size[0]);
   const [width, setWidth] = useState(Size[1]);
   const [rows, setRows] = useState(0);
   const [columns, setColumns] = useState(0);
-  const [selectedRow, setSelectedRow] = useState(
-    !CurCell ? (ColTitles?.length > 0 ? 1 : 0) : CurCell[0]
-  );
-  const [selectedColumn, setSelectedColumn] = useState(
-    !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1]
-  );
 
+  // The Grid is treated as an entire Grid, including column and row headers -
+  // this has led to some complexity in converting between current cell position
+  // as far as JS is concerned and as far as APL is concerned.
+  // If the Title* is set to 0, no title should be shown, so the origin of the
+  // first data cell is 0 in that dimension.
+  // CurCell is 1-based, but we want 0-based, hence the little dance below.
+  const originY = TitleHeight === 0 ? 0 : 1;
+  const originX = TitleWidth === 0 ? 0 : 1;
+  const [selectedRow, setSelectedRow] = useState((CurCell ? CurCell[0] : 1)+originY-1);
+  const [selectedColumn, setSelectedColumn] = useState((CurCell ? CurCell[1] : 1)+originX-1);
+ 
   const [clickData, setClickData] = useState({ isClicked: false, row: selectedRow, column: selectedColumn })
 
-
-  //  console.log("300", {nqEvents})
-  //  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  // console.log("navigation focus", data)
   useEffect(() => {
-    gridRef.current.focus();
-    if (CurCell) {
-      console.log("284 curcell useEffect")
+    if (Size && Size.length > 0) {
+      setHeight(Size[0]);
+      setWidth(Size[1])
+    }
+  }, [Size]);
+
+  useEffect(() => {
+    // TODO TEMPORARILY disabled as it's causing havoc; just changing CurCell
+    // should ONLY refocus if we want it to. eg an action outside of the Grid
+    // that moves it around, should keep the focus on the outside component.
+    // If the focus was already in the Grid and we eg clicked on a ScrollBar,
+    // then that needs to be handled there...
+    // gridRef.current.focus();
+    if (CurCell) {  
       let defaultRow
       let defaultCol
-      // if (curCell) {
-      //   const {Info} = curCell
-      //   defaultRow = !curCell ? (RowTitles?.length > 0 ? 1 : 0) : Info[0];
-      //   defaultCol = !curCell ? (TitleWidth === 0 ? 1 : 0) : Info[1];
-      //   setSelectedRow((prev) => (prev !== Info[0] ? defaultRow : prev));
-      //   setSelectedColumn((prev) => (prev !== Info[1] ? defaultCol : prev));
-      // }
-      // else {
-        gridRef.current.focus();
-        defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
-        defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
-        setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
-        setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
-        // }
-
-        // localStorage.setItem(
-          //   data?.ID,
-          //   JSON.stringify({
-            //     Event: {
-              //       CurCell: [defaultRow, defaultCol],
-              //     },
-              //   })
-              // );
-            }
+      // gridRef.current.focus();
+      defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
+      defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
+      setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
+      setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
+    }
   }, [CurCell]);
-  
-  
-  
+
+
+
   useEffect(() => {
-    if (proceedEventArray[localStorage.getItem("keyPressEventId") + "KeyPress"] == 1) {
-      const event = JSON.parse(localStorage.getItem("event"))
+     if (proceedEventArray[currentEventRef.eventID + "KeyPress"] == 1) {
+      const event = currentEventRef.keyEvent
       updatePosition(event)
       setProceed(false);
-      setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "KeyPress"]: 0 }));
+      setProceedEventArray((prev) => ({ ...prev, [currentEventRef.eventID + "KeyPress"]: 0 }));
       // updateRowColumn(event)
     }
     else if (
-      (proceedEventArray[localStorage.getItem("keyPressEventId") + "CellMove"] == 1)
+      (proceedEventArray[currentEventRef.eventID + "CellMove"] == 1)
     ) {
-
       if (clickData.isClicked) {
         handleCellClickUpdate(clickData.row, clickData.column)
-
+        
         setClickData({ isClicked: false })
         return
       }
-
-      // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-
-      // if (!localStoragValue) {
-      //   localStorage.setItem(
-      //     data?.ID,
-      //     JSON.stringify({
-      //       Event: {
-      //         CurCell: [
-      //           selectedRow,
-      //           selectedColumn,
-      //         ],
-      //       },
-      //     })
-      //   );
-      // } else {
-      //   localStorage.setItem(
-      //     data?.ID,
-      //     JSON.stringify({
-      //       Event: {
-      //         CurCell: [
-      //           selectedRow,
-      //           selectedColumn,
-      //         ],
-      //         Values: localStoragValue?.Event?.Values,
-      //       },
-      //     })
-      //   );
-      // }
-
-      const event = JSON.parse(localStorage.getItem("event"))
+      
+      const event = currentEventRef.keyEvent
       updateRowColumn(event)
     }
   }, [Object.keys(proceedEventArray).length])
 
 
   const style = setStyle(data?.Properties);
+
+
 
   useEffect(() => {
     if (!Attach) return;
@@ -201,12 +176,21 @@ const Grid = ({ data }) => {
   }, [data]);
 
   const handleCellMove = (row, column, mouseClick) => {
-    localStorage.setItem("current-event", "CellMove")
+    // localStorage.setItem("current-event", "CellMove")
     if (column > columns || column <= 0) return;
     const isKeyboard = !mouseClick ? 1 : 0;
-    const eventId = uuidv4();
+    const eventId = crypto.randomUUID();
     setEventId(eventId);
-    localStorage.setItem("keyPressEventId", eventId)
+    // localStorage.setItem("keyPressEventId", eventId)
+    // if (clickData.isClicked) {
+
+      updateCurrentEvent({
+        curEvent: "CellMove",
+        eventID: eventId,
+        keyEvent: currentEventRef.keyEvent,
+      });
+    // }
+    // setCurrentEvent({...currentEvent, curEvent:"CellMove", eventID:eventId})
     const cellChanged = JSON.parse(localStorage.getItem("isChanged"));
     const cellMoveEvent = JSON.stringify({
       Event: {
@@ -227,7 +211,6 @@ const Grid = ({ data }) => {
 
     const exists = Event && Event?.some((item) => item[0] === "CellMove");
     if (!exists) {
-      console.log("grid check", row, column)
       handleData(
         {
           ID: data?.ID,
@@ -241,29 +224,24 @@ const Grid = ({ data }) => {
     else {
       socket.send(cellMoveEvent);
     }
-    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
 
-
-    // localStorage.setItem(
-    //   "isChanged",
-    //   JSON.stringify({
-    //     isChange: false,
-    //     value: "",
-    //   })
-    // );
   };
 
 
   const handleKeyDown = (event) => {
-    console.log("navigation")
-    localStorage.setItem("event", JSON.stringify(event.key))
-    localStorage.setItem("current-event", "KeyPress")
+    // localStorage.setItem("event", JSON.stringify(event.key))
+    // localStorage.setItem("current-event", "KeyPress")
     const isAltPressed = event.altKey ? 4 : 0;
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
     const charCode = event.key.charCodeAt(0);
-    const eventId = uuidv4();
+    const eventId = crypto.randomUUID();
     setEventId(eventId);
+    updateCurrentEvent({
+      curEvent: "KeyPress",
+      eventID: eventId,
+      keyEvent: event.key,
+    });
     let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
 
     let knownKeyPress = true;
@@ -297,7 +275,7 @@ const Grid = ({ data }) => {
         Info: [event.key, charCode, event.keyCode, shiftState],
       },
     });
-    localStorage.setItem("keyPressEventId", eventId)
+    // localStorage.setItem("keyPressEventId", eventId)
     const keyPressEvent = JSON.stringify({
       Event: {
         EventName: "KeyPress",
@@ -307,7 +285,6 @@ const Grid = ({ data }) => {
       },
     });
 
-    console.log("grid check keydown", event.key, childExists, Event)
     if (parentExists && !!!childExists) {
       socket.send(parentKeyPressEvent);
     }
@@ -336,8 +313,6 @@ const Grid = ({ data }) => {
   };
 
   const updatePosition = (key) => {
-    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-
     if (key === "ArrowRight") {
       const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
       if (selectedColumn === updatedColumn) return
@@ -363,7 +338,7 @@ const Grid = ({ data }) => {
         selectedColumn,
         0
       );
-    } else if (key === "ArrowDown") {
+    } else if (key === "ArrowDown" || key==="Enter") {
       const updatedRow = Math.min(selectedRow + 1, rows - 1)
       if (selectedRow == rows - 1) return;
       if (selectedRow === updatedRow) return
@@ -372,6 +347,7 @@ const Grid = ({ data }) => {
         selectedColumn,
         0
       );
+    
     } else if (key === "PageDown") {
       const demoRow = Math.min(selectedRow + 9, rows - 1);
       handleCellMove(
@@ -478,7 +454,7 @@ const Grid = ({ data }) => {
         width: !TitleWidth ? 100 : TitleWidth,
         height: !TitleHeight ? 20 : TitleHeight,
       };
-      TitleWidth === 0 ? null : header.push(emptyobj)
+      TitleWidth === 0 ? null : header.push(emptyobj);
 
       for (let i = 0; i < ColTitles?.length; i++) {
         let obj = {
@@ -514,13 +490,13 @@ const Grid = ({ data }) => {
     // Make the body the Grid Like if it have Input Array that means it have types
     if (!Input) {
       for (let i = 0; i < Values?.length; i++) {
-        let cellType = CellTypes && CellTypes[i][0];
+        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
         const backgroundColor = BCol && BCol[cellType - 1];
         let body = [];
         let obj = {
           type: "rowTitle",
           value: RowTitles ? RowTitles[i] : i + 1,
-          width: RowTitles ? (!TitleWidth ? 100 : TitleWidth) : 100,
+          width: !TitleWidth ? 100 : TitleWidth,
           height: !CellHeights
             ? 20
             : Array.isArray(CellHeights)
@@ -559,7 +535,7 @@ const Grid = ({ data }) => {
     } else if (Input) {
       for (let i = 0; i < Values?.length; i++) {
         let body = [];
-        let cellType = CellTypes && CellTypes[i][0];
+        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
         const backgroundColor = BCol && BCol[cellType - 1];
 
         // Decide to add the RowTitles If the TitleWidth is Greater than 0
@@ -583,14 +559,13 @@ const Grid = ({ data }) => {
             : body.push(obj);
 
         for (let j = 0; j < columns; j++) {
-          let cellType = CellTypes && CellTypes[i][j];
+          let cellType = CellTypes && CellTypes[i] && CellTypes[i][j];
           const type = findAggregatedPropertiesData(
             Input?.length > 1 ? Input && Input[cellType - 1] : Input[0]
           );
 
           // findAggregatedPropertiesData(Input?.length > 1 ? Input && Input[cellType - 1] : Input[0])
-          // console.log("index grid", type,  Input?.length > 1 ? Input && Input[cellType - 1] : Input[0])
-          const event = data?.Properties?.Event && data?.Properties?.Event;
+            const event = data?.Properties?.Event && data?.Properties?.Event;
           const backgroundColor = BCol && BCol[cellType - 1];
           const cellFont = findDesiredData(
             CellFonts && CellFonts[cellType - 1]
@@ -639,28 +614,6 @@ const Grid = ({ data }) => {
 
     if (row == selectedRow && column == selectedColumn) return;
 
-    // let localStoragValue = JSON.parse(localStorage.getItem(data?.ID));
-    // if (!localStoragValue)
-    //   localStorage.setItem(
-    //     data?.ID,
-    //     JSON.stringify({
-    //       Event: {
-    //         CurCell: [row, column],
-    //       },
-    //     })
-    //   );
-    // else {
-    //   localStorage.setItem(
-    //     data?.ID,
-    //     JSON.stringify({
-    //       Event: {
-    //         CurCell: [row, column],
-    //         Values: localStoragValue?.Event?.Values,
-    //       },
-    //     })
-    //   );
-    // }
-
     handleData(
       {
         ID: data?.ID,
@@ -675,12 +628,28 @@ const Grid = ({ data }) => {
 
   const gridData = modifyGridData();
   const customStyles = parseFlexStyles(CSS);
-  console.log("260", rows)
+
+  const font = findCurrentData(FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
+  // Returns the right overflow for HScroll and VScroll.
+  const overflowFor = (scroll) => {
+    if (scroll !== undefined) {
+      return {
+        '0': 'hidden',
+        '-1': 'auto',
+        '-2': 'auto',
+        '-3': 'scroll',
+      }['' + scroll];
+    } else {
+      return 'auto';
+    }
+  };
 
   return (
     <>
       <div
-        tabIndex={0}
+        tabIndex={TabIndex ?? 0}
         ref={gridRef}
         onKeyDown={handleKeyDown}
         onMouseDown={(e) => {
@@ -710,30 +679,22 @@ const Grid = ({ data }) => {
           height,
           width,
           border: "1px solid black",
-          overflow: !ColTitles ? "auto" : "hidden",
           background: "white",
           display: Visible == 0 ? "none" : "block",
-          overflowX:
-            HScroll == -3
-              ? "scroll"
-              : HScroll == -1 || HScroll == -2
-                ? "auto"
-                : "auto",
-          overflowY:
-            VScroll == -3
-              ? "scroll"
-              : VScroll == -1 || HScroll == -2
-                ? "auto"
-                : "auto",
+          // Default to auto - it should be ignored if overflowX or overflowY
+          // are defined below.
+          overflow: "auto",
+          overflowX: overflowFor(HScroll),
+          overflowY: overflowFor(VScroll),
           ...customStyles,
+          ...fontStyles,
         }}
       >
         {gridData?.map((row, rowi) => {
           return (
             <div style={{ display: "flex" }} id={`row-${rowi}-cell`}>
               {row.map((data, columni) => {
-                //  selectedRow === rowi && console.log("issue arrow focus", selectedRow, rowi )
-                const isFocused =
+                 const isFocused =
                   selectedRow === rowi && selectedColumn === (TitleWidth === 0 ? columni + 1 : columni);
 
                 return (
@@ -751,7 +712,7 @@ const Grid = ({ data }) => {
                       borderBottom: isFocused
                         ? "1px solid blue"
                         : "1px solid  #EFEFEF",
-                      fontSize: "12px",
+                      // fontSize: "12px",
                       minHeight: `${data?.height}px`,
                       maxHeight: `${data?.height}px`,
                       minWidth: `${data?.width}px`,

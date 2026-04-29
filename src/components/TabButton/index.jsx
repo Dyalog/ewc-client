@@ -56,15 +56,15 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
         ...customStyles
       }}
       onClick={() => {
-        console.log(
-          JSON.stringify({
-            Event: {
-              EventName: emitEvent && emitEvent[0],
-              ID: data?.ID,
-              Info: [data?.ID],
-            },
-          })
-        );
+//         console.log(
+//           JSON.stringify({
+//             Event: {
+//               EventName: emitEvent && emitEvent[0],
+//               ID: data?.ID,
+//               Info: [data?.ID],
+//             },
+//           })
+//         );
 
         localStorage.setItem(
           'lastEvent',

@@ -2,40 +2,46 @@ import { useState, useEffect, useRef } from 'react';
 import useAppData from './useAppData';
 
 const useWindowDimensions = () => {
-  const { socket } = useAppData();
+  const { socket,isDesktop } = useAppData();
+
   const [viewport, setViewport] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
+//   console.log("New height is",viewport);
+
 
   const resizeTimeoutRef = useRef(null);
 
   useEffect(() => {
+
     const handleResize = () => {
       const newViewport = {
         width: window.innerWidth,
         height: window.innerHeight,
       };
 
-      let zoom = Math.round(window.devicePixelRatio * 100);
       setViewport(newViewport);
 
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
-      }
+      }    
 
       resizeTimeoutRef.current = setTimeout(() => {
         let event = JSON.stringify({
           DeviceCapabilities: {
             ViewPort: [newViewport.height, newViewport.width],
             ScreenSize: [window.screen.height, window.screen.width],
-            DPR: zoom / 100,
+            DPR: window.devicePixelRatio,
             PPI: 200,
           },
         });
-        console.log({ event });
+//         console.log({ event });
         socket.send(event);
+
       }, 1000);
+
+
     };
 
     window.addEventListener('resize', handleResize);

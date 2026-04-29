@@ -1,4 +1,5 @@
 import {
+  getFontStyles,
   handleMouseDoubleClick,
   handleMouseDown,
   handleMouseEnter,
@@ -11,6 +12,7 @@ import {
 } from "../../utils";
 import { useAppData } from "../../hooks";
 import { useState } from "react";
+import * as Globals from "../../Globals";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -39,169 +41,173 @@ const flattenIfThreeLevels = (arr) => {
   }
 };
 
-const calculateTextDimensions = (lines, fontSize = 12) => {
+const calculateTextDimensions = (lines, font) => {
+  // Handle empty or invalid input
+  if (!lines || (Array.isArray(lines) && lines.length === 0)) {
+    return { height: 0, width: 0 };
+  }
+  //console.log('calculateTextDimensions input:', { lines, font, fontPName: font?.Properties?.PName, fontSize: font?.Properties?.Size });
+  // Ensure lines is an array
+  const linesArray = Array.isArray(lines) ? lines : [lines];
+
   // Create a hidden div element to calculate text dimensions
-  const scale = localStorage.getItem("fontscale")
+  const scale = Globals.get('fontScale');
   const container = document.createElement('div');
   container.style.visibility = 'hidden';
   container.style.display = 'inline-block';
   container.style.position = 'fixed';
-  container.style.fontSize = fontSize;
-  container.style.lineHeight = fontSize + 'px';
   container.style.top = '0';
   container.style.left = '0';
-  container.style.fontSize = (fontSize * scale) + 'px';
+  container.style.whiteSpace = 'pre';
 
-  // Iterate through the array of words
-  lines.forEach(line => {
-    // Create a span element for each word
+  // TODO remove references to 12px everywhere
+  let lineHeight = '12px';
+  if (font?.Properties?.Size) {
+    lineHeight = (font.Properties.Size * scale) + 'px';
+  }
+
+  const fontStyles = getFontStyles(font);
+  linesArray.forEach(line => {
     const lineDiv = document.createElement('div');
     lineDiv.style.margin = '0';
     lineDiv.style.padding = '0';
     lineDiv.textContent = line;
-    lineDiv.style.display = 'block'; // Start each word on a new line
+    lineDiv.style.display = 'block'; // Start each on a new line
+    lineDiv.style.lineHeight = lineHeight;
+    if (font?.Properties?.Size) {
+      fontStyles.fontSize = (font.Properties.Size * scale) + 'px';
+    } else {
+      fontStyles.fontSize = (12 * scale) + 'px';
+    }
+    Object.assign(lineDiv.style, fontStyles);
     container.appendChild(lineDiv);
   });
 
-  // Append the container to the body
   document.body.appendChild(container);
-  // Retrieve dimensions
   const width = container.offsetWidth;
   const height = container.offsetHeight;
-
   document.body.removeChild(container);
-
-  return [height, width];
+  return {height, width};
 };
 
 const Text = ({ data, fontProperties }) => {
+  const { findCurrentData,socket, fontScale, inheritedProperties } = useAppData();
   const { Visible, Points, Text, FCol, BCol, Event, CSS } = data?.Properties;
-
-  console.log("254", { data, fontProperties });
-  const { socket, fontScale } = useAppData();
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS);
 
-  const { reRender } = useForceRerender();
-
-  const parentSize = JSON.parse(localStorage.getItem("formDimension"));
+  const font = findCurrentData(FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   const newPoints = flattenIfThreeLevels(Points);
 
   const pointsArray =
     newPoints && newPoints[0].map((y, i) => [newPoints[1][i], y]);
 
+  const rotationDegrees = fontProperties?.Rotate ? -(fontProperties.Rotate * (180 / Math.PI)) : 0;
+
   return (
     <>
       <div
+        id={data?.ID}
         style={{
           position: "absolute",
           display: Visible == 0 ? "none" : "block",
-          top: 0,
-          left: 0,
-        }}
-        onMouseDown={(e) => {
-          handleMouseDown(e, socket, Event, data?.ID);
-        }}
-        onMouseUp={(e) => {
-          handleMouseUp(e, socket, Event, data?.ID);
-        }}
-        onMouseEnter={(e) => {
-          handleMouseEnter(e, socket, Event, data?.ID);
-        }}
-        onMouseMove={(e) => {
-          handleMouseMove(e, socket, Event, data?.ID);
-        }}
-        onMouseLeave={(e) => {
-          handleMouseLeave(e, socket, Event, data?.ID);
-        }}
-        onWheel={(e) => {
-          handleMouseWheel(e, socket, Event, data?.ID);
-        }}
-        onDoubleClick={(e) => {
-          handleMouseDoubleClick(e, socket, Event, data?.ID);
         }}
       >
-        <svg
-          height={parentSize && parentSize[0]}
-          width={parentSize && parentSize[1]}
-        >
-          {Text?.map((text, index) => {
-            const dimensions = calculateTextDimensions(
-              [text],
-              fontProperties?.Size
-                ? fontProperties.Size * fontScale
-                : 12 * fontScale
-            );
-            const textWidth = dimensions?.width;
-            const textHeight = dimensions?.height;
+        {Text?.map((text, index) => {
+          const dimensions = calculateTextDimensions(
+            [text],
+            font
+          );
+          const textWidth = dimensions?.width;
+          const textHeight = dimensions?.height;
 
-            const points = pointsArray[index] || [
-              pointsArray?.[index - 1]?.[0],
-              pointsArray?.[index - 1]?.[1] + 10,
-            ];
+          const points = pointsArray[index] || [
+            pointsArray?.[index - 1]?.[0],
+            pointsArray?.[index - 1]?.[1] + 10,
+          ];
 
-            return (
-              <g key={index}>
-                <rect
-                  x={points && points[0]}
-                  y={points && points[1]}
-                  width={textWidth}
-                  height={textHeight}
-                  transform={`translate(${points && points[0]}, ${
-                    points && points[1]
-                  }) rotate(${
-                    fontProperties?.Rotate * (180 / Math.PI)
-                  }) translate(${points && -points[0]}, ${
-                    points && -points[1]
-                  })`}
-                  fill={BCol ? rgbColor(BCol) : "transparent"} // Set your desired background color here
-                />
-                <text
-                  id={`${data?.ID}-t${index + 1}`}
-                  dominantBaseline="hanging"
-                  dy="0em"
-                  x={points && points[0]}
-                  y={points && points[1]}
-                  fontFamily={fontProperties?.PName}
-                  fontSize={
-                    fontProperties?.Size
-                      ? `${fontProperties.Size * fontScale}px`
-                      : `${12 * fontScale}px`
-                  }
-                  fill={FCol ? rgbColor(FCol[index]) : "black"}
-                  fontStyle={
-                    !fontProperties?.Italic
-                      ? "none"
-                      : fontProperties?.Italic == 1
-                      ? "italic"
-                      : "none"
-                  }
-                  fontWeight={
-                    !fontProperties?.Weight ? 0 : fontProperties?.Weight
-                  }
-                  textDecoration={
-                    !fontProperties?.Underline
-                      ? "none"
-                      : fontProperties?.Underline == 1
-                      ? "underline"
-                      : "none"
-                  }
-                  transform={`translate(${points && points[0]}, ${
-                    points && points[1]
-                  }) rotate(${
-                    fontProperties?.Rotate * (180 / Math.PI)
-                  }) translate(${points && -points[0]}, ${
-                    points && -points[1]
-                  })`}
-                  style={{ ...customStyles }}
-                >
-                  {text /*text.replace(/ /g, "\u00A0")*/}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+          const fontSize = fontProperties?.Size
+            ? `${fontProperties.Size * fontScale}px`
+            : `${12 * fontScale}px`;
+
+          // Check if FCol is a single color [R,G,B] or array of colors [[R,G,B], [R,G,B], ...]
+          const isFColArray = FCol && Array.isArray(FCol[0]);
+          const textColor = FCol
+            ? rgbColor(isFColArray ? FCol[index] : FCol)
+            : "black";
+
+          // Check if BCol is a single color [R,G,B] or array of colors [[R,G,B], [R,G,B], ...]
+          const isBColArray = BCol && Array.isArray(BCol[0]);
+          const bgColor = BCol
+            ? rgbColor(isBColArray ? BCol[index] : BCol)
+            : "transparent";
+
+          const fontStyle = fontProperties?.Italic == 1 ? "italic" : "normal";
+          const fontWeight = fontProperties?.Weight || "normal";
+          const textDecoration = fontProperties?.Underline == 1 ? "underline" : "none";
+
+          const lineHeight = fontProperties?.Size
+            ? `${fontProperties.Size * fontScale}px`
+            : `${12 * fontScale}px`;
+
+          return (
+            <div
+              key={index}
+              id={`${data?.ID}-t${index + 1}`}
+              style={{
+                position: "absolute",
+                top: `${points[1]}px`,
+                left: `${points[0]}px`,
+                height: textHeight,
+                width: textWidth,
+                transform: `rotate(${rotationDegrees}deg)`,
+                transformOrigin: '0 0',
+                pointerEvents: 'auto',
+                fontFamily: fontProperties?.PName,
+                fontSize: fontSize,
+                lineHeight: lineHeight,
+                color: textColor,
+                backgroundColor: bgColor,
+                fontStyle: fontStyle,
+                fontWeight: fontWeight,
+                textDecoration: textDecoration,
+                whiteSpace: 'pre',
+                margin: 0,
+                padding: 0,
+                display: 'inline-block',
+                overflow: 'hidden',
+                ...customStyles,
+                ...fontStyles
+              }}
+              onMouseDown={(e) => {
+                handleMouseDown(e, socket, Event, data?.ID);
+              }}
+              onMouseUp={(e) => {
+                handleMouseUp(e, socket, Event, data?.ID);
+              }}
+              onMouseEnter={(e) => {
+                handleMouseEnter(e, socket, Event, data?.ID);
+              }}
+              onMouseMove={(e) => {
+                handleMouseMove(e, socket, Event, data?.ID);
+              }}
+              onMouseLeave={(e) => {
+                handleMouseLeave(e, socket, Event, data?.ID);
+              }}
+              onWheel={(e) => {
+                handleMouseWheel(e, socket, Event, data?.ID);
+              }}
+              onDoubleClick={(e) => {
+                handleMouseDoubleClick(e, socket, Event, data?.ID);
+              }}
+            >
+              {text}
+            </div>
+          );
+        })}
       </div>
     </>
   );

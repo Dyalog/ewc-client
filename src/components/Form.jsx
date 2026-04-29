@@ -1,4 +1,5 @@
 import {
+  getFontStyles,
   setStyle,
   excludeKeys,
   rgbColor,
@@ -19,7 +20,9 @@ import { useEffect, useState } from "react";
 
 const Form = ({ data }) => {
   const { viewport } = useWindowDimensions();
-  const { findDesiredData, socket } = useAppData();
+  const { findCurrentData, socket , isDesktop } = useAppData();
+//   console.log("Desktop is as",!isDesktop);
+
   const [formStyles, setFormStyles] = useState({});
 
   const dimensions = useResizeObserver(document.getElementById(data?.ID));
@@ -33,14 +36,21 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
+    FontObj
   } = data?.Properties;
+
+//   console.log("Dtaa is as",data,Posn);
+  
   const styles = parseFlexStyles(CSS);
 
-  console.log("form after parsing", { styles, CSS, Flex });
+//   console.log("form after parsing", { styles, CSS, Flex });
   const updatedData = excludeKeys(data);
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
+
+  const font = findCurrentData(FontObj);
+  const fontStyles = getFontStyles(font, 12);
 
   const sendConfigureEvent = () => {
     const event = JSON.stringify({
@@ -56,22 +66,19 @@ const Form = ({ data }) => {
       },
     });
     const exists = Event && Event.some((item) => item[0] === "Configure");
-    console.log(event);
     if (!exists) return;
     socket.send(event);
   };
 
   const sendDeviceCapabilities = () => {
-    let zoom = Math.round(window.devicePixelRatio * 100);
     let event = JSON.stringify({
       DeviceCapabilities: {
         ViewPort: [window.innerHeight, window.innerWidth],
         ScreenSize: [window.screen.height, window.screen.width],
-        DPR: zoom / 100,
+        DPR: window.devicePixelRatio,
         PPI: 200,
       },
     });
-    console.log(event);
     socket.send(event);
   };
 
@@ -85,9 +92,9 @@ const Form = ({ data }) => {
   useEffect(() => {
     const hasSize = data?.Properties?.hasOwnProperty("Size");
 
-    const halfViewportWidth = Math.round(window.innerWidth / 2);
+    const halfViewportWidth = window.innerWidth;
 
-    const halfViewportHeight = Math.round(window.innerHeight / 2);
+    const halfViewportHeight = window.innerHeight;
 
     localStorage.setItem(
       "formDimension",
@@ -123,18 +130,11 @@ const Form = ({ data }) => {
 
   useEffect(() => {
     sendConfigureEvent();
-    sendDeviceCapabilities();
+    // triggers a loop with scaling turned on
+    if(!isDesktop){
+      sendDeviceCapabilities();
+    }
   }, [dimensions]);
-
-  // console.log("App Form", {
-  //   formStyles,
-  //   styles,
-  //   data,
-  //   updatedStyles,
-  //   flexDirection: updatedStyles.flexDirection,
-  // });
-
-  // console.log("App Form stringify", JSON.stringify(updatedStyles));
 
   return (
     <div
@@ -162,7 +162,7 @@ const Form = ({ data }) => {
       id={data?.ID}
       style={{
         ...formStyles,
-        ...styles,
+        ...fontStyles,
         background: BCol ? rgbColor(BCol) : "#F0F0F0",
         position: "relative",
         border: "1px solid #F0F0F0",
@@ -174,15 +174,49 @@ const Form = ({ data }) => {
             : "block",
 
         ...imageStyles,
-        // overflow: 'hidden',
+        ...styles,
+        overflow: 'clip',
       }}
       onKeyDown={(e) => {
         // handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
     >
-      {Object.keys(updatedData).map((key, i) => {
-        return <SelectComponent data={updatedData[key]} key={i} />;
-      })}
+      {(() => {
+        const hasMenuBar = Object.keys(updatedData).some(
+          key => updatedData[key]?.Properties?.Type === 'MenuBar'
+        );
+        // TODO: This needs to be determined by menubar styling and font size, etc
+        const menuBarOffset = hasMenuBar ? 25 : 0;
+        
+        return (
+          <>
+            {/* We separate the MenuBar out, whenever you declare it */}
+            {hasMenuBar && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+                {Object.keys(updatedData).filter(key => 
+                  updatedData[key]?.Properties?.Type === 'MenuBar'
+                ).map((key, i) => (
+                  <SelectComponent data={updatedData[key]} key={`menubar-${i}`} />
+                ))}
+              </div>
+            )}
+            
+            <div style={{ 
+              position: 'absolute', 
+              top: menuBarOffset, 
+              left: 0, 
+              right: 0, 
+              bottom: 0 
+            }}>
+              {Object.keys(updatedData).filter(key => 
+                updatedData[key]?.Properties?.Type !== 'MenuBar'
+              ).map((key, i) => (
+                <SelectComponent data={updatedData[key]} key={`content-${i}`} />
+              ))}
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };

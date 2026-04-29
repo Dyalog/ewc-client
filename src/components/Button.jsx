@@ -1,5 +1,6 @@
 import {
   setStyle,
+  getFontStyles,
   extractStringUntilLastPeriod,
   getObjectTypeById,
   handleMouseMove,
@@ -32,14 +33,17 @@ const Button = ({
   );
 
   const styles = setStyle(data?.Properties);
-  const { socket, findDesiredData, dataRef, handleData, reRender } =
-    useAppData();
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS } =
-    data?.Properties;
+  const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, TabIndex } = data?.Properties;
+  const { FontObj } = inheritedProperties(data, 'FontObj');
 
-  console.log("data Button", data);
+//   console.log("data Button", data);
 
   const customStyles = parseFlexStyles(CSS);
+
+  const font = findCurrentData(FontObj);
+  const fontStyles = getFontStyles(font, 12);
+
   const inputRef = useRef();
   const buttonRef = useRef();
 
@@ -58,7 +62,7 @@ const Button = ({
 
   const isRadio = data?.Properties?.Style && data?.Properties?.Style == "Radio";
 
-  const ImageData = findDesiredData(Picture && Picture[0]);
+  const ImageData = findCurrentData(Picture && Picture[0]);
 
   const buttonEvent = data.Properties.Event && data?.Properties?.Event[0];
 
@@ -91,7 +95,7 @@ const Button = ({
     const handleShortcut = (event) => {
       if (shortcutKey && event.altKey && event.key.toLowerCase() === shortcutKey) {
        
-            handleButtonClick(); 
+            handleButtonClick(e); 
       }
     };
     document.addEventListener("keydown", handleShortcut);
@@ -102,7 +106,7 @@ const Button = ({
     if (data?.Properties?.Default === 1) {
       const handleKeyPress = (e) => {
         if (e.key === "Enter") {
-          handleButtonClick();
+          handleButtonClick(e);
         }
       };
       document.addEventListener("keydown", handleKeyPress);
@@ -111,30 +115,34 @@ const Button = ({
   }, [data, buttonEvent]);
 
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (e) => {
+    if (Active === 0) {
+      e.preventDefault();
+      return;
+    }
     document.getElementById(localStorage.getItem("current-focus"))?.blur();
     if (buttonEvent) {
-      console.log(
-        JSON.stringify({
-          Event: {
-            EventName: buttonEvent[0],
-            ID: data?.ID,
-          },
-        })
-      );
+//       console.log(
+//         JSON.stringify({
+//           Event: {
+//             EventName: buttonEvent[0],
+//             ID: data?.ID,
+//           },
+//         })
+//       );
       if (
         localStorage.getItem("current-focus") &&
         localStorage.getItem("shouldChangeEvent") === "true"
       ) {
-        console.log( 
-          JSON.stringify({
-            Event: {
-              EventName: "Change",
-              ID: localStorage.getItem("current-focus"),
-              Info: [data?.ID],
-            },
-          })
-        );
+//         console.log( 
+//           JSON.stringify({
+//             Event: {
+//               EventName: "Change",
+//               ID: localStorage.getItem("current-focus"),
+//               Info: [data?.ID],
+//             },
+//           })
+//         );
 
         socket.send(
           JSON.stringify({
@@ -160,10 +168,13 @@ const Button = ({
     }
   };
 
-
   useEffect(() => {
+    // TODO B1: Fix up resize logic!
+    return;
+    // console.log('RESIZESTART', {parentSize, position, parentOldDimensions});
     if (!position) return;
     if (!parentOldDimensions) return;
+    // console.log('RESIZE', position, parentOldDimensions, dimensions);
 
     let calculateLeft =
       position && position.left && parentOldDimensions && parentOldDimensions[1]
@@ -179,6 +190,10 @@ const Button = ({
 
     calculateTop = Math.max(0, Math.min(calculateTop, dimensions.height));
 
+    // console.log('RESIZED', {
+    //   top: Math.round(calculateTop),
+    //   left: Math.round(calculateLeft),
+    // })
     setPosition({
       top: Math.round(calculateTop),
       left: Math.round(calculateLeft),
@@ -229,7 +244,7 @@ const Button = ({
   }, [dimensions]);
 
   const handleCellChangedEvent = (value) => {
-    const gridEvent = findDesiredData(extractStringUntilLastPeriod(data?.ID));
+    const gridEvent = findCurrentData(extractStringUntilLastPeriod(data?.ID));
     (values[parseInt(row) - 1][parseInt(column) - 1] = value ? 1 : 0),
       handleData(
         {
@@ -275,18 +290,23 @@ const Button = ({
     );
     const exists = event && event.some((item) => item[0] === "CellChanged");
     if (!exists) return;
-    console.log(triggerEvent);
-    console.log(formatCellEvent);
+//     console.log(triggerEvent);
+//     console.log(formatCellEvent);
     socket.send(formatCellEvent);
     socket.send(triggerEvent);
   };
 
   const handleSelectEvent = (value) => {
+    const newState = value ? 1 : 0;
+    handleData(
+      { ID: data?.ID, Properties: { State: newState } },
+      "WS"
+    );
     const triggerEvent = JSON.stringify({
       Event: {
         EventName: "Select",
         ID: data?.ID,
-        Value: value ? 1 : 0,
+        Value: newState,
         Posn: [position?.top, position?.left],
         Size: [Size && Size[0], Size && Size[1]],
       },
@@ -294,7 +314,7 @@ const Button = ({
     localStorage.setItem(data?.ID, triggerEvent);
     const exists = Event && Event.some((item) => item[0] === "Select");
     if (!exists) return;
-    console.log(triggerEvent);
+//     console.log(triggerEvent);
     const event = JSON.stringify({
       Event: {
         EventName: "Select",
@@ -324,7 +344,7 @@ const Button = ({
     });
     const exists = event && event.some((item) => item[0] === "CellMove");
     if (!exists) return;
-    console.log(Event);
+//     console.log(Event);
     socket.send(Event);
   };
 
@@ -359,7 +379,7 @@ const Button = ({
   };
   const handleLeftArrow = () => {
     if (location !== "inGrid") return;
-    console.log(inputRef);
+//     console.log(inputRef);
     const parent = inputRef.current.parentElement;
     const grandParent = parent.parentElement;
     const nextSibling = grandParent.previousSibling;
@@ -410,7 +430,7 @@ const Button = ({
     const exists = Event && Event.some((item) => item[0] === "GotFocus");
 
     if (!exists || previousFocusedId == data?.ID) return;
-    console.log(gotFocusEvent);
+//     console.log(gotFocusEvent);
     socket.send(gotFocusEvent);
   };
 
@@ -428,6 +448,7 @@ const Button = ({
 
     return (
       <div
+        id={data.ID + ".$CONTAINER"}
         onKeyDown={(e) => handleKeyPress(e)}
         style={{
           ...styles,
@@ -437,9 +458,9 @@ const Button = ({
       >
         {Align && Align == "Left" ? (
           <div
-            style={{ fontSize: "12px", position: "absolute", top: 0, left: 0 }}
+            style={{ position: "absolute", top: 0, left: 0, ...customStyles, ...fontStyles }}
           >
-            {Caption}
+            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
         ) : null}
 
@@ -448,9 +469,11 @@ const Button = ({
           ref={inputRef}
           onKeyDown={(e) => handleKeyPress(e)}
           id={data?.ID}
+          tabIndex={TabIndex}
           type="checkbox"
           style={checkBoxPosition}
           checked={checkInput}
+          disabled={Active === 0}
           onChange={(e) => {
             setCheckInput(e.target.checked);
             handleCheckBoxEvent(e.target.checked);
@@ -464,9 +487,10 @@ const Button = ({
               top: 0,
               left: 16,
               ...customStyles,
+              ...fontStyles
             }}
           >
-            {Caption}
+            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>
@@ -498,7 +522,7 @@ const Button = ({
           ID: data?.ID,
         },
       });
-      console.log(emitEvent);
+//       console.log(emitEvent);
 
       socket.send(event);
     };
@@ -552,21 +576,23 @@ const Button = ({
 
     return (
       <div
+        id={data?.ID + ".$CONTAINER"}
         style={{
           ...styles,
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
           ...customStyles,
+          ...fontStyles
         }}
       >
         {Align && Align == "Left" ? (
           <div
             style={{
-              fontSize: "12px",
               position: "absolute",
               top: 2,
               left: 0,
               ...customStyles,
+              ...fontStyles,
             }}
           >
             {Caption}
@@ -576,9 +602,11 @@ const Button = ({
           onFocus={handleGotFocus}
           name={extractStringUntilLastPeriod(data?.ID)}
           id={data?.ID}
+          tabIndex={TabIndex}
           checked={radioValue}
           type="radio"
           value={Caption}
+          disabled={Active === 0}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
           }}
@@ -586,14 +614,14 @@ const Button = ({
         {!Align || Align == "Right" ? (
           <div
             style={{
-              fontSize: "12px",
               position: "absolute",
               top: 2,
               left: 16,
               ...customStyles,
+              ...fontStyles,
             }}
           >
-            <label for={data?.ID}>{Caption}</label>
+            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
           </div>
         ) : null}
       </div>
@@ -625,51 +653,9 @@ const Button = ({
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
       ref={buttonRef}
-      onClick={() => {
-        handleButtonClick()
-        // console.log(
-        //   JSON.stringify({
-        //     Event: {
-        //       EventName: buttonEvent[0],
-        //       ID: data?.ID,
-        //     },
-        //   })
-        // );
-        // if (
-        //   localStorage.getItem("current-focus") &&
-        //   localStorage.getItem("shouldChangeEvent") === "true"
-        // ) {
-        //   console.log(
-        //     JSON.stringify({
-        //       Event: {
-        //         EventName: "Change",
-        //         ID: localStorage.getItem("current-focus"),
-        //         Info: [data?.ID],
-        //       },
-        //     })
-        //   );
-
-        //   socket.send(
-        //     JSON.stringify({
-        //       Event: {
-        //         EventName: "Change",
-        //         ID: localStorage.getItem("current-focus"),
-        //         Info: [data?.ID],
-        //       },
-        //     })
-        //   );
-        // }
-
-        // socket.send(
-        //   JSON.stringify({
-        //     Event: {
-        //       EventName: buttonEvent[0],
-        //       ID: data?.ID,
-        //     },
-        //   })
-        // );
-
-        // handleGotFocus();
+      tabIndex={TabIndex}
+      onClick={(e) => {
+        handleButtonClick(e)
       }}
       style={{
         ...styles,
@@ -681,9 +667,12 @@ const Button = ({
         borderRadius: "4px",
         borderColor: "#ccc",
         fontSize: "12px",
+        color: Active === 0 ? "#838383" : "black",
         // fontSize: '11px',
         cursor: "pointer",
         zIndex: 1,
+        paddingLeft: '3px',
+        paddingRight: '3px',
         display: Visible == 0 ? "none" : "flex",
         ...(data?.Properties?.hasOwnProperty("Posn")
           ? { top: position?.top }
@@ -692,6 +681,7 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
+        ...fontStyles
       }}
     >
       {ImageData ? (
