@@ -18,6 +18,7 @@ import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
 import { getGrid } from "./components/Grid/getGrid";
+import { getNuGrid } from "./components/NuGrid/getNuGrid";
 import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
 import keypressHandlers from "./utils/keypressHandlers";
@@ -734,6 +735,9 @@ const App = () => {
 
               if (Type == "Grid") {
                 return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
+              }
+              if (Type == "NuGrid") {
+                return getNuGrid({ Properties, serverEvent, webSocket, checkSupportedProperties });
               }
               if (Type == "Form") {
                 const supportedProperties = ["Posn", "Size"];
