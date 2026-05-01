@@ -18,6 +18,7 @@ import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
 import { getGrid } from "./components/Grid/getGrid";
+import { getNuGrid } from "./components/NuGrid/getNuGrid";
 import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
 import keypressHandlers from "./utils/keypressHandlers";
@@ -726,38 +727,7 @@ const App = () => {
                 return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
               }
               if (Type == "NuGrid") {
-                // Dedicated NuGrid WG handler. The generic fallback at the
-                // bottom of this if/else worked, but for large grids the
-                // attemptWG RAF retry combined with slow renders pushed
-                // responses past the server's 3s WG_TIMEOUT, manifesting as
-                // bare APL VALUE ERROR in customer event callbacks. Read
-                // straight from the data tree (already kept in sync by
-                // NuGrid's handleCellClick / keyboard handlers via handleData).
-                const supportedProperties = [
-                  "CurCell", "Values", "Posn", "Size",
-                  "ColTitles", "RowTitles", "VScroll", "HScroll", "Input",
-                ];
-                const result = checkSupportedProperties(
-                  supportedProperties,
-                  serverEvent?.Properties
-                );
-                const serverPropertiesObj = {};
-                serverEvent.Properties.forEach((key) => {
-                  // [] is zilde (⍬) — what EWC expects for an empty/unset
-                  // property. Use ?? (not ||) so falsy-but-valid values like
-                  // 0 or "" round-trip correctly.
-                  serverPropertiesObj[key] = Properties[key] ?? [];
-                });
-                return webSocket.send(JSON.stringify({
-                  WG: {
-                    ID: serverEvent.ID,
-                    Properties: serverPropertiesObj,
-                    WGID: serverEvent.WGID,
-                    ...(result?.NotSupported?.length > 0
-                      ? { NotSupported: result.NotSupported }
-                      : null),
-                  },
-                }));
+                return getNuGrid({ Properties, serverEvent, webSocket, checkSupportedProperties });
               }
               if (Type == "Form") {
                 const supportedProperties = ["Posn", "Size"];

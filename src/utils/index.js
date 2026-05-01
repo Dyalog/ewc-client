@@ -391,11 +391,10 @@ export const getObjectById = (jsonData, targetId) => {
   return result ? JSON.stringify(result, null, 2) : null;
 };
 
-// Walk dataRef by dot-separated ID path (e.g. "F0000.App.⍙bS17.Y0.C1").
-// Returns the EWC node ({ID, Properties, ...children}) or null if missing.
-// O(depth) — replaces flatten+find which is O(tree size) and was called
-// per-cell per-render in NuGrid (40-row grids with embedded components
-// blocked the message loop and caused WG timeouts).
+// Walk dataRef by dot-separated ID path. Returns the EWC node
+// ({ID, Properties, ...children}) or null if missing. O(depth) — the
+// dataRef tree is keyed by these path segments (see locateParentByPath
+// in handleData), so this avoids whole-tree traversal.
 export const findByIdPath = (root, id) => {
   if (!id || !root) return null;
   const parts = id.split('.');
