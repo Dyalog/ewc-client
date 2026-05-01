@@ -391,6 +391,22 @@ export const getObjectById = (jsonData, targetId) => {
   return result ? JSON.stringify(result, null, 2) : null;
 };
 
+// Walk dataRef by dot-separated ID path. Returns the EWC node
+// ({ID, Properties, ...children}) or null if missing. O(depth) — the
+// dataRef tree is keyed by these path segments (see locateParentByPath
+// in handleData), so this avoids whole-tree traversal.
+export const findByIdPath = (root, id) => {
+  if (!id || !root) return null;
+  const parts = id.split('.');
+  let node = root;
+  for (const key of parts) {
+    if (!node || typeof node !== 'object' || !(key in node)) return null;
+    node = node[key];
+  }
+  if (!node || !node.ID || !node.Properties) return null;
+  return node;
+};
+
 export function flattenJsonToArray(obj) {
   let result = [];
 
