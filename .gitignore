@@ -39,3 +39,6 @@ TODO.md
 /e2e/demo/test-results
 /e2e/demo/playwright-report
 /e2e/demo/playwright/.cache
+
+# Local Dyalog workspace (built from setup-ewc.apl, not source)
+/.local-dyalog/
