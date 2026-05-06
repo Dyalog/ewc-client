@@ -1,0 +1,69 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main, next]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+
+      - name: Checkout Dyalog/ewc
+        uses: actions/checkout@v4
+        with:
+          repository: Dyalog/ewc
+          path: ewc-server
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build ewc-client
+        run: yarn build
+
+      - name: Start Dyalog EWC server (Docker)
+        run: |
+          docker run -d --name ewc-server --network host \
+            -v "${{ github.workspace }}/ewc-server:/ewc:ro" \
+            -v "${{ github.workspace }}/e2e/demo/ci:/scripts:ro" \
+            dyalog/dyalog:latest \
+            dyalog -script /scripts/start-ewc.dyalog
+
+      - name: Start Vite preview
+        run: nohup yarn preview --port 5173 > vite.log 2>&1 &
+
+      - name: Wait for services
+        run: npx wait-on http://localhost:5173 tcp:22322
+
+      - name: Run Playwright tests
+        run: yarn demotests:browser
+
+      - name: Capture Dyalog container logs
+        if: always()
+        run: docker logs ewc-server || true
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+      - name: Upload Vite log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-log
+          path: vite.log
