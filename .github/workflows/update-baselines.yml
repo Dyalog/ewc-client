@@ -29,6 +29,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
+# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
+# the deprecation warnings now and makes the cutover a non-event.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   update:
     runs-on: ubuntu-latest
