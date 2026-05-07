@@ -1,11 +1,11 @@
 #!/bin/bash
-# Start a dyalog-server docker container running the EWC demo on
+# Start an `ewc-demo` Docker container running the EWC demo on
 # port 22322 (with RIDE on :4502 for development). Used by:
 #
-#   yarn ewc-server:start       # this script
+#   yarn ewc-demo:start       # this script
 #   yarn demotests:visual       # (assumes server already running)
 #   yarn demotests:visual:update
-#   yarn ewc-server:stop        # docker rm -f dyalog-server
+#   yarn ewc-demo:stop        # docker rm -f ewc-demo
 #
 # Always nukes any pre-existing container with the same name (so we
 # don't accumulate "Unable to create more than 100 sessions" cap
@@ -15,7 +15,7 @@
 
 set -e
 
-NAME="dyalog-server"
+NAME="ewc-demo"
 
 # Warn if the user hasn't built ewc-client recently — without dist/,
 # EWC's JSClientFolder auto-discovery falls back to the bundled

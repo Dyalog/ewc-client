@@ -1,132 +1,152 @@
 # EWC Demo Playwright Tests
 
-Automated UI tests for the EWC Demo application using Playwright, connecting to the HTMLRenderer CEF windows via Chrome DevTools Protocol (CDP).
+End-to-end Playwright tests for the EWC demo. Exercises the full stack:
+the React UI (this package's `dist/`), EWC's WebSocket server (Dyalog APL),
+and the demos under `Dyalog/ewc/demo/`.
 
-## Prerequisites
+## How tests connect to EWC
 
-- Node.js 18+
-- Yarn
-- EWC installation with HTMLRenderer mode
-- Dyalog APL 20.0+ (with HTMLRenderer support)
+Tests connect via the `BROWSER_URL` env var. Three modes are supported:
 
-## Installation
+| Mode | `BROWSER_URL` | Used by |
+|---|---|---|
+| **Browser, EWC-served** *(CI)* | `http://localhost:22322` | `tests.yml`, visual baselines |
+| **Browser, Vite-served** *(local dev)* | `http://localhost:5173` | `yarn demotests:browser*` |
+| **Desktop CDP** *(legacy)* | *(unset)* | EWC in CEF mode (`--remote-debugging-port=8080`) |
+
+In Browser, EWC-served mode (the most common path now), EWC's own WebSocket
+Server serves the React client over HTTP at `:22322` AND handles the
+WebSocket upgrade on the same port — single origin.
+
+In Browser, Vite-served mode, the React client is served by `vite` (port
+5173) with hot reload. The bundled JS reads `VITE_APL_URL` to know it should
+WebSocket-connect to `localhost:22322` for the APL backend.
+
+CI exclusively uses Browser, EWC-served (no Vite — production-style).
+
+## Quick start
+
+Local dev against the ewc-demo Docker container:
 
 ```bash
 yarn install
+yarn build                              # build dist/ so EWC serves your changes
+yarn ewc-demo:start                   # start Docker dyalog with EWC on :22322
+BROWSER_URL=http://localhost:22322 npx playwright test
+yarn ewc-demo:stop                    # when done
 ```
 
-## Starting EWC Demo with Remote Debugging
+NOTE: Visual regressions are baselined for linux so they may fail on other Operating systems
 
-To run tests, the EWC Demo must be started with CEF remote debugging enabled. Add these arguments to the Dyalog command line:
-
-```
--cef --remote-debugging-port=8080
-```
-
-### Starting from APL
-
-```apl
-⍝ Load EWC from parent directory
-]link.create # ../ewc/EWC
-]link.create # ../ewc/demo
-
-⍝ Run demo in Desktop mode with debugging
-0 demo.Run 'Desktop'
-```
-
-### Full Command Line Example (macOS)
+Local dev against your own Dyalog APL session + Vite (hot-reload-friendly):
 
 ```bash
-/Applications/Dyalog-20.0.app/Contents/Resources/Dyalog/dyalog \
-    -cef --remote-debugging-port=8080
+# Terminal 1: start a Dyalog APL session with EWC + demo linked,
+#             then run `1 demo.Run 'Browser'` so the EWC WebSocket
+#             server listens on :22322 (see ../ewc/README for setup).
+# Terminal 2:
+yarn dev                                # Vite preview on :5173
+# Terminal 3:
+yarn demotests:browser                  # baked-in BROWSER_URL=http://localhost:5173
 ```
 
-We currently run with ride using:
-```bash
-RIDE_INIT="SERVE:*:4502" /Applications/Dyalog-20.0.app/Contents/Resources/Dyalog/mapl -cef --remote-debugging-port=8080
-```
+## Available scripts
 
-Then load and run the demo from the APL session.
+### Running tests
 
-## Running Tests
+| Command | What it does |
+|---|---|
+| `yarn demotests:browser` | All tests against `http://localhost:5173` (Vite + a local Dyalog APL session running EWC) |
+| `yarn demotests:browser:basic` | Same, only `basic/` |
+| `yarn demotests:browser:headed` | Same, with a visible browser |
+| `yarn demotests:browser:debug` | Same, with the Playwright Inspector |
+| `yarn demotests:report` | Open the HTML report from the last run |
+| `yarn demotests:record` | Playwright codegen against `:5173` |
 
-With the EWC Demo running (with remote debugging enabled):
+### Visual regression (Docker-wrapped)
 
-```bash
-# Run all tests
-yarn test
+| Command | What it does |
+|---|---|
+| `yarn demotests:visual` | Run via Microsoft Playwright Docker image — useful for *previewing* visual diffs locally before pushing |
+| `yarn demotests:visual:update` | Same, but `UPDATE_BASELINES=1` overwrites local PNGs |
 
-# Run tests with browser visible (headed mode)
-yarn test:headed
+> **Local-Docker baselines are NOT canonical for CI.** There's a ~1% per-pixel
+> delta between the Microsoft Playwright Docker image and the GitHub runner's
+> native Playwright install. See [Visual regression](#visual-regression) below.
 
-# Run tests in debug mode (step through)
-yarn test:debug
+### Dyalog/EWC server lifecycle
 
-# View test report
-yarn report
-```
+| Command | What it does |
+|---|---|
+| `yarn ewc-demo:start` | Start `ewc-demo` Docker container; block until `:22322` answers HTTP |
+| `yarn ewc-demo:stop` | `docker rm -f ewc-demo` |
+| `yarn ewc-demo:logs` | `docker logs -f ewc-demo` |
+| `yarn ewc-demo:restart` | Idempotent: same as `:start`, always replaces a running container |
 
-### Using a Different CDP Port
+The start script (`ci/ewc-demo-start.sh`) also exposes RIDE on `:4502`, so
+you can attach a RIDE client to the running interpreter for live APL
+inspection while tests run.
 
-```bash
-CDP_PORT=9222 yarn test
-```
+## Visual regression
 
-## How It Works
+Tests whose names contain `visual` capture full-page screenshots via
+`expect(page).toHaveScreenshot(...)` and compare against committed baselines
+under `tests/baselines/screenshots/`. The default pixel threshold is
+intentionally tight (`maxDiffPixels: 100`) so that small layout shifts in
+this UI library show up as test failures, not silent drift.
 
-1. Playwright connects to the CEF browser via CDP at `http://127.0.0.1:8080`
-2. It discovers all HTMLRenderer windows (each appears as a "page")
-3. Tests scan pages to find the one with expected elements
-4. Standard Playwright assertions and interactions work on the page
+**Baselines are managed by CI**, not committed from local-dev. The
+`update-baselines.yml` workflow regenerates them on the GitHub Linux runner;
+`tests.yml` compares on the same runner — so the comparison environment is
+byte-identical to the baseline-generation environment, and the tight
+threshold doesn't trip on noise.
 
-## Test Structure
+To regenerate baselines after an intentional UI change:
 
-```
-tests/
-├── demo.spec.ts              # Main demo tests (menu + buttons)
-├── helpers/                  # Test utilities
-│   ├── cdp-helper.ts         # CDP connection & page finding
-│   ├── navigation.ts         # Demo navigation utilities
-│   ├── screenshot.ts         # Visual regression helpers
-│   ├── wait-helpers.ts       # Smart waiting utilities
-│   └── error-collector.ts    # Error accumulation pattern
-├── basic/                    # Basic UI demo tests
-├── extras/                   # Extra demo tests
-├── charts/                   # ApexCharts demo tests
-├── flex/                     # Flex demo tests
-└── baselines/screenshots/    # Visual regression baselines
-```
+1. Push your change to a branch.
+2. GitHub → **Actions** → **update visual baselines** → **Run workflow** → select your branch.
+3. The bot regenerates baselines on the runner and **opens a PR** against your branch with the new PNGs.
+4. Review the diffs in the PR's "Files changed" tab — confirm the visual changes match the UI change you intended, then merge.
+5. After merge, the next `tests.yml` run on your branch sees byte-identical pixels and passes.
 
-## Troubleshooting
+Re-running the workflow against the same branch updates the existing PR rather than opening a new one. After the PR merges, the bot's branch is auto-deleted.
 
-### "Could not connect to CDP"
+The local `yarn demotests:visual{,:update}` scripts are for *previewing* — what
+does my UI change look like on Linux Chromium? — not for committing canonical
+baselines.
 
-- Ensure EWC Demo is running with `-cef --remote-debugging-port=8080`
-- Check no other process is using port 8080
-- Verify the demo started successfully (HTMLRenderer window visible)
+## CI
 
-### "No pages found" or wrong page selected
+Three workflows live in `.github/workflows/`:
 
-- EWC Demo may have multiple HTMLRenderer windows
-- Tests try to find the page with expected elements
-- Check test output to see which pages were found
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `build-and-commit.yml` | push | Builds and commits `dist/` |
+| `tests.yml` | after build, also on PR | Runs Playwright against `:22322` (EWC-served browser mode) |
+| `update-baselines.yml` | manual (`workflow_dispatch`) | Regenerates visual baselines on the runner; opens a PR for review |
 
-### Screenshots are blank
+`tests.yml` and `update-baselines.yml` both use `ci/run-server.sh` to bring up
+the Dyalog/EWC backend in a Docker container with the same setup as
+`yarn ewc-demo:start` does locally.
 
-- The test may have selected the wrong page
-- Check `test-results/` folder for screenshots
-- Run with `yarn test:debug` to step through
+### Skipping `tests.yml`
 
-## Available Demos to Test
+Two ways to suppress the test workflow on a given commit/PR:
 
-From `../ewc/demo/DEMOS.apla`:
-- **Basic**: Boxes, Buttons, Fonts, Grids, ListView, MsgBox, Password, Pictures, Pie, Poly, Rect, Rotate, Scroll, Splitters, StdColors, Tabs, TextSize, TimerLines, TreeView
-- **Extras**: RibbonTabs
-- **Charts**: ApexCandleStick, ApexHorizontalBar, ApexMovAvg, ApexSineWave
-- **Flex**: FlexLogin
+- **`[NOTEST]` in the latest commit message, PR title, or PR body** —
+  uppercase, mirrors `[NOBUILD]` for `build-and-commit.yml`. The
+  `check` job greps all three signals (commit message via
+  `git log -1 --pretty=%B`, PR title and body via the event payload)
+  and skips the e2e job when any of them contains the marker. Use for
+  commits where re-running tests adds nothing (e.g. comment-only edits
+  in a tested file, doc updates inside a code dir). Putting it in the
+  PR title is the convenient option since you don't need a new
+  commit — but note that *editing* a PR title alone doesn't refire
+  the workflow; you'd need any new push event to trigger the re-eval.
+- **Doc-only PRs** — `tests.yml` already skips PRs that only touch
+  `**.md`, `README`, or `docs/**`, so renaming sections of this
+  README or editing other docs won't burn CI minutes.
 
-## References
-
-- [Dyalog HTMLRenderer Documentation](https://help.dyalog.com/19.0/Content/GUI/Objects/HTMLRenderer.htm)
-- [EWC Test Suite (reference implementation)](https://github.com/Dyalog/ewc/tree/30-testing/Tests)
-- [Playwright CDP Documentation](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)
+For the absolute nuke, GitHub's native `[skip ci]` / `[ci skip]` /
+`[no ci]` markers in a commit message suppress *all* workflows
+(including `build-and-commit.yml`).
