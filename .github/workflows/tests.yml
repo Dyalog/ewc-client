@@ -26,6 +26,19 @@ on:
       - '**.md'
       - 'README'
       - 'docs/**'
+  # Manual rerun: useful after merging a baselines PR (whose
+  # GITHUB_TOKEN-authored merge doesn't fire downstream workflows),
+  # for re-running flaky failures without an empty commit, or for
+  # smoke-testing a branch against a non-default ewc-server ref.
+  workflow_dispatch:
+    inputs:
+      ewc_server_ref:
+        description: |
+          Dyalog/ewc branch to build against. Leave blank for the
+          default resolution (same-name branch on Dyalog/ewc, falling
+          back to main). Same semantics as update-baselines.yml.
+        required: false
+        default: ''
 
 # Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
 # into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
@@ -63,7 +76,16 @@ jobs:
           # doesn't fall over.
           PR_TITLE: ${{ github.event.pull_request.title || '' }}
           PR_BODY: ${{ github.event.pull_request.body || '' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
+          # Manual dispatch is explicit intent — never honour [NOTEST]
+          # in that path, otherwise a stale commit-message marker would
+          # silently no-op the manual rerun the user just clicked.
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "::notice::Manual dispatch — ignoring any [NOTEST] markers."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           MSG=$(git log -1 --pretty=%B)
           COMBINED="$MSG"$'\n'"$PR_TITLE"$'\n'"$PR_BODY"
           if echo "$COMBINED" | grep -q '\[NOTEST\]'; then
@@ -93,17 +115,22 @@ jobs:
 
       - name: Checkout Dyalog/ewc
         # Resolves the ewc-server ref in this order:
-        #   1. EWC-REF: <branch> in the PR body (PR author override)
-        #   2. same branch name as this workflow's branch
-        #   3. main fallback
+        #   1. workflow_dispatch ewc_server_ref input (manual override)
+        #   2. EWC-REF: <branch> in the PR body (PR author override)
+        #   3. same branch name as this workflow's branch
+        #   4. main fallback
         # See .github/actions/checkout-ewc-server/action.yml for the
         # full precedence rules and rationale.
         uses: ./.github/actions/checkout-ewc-server
         with:
+          # `inputs.ewc_server_ref` is empty on push/pull_request and
+          # only populated on workflow_dispatch — empty falls through
+          # to auto-detection inside the composite action.
+          ref: ${{ inputs.ewc_server_ref || '' }}
           # head_ref is set on PR events (the source branch); ref_name
-          # covers push events. We want the *source* on PRs because
-          # github.ref_name on a PR is the merge ref ("123/merge"),
-          # which never has a Dyalog/ewc counterpart.
+          # covers push and workflow_dispatch. We want the *source* on
+          # PRs because github.ref_name on a PR is the merge ref
+          # ("123/merge"), which never has a Dyalog/ewc counterpart.
           branch: ${{ github.head_ref || github.ref_name }}
           pr-body: ${{ github.event.pull_request.body || '' }}
 

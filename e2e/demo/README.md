@@ -107,7 +107,7 @@ To regenerate baselines after an intentional UI change:
 2. GitHub → **Actions** → **update visual baselines** → **Run workflow** → select your branch.
 3. The bot regenerates baselines on the runner and **opens a PR** against your branch with the new PNGs.
 4. Review the diffs in the PR's "Files changed" tab — confirm the visual changes match the UI change you intended, then merge.
-5. After merge, the next `tests.yml` run on your branch sees byte-identical pixels and passes.
+5. After merge, the next `tests.yml` run on your branch sees byte-identical pixels and passes. **Note:** the baselines-PR merge is authored by `GITHUB_TOKEN`, which doesn't fire downstream workflows — so `tests.yml` won't re-run automatically. Use the manual rerun option (or push any commit) to confirm the new baselines pass.
 
 Re-running the workflow against the same branch updates the existing PR rather than opening a new one. After the PR merges, the bot's branch is auto-deleted.
 
@@ -122,12 +122,17 @@ Three workflows live in `.github/workflows/`:
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `build-and-commit.yml` | push | Builds and commits `dist/` |
-| `tests.yml` | after build, also on PR | Runs Playwright against `:22322` (EWC-served browser mode) |
+| `tests.yml` | push, PR, manual (`workflow_dispatch`) | Runs Playwright against `:22322` (EWC-served browser mode) |
 | `update-baselines.yml` | manual (`workflow_dispatch`) | Regenerates visual baselines on the runner; opens a PR for review |
 
 `tests.yml` and `update-baselines.yml` both use `ci/run-server.sh` to bring up
 the Dyalog/EWC backend in a Docker container with the same setup as
-`yarn ewc-demo:start` does locally.
+`yarn ewc-demo:start` does locally. Both also share
+`.github/actions/checkout-ewc-server/` for resolving which `Dyalog/ewc` branch
+to build against.
+
+`[NOTEST]` markers are **ignored** on manual dispatch — clicking
+"Run workflow" is explicit intent and overrides the skip.
 
 ### Skipping `tests.yml`
 
