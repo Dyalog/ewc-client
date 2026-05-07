@@ -1,0 +1,104 @@
+name: update visual baselines
+
+# Manual trigger: regenerate the committed visual-regression baselines
+# on the GitHub Linux runner — the SAME environment that tests.yml
+# uses for comparison. This is what makes byte-identical pixel
+# comparison possible: same Chromium build + same OS = same pixels.
+#
+# Run this after any intentional UI change: GitHub → Actions →
+# "update visual baselines" → Run workflow.
+#
+# DO NOT commit baselines generated on a different OS (e.g. local
+# macOS), they'll show false-positive diffs against CI even when
+# nothing real has changed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to update baselines on (default: triggering branch)'
+        required: false
+        default: ''
+
+permissions:
+  # Needed so the auto-commit can push the new baselines back.
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Dyalog/ewc
+        uses: actions/checkout@v4
+        with:
+          repository: Dyalog/ewc
+          path: ewc-server
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build ewc-client
+        run: yarn build
+
+      - name: Start Dyalog EWC server (Docker)
+        run: |
+          docker run -d --name ewc-server --network host \
+            --entrypoint /scripts/run-server.sh \
+            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
+            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
+            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            dyalog/dyalog:latest
+
+      - name: Wait for EWC server
+        run: npx wait-on tcp:22322 --timeout 120000
+
+      - name: Regenerate baselines
+        # Run the FULL suite (no --grep filter): visual baselines
+        # capture the post-mutation state of each spec file, so the
+        # earlier mutating tests must run first. Same shape as
+        # tests.yml — only difference is UPDATE_BASELINES=1 to
+        # overwrite committed PNGs instead of compare.
+        env:
+          BROWSER_URL: http://localhost:22322
+          UPDATE_BASELINES: '1'
+        run: npx playwright test
+
+      - name: Commit and push new baselines
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add e2e/demo/tests/baselines/screenshots/
+          if git diff --cached --quiet; then
+            echo 'No baseline changes to commit.'
+          else
+            git commit -m "Update visual baselines (workflow_dispatch run #${{ github.run_number }})"
+            git push
+            echo 'Pushed updated baselines.'
+          fi
+
+      - name: Capture Dyalog container logs (post-run)
+        if: always()
+        run: docker logs ewc-server || true
+
+      - name: Upload regenerated baselines as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: e2e/demo/tests/baselines/screenshots/
+          if-no-files-found: ignore

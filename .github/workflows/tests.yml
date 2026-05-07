@@ -1,0 +1,132 @@
+name: tests
+
+on:
+  # Run after Build and Commit Dist finishes, so the test job always
+  # follows a successful build rather than racing it. workflow_run
+  # fires once the upstream workflow completes (success or failure);
+  # the job-level `if:` below gates on success.
+  workflow_run:
+    workflows: ["Build and Commit Dist"]
+    types: [completed]
+    branches: [main, next]
+  # PRs don't trigger the build workflow, so test independently here.
+  # The e2e job runs `yarn build` itself, so this is self-contained.
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Skip if the upstream build failed or was cancelled. PRs never
+    # have a workflow_run object, so they fall through to running.
+    if: |
+      github.event_name == 'pull_request' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+        with:
+          # workflow_run-triggered runs default to the default branch's
+          # checkout. Pin to the SHA that triggered the upstream build
+          # so tests exercise exactly that code. Empty string => default
+          # behavior (right thing for pull_request runs).
+          ref: ${{ github.event.workflow_run.head_sha || '' }}
+
+      - name: Checkout Dyalog/ewc
+        uses: actions/checkout@v4
+        with:
+          repository: Dyalog/ewc
+          path: ewc-server
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build ewc-client
+        run: yarn build
+
+      - name: Start Dyalog EWC server (Docker)
+        run: |
+          # Mirror the local invocation:
+          #   pipe link.create + EWC.FOLDER + demo.Run into dyalog,
+          #   then `sleep infinity` to keep stdin open so demo.Run's
+          #   wait loop stays active and the EWC Timer keeps firing.
+          # See ci/run-server.sh — it also sets up the env
+          # vars (DYALOG, LD_LIBRARY_PATH, SESSION_FILE) that the
+          # image's default /entrypoint normally provides.
+          #
+          # --network host (Linux runners only) lets Playwright reach
+          # :22322 directly without port-mapping ceremony.
+          docker run -d --name ewc-server --network host \
+            --entrypoint /scripts/run-server.sh \
+            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
+            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
+            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            dyalog/dyalog:latest
+
+      - name: Diagnostics — what's running before wait-on
+        # Run unconditionally so we see the state before `wait-on` has
+        # a chance to hang the job. If Dyalog didn't start (script
+        # error, link.create failure, etc.) the cause is visible in
+        # seconds instead of after a 2-min timeout.
+        run: |
+          sleep 5
+          echo '=== Listening ports ==='
+          (ss -tln 2>/dev/null || netstat -tln) | head -30 || true
+          echo
+          echo '=== Docker container status ==='
+          docker ps -a --filter name=ewc-server || true
+          echo
+          echo '=== Dyalog container logs ==='
+          docker logs ewc-server 2>&1 | tail -80 || true
+
+      - name: Wait for EWC server
+        # EWC's WSS serves both the React client (HTTP at /) and the
+        # WebSocket on the same port. We deliberately don't run Vite
+        # preview — in production mode the bundled JS uses
+        # window.location.origin to derive the WS URL, so loading
+        # localhost:5173 would have it dial ws://localhost:5173/ and
+        # silently fail. Loading localhost:22322 makes the WS upgrade
+        # land on EWC, same origin.
+        #
+        # Probe via tcp: only — `wait-on http://…` defaults to HEAD
+        # requests, and EWC's WSS only handles GET (it logs
+        # "Unhandled HTTP method: HEAD" and never responds). TCP-
+        # listening proof is sufficient; Playwright issues a real
+        # GET when it loads the page.
+        run: npx wait-on tcp:22322 --timeout 120000
+
+      - name: Run Playwright tests
+        # Run Playwright natively on the Linux runner. The runner's
+        # `npx playwright install` and Microsoft's official Docker
+        # image (used for local visual-regression via
+        # `yarn demotests:visual:update`) install the SAME Chromium
+        # build for a given Playwright version, so visual baselines
+        # generated either way render to nearly-identical pixels. Any
+        # small per-environment delta is absorbed by the
+        # maxDiffPixels: 1500 tolerance in playwright.config.ts.
+        # We use the runner natively (not the Docker image) here
+        # because the image's headless shell mishandles some
+        # keyboard-event dispatch in our combo tests.
+        env:
+          BROWSER_URL: http://localhost:22322
+        run: npx playwright test
+
+      - name: Capture Dyalog container logs (post-run)
+        if: always()
+        run: docker logs ewc-server || true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore

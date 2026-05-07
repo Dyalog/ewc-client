@@ -7,7 +7,23 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "demotests:browser:headed": "HEADED=1 BROWSER_URL=http://localhost:5173 playwright test --headed",
+    "demotests:browser:debug": "BROWSER_URL=http://localhost:5173 playwright test --debug",
+    "demotests:update-baselines": "UPDATE_BASELINES=1 BROWSER_URL=http://localhost:5173 playwright test",
+    "demotests:screenshots": "SCREENSHOTS=always playwright test",
+    "demotests:basic": "playwright test e2e/demo/tests/basic",
+    "demotests:browser": "BROWSER_URL=http://localhost:5173 playwright test",
+    "demotests:browser:basic": "BROWSER_URL=http://localhost:5173 playwright test e2e/demo/tests/basic",
+    "demotests:report": "playwright show-report",
+    "demotests:record": "playwright codegen http://localhost:5173",
+    "demotests:record:desktop": "playwright codegen --connect-over-cdp=http://localhost:8080",
+    "demotests:visual": "docker run --rm --add-host=host.docker.internal:host-gateway -v \"$PWD\":/work -w /work -e BROWSER_URL=http://host.docker.internal:22322 mcr.microsoft.com/playwright:v1.59.1-noble npx playwright test",
+    "demotests:visual:update": "docker run --rm --add-host=host.docker.internal:host-gateway -v \"$PWD\":/work -w /work -e BROWSER_URL=http://host.docker.internal:22322 -e UPDATE_BASELINES=1 mcr.microsoft.com/playwright:v1.59.1-noble npx playwright test",
+    "ewc-server:start": "bash ci/ewc-server-start.sh",
+    "ewc-server:stop": "docker rm -f dyalog-server",
+    "ewc-server:logs": "docker logs -f dyalog-server",
+    "ewc-server:restart": "yarn ewc-server:start"
   },
   "dependencies": {
     "apexcharts": "^5.3.6",
@@ -24,6 +40,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.1",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^5.1.2",
@@ -32,6 +50,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.3",
     "globals": "^16.5.0",
+    "typescript": "^5.9.3",
     "vite": "^7.2.7"
   }
 }

@@ -31,3 +31,14 @@ kendo-ui-license.txt
 
 # Personal TODOs
 TODO.md
+
+# Playwright
+/test-results
+/test-results.json
+/playwright-report
+/e2e/demo/test-results
+/e2e/demo/playwright-report
+/e2e/demo/playwright/.cache
+
+# Local Dyalog workspace (built from setup-ewc.apl, not source)
+/.local-dyalog/
