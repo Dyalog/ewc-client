@@ -92,27 +92,37 @@ const App = () => {
     // localStorage.clear();
     fetchData();
 
-    const handleBeforeUnload = () => {
-      // Attempt to send a closing message before the tab is closed
-//       console.log("kksksksksksk",webSocketRef.current)
-      if (webSocketRef.current) {
-        webSocketRef.current.send(
-          JSON.stringify({ Signal: { Name: "Close" } })
-        );
+    // Best-effort graceful close. Sends the application-level Signal:Close
+    // AND a real WebSocket Close frame so the server gets a clean teardown
+    // even when CEF rips the renderer down (Desktop mode).
+    //
+    // Lifecycle event choice: pagehide fires on real teardown (tab/window
+    // close, navigation, renderer kill) — NOT on tab switch, minimise, or
+    // visibility change. beforeunload is registered as a belt-and-braces
+    // fallback for browsers/CEF builds that don't fire pagehide cleanly.
+    const sendCloseSignal = (e) => {
+      // Skip if the page is being shelved into the back/forward cache —
+      // it may come back alive and still need the socket. (Browsers don't
+      // currently bfcache pages with open WebSockets, but be defensive.)
+      if (e && e.persisted) return;
+      const ws = webSocketRef.current;
+      if (!ws) return;
+      try {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ Signal: { Name: "Close" } }));
+          ws.close(1000, "client closing");
+        }
+      } catch (_) {
+        // teardown is best-effort; swallow errors so unload isn't blocked
       }
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", sendCloseSignal);
+    window.addEventListener("beforeunload", sendCloseSignal);
 
     return () => {
-      // Remove the event listener when the component is unmounted
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Close the WebSocket if it's still open
-      if (
-        webSocketRef.current &&
-        webSocketRef.current.readyState === WebSocket.OPEN
-      ) {
-        webSocketRef.current.close();
-      }
+      window.removeEventListener("pagehide", sendCloseSignal);
+      window.removeEventListener("beforeunload", sendCloseSignal);
+      sendCloseSignal();
     };
   }, []);
 
