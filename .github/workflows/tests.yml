@@ -1,20 +1,26 @@
 name: tests
 
 on:
-  # Run after Build and Commit Dist finishes, so the test job always
-  # follows a successful build rather than racing it. workflow_run
-  # fires once the upstream workflow completes (success or failure);
-  # the job-level `if:` below gates on success.
-  workflow_run:
-    workflows: ["Build and Commit Dist"]
-    types: [completed]
+  # Run on every push to main/next AND on pull requests. Triggering
+  # from `push` (not `workflow_run` chained off Build and Commit Dist)
+  # is what makes tests show up as a status check on the commit and
+  # in branch-protection rules — workflow_run-triggered runs are
+  # invisible to the commit-status UI. Tradeoff: tests run in
+  # parallel with the build instead of after it, but the e2e job
+  # does its own `yarn build` so it doesn't depend on the build's
+  # auto-committed dist anyway.
+  #
+  # Build and Commit Dist's auto-commit of dist/ does NOT re-trigger
+  # this workflow: GitHub's GITHUB_TOKEN protection prevents pushes
+  # made by GITHUB_TOKEN from spawning new workflow runs. The
+  # `actor != github-actions[bot]` skip below is belt-and-suspenders
+  # for the case where a future change uses a PAT instead.
+  push:
     branches: [main, next]
-  # PRs don't trigger the build workflow, so test independently here.
-  # The e2e job runs `yarn build` itself, so this is self-contained.
-  # paths-ignore skips PRs that only touch docs (mirrors the same
-  # set build-and-commit.yml uses).
-  # Note: paths-ignore doesn't apply to workflow_run — that one's
-  # filtered by [NOTEST] marker check below.
+    paths-ignore:
+      - '**.md'
+      - 'README'
+      - 'docs/**'
   pull_request:
     paths-ignore:
       - '**.md'
@@ -37,17 +43,18 @@ jobs:
       - name: Checkout for commit-message inspection
         uses: actions/checkout@v4
         with:
-          # workflow_run → SHA that triggered the build.
           # pull_request → PR's HEAD commit (not the merge commit, so
           #                                  git log -1 sees the PR's
           #                                  latest real commit).
-          ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || '' }}
+          # push        → empty string falls through to default
+          #                                  checkout = the pushed commit.
+          ref: ${{ github.event.pull_request.head.sha || '' }}
       - name: Look for [NOTEST] in commit / PR title / PR body
         id: notest
         env:
-          # Both fields are empty strings on workflow_run events; only
-          # populated on pull_request events. Always-defined here so
-          # the shell doesn't fall over.
+          # PR_TITLE/PR_BODY are populated only on pull_request events;
+          # empty strings on push. Always-defined here so the shell
+          # doesn't fall over.
           PR_TITLE: ${{ github.event.pull_request.title || '' }}
           PR_BODY: ${{ github.event.pull_request.body || '' }}
         run: |
@@ -65,22 +72,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Skip if any of:
-    #   - the check job found [NOTEST] in the latest commit message
-    #   - upstream build failed/cancelled (PR runs don't have a
-    #     workflow_run object, so they fall through to running)
+    #   - the check job found [NOTEST] in the latest commit / PR
+    #   - the push was made by github-actions[bot] (Build and Commit
+    #     Dist's auto-commit of dist/). GITHUB_TOKEN protection
+    #     should already prevent that push from triggering us, but
+    #     this is belt-and-suspenders if someone later swaps in a
+    #     PAT. PRs and direct human pushes still run normally.
     if: |
       needs.check.outputs.skip != 'true' &&
-      (github.event_name == 'pull_request' ||
-       github.event.workflow_run.conclusion == 'success')
+      github.actor != 'github-actions[bot]'
     steps:
       - name: Checkout ewc-client
         uses: actions/checkout@v4
-        with:
-          # workflow_run-triggered runs default to the default branch's
-          # checkout. Pin to the SHA that triggered the upstream build
-          # so tests exercise exactly that code. Empty string => default
-          # behavior (right thing for pull_request runs).
-          ref: ${{ github.event.workflow_run.head_sha || '' }}
 
       - name: Checkout Dyalog/ewc
         uses: actions/checkout@v4
