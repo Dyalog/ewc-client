@@ -160,10 +160,16 @@ the Dyalog/EWC backend in a Docker container with the same setup as
 
 Two ways to suppress the test workflow on a given commit/PR:
 
-- **`[NOTEST]` in commit message or PR title/body** — uppercase, mirrors
-  `[NOBUILD]` for `build-and-commit.yml`. Use for commits where
-  re-running tests adds nothing (e.g. comment-only edits in a tested
-  file, README inside a code dir).
+- **`[NOTEST]` in the latest commit message, PR title, or PR body** —
+  uppercase, mirrors `[NOBUILD]` for `build-and-commit.yml`. The
+  `check` job greps all three signals (commit message via
+  `git log -1 --pretty=%B`, PR title and body via the event payload)
+  and skips the e2e job when any of them contains the marker. Use for
+  commits where re-running tests adds nothing (e.g. comment-only edits
+  in a tested file, doc updates inside a code dir). Putting it in the
+  PR title is the convenient option since you don't need a new
+  commit — but note that *editing* a PR title alone doesn't refire
+  the workflow; you'd need any new push event to trigger the re-eval.
 - **Doc-only PRs** — `tests.yml` already skips PRs that only touch
   `**.md`, `README`, or `docs/**`, so renaming sections of this
   README or editing other docs won't burn CI minutes.

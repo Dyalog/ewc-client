@@ -22,24 +22,56 @@ on:
       - 'docs/**'
 
 jobs:
+  # Look for the [NOTEST] marker in any of: latest commit message, PR
+  # title, PR body. A separate job because GitHub doesn't expose
+  # commit messages in the `pull_request` event payload — we have to
+  # `git log` after checkout to see them. The PR title/body come from
+  # event payload fields (passed via env vars to avoid script-
+  # injection risk from inlining ${{ }} into the shell).
+  # Mirrors `[NOBUILD]` in build-and-commit.yml.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.notest.outputs.skip }}
+    steps:
+      - name: Checkout for commit-message inspection
+        uses: actions/checkout@v4
+        with:
+          # workflow_run → SHA that triggered the build.
+          # pull_request → PR's HEAD commit (not the merge commit, so
+          #                                  git log -1 sees the PR's
+          #                                  latest real commit).
+          ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || '' }}
+      - name: Look for [NOTEST] in commit / PR title / PR body
+        id: notest
+        env:
+          # Both fields are empty strings on workflow_run events; only
+          # populated on pull_request events. Always-defined here so
+          # the shell doesn't fall over.
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+        run: |
+          MSG=$(git log -1 --pretty=%B)
+          COMBINED="$MSG"$'\n'"$PR_TITLE"$'\n'"$PR_BODY"
+          if echo "$COMBINED" | grep -q '\[NOTEST\]'; then
+            echo "::notice::Found [NOTEST] in commit / PR title / PR body — skipping tests."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
   e2e:
+    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Skip if any of:
+    #   - the check job found [NOTEST] in the latest commit message
     #   - upstream build failed/cancelled (PR runs don't have a
     #     workflow_run object, so they fall through to running)
-    #   - PR title or body contains [NOTEST] (commit-level skip
-    #     marker, mirrors [NOBUILD] in build-and-commit.yml)
-    #   - the workflow_run-triggering commit message contains
-    #     [NOTEST] (the post-build chain path)
-    # contains() is case-sensitive, so the marker must be all-caps:
-    # `[NOTEST]`, not `[notest]`.
     if: |
+      needs.check.outputs.skip != 'true' &&
       (github.event_name == 'pull_request' ||
-       github.event.workflow_run.conclusion == 'success') &&
-      !contains(github.event.pull_request.title, '[NOTEST]') &&
-      !contains(github.event.pull_request.body, '[NOTEST]') &&
-      !contains(github.event.workflow_run.head_commit.message, '[NOTEST]')
+       github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Checkout ewc-client
         uses: actions/checkout@v4
