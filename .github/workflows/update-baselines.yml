@@ -1,0 +1,157 @@
+name: update visual baselines
+
+# Manual trigger: regenerate the committed visual-regression baselines
+# on the GitHub Linux runner — the SAME environment that tests.yml
+# uses for comparison. This is what makes byte-identical pixel
+# comparison possible: same Chromium build + same OS = same pixels.
+#
+# Opens a PR (rather than committing directly) so the visual changes
+# get reviewed before becoming the source of truth — important for a
+# UI library where layout shifts matter. Workflow:
+#
+#   1. Trigger: GitHub → Actions → "update visual baselines"
+#      → Run workflow → select branch
+#   2. Bot regenerates PNGs and opens a PR titled
+#      "Update visual baselines (<branch>)" against that branch
+#   3. Reviewer inspects the PR's "Files changed" tab to confirm the
+#      diffs match an intentional UI change, then merges
+#
+# DO NOT commit baselines generated on a different OS (e.g. local
+# macOS); they'll show false-positive diffs against CI even when
+# nothing real has changed.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  # `contents: write` to push the bot branch with new PNGs.
+  # `pull-requests: write` to open / update the PR itself.
+  contents: write
+  pull-requests: write
+
+# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
+# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
+# the deprecation warnings now and makes the cutover a non-event.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+        with:
+          # No explicit `ref:` — defaults to the branch selected in
+          # the workflow_dispatch "Use workflow from" dropdown
+          # (github.ref_name), which is also our PR target below.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Dyalog/ewc
+        uses: actions/checkout@v4
+        with:
+          repository: Dyalog/ewc
+          path: ewc-server
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build ewc-client
+        run: yarn build
+
+      - name: Start Dyalog EWC server (Docker)
+        # Same setup as tests.yml — see that workflow for the rationale
+        # on entrypoint script, mounts, and --network host. Identical
+        # environment is the whole point: baselines generated here will
+        # compare byte-identically against tests.yml's runs.
+        run: |
+          docker run -d --name ewc-demo --network host \
+            --entrypoint /scripts/run-server.sh \
+            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
+            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
+            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            dyalog/dyalog:latest
+
+      - name: Wait for EWC server
+        # tcp: probe (not http://…) — `wait-on` defaults to HEAD which
+        # EWC's WSS doesn't handle. See tests.yml for full notes.
+        run: npx wait-on tcp:22322 --timeout 120000
+
+      - name: Regenerate baselines
+        # Run the FULL suite (no --grep filter): visual baselines
+        # capture the post-mutation state of each spec file, so the
+        # earlier mutating tests must run first. Same shape as
+        # tests.yml — only difference is UPDATE_BASELINES=1 to
+        # overwrite committed PNGs instead of compare.
+        env:
+          BROWSER_URL: http://localhost:22322
+          UPDATE_BASELINES: '1'
+        run: npx playwright test
+
+      - name: Open PR with updated baselines
+        # Open (or update) a PR targeting the dispatched branch with
+        # the regenerated baselines. PR-based instead of direct push
+        # so the visual diffs are reviewable before becoming truth.
+        #
+        # peter-evans/create-pull-request handles:
+        #   - creating the head branch if absent, updating if present
+        #   - committing only the paths in `add-paths`
+        #   - opening or updating the PR
+        #   - cleaning up the branch after the PR is merged
+        #
+        # The bot uses GITHUB_TOKEN. One known caveat: PRs opened by
+        # GITHUB_TOKEN don't trigger downstream workflows, so
+        # tests.yml won't auto-fire on this PR. Click "Re-run all
+        # jobs" on a previous tests.yml run, or push an empty commit,
+        # to verify the new baselines actually pass tests.
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: e2e/demo/tests/baselines/screenshots/
+          # Fixed branch name per target — running this workflow twice
+          # against the same branch updates the existing PR rather
+          # than spawning duplicates.
+          branch: visual-baselines/${{ github.ref_name }}
+          base: ${{ github.ref_name }}
+          delete-branch: true
+          commit-message: "Update visual baselines (run #${{ github.run_number }})"
+          title: "Update visual baselines (${{ github.ref_name }})"
+          body: |
+            Regenerated visual-regression baselines via the **update visual baselines** workflow.
+
+            ### Review checklist
+
+            - [ ] Open the "Files changed" tab and inspect each PNG diff
+            - [ ] Confirm the visual changes match an intentional UI change
+            - [ ] If a baseline looks wrong, **close this PR and investigate** before re-running the workflow
+
+            Once merged, future `tests.yml` runs on `${{ github.ref_name }}` will compare against these baselines.
+
+            ---
+            _Generated by run #${{ github.run_number }}_
+
+      - name: Capture Dyalog container logs (post-run)
+        if: always()
+        run: docker logs ewc-demo || true
+
+      - name: Upload regenerated baselines as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: e2e/demo/tests/baselines/screenshots/
+          if-no-files-found: ignore
+          # Backup of the regenerated PNGs in case the PR step fails
+          # (e.g. token can't open PRs against this branch). The
+          # canonical artefact is the PR itself; this is the fallback
+          # for manual review and download.
+          retention-days: 7

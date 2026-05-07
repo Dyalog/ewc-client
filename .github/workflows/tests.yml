@@ -1,0 +1,195 @@
+name: tests
+
+on:
+  # Run on every push to main/next AND on pull requests. Triggering
+  # from `push` (not `workflow_run` chained off Build and Commit Dist)
+  # is what makes tests show up as a status check on the commit and
+  # in branch-protection rules — workflow_run-triggered runs are
+  # invisible to the commit-status UI. Tradeoff: tests run in
+  # parallel with the build instead of after it, but the e2e job
+  # does its own `yarn build` so it doesn't depend on the build's
+  # auto-committed dist anyway.
+  #
+  # Build and Commit Dist's auto-commit of dist/ does NOT re-trigger
+  # this workflow: GitHub's GITHUB_TOKEN protection prevents pushes
+  # made by GITHUB_TOKEN from spawning new workflow runs. The
+  # `actor != github-actions[bot]` skip below is belt-and-suspenders
+  # for the case where a future change uses a PAT instead.
+  push:
+    branches: [main, next]
+    paths-ignore:
+      - '**.md'
+      - 'README'
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'README'
+      - 'docs/**'
+
+# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
+# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
+# the deprecation warnings now and makes the cutover a non-event.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  # Look for the [NOTEST] marker in any of: latest commit message, PR
+  # title, PR body. A separate job because GitHub doesn't expose
+  # commit messages in the `pull_request` event payload — we have to
+  # `git log` after checkout to see them. The PR title/body come from
+  # event payload fields (passed via env vars to avoid script-
+  # injection risk from inlining ${{ }} into the shell).
+  # Mirrors `[NOBUILD]` in build-and-commit.yml.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.notest.outputs.skip }}
+    steps:
+      - name: Checkout for commit-message inspection
+        uses: actions/checkout@v4
+        with:
+          # pull_request → PR's HEAD commit (not the merge commit, so
+          #                                  git log -1 sees the PR's
+          #                                  latest real commit).
+          # push        → empty string falls through to default
+          #                                  checkout = the pushed commit.
+          ref: ${{ github.event.pull_request.head.sha || '' }}
+      - name: Look for [NOTEST] in commit / PR title / PR body
+        id: notest
+        env:
+          # PR_TITLE/PR_BODY are populated only on pull_request events;
+          # empty strings on push. Always-defined here so the shell
+          # doesn't fall over.
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+        run: |
+          MSG=$(git log -1 --pretty=%B)
+          COMBINED="$MSG"$'\n'"$PR_TITLE"$'\n'"$PR_BODY"
+          if echo "$COMBINED" | grep -q '\[NOTEST\]'; then
+            echo "::notice::Found [NOTEST] in commit / PR title / PR body — skipping tests."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  e2e:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Skip if any of:
+    #   - the check job found [NOTEST] in the latest commit / PR
+    #   - the push was made by github-actions[bot] (Build and Commit
+    #     Dist's auto-commit of dist/). GITHUB_TOKEN protection
+    #     should already prevent that push from triggering us, but
+    #     this is belt-and-suspenders if someone later swaps in a
+    #     PAT. PRs and direct human pushes still run normally.
+    if: |
+      needs.check.outputs.skip != 'true' &&
+      github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+
+      - name: Checkout Dyalog/ewc
+        uses: actions/checkout@v4
+        with:
+          repository: Dyalog/ewc
+          path: ewc-server
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build ewc-client
+        run: yarn build
+
+      - name: Start Dyalog EWC server (Docker)
+        run: |
+          # Mirror the local invocation:
+          #   pipe link.create + EWC.FOLDER + demo.Run into dyalog,
+          #   then `sleep infinity` to keep stdin open so demo.Run's
+          #   wait loop stays active and the EWC Timer keeps firing.
+          # See ci/run-server.sh — it also sets up the env
+          # vars (DYALOG, LD_LIBRARY_PATH, SESSION_FILE) that the
+          # image's default /entrypoint normally provides.
+          #
+          # --network host (Linux runners only) lets Playwright reach
+          # :22322 directly without port-mapping ceremony.
+          docker run -d --name ewc-demo --network host \
+            --entrypoint /scripts/run-server.sh \
+            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
+            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
+            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            dyalog/dyalog:latest
+
+      - name: Diagnostics — what's running before wait-on
+        # Run unconditionally so we see the state before `wait-on` has
+        # a chance to hang the job. If Dyalog didn't start (script
+        # error, link.create failure, etc.) the cause is visible in
+        # seconds instead of after a 2-min timeout.
+        run: |
+          sleep 5
+          echo '=== Listening ports ==='
+          (ss -tln 2>/dev/null || netstat -tln) | head -30 || true
+          echo
+          echo '=== Docker container status ==='
+          docker ps -a --filter name=ewc-demo || true
+          echo
+          echo '=== Dyalog container logs ==='
+          docker logs ewc-demo 2>&1 | tail -80 || true
+
+      - name: Wait for EWC server
+        # EWC's WSS serves both the React client (HTTP at /) and the
+        # WebSocket on the same port. We deliberately don't run Vite
+        # preview — in production mode the bundled JS uses
+        # window.location.origin to derive the WS URL, so loading
+        # localhost:5173 would have it dial ws://localhost:5173/ and
+        # silently fail. Loading localhost:22322 makes the WS upgrade
+        # land on EWC, same origin.
+        #
+        # Probe via tcp: only — `wait-on http://…` defaults to HEAD
+        # requests, and EWC's WSS only handles GET (it logs
+        # "Unhandled HTTP method: HEAD" and never responds). TCP-
+        # listening proof is sufficient; Playwright issues a real
+        # GET when it loads the page.
+        run: npx wait-on tcp:22322 --timeout 120000
+
+      - name: Run Playwright tests
+        # Run Playwright natively on the Linux runner — same env that
+        # update-baselines.yml uses to *generate* visual baselines, so
+        # comparison is byte-identical and the tight maxDiffPixels: 100
+        # threshold (in playwright.config.ts) catches real layout
+        # regressions without tripping on rendering jitter.
+        #
+        # We don't wrap Playwright in Microsoft's Docker image here:
+        # its headless-shell variant mishandles certain keyboard-event
+        # dispatches (Alt+Arrow, character search) in the combo specs.
+        # Native runner Playwright avoids that issue. The image is
+        # only used by `yarn demotests:visual` for local previews.
+        env:
+          BROWSER_URL: http://localhost:22322
+        run: npx playwright test
+
+      - name: Capture Dyalog container logs (post-run)
+        if: always()
+        run: docker logs ewc-demo || true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          # Default retention is 90 days; we don't need that long
+          # for run-by-run reports — old failures get fixed within
+          # days, and storage adds up quickly with 100+ tests/run.
+          retention-days: 7
