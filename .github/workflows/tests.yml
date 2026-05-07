@@ -11,17 +11,35 @@ on:
     branches: [main, next]
   # PRs don't trigger the build workflow, so test independently here.
   # The e2e job runs `yarn build` itself, so this is self-contained.
+  # paths-ignore skips PRs that only touch docs (mirrors the same
+  # set build-and-commit.yml uses).
+  # Note: paths-ignore doesn't apply to workflow_run — that one's
+  # filtered by [NOTEST] marker check below.
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'README'
+      - 'docs/**'
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Skip if the upstream build failed or was cancelled. PRs never
-    # have a workflow_run object, so they fall through to running.
+    # Skip if any of:
+    #   - upstream build failed/cancelled (PR runs don't have a
+    #     workflow_run object, so they fall through to running)
+    #   - PR title or body contains [NOTEST] (commit-level skip
+    #     marker, mirrors [NOBUILD] in build-and-commit.yml)
+    #   - the workflow_run-triggering commit message contains
+    #     [NOTEST] (the post-build chain path)
+    # contains() is case-sensitive, so the marker must be all-caps:
+    # `[NOTEST]`, not `[notest]`.
     if: |
-      github.event_name == 'pull_request' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event_name == 'pull_request' ||
+       github.event.workflow_run.conclusion == 'success') &&
+      !contains(github.event.pull_request.title, '[NOTEST]') &&
+      !contains(github.event.pull_request.body, '[NOTEST]') &&
+      !contains(github.event.workflow_run.head_commit.message, '[NOTEST]')
     steps:
       - name: Checkout ewc-client
         uses: actions/checkout@v4
@@ -130,3 +148,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: ignore
+          # Default retention is 90 days; we don't need that long
+          # for run-by-run reports — old failures get fixed within
+          # days, and storage adds up quickly with 100+ tests/run.
+          retention-days: 7

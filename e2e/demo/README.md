@@ -132,8 +132,11 @@ To regenerate baselines after an intentional UI change:
 
 1. Push your change to a branch.
 2. GitHub → **Actions** → **update visual baselines** → **Run workflow** → select your branch.
-3. The bot regenerates baselines on the runner and commits them back.
-4. The next `tests.yml` run on your branch sees byte-identical pixels and passes.
+3. The bot regenerates baselines on the runner and **opens a PR** against your branch with the new PNGs.
+4. Review the diffs in the PR's "Files changed" tab — confirm the visual changes match the UI change you intended, then merge.
+5. After merge, the next `tests.yml` run on your branch sees byte-identical pixels and passes.
+
+Re-running the workflow against the same branch updates the existing PR rather than opening a new one. After the PR merges, the bot's branch is auto-deleted.
 
 The local `yarn demotests:visual{,:update}` scripts are for *previewing* — what
 does my UI change look like on Linux Chromium? — not for committing canonical
@@ -147,11 +150,27 @@ Three workflows live in `.github/workflows/`:
 |---|---|---|
 | `build-and-commit.yml` | push | Builds and commits `dist/` |
 | `tests.yml` | after build, also on PR | Runs Playwright against `:22322` (EWC-served browser mode) |
-| `update-baselines.yml` | manual (`workflow_dispatch`) | Regenerates visual baselines on the runner; commits back |
+| `update-baselines.yml` | manual (`workflow_dispatch`) | Regenerates visual baselines on the runner; opens a PR for review |
 
 `tests.yml` and `update-baselines.yml` both use `ci/run-server.sh` to bring up
 the Dyalog/EWC backend in a Docker container with the same setup as
 `yarn ewc-server:start` does locally.
+
+### Skipping `tests.yml`
+
+Two ways to suppress the test workflow on a given commit/PR:
+
+- **`[NOTEST]` in commit message or PR title/body** — uppercase, mirrors
+  `[NOBUILD]` for `build-and-commit.yml`. Use for commits where
+  re-running tests adds nothing (e.g. comment-only edits in a tested
+  file, README inside a code dir).
+- **Doc-only PRs** — `tests.yml` already skips PRs that only touch
+  `**.md`, `README`, or `docs/**`, so renaming sections of this
+  README or editing other docs won't burn CI minutes.
+
+For the absolute nuke, GitHub's native `[skip ci]` / `[ci skip]` /
+`[no ci]` markers in a commit message suppress *all* workflows
+(including `build-and-commit.yml`).
 
 ## Troubleshooting
 
