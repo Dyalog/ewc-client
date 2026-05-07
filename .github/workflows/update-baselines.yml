@@ -56,6 +56,10 @@ jobs:
         run: yarn build
 
       - name: Start Dyalog EWC server (Docker)
+        # Same setup as tests.yml — see that workflow for the rationale
+        # on entrypoint script, mounts, and --network host. Identical
+        # environment is the whole point: baselines generated here will
+        # compare byte-identically against tests.yml's runs.
         run: |
           docker run -d --name ewc-server --network host \
             --entrypoint /scripts/run-server.sh \
@@ -65,6 +69,8 @@ jobs:
             dyalog/dyalog:latest
 
       - name: Wait for EWC server
+        # tcp: probe (not http://…) — `wait-on` defaults to HEAD which
+        # EWC's WSS doesn't handle. See tests.yml for full notes.
         run: npx wait-on tcp:22322 --timeout 120000
 
       - name: Regenerate baselines
@@ -79,6 +85,10 @@ jobs:
         run: npx playwright test
 
       - name: Commit and push new baselines
+        # Auto-commit the regenerated PNGs back to the triggering
+        # branch. `git diff --cached --quiet` returns non-zero if
+        # there's anything staged — only commit + push if there are
+        # actual changes, otherwise just log it.
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'

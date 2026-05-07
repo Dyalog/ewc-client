@@ -104,17 +104,17 @@ jobs:
         run: npx wait-on tcp:22322 --timeout 120000
 
       - name: Run Playwright tests
-        # Run Playwright natively on the Linux runner. The runner's
-        # `npx playwright install` and Microsoft's official Docker
-        # image (used for local visual-regression via
-        # `yarn demotests:visual:update`) install the SAME Chromium
-        # build for a given Playwright version, so visual baselines
-        # generated either way render to nearly-identical pixels. Any
-        # small per-environment delta is absorbed by the
-        # maxDiffPixels: 1500 tolerance in playwright.config.ts.
-        # We use the runner natively (not the Docker image) here
-        # because the image's headless shell mishandles some
-        # keyboard-event dispatch in our combo tests.
+        # Run Playwright natively on the Linux runner — same env that
+        # update-baselines.yml uses to *generate* visual baselines, so
+        # comparison is byte-identical and the tight maxDiffPixels: 100
+        # threshold (in playwright.config.ts) catches real layout
+        # regressions without tripping on rendering jitter.
+        #
+        # We don't wrap Playwright in Microsoft's Docker image here:
+        # its headless-shell variant mishandles certain keyboard-event
+        # dispatches (Alt+Arrow, character search) in the combo specs.
+        # Native runner Playwright avoids that issue. The image is
+        # only used by `yarn demotests:visual` for local previews.
         env:
           BROWSER_URL: http://localhost:22322
         run: npx playwright test
