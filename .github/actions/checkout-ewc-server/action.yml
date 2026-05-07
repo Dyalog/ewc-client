@@ -21,9 +21,11 @@ inputs:
     default: ''
   pr-body:
     description: |
-      The PR body to scan for an `EWC-REF: <branch>` marker. Pass
-      `${{ github.event.pull_request.body || '' }}` from the caller —
-      empty on non-PR events, which short-circuits the marker check.
+      The PR body to scan for an `EWC-REF: <branch>` marker. The
+      caller passes the github.event.pull_request.body context with
+      an empty-string fallback for non-PR events, which short-circuits
+      the marker check. (Literal expression syntax omitted here — GitHub
+      Actions evaluates expressions inside description fields.)
     required: false
     default: ''
   branch:
@@ -51,9 +53,9 @@ runs:
       id: resolve
       shell: bash
       # Pass attacker-controlled values (pr-body, branch) via env vars
-      # rather than inlining ${{ }} into the shell. Same precaution as
-      # tests.yml's [NOTEST] check — a `;rm -rf` in a PR body must not
-      # become a command.
+      # rather than inlining workflow expressions into the shell. Same
+      # precaution as tests.yml's [NOTEST] check — a `;rm -rf` in a PR
+      # body must not become a command.
       env:
         EXPLICIT_REF: ${{ inputs.ref }}
         PR_BODY: ${{ inputs.pr-body }}
