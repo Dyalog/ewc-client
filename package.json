@@ -17,7 +17,13 @@
     "demotests:browser:basic": "BROWSER_URL=http://localhost:5173 playwright test e2e/demo/tests/basic",
     "demotests:report": "playwright show-report",
     "demotests:record": "playwright codegen http://localhost:5173",
-    "demotests:record:desktop": "playwright codegen --connect-over-cdp=http://localhost:8080"
+    "demotests:record:desktop": "playwright codegen --connect-over-cdp=http://localhost:8080",
+    "demotests:visual": "docker run --rm --add-host=host.docker.internal:host-gateway -v \"$PWD\":/work -w /work -e BROWSER_URL=http://host.docker.internal:22322 mcr.microsoft.com/playwright:v1.59.1-noble npx playwright test",
+    "demotests:visual:update": "docker run --rm --add-host=host.docker.internal:host-gateway -v \"$PWD\":/work -w /work -e BROWSER_URL=http://host.docker.internal:22322 -e UPDATE_BASELINES=1 mcr.microsoft.com/playwright:v1.59.1-noble npx playwright test",
+    "ewc-server:start": "bash ci/ewc-server-start.sh",
+    "ewc-server:stop": "docker rm -f dyalog-server",
+    "ewc-server:logs": "docker logs -f dyalog-server",
+    "ewc-server:restart": "yarn ewc-server:start"
   },
   "dependencies": {
     "apexcharts": "^5.3.6",

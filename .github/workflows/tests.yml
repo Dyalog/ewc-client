@@ -58,7 +58,7 @@ jobs:
           #   pipe link.create + EWC.FOLDER + demo.Run into dyalog,
           #   then `sleep infinity` to keep stdin open so demo.Run's
           #   wait loop stays active and the EWC Timer keeps firing.
-          # See e2e/demo/ci/run-server.sh — it also sets up the env
+          # See ci/run-server.sh — it also sets up the env
           # vars (DYALOG, LD_LIBRARY_PATH, SESSION_FILE) that the
           # image's default /entrypoint normally provides.
           #
@@ -68,7 +68,7 @@ jobs:
             --entrypoint /scripts/run-server.sh \
             -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
             -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
-            -v "${{ github.workspace }}/e2e/demo/ci:/scripts:ro" \
+            -v "${{ github.workspace }}/ci:/scripts:ro" \
             dyalog/dyalog:latest
 
       - name: Diagnostics — what's running before wait-on
@@ -104,11 +104,17 @@ jobs:
         run: npx wait-on tcp:22322 --timeout 120000
 
       - name: Run Playwright tests
-        # Invoke Playwright directly rather than via a yarn script —
-        # the package.json `demotests:*` scripts all bake in
-        # BROWSER_URL=http://localhost:5173 (the local-dev URL via
-        # Vite). In CI, EWC's WSS serves both the React client and
-        # the WebSocket on :22322, so we override here.
+        # Run Playwright natively on the Linux runner. The runner's
+        # `npx playwright install` and Microsoft's official Docker
+        # image (used for local visual-regression via
+        # `yarn demotests:visual:update`) install the SAME Chromium
+        # build for a given Playwright version, so visual baselines
+        # generated either way render to nearly-identical pixels. Any
+        # small per-environment delta is absorbed by the
+        # maxDiffPixels: 1500 tolerance in playwright.config.ts.
+        # We use the runner natively (not the Docker image) here
+        # because the image's headless shell mishandles some
+        # keyboard-event dispatch in our combo tests.
         env:
           BROWSER_URL: http://localhost:22322
         run: npx playwright test
