@@ -114,7 +114,7 @@ jobs:
           #
           # --network host (Linux runners only) lets Playwright reach
           # :22322 directly without port-mapping ceremony.
-          docker run -d --name ewc-server --network host \
+          docker run -d --name ewc-demo --network host \
             --entrypoint /scripts/run-server.sh \
             -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
             -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
@@ -132,10 +132,10 @@ jobs:
           (ss -tln 2>/dev/null || netstat -tln) | head -30 || true
           echo
           echo '=== Docker container status ==='
-          docker ps -a --filter name=ewc-server || true
+          docker ps -a --filter name=ewc-demo || true
           echo
           echo '=== Dyalog container logs ==='
-          docker logs ewc-server 2>&1 | tail -80 || true
+          docker logs ewc-demo 2>&1 | tail -80 || true
 
       - name: Wait for EWC server
         # EWC's WSS serves both the React client (HTTP at /) and the
@@ -171,7 +171,7 @@ jobs:
 
       - name: Capture Dyalog container logs (post-run)
         if: always()
-        run: docker logs ewc-server || true
+        run: docker logs ewc-demo || true
 
       - name: Upload Playwright report
         if: always()

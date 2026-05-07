@@ -26,16 +26,17 @@ CI exclusively uses Browser, EWC-served (no Vite — production-style).
 
 ## Quick start
 
-Local dev against the dyalog-server Docker container:
+Local dev against the ewc-demo Docker container:
 
 ```bash
 yarn install
 yarn build                              # build dist/ so EWC serves your changes
-yarn ewc-server:start                   # start Docker dyalog with EWC on :22322
-BROWSER_URL=http://localhost:22322 \
-  npx playwright test e2e/demo/tests/basic/buttons.spec.ts
-yarn ewc-server:stop                    # when done
+yarn ewc-demo:start                   # start Docker dyalog with EWC on :22322
+BROWSER_URL=http://localhost:22322 npx playwright test
+yarn ewc-demo:stop                    # when done
 ```
+
+NOTE: Visual regressions are baselined for linux so they may fail on other Operating systems
 
 Local dev against your own Dyalog APL session + Vite (hot-reload-friendly):
 
@@ -77,42 +78,14 @@ yarn demotests:browser                  # baked-in BROWSER_URL=http://localhost:
 
 | Command | What it does |
 |---|---|
-| `yarn ewc-server:start` | Start `dyalog-server` Docker container; block until `:22322` answers HTTP |
-| `yarn ewc-server:stop` | `docker rm -f dyalog-server` |
-| `yarn ewc-server:logs` | `docker logs -f dyalog-server` |
-| `yarn ewc-server:restart` | Idempotent: same as `:start`, always replaces a running container |
+| `yarn ewc-demo:start` | Start `ewc-demo` Docker container; block until `:22322` answers HTTP |
+| `yarn ewc-demo:stop` | `docker rm -f ewc-demo` |
+| `yarn ewc-demo:logs` | `docker logs -f ewc-demo` |
+| `yarn ewc-demo:restart` | Idempotent: same as `:start`, always replaces a running container |
 
-The start script (`ci/ewc-server-start.sh`) also exposes RIDE on `:4502`, so
+The start script (`ci/ewc-demo-start.sh`) also exposes RIDE on `:4502`, so
 you can attach a RIDE client to the running interpreter for live APL
 inspection while tests run.
-
-## Test layout
-
-```
-e2e/demo/
-├── tests/
-│   ├── basic/                          # the test specs (~111 tests)
-│   │   ├── buttons.spec.ts
-│   │   ├── combo.spec.ts
-│   │   ├── nugrid*.spec.ts             # NuGrid suite
-│   │   ├── pictures.spec.ts
-│   │   ├── pie.spec.ts
-│   │   ├── rect.spec.ts
-│   │   ├── stdcolors.spec.ts
-│   │   ├── subform-{edit,combo,grid,nested}.spec.ts
-│   │   └── textsize.spec.ts
-│   ├── helpers/                        # connection + navigation utilities
-│   │   ├── cdp-helper.ts               # browser launch + page-find logic
-│   │   ├── navigation.ts               # demo selection from the menu combobox
-│   │   ├── screenshot.ts
-│   │   ├── wait-helpers.ts
-│   │   └── error-collector.ts
-│   └── baselines/screenshots/          # visual-regression PNGs (CI-managed)
-└── README.md                           # this file
-```
-
-CI infrastructure (Docker entrypoints, APL setup script, server lifecycle)
-lives at the repo root in `ci/`, not under `tests/`.
 
 ## Visual regression
 
@@ -154,7 +127,7 @@ Three workflows live in `.github/workflows/`:
 
 `tests.yml` and `update-baselines.yml` both use `ci/run-server.sh` to bring up
 the Dyalog/EWC backend in a Docker container with the same setup as
-`yarn ewc-server:start` does locally.
+`yarn ewc-demo:start` does locally.
 
 ### Skipping `tests.yml`
 
@@ -177,31 +150,3 @@ Two ways to suppress the test workflow on a given commit/PR:
 For the absolute nuke, GitHub's native `[skip ci]` / `[ci skip]` /
 `[no ci]` markers in a commit message suppress *all* workflows
 (including `build-and-commit.yml`).
-
-## Troubleshooting
-
-| Symptom | Likely cause / fix |
-|---|---|
-| `EWC server did not come up within 60 seconds` | `run-server.sh` errored. Check `yarn ewc-server:logs`. |
-| `Unable to create more than 100 sessions` (in dyalog logs) | Container's been running through too many test runs. `yarn ewc-server:restart`. |
-| `wait-on tcp:22322` hangs | Dyalog container is up but `:22322` not bound — usually a `]link.create` failure. Inspect `docker logs dyalog-server`. |
-| Tests show "waiting for `[role="combobox"]`" timeout | Browser connected but EWC didn't push the demo menu. Container session limit, demo.Run wait-loop hung, or stale APL state — restart the container. |
-| Visual tests fail with ~1% pixel diff | Baselines were generated in a different environment than CI. Regenerate via the **update visual baselines** workflow. |
-| `dist/` warning on server start | EWC will fall back to the bundled client inside the ewc repo. Run `yarn build` first so it serves your local React changes. |
-
-## Available demos
-
-From `../ewc/demo/DEMOS.apla`:
-
-- **Basic**: Boxes, Buttons, Combo, Fonts, Grids, ListView, MsgBox, Password, Pictures, Pie, Poly, Rect, Rotate, Scroll, Splitters, StdColors, Tabs, TextSize, TimerLines, TreeView
-- **SubForm**: SubFormEdit, SubFormCombo, SubFormGrid, SubFormNested
-- **Extras**: RibbonTabs
-- **Charts**: ApexCandleStick, ApexHorizontalBar, ApexMovAvg, ApexSineWave
-- **Flex**: FlexLogin
-
-## References
-
-- [Playwright `chromium.launch`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch)
-- [Playwright visual comparisons](https://playwright.dev/docs/test-snapshots)
-- [Playwright `workflow_dispatch` for visual baselines](https://playwright.dev/docs/ci-intro#testing-visual-changes)
-

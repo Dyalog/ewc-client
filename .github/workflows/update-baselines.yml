@@ -68,7 +68,7 @@ jobs:
         # environment is the whole point: baselines generated here will
         # compare byte-identically against tests.yml's runs.
         run: |
-          docker run -d --name ewc-server --network host \
+          docker run -d --name ewc-demo --network host \
             --entrypoint /scripts/run-server.sh \
             -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
             -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
@@ -135,7 +135,7 @@ jobs:
 
       - name: Capture Dyalog container logs (post-run)
         if: always()
-        run: docker logs ewc-server || true
+        run: docker logs ewc-demo || true
 
       - name: Upload regenerated baselines as artifact
         if: always()
