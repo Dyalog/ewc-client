@@ -1,0 +1,107 @@
+name: Checkout Dyalog/ewc
+description: |
+  Check out Dyalog/ewc with branch resolution. Order of precedence:
+    1. `ref` input — explicit override (used by update-baselines.yml's
+       workflow_dispatch input).
+    2. `EWC-REF: <branch>` line in `pr-body` — PR-author override.
+    3. `branch` input — same-name branch on Dyalog/ewc as the calling
+       workflow's branch (the common case for paired cross-repo work).
+    4. `main` — fallback when none of the above resolves to a real
+       branch on Dyalog/ewc.
+  The probe uses `git ls-remote` so an unresolvable candidate falls
+  through silently with a `::notice::` rather than failing the job.
+
+inputs:
+  ref:
+    description: |
+      Explicit ewc-server ref. When set, skips all auto-detection and
+      uses this verbatim (still falls back to main if the ref doesn't
+      exist on Dyalog/ewc, so a typo doesn't blow up the job).
+    required: false
+    default: ''
+  pr-body:
+    description: |
+      The PR body to scan for an `EWC-REF: <branch>` marker. The
+      caller passes the github.event.pull_request.body context with
+      an empty-string fallback for non-PR events, which short-circuits
+      the marker check. (Literal expression syntax omitted here — GitHub
+      Actions evaluates expressions inside description fields.)
+    required: false
+    default: ''
+  branch:
+    description: |
+      The calling workflow's branch — used as the same-name candidate.
+      For PRs pass `github.head_ref`; for push / workflow_dispatch pass
+      `github.ref_name`. The caller knows the context so we don't try
+      to second-guess it here.
+    required: false
+    default: ''
+  path:
+    description: Workspace path to check the repository into.
+    required: false
+    default: ewc-server
+
+outputs:
+  ref:
+    description: The ref that was actually checked out (post-fallback).
+    value: ${{ steps.resolve.outputs.ref }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve ewc-server ref
+      id: resolve
+      shell: bash
+      # Pass attacker-controlled values (pr-body, branch) via env vars
+      # rather than inlining workflow expressions into the shell. Same
+      # precaution as tests.yml's [NOTEST] check — a `;rm -rf` in a PR
+      # body must not become a command.
+      env:
+        EXPLICIT_REF: ${{ inputs.ref }}
+        PR_BODY: ${{ inputs.pr-body }}
+        BRANCH: ${{ inputs.branch }}
+      run: |
+        set -euo pipefail
+
+        # Restrict the marker regex to git-branch-name-safe chars.
+        # `git check-ref-format` allows more, but this set covers
+        # everything we'd realistically use and rejects shell metachars
+        # so the candidate is safe to pass to `git ls-remote` and
+        # `actions/checkout` even if those tools ever changed how they
+        # treat their args.
+        SAFE='[A-Za-z0-9._/-]+'
+
+        CANDIDATE=""
+        SOURCE=""
+        if [[ -n "$EXPLICIT_REF" ]]; then
+          CANDIDATE="$EXPLICIT_REF"
+          SOURCE="explicit input"
+        elif MARKER=$(printf '%s' "$PR_BODY" | grep -oE "^EWC-REF:[[:space:]]*$SAFE" | head -1); then
+          CANDIDATE=$(printf '%s' "$MARKER" | sed -E 's/^EWC-REF:[[:space:]]*//')
+          SOURCE="EWC-REF marker in PR body"
+        elif [[ -n "$BRANCH" ]]; then
+          CANDIDATE="$BRANCH"
+          SOURCE="branch-name match"
+        fi
+
+        if [[ -n "$CANDIDATE" ]]; then
+          echo "Candidate ewc-server ref: '$CANDIDATE' (source: $SOURCE)"
+          # `--exit-code` makes ls-remote return 2 when the ref is
+          # absent and 0 when present. Anything else is a transient or
+          # auth failure — we still fall back to main, but log loudly
+          # so a real outage isn't silently masked by the fallback.
+          if git ls-remote --exit-code --heads https://github.com/Dyalog/ewc "$CANDIDATE" >/dev/null 2>&1; then
+            echo "ref=$CANDIDATE" >> "$GITHUB_OUTPUT"
+            echo "::notice::Using Dyalog/ewc@$CANDIDATE ($SOURCE)"
+            exit 0
+          fi
+          echo "::notice::Dyalog/ewc has no branch '$CANDIDATE' ($SOURCE) — falling back to main"
+        fi
+        echo "ref=main" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout Dyalog/ewc
+      uses: actions/checkout@v4
+      with:
+        repository: Dyalog/ewc
+        ref: ${{ steps.resolve.outputs.ref }}
+        path: ${{ inputs.path }}
