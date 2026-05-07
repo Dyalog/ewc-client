@@ -22,6 +22,14 @@ name: update visual baselines
 
 on:
   workflow_dispatch:
+    inputs:
+      ewc_server_ref:
+        description: |
+          Dyalog/ewc branch to build against. Leave blank to use the
+          same branch name as the dispatched ewc-client branch (falls
+          back to main if that branch doesn't exist on Dyalog/ewc).
+        required: false
+        default: ''
 
 permissions:
   # `contents: write` to push the bot branch with new PNGs.
@@ -49,10 +57,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Dyalog/ewc
-        uses: actions/checkout@v4
+        # The dispatched-branch's same-name branch on Dyalog/ewc is the
+        # default; the workflow_dispatch input above lets a maintainer
+        # pin a different ref when regenerating baselines for paired
+        # cross-repo work. See .github/actions/checkout-ewc-server.
+        uses: ./.github/actions/checkout-ewc-server
         with:
-          repository: Dyalog/ewc
-          path: ewc-server
+          ref: ${{ inputs.ewc_server_ref }}
+          branch: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
