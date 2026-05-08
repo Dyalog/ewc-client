@@ -87,7 +87,9 @@ const SelectComponent = ({
     return (
       <div
         style={
-          location == 'inGrid'
+          location == 'inNuGrid'
+            ? { display: 'flex', flex: 1, width: '100%', height: '100%' }
+            : location == 'inGrid'
             ? {
                 display: 'flex',
                 justifyContent:
