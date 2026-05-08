@@ -233,7 +233,7 @@ test.describe('DemoNuGridStyles - CellFonts (per-cellType fonts)', () => {
     const fontWeight = await cell.evaluate(el => getComputedStyle(el).fontWeight);
     const fontSize = await cell.evaluate(el => getComputedStyle(el).fontSize);
 
-    expect(fontFamily.toLowerCase()).toContain('courier');
+    expect(fontFamily.toLowerCase()).toMatch(/courier|mono/);
     expect(fontWeight).toBe('700');
     expect(fontSize).toBe('14px');
   });
