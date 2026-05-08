@@ -899,7 +899,8 @@ const App = () => {
                   })
                 );
               } else if (Type == "Combo") {
-                const { SelItems, Items, Text } = Properties;
+                const { SelItems, Text } = Properties;
+                const Items = Properties.Items || [];
                 const supportedProperties = ["Text", "SelItems", "Posn", "Size"];
 
                 const result = checkSupportedProperties(
@@ -1444,11 +1445,23 @@ const App = () => {
                 }));
               }
             } catch (e) {
-              // There should be a proper error response here, but for now, we just log.
-              // This is because we know something failed, but APL doesn't and
-              // just waits 3s to mark the WG as failed.
+              // Without a response, APL waits 3s and then signals VALUE ERROR
+              // on the caller (e.g. CBRunDemo[27] sel←(⊃args)eWG'SelItems').
+              // Send an error back so the wait short-circuits and the APL
+              // side gets a real signalable error instead of a hang.
               console.error("WG Error: ", e);
-              // wsSend({...});
+              try {
+                webSocket.send(JSON.stringify({
+                  WG: {
+                    ID: evData.WG?.ID,
+                    Error: {
+                      Code: 2,
+                      Message: `WG handler threw: ${e?.message || String(e)}`,
+                      WGID: evData.WG?.WGID,
+                    },
+                  },
+                }));
+              } catch {}
             }
           }
           // Retry on WG - if it's not in the page, wait for next render
