@@ -50,12 +50,9 @@ test.describe('DemoNuGridScroll - Structure', () => {
   test('initial cell values show row/col format', async () => {
     const cells = page.locator('.nugrid-cell');
 
-    // First cell should contain "1/1", last cell "10/10"
-    const firstInput = cells.nth(0).locator('input');
-    const lastInput = cells.nth(99).locator('input');
-
-    await expect(firstInput).toHaveValue('1/1');
-    await expect(lastInput).toHaveValue('10/10');
+    // Only the selected cell renders an <input>; other cells display the value as static text.
+    await expect(cells.nth(0).locator('input')).toHaveValue('1/1');
+    await expect(cells.nth(99)).toContainText('10/10');
   });
 
   test('scrollbars are hidden (external controls manage scrolling)', async () => {
@@ -222,9 +219,10 @@ test.describe('DemoNuGridScroll - Virtual Scrolling', () => {
     // After scrolling down from initial position, first row should be > Row 1
     expect(firstRowText).not.toBe('Row 1');
 
-    // Cell values should be consistent with row/col headers
-    const firstCellInput = cells.nth(0).locator('input');
-    const cellValue = await firstCellInput.inputValue();
+    // Cell values should be consistent with row/col headers.
+    // Selection is at bottom-right after Control+End + ArrowDowns, so cell 0
+    // (top-left) is not selected and renders its value as static text, not an <input>.
+    const cellValue = (await cells.nth(0).textContent())?.trim() ?? '';
     // Value format is "row/col" where row matches the current window offset
     expect(cellValue).toMatch(/^\d+\/\d+$/);
   });
