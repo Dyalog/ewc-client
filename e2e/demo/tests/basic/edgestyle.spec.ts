@@ -143,4 +143,13 @@ test.describe('DemoEdgeStyle', () => {
       expect(style).toContain('solid');
     });
   }
+
+  // ─── Visual regression ─────────────────────────────────────────────
+  // Baseline captured on Linux (Playwright Docker image). Mac runs will
+  // produce ~1% font-rendering noise; update via demotests:visual:update.
+  test('visual regression - edgestyle demo', async () => {
+    await expect(page).toHaveScreenshot('edgestyle-demo.png', {
+      maxDiffPixels: 100,
+    });
+  });
 });
