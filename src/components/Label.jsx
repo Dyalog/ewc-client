@@ -1,5 +1,5 @@
 import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
-import { getEdgeStyleBorder } from "../styles/edgeStyles";
+import { getBorderStyles } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
 
@@ -81,10 +81,7 @@ const Label = ({ data, gridValue }) => {
       style={{
         ...styles,
         display: Visible == 0 ? "none" : "block",
-        ...(EdgeStyle
-          ? getEdgeStyleBorder(EdgeStyle)
-          : { border: Border == 0 ? "none" : "1px solid #6A6A6A" }
-        ),
+        ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
         ...customStyles
       }}
       onMouseDown={(e) => {
