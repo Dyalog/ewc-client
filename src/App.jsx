@@ -1595,6 +1595,27 @@ const App = () => {
                   Info,
                 })
               );
+              // NuGrid reads CurCell from the data tree (Properties.CurCell),
+              // not from localStorage. Update the tree so the grid actually
+              // moves when the server NQ's a CellMove (e.g. a KeyPress
+              // handler that decides to advance the cursor).
+              handleData(
+                {
+                  ID,
+                  Properties: {
+                    ...(existingData?.Properties || {}),
+                    CurCell: [Info[0], Info[1]],
+                  },
+                },
+                "WS"
+              );
+              // Echo back since NoCallback=0 means the server expects
+              // confirmation. Matches the convention in the trailing else.
+              nqCallback({
+                EventName: "CellMove",
+                ID,
+                Info,
+              });
             } else if (Event == "Select") {
               const element = document.getElementById(nqEvent.ID);
               if (element) element.click();
