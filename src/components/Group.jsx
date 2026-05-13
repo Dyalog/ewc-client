@@ -15,7 +15,7 @@ import {
   handleMouseDown,
   handleMouseUp,
 } from "../utils";
-import { getEdgeStyleBorder } from "../styles/edgeStyles";
+import { getBorderStyles } from "../styles/edgeStyles";
 import SelectComponent from "./SelectComponent";
 import { useAppData, useResizeObserver } from "../hooks";
 
@@ -105,10 +105,7 @@ const Group = ({ data }) => {
         ...styles,
         width,
         height,
-        ...(EdgeStyle
-          ? getEdgeStyleBorder(EdgeStyle)
-          : { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
-        ),
+        ...getBorderStyles(EdgeStyle, Border),
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,

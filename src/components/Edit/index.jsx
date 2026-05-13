@@ -17,7 +17,7 @@ import {
   handleMouseDoubleClick,
   getFontStyles,
 } from "../../utils";
-import { getEdgeStyleBorder } from "../../styles/edgeStyles";
+import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import dayjs from "dayjs";
@@ -787,9 +787,7 @@ const Edit = ({
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
 
-          ...(EdgeStyle
-            ? getEdgeStyleBorder(EdgeStyle)
-            : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+          ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
           textAlign: "right",
           verticalAlign: "text-top",
           paddingBottom: "6px",
@@ -862,9 +860,7 @@ const Edit = ({
         zIndex: 1,
         display: Visible == 0 ? "none" : "block",
         paddingLeft: "5px",
-        ...(EdgeStyle
-          ? getEdgeStyleBorder(EdgeStyle)
-          : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+        ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
         ...(Active === 0 ? {
           backgroundColor: "field",
           color: "#838383",
