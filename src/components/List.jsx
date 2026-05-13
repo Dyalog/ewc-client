@@ -11,7 +11,7 @@ import {
   parseFlexStyles,
   setStyle,
 } from "../utils";
-import { getEdgeStyleBorder } from "../styles/edgeStyles";
+import { getBorderStyles } from "../styles/edgeStyles";
 import { useEffect, useRef, useState } from "react";
 import { useAppData, useResizeObserver } from "../hooks";
 
@@ -257,11 +257,13 @@ const List = ({ data }) => {
       style={{
         ...styles,
         ...width,
-        ...(EdgeStyle
-          ? getEdgeStyleBorder(EdgeStyle)
-          : Border !== undefined
-            ? { border: Border == 0 ? "none" : "1px solid #E9E9E9" }
-            : { border: "1px solid " + (isFocused ? "black" : "darkgrey") }
+        // When neither Border nor EdgeStyle is set, List uses a focus-aware
+        // default (black when focused, darkgrey otherwise). EdgeStyle='None'
+        // is treated as absent (per the APL semantic that 'None' means "no
+        // edge styling"), so it doesn't suppress the focus default on its own.
+        ...((EdgeStyle && EdgeStyle !== "None") || Border !== undefined
+          ? getBorderStyles(EdgeStyle, Border)
+          : { border: "1px solid " + (isFocused ? "black" : "darkgrey") }
         ),
         display: Visible === 0 ? "none" : "block",
       }}

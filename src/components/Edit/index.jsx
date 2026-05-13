@@ -17,7 +17,7 @@ import {
   handleMouseDoubleClick,
   getFontStyles,
 } from "../../utils";
-import { getEdgeStyleBorder } from "../../styles/edgeStyles";
+import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import { useNuGridContext } from "../NuGrid/NuGridContext";
@@ -577,7 +577,7 @@ const Edit = ({
     const prevFocusedID = JSON.parse(localStorage.getItem(prevFocused));
 
     // TODO I'm pretty sure this change logic is wrong
-    if (!!data.Properties.hasOwnProperty("Event")) {
+    if (data.Properties.hasOwnProperty("Event")) {
       const event1 = JSON.stringify({
         Event: {
           EventName: "Change",
@@ -897,13 +897,13 @@ const Edit = ({
           ...(isInNuGrid
             ? { border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle' }
             : {
-              ...(EdgeStyle
-                ? getEdgeStyleBorder(EdgeStyle)
-                : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+              ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
               verticalAlign: "text-top",
               paddingBottom: "6px",
               paddingRight: "2px",
             }),
+
+          
           textAlign: "right",
           ...customStyles,
           ...fontStyles,
@@ -977,9 +977,7 @@ const Edit = ({
           : {
             borderRadius: "2px",
             paddingLeft: "5px",
-            ...(EdgeStyle
-              ? getEdgeStyleBorder(EdgeStyle)
-              : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+            ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
           }),
         ...(Active === 0 ? {
           backgroundColor: "field",
