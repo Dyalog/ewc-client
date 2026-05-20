@@ -47,6 +47,11 @@ const NuGridCell = ({
       // Override positioning - component fills the cell
       Posn: undefined,
       Size: undefined,
+      // The template is shared across every cell in the column. APL may set
+      // Visible=0 on the template (it's "hidden" in its standalone form
+      // context) — but the native ⎕WC grid never honours that inside a cell.
+      // Force visible here so cells don't render as display:none.
+      Visible: 1,
     },
   }), [componentData]);
 
