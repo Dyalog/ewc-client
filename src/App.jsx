@@ -1669,47 +1669,62 @@ const App = () => {
           const currentPendingEvent = pendingKeypressEventRef.current;
           if (currentPendingEvent && currentPendingEvent.eventId === EventID) {
             if (Proceed === 1) {
-              // Apply the pending keystroke to the Edit field
-              const editElement = document.getElementById(currentPendingEvent.componentId);
-              
-              if (editElement) {
-                const componentData = JSON.parse(getObjectById(dataRef.current, currentPendingEvent.componentId));
-                
-                // Map JavaScript key names to keypressHandler names
-                const keyMap = {
-                  'Tab': 'HT',
-                  'ArrowLeft': currentPendingEvent.shiftKey ? 'Lc' : 'LC',
-                  'ArrowRight': currentPendingEvent.shiftKey ? 'Rc' : 'RC', 
-                  'Backspace': 'DB',
-                  'Delete': 'DI'
-                };
-                
-                const handlerKey = keyMap[currentPendingEvent.key] || currentPendingEvent.key;
-                
-                if (handlerKey && keypressHandlers[handlerKey]) {
-                  // Use the appropriate keypress handler for special keys
-                  keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData.Properties);
-                } else if (currentPendingEvent.key.length === 1) {
-                  // Handle regular character input
-                  const start = editElement.selectionStart;
-                  const end = editElement.selectionEnd;
-                  const currentValue = editElement.value;
-                  
-                  const newValue = currentValue.slice(0, start) + currentPendingEvent.key + currentValue.slice(end);
-                  
-                  // Update the DOM
-                  editElement.value = newValue;
-                  editElement.setSelectionRange(start + 1, start + 1);
-                  
-                  // Update the global tree so WG requests see the new value
-                  handleData({
-                    ID: currentPendingEvent.componentId,
-                    Properties: {
-                      Text: newValue,
-                      Value: newValue,
-                      SelText: [start + 2, start + 2], // 1-indexed for APL
-                    },
-                  }, "WS");
+              // Prefer the per-instance applyKey callback (registered by Edit's
+              // handleKeyPress) for single-character input. This mutates the
+              // Edit instance's local state instead of writing to
+              // data.Properties.Text — critical for NuGrid, where Properties
+              // is a per-column template shared across every cell. Without
+              // this, replaying a typed char into Properties.Text would
+              // contaminate every other cell in the column.
+              if (
+                currentPendingEvent.applyKey &&
+                typeof currentPendingEvent.applyKey === 'function' &&
+                currentPendingEvent.key &&
+                currentPendingEvent.key.length === 1
+              ) {
+                currentPendingEvent.applyKey(currentPendingEvent.key);
+              } else {
+                // Fallback: legacy DOM mutation path for special keys and
+                // for components that don't register applyKey (Combo, etc.).
+                const editElement = document.getElementById(currentPendingEvent.componentId);
+
+                if (editElement) {
+                  const componentData = JSON.parse(getObjectById(dataRef.current, currentPendingEvent.componentId));
+
+                  // Map JavaScript key names to keypressHandler names
+                  const keyMap = {
+                    'Tab': 'HT',
+                    'ArrowLeft': currentPendingEvent.shiftKey ? 'Lc' : 'LC',
+                    'ArrowRight': currentPendingEvent.shiftKey ? 'Rc' : 'RC',
+                    'Backspace': 'DB',
+                    'Delete': 'DI'
+                  };
+
+                  const handlerKey = keyMap[currentPendingEvent.key] || currentPendingEvent.key;
+
+                  if (handlerKey && keypressHandlers[handlerKey]) {
+                    // Use the appropriate keypress handler for special keys
+                    keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData.Properties);
+                  } else if (currentPendingEvent.key.length === 1) {
+                    // Legacy single-char path (only reached if applyKey wasn't registered)
+                    const start = editElement.selectionStart;
+                    const end = editElement.selectionEnd;
+                    const currentValue = editElement.value;
+
+                    const newValue = currentValue.slice(0, start) + currentPendingEvent.key + currentValue.slice(end);
+
+                    editElement.value = newValue;
+                    editElement.setSelectionRange(start + 1, start + 1);
+
+                    handleData({
+                      ID: currentPendingEvent.componentId,
+                      Properties: {
+                        Text: newValue,
+                        Value: newValue,
+                        SelText: [start + 2, start + 2], // 1-indexed for APL
+                      },
+                    }, "WS");
+                  }
                 }
               }
             }
