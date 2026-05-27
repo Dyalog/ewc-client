@@ -21,7 +21,7 @@ import { getGrid } from "./components/Grid/getGrid";
 import { getNuGrid } from "./components/NuGrid/getNuGrid";
 import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
-import keypressHandlers from "./utils/keypressHandlers";
+import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
 
@@ -1669,47 +1669,48 @@ const App = () => {
           const currentPendingEvent = pendingKeypressEventRef.current;
           if (currentPendingEvent && currentPendingEvent.eventId === EventID) {
             if (Proceed === 1) {
-              // Apply the pending keystroke to the Edit field
-              const editElement = document.getElementById(currentPendingEvent.componentId);
-              
-              if (editElement) {
-                const componentData = JSON.parse(getObjectById(dataRef.current, currentPendingEvent.componentId));
-                
-                // Map JavaScript key names to keypressHandler names
-                const keyMap = {
-                  'Tab': 'HT',
-                  'ArrowLeft': currentPendingEvent.shiftKey ? 'Lc' : 'LC',
-                  'ArrowRight': currentPendingEvent.shiftKey ? 'Rc' : 'RC', 
-                  'Backspace': 'DB',
-                  'Delete': 'DI'
-                };
-                
-                const handlerKey = keyMap[currentPendingEvent.key] || currentPendingEvent.key;
-                
-                if (handlerKey && keypressHandlers[handlerKey]) {
-                  // Use the appropriate keypress handler for special keys
-                  keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData.Properties);
-                } else if (currentPendingEvent.key.length === 1) {
-                  // Handle regular character input
-                  const start = editElement.selectionStart;
-                  const end = editElement.selectionEnd;
-                  const currentValue = editElement.value;
-                  
-                  const newValue = currentValue.slice(0, start) + currentPendingEvent.key + currentValue.slice(end);
-                  
-                  // Update the DOM
-                  editElement.value = newValue;
-                  editElement.setSelectionRange(start + 1, start + 1);
-                  
-                  // Update the global tree so WG requests see the new value
-                  handleData({
-                    ID: currentPendingEvent.componentId,
-                    Properties: {
-                      Text: newValue,
-                      Value: newValue,
-                      SelText: [start + 2, start + 2], // 1-indexed for APL
-                    },
-                  }, "WS");
+              const { key, shiftKey, componentId, applyKey } = currentPendingEvent;
+
+              // Navigation / editing keys are delegated to a registered EWC
+              // keypress handler (resolved by code; see keyNameToCode).
+              // Printable characters have no handler and fall to the `else`.
+              const specialHandler = keypressHandlers[keyNameToCode(key, shiftKey)];
+
+              if (specialHandler) {
+                // Special key: delegate to its handler (operates on the data
+                // tree via componentId/handleData, not the DOM element).
+                const componentData = JSON.parse(getObjectById(dataRef.current, componentId));
+                specialHandler(handleData, componentId, componentData.Properties);
+              } else if (key && key.length === 1) {
+                // Printable character.
+                if (typeof applyKey === 'function') {
+                  // Per-instance apply (registered by Edit's handleKeyPress):
+                  // mutates this Edit's own React state, never the shared
+                  // NuGrid column template (data.Properties). Writing a typed
+                  // char into Properties.Text would contaminate every cell in
+                  // the column.
+                  applyKey(key);
+                } else {
+                  // Legacy fallback for components that don't register applyKey:
+                  // mutate the DOM input directly and push Text/Value to the tree.
+                  const editElement = document.getElementById(componentId);
+                  if (editElement) {
+                    const start = editElement.selectionStart;
+                    const end = editElement.selectionEnd;
+                    const newValue = editElement.value.slice(0, start) + key + editElement.value.slice(end);
+
+                    editElement.value = newValue;
+                    editElement.setSelectionRange(start + 1, start + 1);
+
+                    handleData({
+                      ID: componentId,
+                      Properties: {
+                        Text: newValue,
+                        Value: newValue,
+                        SelText: [start + 2, start + 2], // 1-indexed for APL
+                      },
+                    }, "WS");
+                  }
                 }
               }
             }

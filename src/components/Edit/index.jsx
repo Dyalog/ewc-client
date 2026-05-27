@@ -484,12 +484,32 @@ const Edit = ({
     const eventId = crypto.randomUUID();
     setEventId(eventId);
     
-    // Set pending keypress flag for HT handler
-    pendingKeypressEventRef.current = { 
-      key: e.key, 
-      eventId, 
+    // Register a per-instance callback so the EC=1 (Proceed=1) replay path
+    // in App.jsx can apply the typed character to *this* input's own state
+    // — never to data.Properties.Text. data.Properties is the per-column
+    // template shared across every NuGrid cell, so writing to it from EC
+    // replay contaminates every cell in the column. Mutating local state
+    // via setInputValue keeps the change scoped to this Edit instance.
+    // For standalone (non-NuGrid) Edits, the useEffect on [inputValue]
+    // still propagates to data.Properties via handleData WS, so behavior
+    // is preserved.
+    pendingKeypressEventRef.current = {
+      key: e.key,
+      eventId,
       componentId: data?.ID,
-      shiftKey: e.shiftKey 
+      shiftKey: e.shiftKey,
+      applyKey: (k) => {
+        const inp = inputRef.current;
+        if (!inp) return;
+        const start = inp.selectionStart ?? inp.value.length;
+        const end = inp.selectionEnd ?? inp.value.length;
+        const newVal = inp.value.slice(0, start) + k + inp.value.slice(end);
+        setInputValue(newVal);
+        setEmitValue(newVal);
+        requestAnimationFrame(() => {
+          inputRef.current?.setSelectionRange(start + k.length, start + k.length);
+        });
+      },
     };
     const isAltPressed = e.altKey ? 4 : 0;
     const isCtrlPressed = e.ctrlKey ? 2 : 0;
@@ -845,16 +865,29 @@ const Edit = ({
 
 
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
-    // When in NuGrid with a server-formatted value and not editing, show the
-    // pre-formatted string in a plain input. NumericFormat would re-parse it
-    // and lose the ⎕FMT formatting (custom separators, padding, etc.).
-    if (isInNuGrid && formattedValue != null && !isEditing) {
+    // Inside a NuGrid cell: always render a plain input, regardless of
+    // isEditing. NumericFormat reparses on focus and strips server-side
+    // ⎕FMT formatting — including non-numeric sentinels like "na" — which
+    // is why double-clicking a "na" cell blanked it. Native Dyalog grids
+    // store the cell text as-is and only the user's keystrokes can change
+    // it; this matches that behavior.
+    // When the cell is selected (isEditing=true), inputValue carries the
+    // raw cell content (set by decideInputValue's isEditing branch);
+    // otherwise it carries the server-formatted display string.
+    if (isInNuGrid) {
       return (
         <input
           id={data?.ID}
           ref={inputRef}
           value={inputValue}
-          readOnly
+          readOnly={!isEditing}
+          onChange={(e) => {
+            // Local-only state update; commit happens in handleBlur via
+            // nuGridContext.onCellChange. Never write to data.Properties
+            // here — it's the per-column shared template.
+            setInputValue(e.target.value);
+            setEmitValue(e.target.value);
+          }}
           style={{
             ...styles,
             width: !Size ? "100%" : Size[1],
