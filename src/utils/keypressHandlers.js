@@ -1,6 +1,21 @@
 // Return true/false, in order to decide on sending a default response
 // Return an object to send a customised response
 
+// Translate a browser KeyboardEvent.key name into the EWC keypress-handler
+// code used to key the handlers below. Codes (e.g. 'DB', 'HT') and printable
+// characters pass through unchanged, so this is safe to call on any key.
+// Kept here so all keypress key↔code mapping lives in one place.
+export const keyNameToCode = (key, shiftKey = false) => {
+  switch (key) {
+    case 'Tab': return 'HT';
+    case 'ArrowLeft': return shiftKey ? 'Lc' : 'LC';
+    case 'ArrowRight': return shiftKey ? 'Rc' : 'RC';
+    case 'Backspace': return 'DB';
+    case 'Delete': return 'DI';
+    default: return key;
+  }
+};
+
 export default {
   // Left Cursor
   'LC': function(handleData, id, props) {

@@ -21,7 +21,7 @@ import { getGrid } from "./components/Grid/getGrid";
 import { getNuGrid } from "./components/NuGrid/getNuGrid";
 import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
-import keypressHandlers from "./utils/keypressHandlers";
+import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
 
@@ -1669,55 +1669,41 @@ const App = () => {
           const currentPendingEvent = pendingKeypressEventRef.current;
           if (currentPendingEvent && currentPendingEvent.eventId === EventID) {
             if (Proceed === 1) {
-              // Prefer the per-instance applyKey callback (registered by Edit's
-              // handleKeyPress) for single-character input. This mutates the
-              // Edit instance's local state instead of writing to
-              // data.Properties.Text — critical for NuGrid, where Properties
-              // is a per-column template shared across every cell. Without
-              // this, replaying a typed char into Properties.Text would
-              // contaminate every other cell in the column.
-              if (
-                currentPendingEvent.applyKey &&
-                typeof currentPendingEvent.applyKey === 'function' &&
-                currentPendingEvent.key &&
-                currentPendingEvent.key.length === 1
-              ) {
-                currentPendingEvent.applyKey(currentPendingEvent.key);
-              } else {
-                // Fallback: legacy DOM mutation path for special keys and
-                // for components that don't register applyKey (Combo, etc.).
-                const editElement = document.getElementById(currentPendingEvent.componentId);
+              const { key, shiftKey, componentId, applyKey } = currentPendingEvent;
 
-                if (editElement) {
-                  const componentData = JSON.parse(getObjectById(dataRef.current, currentPendingEvent.componentId));
+              // Navigation / editing keys are delegated to a registered EWC
+              // keypress handler (resolved by code; see keyNameToCode).
+              // Printable characters have no handler and fall to the `else`.
+              const specialHandler = keypressHandlers[keyNameToCode(key, shiftKey)];
 
-                  // Map JavaScript key names to keypressHandler names
-                  const keyMap = {
-                    'Tab': 'HT',
-                    'ArrowLeft': currentPendingEvent.shiftKey ? 'Lc' : 'LC',
-                    'ArrowRight': currentPendingEvent.shiftKey ? 'Rc' : 'RC',
-                    'Backspace': 'DB',
-                    'Delete': 'DI'
-                  };
-
-                  const handlerKey = keyMap[currentPendingEvent.key] || currentPendingEvent.key;
-
-                  if (handlerKey && keypressHandlers[handlerKey]) {
-                    // Use the appropriate keypress handler for special keys
-                    keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData.Properties);
-                  } else if (currentPendingEvent.key.length === 1) {
-                    // Legacy single-char path (only reached if applyKey wasn't registered)
+              if (specialHandler) {
+                // Special key: delegate to its handler (operates on the data
+                // tree via componentId/handleData, not the DOM element).
+                const componentData = JSON.parse(getObjectById(dataRef.current, componentId));
+                specialHandler(handleData, componentId, componentData.Properties);
+              } else if (key && key.length === 1) {
+                // Printable character.
+                if (typeof applyKey === 'function') {
+                  // Per-instance apply (registered by Edit's handleKeyPress):
+                  // mutates this Edit's own React state, never the shared
+                  // NuGrid column template (data.Properties). Writing a typed
+                  // char into Properties.Text would contaminate every cell in
+                  // the column.
+                  applyKey(key);
+                } else {
+                  // Legacy fallback for components that don't register applyKey:
+                  // mutate the DOM input directly and push Text/Value to the tree.
+                  const editElement = document.getElementById(componentId);
+                  if (editElement) {
                     const start = editElement.selectionStart;
                     const end = editElement.selectionEnd;
-                    const currentValue = editElement.value;
-
-                    const newValue = currentValue.slice(0, start) + currentPendingEvent.key + currentValue.slice(end);
+                    const newValue = editElement.value.slice(0, start) + key + editElement.value.slice(end);
 
                     editElement.value = newValue;
                     editElement.setSelectionRange(start + 1, start + 1);
 
                     handleData({
-                      ID: currentPendingEvent.componentId,
+                      ID: componentId,
                       Properties: {
                         Text: newValue,
                         Value: newValue,
