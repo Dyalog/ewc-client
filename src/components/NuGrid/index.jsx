@@ -14,6 +14,7 @@ import {
   handleMouseWheel,
 } from '../../utils';
 import { useAppData } from '../../hooks';
+import { getBorderStyles } from '../../styles/edgeStyles';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
 import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
 import useNuGridState from './useNuGridState';
@@ -64,6 +65,8 @@ const NuGrid = ({ data }) => {
     RowTitleFCol,
     CSS,
     Event,
+    Border,
+    EdgeStyle,
   } = data?.Properties || {};
 
   // Values and FormattedValues are kept in local state so handleCellChange
@@ -378,6 +381,8 @@ const NuGrid = ({ data }) => {
     display: Visible === 0 ? 'none' : 'block',
     width: Size?.[1] ?? 275,
     height: Size?.[0] ?? 225,
+    // Honor APL Border/EdgeStyle; default keeps the historical #b4b4b4 line.
+    ...getBorderStyles(EdgeStyle, Border, '#b4b4b4'),
     ...customStyles,
   };
 

@@ -341,4 +341,23 @@ test.describe('DemoNuGridFormat - FormatString support', () => {
     const numericBorder = await measureBottomBorder({ row: 2, col: 3 });
     expect(numericBorder.width).toBe('0px');
   });
+
+  // NuGrid now honors the APL Border property via getBorderStyles. The demo
+  // doesn't set Border explicitly so it defaults — assert the inline border
+  // declaration is present (which proves the prop pipeline is wired; a CSS
+  // default could also produce a visible border, only inline-style presence
+  // distinguishes the two).
+  test('NuGrid applies inline border style from Border/EdgeStyle props', async () => {
+    const grid = page.locator('.nugrid');
+    const inlineStyle = await grid.getAttribute('style');
+    expect(inlineStyle).toMatch(/border\s*:/);
+
+    // Default (Border missing → treated as truthy by getBorderStyles): 1px solid.
+    const computed = await grid.evaluate((el) => {
+      const cs = window.getComputedStyle(el);
+      return { width: cs.borderTopWidth, style: cs.borderTopStyle };
+    });
+    expect(computed.width).toBe('1px');
+    expect(computed.style).toBe('solid');
+  });
 });
