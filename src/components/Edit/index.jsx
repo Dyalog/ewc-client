@@ -21,6 +21,7 @@ import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
 import { useNuGridContext } from "../NuGrid/NuGridContext";
+import { normalizeAplFormatted } from "../NuGrid/useNumericFormatter";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
 import * as Globals from "../../Globals";
@@ -463,6 +464,17 @@ const Edit = ({
 
   const handleKeyPress = (e) => {
     updateSelText(); // Update global tree with current selection
+    // While editing a NuGrid cell, keys that move the text cursor (or text
+    // selection) inside the <input> must NOT bubble to NuGrid's container
+    // handleKeyDown — otherwise the grid moves the active cell instead.
+    // Up/Down/Tab/Enter intentionally still bubble: a single-line input
+    // does nothing with Up/Down natively, and Tab/Enter committing + moving
+    // is the Excel-like behavior users expect from a grid.
+    if (isInNuGrid && isEditing &&
+        (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
+         e.key === "Home" || e.key === "End")) {
+      e.stopPropagation();
+    }
     if (e.key == "ArrowRight") handleRightArrow();
     else if (e.key == "ArrowLeft") handleLeftArrow();
     else if (e.key == "ArrowDown") handleCellMove();
@@ -721,11 +733,17 @@ const Edit = ({
 
     // Check if we're inside a NuGrid cell
     if (isInNuGrid && nuGridContext) {
+      // Normalize APL-formatted user input to its wire form at commit time:
+      // converts ¯→'-' (so Number() can parse it) and trims any padding.
+      // Deliberately NOT done in onChange — the user should see exactly what
+      // they typed (including ¯) while the field is active; the conversion
+      // happens only at the boundary as the value goes back to EWC.
+      const committedEmit = normalizeAplFormatted(emitValue);
       // Compare with original value from context
       const originalValue = nuGridContext.cellValue;
       const currentValue = (FieldType === "LongNumeric" || FieldType === "Numeric")
-        ? (emitValue !== "" ? Number(emitValue) : emitValue)
-        : emitValue;
+        ? (committedEmit !== "" ? Number(committedEmit) : committedEmit)
+        : committedEmit;
       if (originalValue !== currentValue) {
         nuGridContext.onCellChange(currentValue);
       }
@@ -746,7 +764,21 @@ const Edit = ({
 
   const handleGotFocus = () => {
     // Mark as editing to prevent decideInputValue from overwriting user input
-    if (isInNuGrid) setIsEditing(true);
+    if (isInNuGrid) {
+      setIsEditing(true);
+      // For Numeric cells the displayed text is the server-formatted string
+      // (commas, currency). Swap to the raw cellValue here so the user edits
+      // a parseable number — otherwise Number("14,0000") would yield NaN.
+      // The useEffect guard at "if (isEditing) return" blocks decideInputValue
+      // from doing this for us on the false→true transition.
+      if ((FieldType === "LongNumeric" || FieldType === "Numeric")
+          && nuGridContext?.cellValue !== undefined
+          && nuGridContext?.cellValue !== "") {
+        const raw = String(nuGridContext.cellValue);
+        setInputValue(raw);
+        setEmitValue(raw);
+      }
+    }
 
     const previousFocusedId = localStorage.getItem("current-focus");
     setprevFocused(previousFocusedId);
@@ -885,6 +917,10 @@ const Edit = ({
             // Local-only state update; commit happens in handleBlur via
             // nuGridContext.onCellChange. Never write to data.Properties
             // here — it's the per-column shared template.
+            // Preserve the user's keystrokes verbatim — including the APL
+            // high minus '¯'. The ¯→'-' conversion happens at commit time
+            // in handleBlur so the wire format to EWC is a parseable number,
+            // while the editing experience stays faithful to APL notation.
             setInputValue(e.target.value);
             setEmitValue(e.target.value);
           }}

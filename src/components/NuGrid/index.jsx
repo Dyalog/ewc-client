@@ -15,7 +15,7 @@ import {
 } from '../../utils';
 import { useAppData } from '../../hooks';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
-import useNumericFormatter from './useNumericFormatter';
+import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
 import useNuGridState from './useNuGridState';
 import useNuGridNavigation from './useNuGridNavigation';
 import useNuGridEvents from './useNuGridEvents';
@@ -364,7 +364,7 @@ const NuGrid = ({ data }) => {
 
   // Format cell value based on its type
   const formatCellValue = (value, cellType, formattedValue) => {
-    if (formattedValue != null) return formattedValue;
+    if (formattedValue != null) return normalizeAplFormatted(formattedValue);
     if (value === null || value === undefined) return '';
     if (isNumericType(cellType)) return formatNumber(value);
     return String(value);
@@ -515,7 +515,7 @@ const NuGrid = ({ data }) => {
                               row={rowIndex + 1}
                               col={colIndex + 1}
                               cellValue={cell}
-                              formattedValue={FormattedValues?.[rowIndex]?.[colIndex]}
+                              formattedValue={normalizeAplFormatted(FormattedValues?.[rowIndex]?.[colIndex])}
                               componentId={inputComponentId}
                               componentData={inputComponentData}
                               gridId={data?.ID}
@@ -572,7 +572,7 @@ const NuGrid = ({ data }) => {
                               row={rowIndex + 1}
                               col={1}
                               cellValue={row}
-                              formattedValue={FormattedValues?.[rowIndex]?.[0]}
+                              formattedValue={normalizeAplFormatted(FormattedValues?.[rowIndex]?.[0])}
                               componentId={inputComponentId}
                               componentData={inputComponentData}
                               gridId={data?.ID}
