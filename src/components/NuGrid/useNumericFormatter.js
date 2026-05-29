@@ -1,14 +1,7 @@
 import { useMemo } from 'react';
 
-// Normalize an APL-flavored value into web-display form:
-//  1. Convert the APL high minus (U+00AF '¯') to ASCII '-' — ⎕FMT emits ¯
-//     for negatives, but JavaScript's Number() and conventional readers expect '-'.
-//  2. Strip leading/trailing whitespace — ⎕FMT right-pads to the column width
-//     (e.g. CI8 turns 8500 into "   8,500"); CSS right-alignment renders that
-//     padding as a visible gap.
-// Applied at the boundary between APL-formatted data and the user/web layer:
-// at display read sites (server FormattedValue → cell text) and at commit
-// (user input → wire format for EWC).
+// Convert ⎕FMT output to web form: ¯→'-' and strip column-width padding.
+// Used at the APL ↔ web boundary (display read sites and commit).
 export const normalizeAplFormatted = (value) => {
   if (typeof value !== 'string') return value;
   return value.replace(/¯/g, '-').trim();

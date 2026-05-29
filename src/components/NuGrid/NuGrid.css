@@ -186,9 +186,9 @@
 
 /* All inputs within cells - no borders or focus indicators */
 .nugrid-cell input {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+  border: none;
+  outline: none;
+  box-shadow: none;
   width: 100%;
   height: 100%;
   padding: 0 4px;
@@ -198,10 +198,14 @@
   box-sizing: border-box;
 }
 
+/* Attribute selector lifts specificity to (0,3,1) — beats App.css's focus
+   rules without needing !important. */
+.nugrid-cell input[type='text']:focus,
+.nugrid-cell input[type='number']:focus,
 .nugrid-cell input:focus {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+  border: none;
+  outline: none;
+  box-shadow: none;
   background-color: #fff;
 }
 

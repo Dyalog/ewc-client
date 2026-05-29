@@ -11,19 +11,11 @@ input[type='number'] {
   text-align: right;
 }
 
-input[type='number']:focus {
-  outline: none;
-  border-bottom: 2px solid blue !important;
-}
-
+/* Suppress browser focus ring; the blue underline is applied inline by Edit. */
+input[type='number']:focus,
+input[type='text']:focus,
 input[type='date']:focus {
   outline: none;
-}
-
-input[type='text']:focus {
-  outline: none;
-  border-bottom: 2px solid blue !important;
-  /* outline-color: blue; */
 }
 
 select:focus-visible {

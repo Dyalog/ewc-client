@@ -314,4 +314,31 @@ test.describe('DemoNuGridFormat - FormatString support', () => {
     const cursorRight: number = await input.evaluate((el: HTMLInputElement) => el.selectionStart ?? -1);
     expect(cursorRight).toBe('Boltzmann'.length);
   });
+
+  // App.css applies a global `input[type='text']:focus { border-bottom: 2px solid blue }`
+  // — fine for standalone inputs, but inside NuGrid the cell already provides
+  // a selection indicator. The NuGrid override must beat the global rule so
+  // no blue underline appears on focused cells (string or numeric).
+  test('focused Edit input shows no blue bottom border in any cell', async () => {
+    const measureBottomBorder = async (rowCol: { row: number; col: number }) => {
+      const cell = page.locator(`.nugrid-cell[data-row="${rowCol.row}"][data-col="${rowCol.col}"]`);
+      await cell.click();
+      await new Promise(r => setTimeout(r, 200));
+      const input = cell.locator('input');
+      await input.click();
+      await new Promise(r => setTimeout(r, 200));
+      return await input.evaluate((el) => {
+        const cs = window.getComputedStyle(el);
+        return { width: cs.borderBottomWidth, style: cs.borderBottomStyle };
+      });
+    };
+
+    // String Edit (Company column, FieldType missing → text)
+    const stringBorder = await measureBottomBorder({ row: 2, col: 1 });
+    expect(stringBorder.width).toBe('0px');
+
+    // Numeric Edit (Headcount column, FieldType=Numeric)
+    const numericBorder = await measureBottomBorder({ row: 2, col: 3 });
+    expect(numericBorder.width).toBe('0px');
+  });
 });

@@ -217,6 +217,53 @@ test.describe('DemoSubFormEdit', () => {
   });
 
   // ─────────────────────────────────────────────────────────────
+  // Focus indicator (regression: was lost when we removed !important
+  // from App.css; restored via React isFocused state in Edit/index.jsx)
+  // ─────────────────────────────────────────────────────────────
+
+  test('standalone text Edit shows blue underline when focused, removes on blur', async () => {
+    const edit = page.locator('#F1\\.SF\\.EDIT1');
+
+    // Before focus: no blue underline.
+    const idle = await edit.evaluate((el) => {
+      const cs = window.getComputedStyle(el);
+      return { width: cs.borderBottomWidth, color: cs.borderBottomColor };
+    });
+    // Idle bottom border may be 0px (no border) or whatever getBorderStyles
+    // sets; assert only that it is NOT the focus indicator.
+    expect(idle.width).not.toBe('2px');
+
+    // Focus: blue 2px underline appears.
+    await edit.focus();
+    await page.waitForTimeout(100);
+    const focused = await edit.evaluate((el) => {
+      const cs = window.getComputedStyle(el);
+      return { width: cs.borderBottomWidth, color: cs.borderBottomColor };
+    });
+    expect(focused.width).toBe('2px');
+    // Blue computes to rgb(0, 0, 255) in most engines.
+    expect(focused.color).toBe('rgb(0, 0, 255)');
+
+    // Blur: indicator goes away.
+    await edit.blur();
+    await page.waitForTimeout(100);
+    const afterBlur = await edit.evaluate((el) => window.getComputedStyle(el).borderBottomWidth);
+    expect(afterBlur).not.toBe('2px');
+  });
+
+  test('standalone Numeric Edit shows blue underline when focused', async () => {
+    const edit = page.locator('#F1\\.SF\\.EDIT2');
+    await edit.focus();
+    await page.waitForTimeout(100);
+    const focused = await edit.evaluate((el) => {
+      const cs = window.getComputedStyle(el);
+      return { width: cs.borderBottomWidth, color: cs.borderBottomColor };
+    });
+    expect(focused.width).toBe('2px');
+    expect(focused.color).toBe('rgb(0, 0, 255)');
+  });
+
+  // ─────────────────────────────────────────────────────────────
   // Visual Regression
   // ─────────────────────────────────────────────────────────────
 

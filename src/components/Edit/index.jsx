@@ -68,6 +68,8 @@ const Edit = ({
   const prevInputValueRef = useRef("");
   // Track when user is actively editing to prevent decideInputValue from overwriting
   const [isEditing, setIsEditing] = useState(false);
+  // Focus state — drives the standalone Edit's blue underline indicator.
+  const [isFocused, setIsFocused] = useState(false);
 
   const {
     FieldType,
@@ -464,12 +466,8 @@ const Edit = ({
 
   const handleKeyPress = (e) => {
     updateSelText(); // Update global tree with current selection
-    // While editing a NuGrid cell, keys that move the text cursor (or text
-    // selection) inside the <input> must NOT bubble to NuGrid's container
-    // handleKeyDown — otherwise the grid moves the active cell instead.
-    // Up/Down/Tab/Enter intentionally still bubble: a single-line input
-    // does nothing with Up/Down natively, and Tab/Enter committing + moving
-    // is the Excel-like behavior users expect from a grid.
+    // Cursor-movement keys stay in the input; Up/Down/Tab/Enter still bubble
+    // to NuGrid for Excel-style commit + cell move.
     if (isInNuGrid && isEditing &&
         (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
          e.key === "Home" || e.key === "End")) {
@@ -719,6 +717,7 @@ const Edit = ({
   const handleBlur = () => {
     // Clear editing flag first so decideInputValue can run after blur if needed
     if (isInNuGrid) setIsEditing(false);
+    setIsFocused(false);
 
     updateSelText(); // Update global tree with final selection
     if (Event && Event.some((item) => item[0] === "LostFocus")) {
@@ -733,11 +732,7 @@ const Edit = ({
 
     // Check if we're inside a NuGrid cell
     if (isInNuGrid && nuGridContext) {
-      // Normalize APL-formatted user input to its wire form at commit time:
-      // converts ¯→'-' (so Number() can parse it) and trims any padding.
-      // Deliberately NOT done in onChange — the user should see exactly what
-      // they typed (including ¯) while the field is active; the conversion
-      // happens only at the boundary as the value goes back to EWC.
+      // Convert APL ¯→'-' and trim only at commit, so editing stays verbatim.
       const committedEmit = normalizeAplFormatted(emitValue);
       // Compare with original value from context
       const originalValue = nuGridContext.cellValue;
@@ -763,14 +758,12 @@ const Edit = ({
   };
 
   const handleGotFocus = () => {
-    // Mark as editing to prevent decideInputValue from overwriting user input
+    setIsFocused(true);
+    // Mark editing so decideInputValue stops overwriting user input.
     if (isInNuGrid) {
       setIsEditing(true);
-      // For Numeric cells the displayed text is the server-formatted string
-      // (commas, currency). Swap to the raw cellValue here so the user edits
-      // a parseable number — otherwise Number("14,0000") would yield NaN.
-      // The useEffect guard at "if (isEditing) return" blocks decideInputValue
-      // from doing this for us on the false→true transition.
+      // Swap formatted display (e.g. "8,500") for the raw cellValue so
+      // Number() can parse after edits — the useEffect guard skips this.
       if ((FieldType === "LongNumeric" || FieldType === "Numeric")
           && nuGridContext?.cellValue !== undefined
           && nuGridContext?.cellValue !== "") {
@@ -897,15 +890,8 @@ const Edit = ({
 
 
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
-    // Inside a NuGrid cell: always render a plain input, regardless of
-    // isEditing. NumericFormat reparses on focus and strips server-side
-    // ⎕FMT formatting — including non-numeric sentinels like "na" — which
-    // is why double-clicking a "na" cell blanked it. Native Dyalog grids
-    // store the cell text as-is and only the user's keystrokes can change
-    // it; this matches that behavior.
-    // When the cell is selected (isEditing=true), inputValue carries the
-    // raw cell content (set by decideInputValue's isEditing branch);
-    // otherwise it carries the server-formatted display string.
+    // Inside NuGrid: plain input (not NumericFormat) so ⎕FMT strings survive.
+    // inputValue holds raw value while editing, formatted string otherwise.
     if (isInNuGrid) {
       return (
         <input
@@ -914,13 +900,8 @@ const Edit = ({
           value={inputValue}
           readOnly={!isEditing}
           onChange={(e) => {
-            // Local-only state update; commit happens in handleBlur via
-            // nuGridContext.onCellChange. Never write to data.Properties
-            // here — it's the per-column shared template.
-            // Preserve the user's keystrokes verbatim — including the APL
-            // high minus '¯'. The ¯→'-' conversion happens at commit time
-            // in handleBlur so the wire format to EWC is a parseable number,
-            // while the editing experience stays faithful to APL notation.
+            // Local-only; commit via handleBlur. Never write data.Properties
+            // (shared column template). ¯→'-' conversion is in handleBlur.
             setInputValue(e.target.value);
             setEmitValue(e.target.value);
           }}
@@ -972,7 +953,11 @@ const Edit = ({
               verticalAlign: "text-top",
               paddingBottom: "6px",
               paddingRight: "2px",
+              // Focus underline — placed after getBorderStyles so borderBottom wins.
+              ...(isFocused ? { borderBottom: '2px solid blue' } : {}),
             }),
+
+
           textAlign: "right",
           ...customStyles,
           ...fontStyles,
@@ -1046,9 +1031,9 @@ const Edit = ({
           : {
             borderRadius: "2px",
             paddingLeft: "5px",
-            ...(EdgeStyle
-              ? getEdgeStyleBorder(EdgeStyle)
-              : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
+            ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
+            // Focus underline — placed after getBorderStyles so borderBottom wins.
+            ...(isFocused ? { borderBottom: '2px solid blue' } : {}),
           }),
         ...(Active === 0 ? {
           backgroundColor: "field",
