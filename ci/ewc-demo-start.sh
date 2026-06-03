@@ -17,9 +17,7 @@ set -e
 
 NAME="ewc-demo"
 
-# Pick the EWC source to mount. Default to a sibling `ewc` directory,
-# but allow EWC_SRC=... to override (useful when working in worktrees
-# named e.g. `ewc-<branch>` paired with `ewc-client-<branch>`).
+# EWC_SRC=... overrides the default sibling `ewc` directory (worktree pairs).
 EWC_SRC="${EWC_SRC:-$PWD/../ewc}"
 if [ ! -d "$EWC_SRC" ]; then
     echo "ERROR: EWC source not found at $EWC_SRC" >&2

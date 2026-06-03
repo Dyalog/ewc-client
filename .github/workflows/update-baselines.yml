@@ -68,16 +68,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          # See tests.yml for pin rationale.
+          node-version: '24'
           cache: yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Cache Playwright browsers
-        # Shares the cache key shape with tests.yml so baseline runs and
-        # test runs reuse each other's populated cache. See tests.yml for
-        # the rationale.
+        # Shares key shape with tests.yml so both workflows reuse one cache.
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -86,13 +85,8 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers
-        # --no-shell skips chromium-headless-shell (unused — tests launch
-        # full Chromium). Visual baselines are captured via the full browser
-        # too, so screenshot fidelity is unchanged. See tests.yml for full
-        # rationale.
+        # See tests.yml.
         timeout-minutes: 6
-        env:
-          DEBUG: pw:install
         run: npx playwright install --with-deps --no-shell chromium
 
       - name: Build ewc-client
