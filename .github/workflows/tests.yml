@@ -152,9 +152,8 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers
-        # --no-shell: skip the ~90 MB chromium-headless-shell binary; tests use full Chromium.
         timeout-minutes: 6
-        run: npx playwright install --with-deps --no-shell chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Build ewc-client
         run: yarn build
