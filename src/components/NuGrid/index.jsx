@@ -99,6 +99,16 @@ const NuGrid = ({ data }) => {
   // Selection rectangle (1-based inclusive bounds) for row/column/range
   // selection via header clicks. null = single-cell mode (just curCell).
   const [selection, setSelection] = useState(null);
+  // The corner that doesn't move during shift+click / shift+arrow extension.
+  // Set on every non-shift click; used by extendSelectionTo to grow/shrink
+  // the rectangle while preserving the user's directional intent.
+  const [anchor, setAnchor] = useState(null);
+  // Mouse drag-select tracking (mousedown on cell → enter cells → mouseup).
+  const isDraggingRef = useRef(false);
+  // Mirror selection + fireGridSelect into refs so the window mouseup listener
+  // (installed once on mount) reads the latest values without re-attaching.
+  const selectionRef = useRef(null);
+  const fireGridSelectRef = useRef(null);
 
   useEffect(() => {
     setValues(propsValues);
@@ -107,6 +117,50 @@ const NuGrid = ({ data }) => {
   useEffect(() => {
     setFormattedValues(propsFormattedValues);
   }, [propsFormattedValues]);
+
+  // Track whether the most recent mouseup ended a drag, so the click event
+  // that fires immediately after can be suppressed at capture phase.
+  const justEndedDragRef = useRef(false);
+
+  // Window-level mouseup ends any active drag-select. Registered with capture
+  // so we run BEFORE widget descendants (Combo, checkbox) see mouseup — that
+  // way we can stopPropagation + preventDefault to suppress their click when
+  // the drag terminates over them.
+  useEffect(() => {
+    const mouseup = (e) => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      const sel = selectionRef.current;
+      if (sel) {
+        e.preventDefault();
+        e.stopPropagation();
+        justEndedDragRef.current = true;
+        if (fireGridSelectRef.current) {
+          fireGridSelectRef.current(sel.sr, sel.sc, sel.er, sel.ec);
+        }
+      }
+    };
+    // The click event browsers synthesize after mouseup must also be
+    // suppressed during drag-end — otherwise a Combo at the release
+    // point opens via its click handler.
+    const click = (e) => {
+      if (justEndedDragRef.current) {
+        justEndedDragRef.current = false;
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener('mouseup', mouseup, true);
+    window.addEventListener('click', click, true);
+    return () => {
+      window.removeEventListener('mouseup', mouseup, true);
+      window.removeEventListener('click', click, true);
+    };
+  }, []);
+
+  // Keep refs in sync with the latest values for the window listener.
+  useEffect(() => { selectionRef.current = selection; });
+  useEffect(() => { fireGridSelectRef.current = fireGridSelect; });
 
   // Normalize Input to an array (can be single string or array of strings)
   // useMemo ensures stable reference for useCallback dependencies
@@ -302,6 +356,25 @@ const NuGrid = ({ data }) => {
       copySelectionToClipboard();
       return;
     }
+    // Ctrl/Cmd+A selects all (Excel-style).
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      selectAll();
+      return;
+    }
+    // Shift+arrow extends the selection from `anchor` toward the new cell.
+    // Without shift, arrows just navigate (existing path).
+    if (event.shiftKey
+        && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      event.preventDefault();
+      const [r, c] = curCell;
+      const dr = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
+      const dc = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      const nr = Math.min(Math.max(r + dr, 1), numRows);
+      const nc = Math.min(Math.max(c + dc, 1), numCols);
+      extendSelectionTo(nr, nc);
+      return;
+    }
 
     const result = navigationKeyDown(event);
 
@@ -310,6 +383,13 @@ const NuGrid = ({ data }) => {
       activateCurrentCell();
     } else if (result) {
       const newCell = result;
+      // Non-shift arrow navigation clears any range and re-anchors at the
+      // new cell — matches Excel's "arrow without shift drops the selection".
+      if (selection) {
+        fireGridSelect(newCell[0], newCell[1], newCell[0], newCell[1]);
+      }
+      setSelection(null);
+      setAnchor({ r: newCell[0], c: newCell[1] });
 
       // Commit any in-progress edit before the widget unmounts.
       // This fires Edit's handleBlur synchronously while still mounted,
@@ -417,20 +497,46 @@ const NuGrid = ({ data }) => {
 
   // Click handlers for the three header surfaces. Each fires GridSelect with
   // the resulting rectangle so APL handlers can react (e.g. log, export).
-  const selectRow = (row) => {
-    setSelection({ sr: row, sc: 1, er: row, ec: numCols });
+  // The `shift` flag extends from the existing anchor (Excel-style).
+  const selectRow = (row, shift = false) => {
+    const anchorR = shift && anchor ? anchor.r : row;
+    const sr = Math.min(anchorR, row);
+    const er = Math.max(anchorR, row);
+    if (!shift) setAnchor({ r: row, c: 1 });
+    setSelection({ sr, sc: 1, er, ec: numCols });
     moveTo(row, 1);
-    fireGridSelect(row, 1, row, numCols);
+    fireGridSelect(sr, 1, er, numCols);
   };
-  const selectColumn = (col) => {
-    setSelection({ sr: 1, sc: col, er: numRows, ec: col });
+  const selectColumn = (col, shift = false) => {
+    const anchorC = shift && anchor ? anchor.c : col;
+    const sc = Math.min(anchorC, col);
+    const ec = Math.max(anchorC, col);
+    if (!shift) setAnchor({ r: 1, c: col });
+    setSelection({ sr: 1, sc, er: numRows, ec });
     moveTo(1, col);
-    fireGridSelect(1, col, numRows, col);
+    fireGridSelect(1, sc, numRows, ec);
   };
   const selectAll = () => {
+    setAnchor({ r: 1, c: 1 });
     setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
     moveTo(1, 1);
     fireGridSelect(1, 1, numRows, numCols);
+  };
+
+  // Extend the selection to (r, c) from the current anchor (or curCell if no
+  // anchor exists yet). Used by shift+click on a cell, shift+arrow, and drag.
+  const extendSelectionTo = (r, c) => {
+    const a = anchor ?? { r: curCell[0], c: curCell[1] };
+    if (!anchor) setAnchor(a);
+    const sr = Math.min(a.r, r), er = Math.max(a.r, r);
+    const sc = Math.min(a.c, c), ec = Math.max(a.c, c);
+    if (sr === er && sc === ec) {
+      setSelection(null);
+    } else {
+      setSelection({ sr, sc, er, ec });
+    }
+    moveTo(r, c);
+    fireGridSelect(sr, sc, er, ec);
   };
 
   // Build TSV from the current selection (or just curCell). Cells in a row
@@ -552,14 +658,39 @@ const NuGrid = ({ data }) => {
                     <th
                       className="nugrid-corner-cell"
                       style={{ width: effectiveTitleWidth, height: effectiveTitleHeight, cursor: 'cell' }}
-                      onClick={selectAll}
+                      onMouseDown={() => {
+                        setAnchor({ r: 1, c: 1 });
+                        setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
+                        moveTo(1, 1);
+                        isDraggingRef.current = true;
+                      }}
                     />
                   )}
                   {colTitlesArray.map((title, colIndex) => (
                     <th
                       key={colIndex}
                       className={`nugrid-col-header${Array.isArray(title) ? ' multi-line' : ''}${isColInSelection(colIndex + 1) ? ' selected-col' : ''}`}
-                      onClick={() => selectColumn(colIndex + 1)}
+                      onMouseDown={(e) => {
+                        const col = colIndex + 1;
+                        if (e.shiftKey && anchor) {
+                          const sc = Math.min(anchor.c, col), ec = Math.max(anchor.c, col);
+                          setSelection({ sr: 1, sc, er: numRows, ec });
+                          moveTo(1, col);
+                          fireGridSelect(1, sc, numRows, ec);
+                        } else {
+                          setAnchor({ r: 1, c: col });
+                          setSelection({ sr: 1, sc: col, er: numRows, ec: col });
+                          moveTo(1, col);
+                          isDraggingRef.current = true;
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (!isDraggingRef.current || !anchor) return;
+                        const col = colIndex + 1;
+                        const sc = Math.min(anchor.c, col), ec = Math.max(anchor.c, col);
+                        setSelection({ sr: 1, sc, er: numRows, ec });
+                        moveTo(1, col);
+                      }}
                       style={{
                         width: getCellWidth(colIndex),
                         height: effectiveTitleHeight,
@@ -590,7 +721,27 @@ const NuGrid = ({ data }) => {
                   {showRowTitles && (
                     <th
                       className={`nugrid-row-header${isRowInSelection(rowIndex + 1) ? ' selected-row' : ''}`}
-                      onClick={() => selectRow(rowIndex + 1)}
+                      onMouseDown={(e) => {
+                        const row = rowIndex + 1;
+                        if (e.shiftKey && anchor) {
+                          const sr = Math.min(anchor.r, row), er = Math.max(anchor.r, row);
+                          setSelection({ sr, sc: 1, er, ec: numCols });
+                          moveTo(row, 1);
+                          fireGridSelect(sr, 1, er, numCols);
+                        } else {
+                          setAnchor({ r: row, c: 1 });
+                          setSelection({ sr: row, sc: 1, er: row, ec: numCols });
+                          moveTo(row, 1);
+                          isDraggingRef.current = true;
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (!isDraggingRef.current || !anchor) return;
+                        const row = rowIndex + 1;
+                        const sr = Math.min(anchor.r, row), er = Math.max(anchor.r, row);
+                        setSelection({ sr, sc: 1, er, ec: numCols });
+                        moveTo(row, 1);
+                      }}
                       style={{
                         width: effectiveTitleWidth,
                         height: getCellHeight(rowIndex),
@@ -646,14 +797,42 @@ const NuGrid = ({ data }) => {
                             color: fgColor,
                             ...cellFontStyles,
                           }}
-                          onClick={() => {
-                            // Per Dyalog spec, GridSelect also fires when an
-                            // existing selection is cancelled by a cell click.
-                            if (selection) {
-                              fireGridSelect(rowIndex + 1, colIndex + 1, rowIndex + 1, colIndex + 1);
+                          onMouseDownCapture={(e) => {
+                            // Shift+click extends selection — intercept at
+                            // capture so it works even on cells with widgets
+                            // (Combo, checkbox), preventing widget activation.
+                            if (e.shiftKey) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              extendSelectionTo(rowIndex + 1, colIndex + 1);
                             }
+                          }}
+                          onMouseDown={(e) => {
+                            if (e.shiftKey) return; // handled in capture
+                            // Plain mousedown: only start drag-select if the
+                            // event hit the cell itself (not a widget child).
+                            // For widget cells, mousedown opens the widget as
+                            // usual; users start drags from non-widget cells.
+                            if (e.target !== e.currentTarget) return;
+                            const r = rowIndex + 1, c = colIndex + 1;
+                            if (selection) fireGridSelect(r, c, r, c);
+                            setAnchor({ r, c });
                             setSelection(null);
+                            isDraggingRef.current = true;
                             handleCellClick(rowIndex, colIndex);
+                          }}
+                          onMouseEnter={() => {
+                            // While dragging, sweep the selection rectangle.
+                            if (!isDraggingRef.current || !anchor) return;
+                            const r = rowIndex + 1, c = colIndex + 1;
+                            const sr = Math.min(anchor.r, r), er = Math.max(anchor.r, r);
+                            const sc = Math.min(anchor.c, c), ec = Math.max(anchor.c, c);
+                            if (sr === er && sc === ec) {
+                              setSelection(null);
+                            } else {
+                              setSelection({ sr, sc, er, ec });
+                            }
+                            moveTo(r, c);
                           }}
                         >
                           {showWidget ? (
@@ -711,12 +890,30 @@ const NuGrid = ({ data }) => {
                             color: fgColor,
                             ...cellFontStyles,
                           }}
-                          onClick={() => {
-                            if (selection) {
-                              fireGridSelect(rowIndex + 1, 1, rowIndex + 1, 1);
+                          onMouseDownCapture={(e) => {
+                            if (e.shiftKey) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              extendSelectionTo(rowIndex + 1, 1);
                             }
+                          }}
+                          onMouseDown={(e) => {
+                            if (e.shiftKey) return;
+                            if (e.target !== e.currentTarget) return;
+                            const r = rowIndex + 1;
+                            if (selection) fireGridSelect(r, 1, r, 1);
+                            setAnchor({ r, c: 1 });
                             setSelection(null);
+                            isDraggingRef.current = true;
                             handleCellClick(rowIndex, 0);
+                          }}
+                          onMouseEnter={() => {
+                            if (!isDraggingRef.current || !anchor) return;
+                            const r = rowIndex + 1;
+                            const sr = Math.min(anchor.r, r), er = Math.max(anchor.r, r);
+                            if (sr === er) setSelection(null);
+                            else setSelection({ sr, sc: 1, er, ec: 1 });
+                            moveTo(r, 1);
                           }}
                         >
                           {showWidget ? (

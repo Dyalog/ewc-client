@@ -108,6 +108,88 @@ test.describe('NuGrid selection — row / col / all + copy as TSV', () => {
     const text = await readClipboard(page);
     expect(text).toBe('Beta');
   });
+
+  // ─── Phase 2: shift+click, Ctrl+A, shift+arrow, drag-select ─────────────
+
+  test('Shift+click extends the selection from the anchor cell', async () => {
+    // Click row 1 col 1 as anchor, then shift+click row 3 col 2.
+    await page.locator(`${grid} .nugrid-cell[data-row="1"][data-col="1"]`).click();
+    await new Promise((r) => setTimeout(r, 100));
+    await page.locator(`${grid} .nugrid-cell[data-row="3"][data-col="2"]`).click({ modifiers: ['Shift'] });
+    await new Promise((r) => setTimeout(r, 100));
+    // All 6 cells should be in the range.
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(6);
+  });
+
+  test('Shift+click on a row header extends the row band', async () => {
+    await page.locator(`${grid} .nugrid-row-header`).nth(0).click();
+    await new Promise((r) => setTimeout(r, 100));
+    await page.locator(`${grid} .nugrid-row-header`).nth(2).click({ modifiers: ['Shift'] });
+    await new Promise((r) => setTimeout(r, 100));
+    // Rows 1-3 × cols 1-2 = 6 cells.
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(6);
+  });
+
+  test('Ctrl+A selects all cells', async () => {
+    // Click somewhere first to get focus on the grid.
+    await page.locator(`${grid} .nugrid-cell[data-row="1"][data-col="1"]`).click();
+    await new Promise((r) => setTimeout(r, 100));
+    await page.locator(grid).focus();
+    await page.keyboard.press('Control+A');
+    await new Promise((r) => setTimeout(r, 100));
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(6);
+  });
+
+  test('Shift+ArrowDown extends the selection downward', async () => {
+    // Anchor on (1, 1).
+    await page.locator(`${grid} .nugrid-cell[data-row="1"][data-col="1"]`).click();
+    await new Promise((r) => setTimeout(r, 100));
+    await page.locator(grid).focus();
+    await page.keyboard.press('Shift+ArrowDown');
+    await new Promise((r) => setTimeout(r, 100));
+    // Now rows 1-2 col 1 should be selected (2 cells).
+    await expect(page.locator(`${grid} .nugrid-cell[data-col="1"].range-selected`)).toHaveCount(2);
+  });
+
+  test('Shift+ArrowRight then Shift+ArrowDown selects a rectangle', async () => {
+    await page.locator(`${grid} .nugrid-cell[data-row="1"][data-col="1"]`).click();
+    await new Promise((r) => setTimeout(r, 100));
+    await page.locator(grid).focus();
+    await page.keyboard.press('Shift+ArrowRight');
+    await page.keyboard.press('Shift+ArrowDown');
+    await new Promise((r) => setTimeout(r, 100));
+    // Rows 1-2 × cols 1-2 = 4 cells.
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(4);
+  });
+
+  test('Plain arrow key after a range clears the selection', async () => {
+    // Make a range.
+    await page.locator(`${grid} .nugrid-row-header`).nth(0).click();
+    await new Promise((r) => setTimeout(r, 100));
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(2);
+    // Plain arrow → clear.
+    await page.locator(grid).focus();
+    await page.keyboard.press('ArrowDown');
+    await new Promise((r) => setTimeout(r, 100));
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(0);
+  });
+
+  test('Mouse drag from one cell to another selects the rectangle', async () => {
+    const start = page.locator(`${grid} .nugrid-cell[data-row="1"][data-col="1"]`);
+    const end = page.locator(`${grid} .nugrid-cell[data-row="3"][data-col="2"]`);
+    // Browser drag: mousedown on start, move over end, mouseup on end.
+    const sBox = await start.boundingBox();
+    const eBox = await end.boundingBox();
+    if (!sBox || !eBox) throw new Error('cells not visible');
+    await page.mouse.move(sBox.x + sBox.width / 2, sBox.y + sBox.height / 2);
+    await page.mouse.down();
+    // Step the cursor through the intermediate cell so onMouseEnter fires.
+    await page.mouse.move(eBox.x + eBox.width / 2, sBox.y + sBox.height / 2, { steps: 4 });
+    await page.mouse.move(eBox.x + eBox.width / 2, eBox.y + eBox.height / 2, { steps: 4 });
+    await page.mouse.up();
+    await new Promise((r) => setTimeout(r, 100));
+    await expect(page.locator(`${grid} .nugrid-cell.range-selected`)).toHaveCount(6);
+  });
 });
 
 // GridSelect event end-to-end: NuGrid client fires it, EWC server forwards
@@ -157,5 +239,60 @@ test.describe('NuGrid GridSelect event — round-trip to APL handler', () => {
     await new Promise((r) => setTimeout(r, 400));
     const log = await page.locator('#F1\\.Log').textContent();
     expect(log).toContain('GridSelect: Cell [2,2]');
+  });
+
+  // Drag-select that ends on a Combo cell shouldn't open the dropdown.
+  // DemoNuGrid col 4 is "In Stock" (checkbox), col 5 is "Color" (Combo).
+  // We start from row 1 col 1 (text cell — has Edit) — but mousedown on the
+  // <td> itself rather than its child input. Drag down to col 4, release.
+  test('drag ending over a Combo cell does NOT open the combo dropdown', async () => {
+    // Use row 1 col 4 (In Stock — checkbox) as a stand-in widget cell.
+    const start = page.locator('#F1\\.G .nugrid-row-header').nth(0); // row header is safe to mousedown
+    const end = page.locator('#F1\\.G .nugrid-cell[data-row="3"][data-col="4"]');
+
+    const sBox = await start.boundingBox();
+    const eBox = await end.boundingBox();
+    if (!sBox || !eBox) throw new Error('cells not visible');
+    await page.mouse.move(sBox.x + sBox.width / 2, sBox.y + sBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(eBox.x + eBox.width / 2, eBox.y + eBox.height / 2, { steps: 4 });
+    await page.mouse.up();
+    await new Promise((r) => setTimeout(r, 300));
+
+    // After release, no combo dropdown should be visible.
+    // (DemoNuGrid's combos use native select; we check for an open dropdown
+    //  via aria-expanded if available, or just confirm no listbox is open.)
+    const openCombos = page.locator('#F1\\.G [role="combobox"][aria-expanded="true"]');
+    await expect(openCombos).toHaveCount(0);
+    // And dragging from a row header still produced a multi-cell selection.
+    const ranged = page.locator('#F1\\.G .nugrid-cell.range-selected');
+    expect(await ranged.count()).toBeGreaterThan(2);
+  });
+
+  test('drag-select ends on release even outside the grid', async () => {
+    const start = page.locator('#F1\\.G .nugrid-row-header').nth(0);
+    const sBox = await start.boundingBox();
+    if (!sBox) throw new Error('start cell not visible');
+    await page.mouse.move(sBox.x + sBox.width / 2, sBox.y + sBox.height / 2);
+    await page.mouse.down();
+    // Drag down into another row, then move OUT of the grid before release.
+    const endCell = page.locator('#F1\\.G .nugrid-cell[data-row="3"][data-col="2"]');
+    const eBox = await endCell.boundingBox();
+    if (!eBox) throw new Error('end cell not visible');
+    await page.mouse.move(eBox.x + eBox.width / 2, eBox.y + eBox.height / 2, { steps: 4 });
+    // Release outside the grid (e.g. somewhere on the body).
+    await page.mouse.move(50, 50, { steps: 2 });
+    await page.mouse.up();
+    await new Promise((r) => setTimeout(r, 300));
+    // Selection should still be active — drag ended cleanly, range preserved.
+    const ranged = page.locator('#F1\\.G .nugrid-cell.range-selected');
+    expect(await ranged.count()).toBeGreaterThan(2);
+    // And dragging another row header now should REPLACE the selection
+    // (i.e., isDragging was correctly cleared so a fresh drag starts fresh).
+    await page.locator('#F1\\.G .nugrid-row-header').nth(4).click();
+    await new Promise((r) => setTimeout(r, 200));
+    // Row 5's range — should be just row 5's cells.
+    const newRow = page.locator('#F1\\.G .nugrid-cell[data-row="5"].range-selected');
+    expect(await newRow.count()).toBeGreaterThan(0);
   });
 });
