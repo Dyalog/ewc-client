@@ -128,7 +128,7 @@ const NuGrid = ({ data }) => {
   );
 
   // Event handling (CellMove, KeyPress, CellChanged)
-  const { fireCellMove, fireKeyPress, fireCellChanged } = useNuGridEvents(socket, Event, data?.ID);
+  const { fireCellMove, fireKeyPress, fireCellChanged, fireGridSelect } = useNuGridEvents(socket, Event, data?.ID);
 
   // Use a ref for Values to avoid recreating handleCellChange on every Values change
   // This prevents the infinite re-render loop when embedded components update values
@@ -415,18 +415,22 @@ const NuGrid = ({ data }) => {
     return curCell[1] === col;
   };
 
-  // Click handlers for the three header surfaces.
+  // Click handlers for the three header surfaces. Each fires GridSelect with
+  // the resulting rectangle so APL handlers can react (e.g. log, export).
   const selectRow = (row) => {
     setSelection({ sr: row, sc: 1, er: row, ec: numCols });
     moveTo(row, 1);
+    fireGridSelect(row, 1, row, numCols);
   };
   const selectColumn = (col) => {
     setSelection({ sr: 1, sc: col, er: numRows, ec: col });
     moveTo(1, col);
+    fireGridSelect(1, col, numRows, col);
   };
   const selectAll = () => {
     setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
     moveTo(1, 1);
+    fireGridSelect(1, 1, numRows, numCols);
   };
 
   // Build TSV from the current selection (or just curCell). Cells in a row
@@ -643,7 +647,12 @@ const NuGrid = ({ data }) => {
                             ...cellFontStyles,
                           }}
                           onClick={() => {
-                            setSelection(null); // data-cell click → single-cell mode
+                            // Per Dyalog spec, GridSelect also fires when an
+                            // existing selection is cancelled by a cell click.
+                            if (selection) {
+                              fireGridSelect(rowIndex + 1, colIndex + 1, rowIndex + 1, colIndex + 1);
+                            }
+                            setSelection(null);
                             handleCellClick(rowIndex, colIndex);
                           }}
                         >
@@ -703,6 +712,9 @@ const NuGrid = ({ data }) => {
                             ...cellFontStyles,
                           }}
                           onClick={() => {
+                            if (selection) {
+                              fireGridSelect(rowIndex + 1, 1, rowIndex + 1, 1);
+                            }
                             setSelection(null);
                             handleCellClick(rowIndex, 0);
                           }}

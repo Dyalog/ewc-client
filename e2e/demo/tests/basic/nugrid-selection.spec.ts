@@ -109,3 +109,53 @@ test.describe('NuGrid selection — row / col / all + copy as TSV', () => {
     expect(text).toBe('Beta');
   });
 });
+
+// GridSelect event end-to-end: NuGrid client fires it, EWC server forwards
+// to APL callback (CBNuGrid), which writes to F1.Log. We navigate to
+// DemoNuGrid where the handler is registered and verify the log content.
+test.describe('NuGrid GridSelect event — round-trip to APL handler', () => {
+  let browser: Browser;
+  let page: Page;
+
+  test.beforeAll(async () => {
+    const result = await connectAndFindEWCPage(CDP_PORT);
+    browser = result.browser;
+    page = await navigateToDemo(result.page, 'NuGrid', '.nugrid-table', 10000);
+  });
+
+  test('clicking a row header logs "GridSelect: Row N" via CBNuGrid', async () => {
+    // DemoNuGrid grid is F1.G; row headers are 1-indexed in the title column.
+    await page.locator('#F1\\.G .nugrid-row-header').nth(1).click();
+    // Give the WebSocket round-trip a moment.
+    await new Promise((r) => setTimeout(r, 400));
+    const log = await page.locator('#F1\\.Log').textContent();
+    expect(log).toContain('GridSelect: Row 2');
+  });
+
+  test('clicking a column header logs "GridSelect: Col N"', async () => {
+    await page.locator('#F1\\.G .nugrid-col-header').nth(2).click();
+    await new Promise((r) => setTimeout(r, 400));
+    const log = await page.locator('#F1\\.Log').textContent();
+    expect(log).toContain('GridSelect: Col 3');
+  });
+
+  test('clicking the corner cell logs "GridSelect: Range …"', async () => {
+    await page.locator('#F1\\.G .nugrid-corner-cell').click();
+    await new Promise((r) => setTimeout(r, 400));
+    const log = await page.locator('#F1\\.Log').textContent();
+    expect(log).toContain('GridSelect: Range');
+  });
+
+  // Per Dyalog spec: GridSelect also fires when an existing selection is
+  // cancelled by clicking on a cell — with Start === End === clicked cell.
+  test('clicking a cell after a range logs "GridSelect: Cell [r,c]"', async () => {
+    // First create a range (row 1) so the cancel path is exercised.
+    await page.locator('#F1\\.G .nugrid-row-header').nth(0).click();
+    await new Promise((r) => setTimeout(r, 200));
+    // Then click a cell to cancel.
+    await page.locator('#F1\\.G .nugrid-cell[data-row="2"][data-col="2"]').click();
+    await new Promise((r) => setTimeout(r, 400));
+    const log = await page.locator('#F1\\.Log').textContent();
+    expect(log).toContain('GridSelect: Cell [2,2]');
+  });
+});

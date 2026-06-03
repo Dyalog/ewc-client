@@ -83,11 +83,33 @@ const useNuGridEvents = (socket, Event, gridId) => {
     return true;
   }, [socket, gridId, hasEvent]);
 
+  // Fire GridSelect event when a selection is made or cancelled.
+  // Per Dyalog Event 165 spec: Info is [Start, End] where each is a 2-element
+  // [row, col] vector (1-based). For single-cell selections Start === End.
+  // See: https://help.dyalog.com/latest/Content/GUI/MethodOrEvents/GridSelect.htm
+  const fireGridSelect = useCallback((sr, sc, er, ec) => {
+    if (!hasEvent('GridSelect')) return false;
+
+    const eventId = crypto.randomUUID();
+
+    socket.send(JSON.stringify({
+      Event: {
+        EventName: 'GridSelect',
+        ID: gridId,
+        EventID: eventId,
+        Info: [[sr, sc], [er, ec]],
+      },
+    }));
+
+    return true;
+  }, [socket, gridId, hasEvent]);
+
   return {
     hasEvent,
     fireCellMove,
     fireKeyPress,
     fireCellChanged,
+    fireGridSelect,
   };
 };
 
