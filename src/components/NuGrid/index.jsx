@@ -20,8 +20,27 @@ import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatte
 import useNuGridState from './useNuGridState';
 import useNuGridNavigation from './useNuGridNavigation';
 import useNuGridEvents from './useNuGridEvents';
+import useNuGridTitleSize from './useNuGridTitleSize';
 import NuGridCell from './NuGridCell';
 import './NuGrid.css';
+
+// Pre-mount / unknown-column fallback before useLayoutEffect measures.
+// Matches the legacy Grid component's `!CellWidths ? 100` default.
+const FALLBACK_CELL_WIDTH = 100;
+// Matches legacy Grid's `!CellHeights ? 20` default for sparse-array entries.
+const FALLBACK_CELL_HEIGHT = 20;
+
+// Excel-style column letter for index i (0→'A', 25→'Z', 26→'AA', …).
+// Matches legacy Grid's `generateHeader(columns)` for missing ColTitles.
+const columnLetter = (i) => {
+  let s = '';
+  let n = i;
+  do {
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return s;
+};
 
 // Map EWC scroll values to CSS overflow values
 // 0 = hidden, -1/-2 = auto (default), -3 = always visible
@@ -44,9 +63,11 @@ const NuGrid = ({ data }) => {
     Values: propsValues,
     ColTitles,
     RowTitles,
-    TitleWidth = 50,
-    TitleHeight = 20,
-    CellWidths = 100,
+    // No defaults here — undefined means "auto" per ⎕WC, resolved below.
+    TitleWidth,
+    TitleHeight,
+    // No default: undefined = auto-size per column from col titles.
+    CellWidths,
     CellHeights = 20,
     CurCell,
     VScroll = -1,
@@ -349,20 +370,22 @@ const NuGrid = ({ data }) => {
   const { Thousand = ',', Decimal = '.' } = localeData?.Properties || {};
   const { formatNumber } = useNumericFormatter(Thousand, Decimal);
 
-  // Helper to get width for a column (scalar or per-column array)
+  // Width for a column: auto (measured from col title) if user didn't set
+  // CellWidths, else scalar or per-column array as provided.
   const getCellWidth = (colIndex) => {
+    if (wantsAutoCols) return autoColWidths[colIndex] ?? FALLBACK_CELL_WIDTH;
     if (Array.isArray(CellWidths)) {
-      return CellWidths[colIndex] ?? CellWidths[0] ?? 100;
+      return CellWidths[colIndex] ?? CellWidths[0] ?? FALLBACK_CELL_WIDTH;
     }
-    return CellWidths || 100;
+    return CellWidths || FALLBACK_CELL_WIDTH;
   };
 
   // Helper to get height for a row (scalar or per-row array)
   const getCellHeight = (rowIndex) => {
     if (Array.isArray(CellHeights)) {
-      return CellHeights[rowIndex] ?? CellHeights[0] ?? 24;
+      return CellHeights[rowIndex] ?? CellHeights[0] ?? FALLBACK_CELL_HEIGHT;
     }
-    return CellHeights || 24;
+    return CellHeights || FALLBACK_CELL_HEIGHT;
   };
 
   // Format cell value based on its type
@@ -386,11 +409,34 @@ const NuGrid = ({ data }) => {
     ...customStyles,
   };
 
-  // Normalize titles to arrays
-  const colTitlesArray = ColTitles ? (Array.isArray(ColTitles) ? ColTitles : [ColTitles]) : [];
-  const rowTitlesArray = RowTitles ? (Array.isArray(RowTitles) ? RowTitles : [RowTitles]) : [];
+  // Normalize titles to arrays. Missing/empty → Excel-style auto-labels
+  // (A,B,C… for columns, 1,2,3… for rows). Matches legacy Grid behavior:
+  // titles are always present unless explicitly suppressed with TitleWidth/
+  // TitleHeight = 0.
+  const explicitColTitles = ColTitles != null
+    && (Array.isArray(ColTitles) ? ColTitles.length > 0 : true);
+  const explicitRowTitles = RowTitles != null
+    && (Array.isArray(RowTitles) ? RowTitles.length > 0 : true);
+  const colTitlesArray = explicitColTitles
+    ? (Array.isArray(ColTitles) ? ColTitles : [ColTitles])
+    : Array.from({ length: numCols }, (_, i) => columnLetter(i));
+  const rowTitlesArray = explicitRowTitles
+    ? (Array.isArray(RowTitles) ? RowTitles : [RowTitles])
+    : Array.from({ length: numRows }, (_, i) => String(i + 1));
   const hasColTitles = colTitlesArray.length > 0;
   const hasRowTitles = rowTitlesArray.length > 0;
+
+  // ⎕WC behavior: undefined/empty/negative TitleWidth/Height/CellWidths
+  // auto-size to fit content; 0 hides titles; positive is fixed.
+  const {
+    effectiveTitleWidth, effectiveTitleHeight, autoColWidths, wantsAutoCols,
+  } = useNuGridTitleSize(
+    TitleWidth, TitleHeight, CellWidths, rowTitlesArray, colTitlesArray, gridRef,
+  );
+
+  // ⎕WC: TitleWidth/Height = 0 fully hides the row/col title band (no DOM at all).
+  const showRowTitles = hasRowTitles && effectiveTitleWidth !== 0;
+  const showColTitles = hasColTitles && effectiveTitleHeight !== 0;
 
   return (
     <div
@@ -418,13 +464,23 @@ const NuGrid = ({ data }) => {
       >
         {Values && Values.length > 0 ? (
           <table className="nugrid-table">
-            {hasColTitles && (
+            {/* <colgroup> is the cross-engine reliable way to pin column
+                widths under table-layout: fixed. Cell-level widths can be
+                ignored by some browsers (notably CEF) when the table itself
+                doesn't have an explicit declared width. */}
+            <colgroup>
+              {showRowTitles && <col style={{ width: effectiveTitleWidth }} />}
+              {(Array.isArray(Values[0]) ? Values[0] : [Values[0]]).map((_, colIndex) => (
+                <col key={colIndex} style={{ width: getCellWidth(colIndex) }} />
+              ))}
+            </colgroup>
+            {showColTitles && (
               <thead>
-                <tr className="nugrid-header-row" style={{ height: TitleHeight }}>
-                  {hasRowTitles && (
+                <tr className="nugrid-header-row" style={{ height: effectiveTitleHeight }}>
+                  {showRowTitles && (
                     <th
                       className="nugrid-corner-cell"
-                      style={{ width: TitleWidth, height: TitleHeight }}
+                      style={{ width: effectiveTitleWidth, height: effectiveTitleHeight }}
                     />
                   )}
                   {colTitlesArray.map((title, colIndex) => (
@@ -433,7 +489,7 @@ const NuGrid = ({ data }) => {
                       className={`nugrid-col-header${Array.isArray(title) ? ' multi-line' : ''}${curCell[1] === colIndex + 1 ? ' selected-col' : ''}`}
                       style={{
                         width: getCellWidth(colIndex),
-                        height: TitleHeight,
+                        height: effectiveTitleHeight,
                         backgroundColor: curCell[1] === colIndex + 1
                           ? '#b8d4e8'
                           : ColTitleBCol ? rgbColor(ColTitleBCol) : undefined,
@@ -457,11 +513,11 @@ const NuGrid = ({ data }) => {
             <tbody>
               {Values.map((row, rowIndex) => (
                 <tr key={rowIndex} className="nugrid-row" style={{ height: getCellHeight(rowIndex) }}>
-                  {hasRowTitles && (
+                  {showRowTitles && (
                     <th
                       className={`nugrid-row-header${curCell[0] === rowIndex + 1 ? ' selected-row' : ''}`}
                       style={{
-                        width: TitleWidth,
+                        width: effectiveTitleWidth,
                         height: getCellHeight(rowIndex),
                         backgroundColor: curCell[0] === rowIndex + 1
                           ? '#b8d4e8'

@@ -43,7 +43,11 @@
 
 .nugrid-table {
   border-collapse: collapse;
-  width: 100%;
+  /* fit-content sizes the table to the sum of declared column widths. Without
+     it `table-layout: fixed` either fills 100% (scaling columns up) or falls
+     back to auto-layout (ignoring declared widths). Container's overflow:auto
+     handles horizontal scroll when columns total exceeds the grid. */
+  width: fit-content;
   table-layout: fixed;
 }
 
