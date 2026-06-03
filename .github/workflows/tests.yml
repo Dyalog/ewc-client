@@ -136,8 +136,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # Pinned: lts/* drifted to a Node major that hangs Playwright extraction.
-          node-version: '24'
+          node-version: lts/*
           cache: yarn
 
       - name: Install dependencies
