@@ -96,6 +96,9 @@ const NuGrid = ({ data }) => {
   // and are synced here.
   const [Values, setValues] = useState(propsValues);
   const [FormattedValues, setFormattedValues] = useState(propsFormattedValues);
+  // Selection rectangle (1-based inclusive bounds) for row/column/range
+  // selection via header clicks. null = single-cell mode (just curCell).
+  const [selection, setSelection] = useState(null);
 
   useEffect(() => {
     setValues(propsValues);
@@ -292,6 +295,14 @@ const NuGrid = ({ data }) => {
 
   // Handle keyboard events
   const handleKeyDown = (event) => {
+    // Ctrl/Cmd+C copies the current selection as TSV. Tab-delimited within
+    // rows, newline-delimited between rows — pastes into Excel/Sheets.
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
+      event.preventDefault();
+      copySelectionToClipboard();
+      return;
+    }
+
     const result = navigationKeyDown(event);
 
     if (result === 'activate') {
@@ -388,6 +399,62 @@ const NuGrid = ({ data }) => {
     return CellHeights || FALLBACK_CELL_HEIGHT;
   };
 
+  // Selection helpers (1-based row/col). Selection is a rectangle that
+  // covers row/column/range/all selections uniformly.
+  const isCellInSelection = (row, col) => {
+    if (!selection) return false;
+    return row >= selection.sr && row <= selection.er
+        && col >= selection.sc && col <= selection.ec;
+  };
+  const isRowInSelection = (row) => {
+    if (selection) return row >= selection.sr && row <= selection.er;
+    return curCell[0] === row;
+  };
+  const isColInSelection = (col) => {
+    if (selection) return col >= selection.sc && col <= selection.ec;
+    return curCell[1] === col;
+  };
+
+  // Click handlers for the three header surfaces.
+  const selectRow = (row) => {
+    setSelection({ sr: row, sc: 1, er: row, ec: numCols });
+    moveTo(row, 1);
+  };
+  const selectColumn = (col) => {
+    setSelection({ sr: 1, sc: col, er: numRows, ec: col });
+    moveTo(1, col);
+  };
+  const selectAll = () => {
+    setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
+    moveTo(1, 1);
+  };
+
+  // Build TSV from the current selection (or just curCell). Cells in a row
+  // join with tab; rows join with newline — pastes directly into Excel/Sheets.
+  const copySelectionToClipboard = async () => {
+    const sr = selection?.sr ?? curCell[0];
+    const sc = selection?.sc ?? curCell[1];
+    const er = selection?.er ?? curCell[0];
+    const ec = selection?.ec ?? curCell[1];
+    const lines = [];
+    for (let r = sr; r <= er; r++) {
+      const cells = [];
+      for (let c = sc; c <= ec; c++) {
+        const v = Array.isArray(Values[r - 1]) ? Values[r - 1][c - 1] : Values[r - 1];
+        cells.push(v == null ? '' : String(v));
+      }
+      lines.push(cells.join('\t'));
+    }
+    const text = lines.join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Fallback for non-secure contexts (some embedded browsers reject the
+      // async API); silently no-op — test paths use the async branch.
+    }
+    return text;
+  };
+
   // Format cell value based on its type
   const formatCellValue = (value, cellType, formattedValue) => {
     if (formattedValue != null) return normalizeAplFormatted(formattedValue);
@@ -480,17 +547,20 @@ const NuGrid = ({ data }) => {
                   {showRowTitles && (
                     <th
                       className="nugrid-corner-cell"
-                      style={{ width: effectiveTitleWidth, height: effectiveTitleHeight }}
+                      style={{ width: effectiveTitleWidth, height: effectiveTitleHeight, cursor: 'cell' }}
+                      onClick={selectAll}
                     />
                   )}
                   {colTitlesArray.map((title, colIndex) => (
                     <th
                       key={colIndex}
-                      className={`nugrid-col-header${Array.isArray(title) ? ' multi-line' : ''}${curCell[1] === colIndex + 1 ? ' selected-col' : ''}`}
+                      className={`nugrid-col-header${Array.isArray(title) ? ' multi-line' : ''}${isColInSelection(colIndex + 1) ? ' selected-col' : ''}`}
+                      onClick={() => selectColumn(colIndex + 1)}
                       style={{
                         width: getCellWidth(colIndex),
                         height: effectiveTitleHeight,
-                        backgroundColor: curCell[1] === colIndex + 1
+                        cursor: 'cell',
+                        backgroundColor: isColInSelection(colIndex + 1)
                           ? '#b8d4e8'
                           : ColTitleBCol ? rgbColor(ColTitleBCol) : undefined,
                         color: ColTitleFCol ? rgbColor(ColTitleFCol) : undefined,
@@ -515,11 +585,13 @@ const NuGrid = ({ data }) => {
                 <tr key={rowIndex} className="nugrid-row" style={{ height: getCellHeight(rowIndex) }}>
                   {showRowTitles && (
                     <th
-                      className={`nugrid-row-header${curCell[0] === rowIndex + 1 ? ' selected-row' : ''}`}
+                      className={`nugrid-row-header${isRowInSelection(rowIndex + 1) ? ' selected-row' : ''}`}
+                      onClick={() => selectRow(rowIndex + 1)}
                       style={{
                         width: effectiveTitleWidth,
                         height: getCellHeight(rowIndex),
-                        backgroundColor: curCell[0] === rowIndex + 1
+                        cursor: 'cell',
+                        backgroundColor: isRowInSelection(rowIndex + 1)
                           ? '#b8d4e8'
                           : RowTitleBCol ? rgbColor(RowTitleBCol) : undefined,
                         color: RowTitleFCol ? rgbColor(RowTitleFCol) : undefined,
@@ -554,10 +626,11 @@ const NuGrid = ({ data }) => {
                       const cellFontObj = cellFontId ? findCurrentData(cellFontId) : null;
                       const cellFontStyles = cellFontObj ? getFontStyles(cellFontObj) : {};
 
+                      const inRange = isCellInSelection(rowIndex + 1, colIndex + 1);
                       return (
                         <td
                           key={colIndex}
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${showWidget ? ' has-component' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inRange ? ' range-selected' : ''}${showWidget ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={colIndex + 1}
                           style={{
@@ -569,7 +642,10 @@ const NuGrid = ({ data }) => {
                             color: fgColor,
                             ...cellFontStyles,
                           }}
-                          onClick={() => handleCellClick(rowIndex, colIndex)}
+                          onClick={() => {
+                            setSelection(null); // data-cell click → single-cell mode
+                            handleCellClick(rowIndex, colIndex);
+                          }}
                         >
                           {showWidget ? (
                             <NuGridCell
@@ -614,7 +690,7 @@ const NuGrid = ({ data }) => {
 
                       return (
                         <td
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${showWidget ? ' has-component' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${isCellInSelection(rowIndex + 1, 1) ? ' range-selected' : ''}${showWidget ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={1}
                           style={{
@@ -626,7 +702,10 @@ const NuGrid = ({ data }) => {
                             color: fgColor,
                             ...cellFontStyles,
                           }}
-                          onClick={() => handleCellClick(rowIndex, 0)}
+                          onClick={() => {
+                            setSelection(null);
+                            handleCellClick(rowIndex, 0);
+                          }}
                         >
                           {showWidget ? (
                             <NuGridCell

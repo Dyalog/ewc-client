@@ -154,6 +154,13 @@
   font-size: inherit;
 }
 
+/* Range selection — cells inside a row/column/all selection get a light tint.
+   The anchor (current) cell still gets the blue border via .selected; its
+   white background wins, mimicking Excel's "active inside selection" look. */
+.nugrid-cell.range-selected {
+  background-color: #cfe2f3;
+}
+
 /* Cell selection - blue border matching theme */
 .nugrid-cell.selected {
   border: 1px solid blue;
