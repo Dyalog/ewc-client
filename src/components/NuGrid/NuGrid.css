@@ -65,6 +65,13 @@
   white-space: nowrap;
   font-family: inherit;
   font-size: inherit;
+  /* Pin the text line box so it stops inflating the row. In a border-collapse
+     table the row pitch is (line-height + 1px collapsed gridline); 15px -> 16px
+     pitch, matching the native Win32 grid. Absolute px deliberately overrides
+     the inherited Bootstrap line-height:1.5 (--bs-body-line-height) that was
+     rendering rows at 20.5px. Only affects text line boxes — embedded
+     inputs/combos/checkboxes are unaffected. */
+  line-height: 15px;
   cursor: cell;
   user-select: none;
   background-color: #fff;
@@ -129,6 +136,12 @@
   position: sticky;
   left: 0;
   z-index: 10;
+  /* Row-title cells live inside each data <tr> and share its height, so they
+     must pin line-height too (15px -> 16px pitch); otherwise the inherited 1.5
+     line box re-inflates the row from the title side. The col-header / corner
+     cells live in the header band and are intentionally left alone so header
+     auto-sizing and multi-line ColTitles keep working. */
+  line-height: 15px;
 }
 
 /* Corner cell - sticky in both directions, highest z-index */

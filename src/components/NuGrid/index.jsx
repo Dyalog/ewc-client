@@ -27,8 +27,10 @@ import './NuGrid.css';
 // Pre-mount / unknown-column fallback before useLayoutEffect measures.
 // Matches the legacy Grid component's `!CellWidths ? 100` default.
 const FALLBACK_CELL_WIDTH = 100;
-// Matches legacy Grid's `!CellHeights ? 20` default for sparse-array entries.
-const FALLBACK_CELL_HEIGHT = 20;
+// Default data-row height. 16px matches the native Win32 grid row pitch
+// (paired with line-height:15px on .nugrid-cell in NuGrid.css). Only used to
+// fill sparse CellHeights-array holes; explicit APL CellHeights still win.
+const FALLBACK_CELL_HEIGHT = 16;
 
 // Excel-style column letter for index i (0→'A', 25→'Z', 26→'AA', …).
 // Matches legacy Grid's `generateHeader(columns)` for missing ColTitles.
@@ -68,7 +70,7 @@ const NuGrid = ({ data }) => {
     TitleHeight,
     // No default: undefined = auto-size per column from col titles.
     CellWidths,
-    CellHeights = 20,
+    CellHeights = 16,
     CurCell,
     VScroll = -1,
     HScroll = -1,

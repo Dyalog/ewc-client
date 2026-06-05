@@ -17,11 +17,15 @@ import { useLayoutEffect, useMemo, useState } from 'react';
 // slop (anti-aliasing, sub-pixel advance), otherwise a 1-char title clips to
 // an ellipsis. 18 leaves a comfortable margin.
 const TITLE_PADDING_X = 18;
-const TITLE_PADDING_Y = 6;
+// Each column-title line occupies exactly one data-row's height. The native
+// Win32 grid renders its title band as N rows tall for N title lines (measured:
+// native Prices band 48px = 3 lines x 16px row pitch). 16 = cell line-height
+// 15px + 1px collapsed gridline, matching .nugrid-cell data rows.
+const TITLE_LINE_HEIGHT = 16;
 // Auto-sized title/column widths are floored to this — matches the legacy
 // EWC Grid component's hardcoded default. Explicit positive values bypass.
 const FALLBACK_TITLE_WIDTH = 100;
-const FALLBACK_TITLE_HEIGHT = 20;
+const FALLBACK_TITLE_HEIGHT = 16;
 
 const isAuto = (value) => {
   if (value === 0) return false;                       // explicit 0 = hide
@@ -108,8 +112,11 @@ const useNuGridTitleSize = (
       setAutoWidth(Math.max(measured, FALLBACK_TITLE_WIDTH));
     }
     if (wantsAutoH) {
-      const lineHeightPx = parseFloat(cs.fontSize) * 1.3 || 16;
-      const measured = Math.ceil(maxLines(colTitles) * lineHeightPx) + TITLE_PADDING_Y;
+      // One data-row per title line, matching native. The old
+      // `fontSize*1.3 + 6px` overshot by ~6px (a 1-line header rendered at 22px
+      // instead of 16px), eating vertical space and forcing an unexpected
+      // vertical scrollbar. Height is now N lines x the data-row pitch.
+      const measured = maxLines(colTitles) * TITLE_LINE_HEIGHT;
       setAutoHeight(Math.max(measured, FALLBACK_TITLE_HEIGHT));
     }
     if (wantsAutoCols) {
