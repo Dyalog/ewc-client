@@ -3,7 +3,11 @@
 .nugrid {
   box-sizing: border-box;
   overflow: hidden;
-  background-color: #fff;
+  /* Filler shown when the grid's Size is larger than the fit-content table
+     (i.e. the area below the last row / right of the last column). Match the
+     form's #f0f0f0 so the unused area blends in instead of flashing white.
+     Data cells paint their own #fff, so only the empty region is affected. */
+  background-color: #f0f0f0;
   border: 1px solid #b4b4b4;
   font-family: inherit;
   font-size: inherit;

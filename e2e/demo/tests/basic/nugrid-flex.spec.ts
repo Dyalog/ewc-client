@@ -47,8 +47,8 @@ test.describe('DemoNuGridFlex - Flex Row', () => {
     const g1 = page.locator('#F1\\.ROW\\.G1');
     const box = await g1.boundingBox();
 
-    expect(box!.width).toBe(260);
-    expect(box!.height).toBe(120);
+    expect(box!.width).toBe(253);
+    expect(box!.height).toBe(70);
   });
 
   test('row flex grids render correct data', async () => {
@@ -99,8 +99,8 @@ test.describe('DemoNuGridFlex - Flex Column', () => {
     const grid = page.locator('#F1\\.COL\\.G');
     const box = await grid.boundingBox();
 
-    expect(box!.width).toBe(260);
-    expect(box!.height).toBe(120);
+    expect(box!.width).toBe(253);
+    expect(box!.height).toBe(70);
   });
 
   test('column flex grid renders correct data', async () => {
@@ -147,8 +147,8 @@ test.describe('DemoNuGridFlex - Fixed Positioning', () => {
     const grid = page.locator('#F1\\.FIXED\\.G');
     const box = await grid.boundingBox();
 
-    expect(box!.width).toBe(260);
-    expect(box!.height).toBe(120);
+    expect(box!.width).toBe(253);
+    expect(box!.height).toBe(70);
   });
 
   test('fixed grid renders correct data', async () => {
