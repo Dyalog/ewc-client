@@ -214,8 +214,14 @@ const NuGrid = ({ data }) => {
     return (cellType && cellType >= 1) ? cellType : null;
   }, [CellTypes]);
 
-  // Check if a cell's input widget should be shown (even when not selected)
+  // Check if a cell's input widget should be shown (even when not selected).
+  // Per ⎕WC, ShowInput only applies to cells displayed with a Combo or Button
+  // object — Edit/Numeric/Label cells ignore it and show as text until selected
+  // (otherwise a column of always-on text editors looks broken).
   const shouldShowInput = useCallback((rowIndex, colIndex) => {
+    const inputId = getInputComponentId(rowIndex, colIndex);
+    const inputType = inputId ? findCurrentData(inputId)?.Properties?.Type : null;
+    if (inputType !== 'Combo' && inputType !== 'Button') return false;
     if (ShowInput === 1) return true;
     if (ShowInput === 0) return false;
     if (Array.isArray(ShowInput)) {
@@ -225,7 +231,7 @@ const NuGrid = ({ data }) => {
       }
     }
     return false;
-  }, [ShowInput, CellTypes]);
+  }, [ShowInput, CellTypes, getInputComponentId, findCurrentData]);
 
   // Handle cell value changes from embedded components
   // Uses valuesRef to avoid recreating this callback when Values changes
@@ -487,6 +493,16 @@ const NuGrid = ({ data }) => {
     if (!selection) return false;
     return row >= selection.sr && row <= selection.er
         && col >= selection.sc && col <= selection.ec;
+  };
+  // Which sides of an in-range cell lie on the selection's outer boundary, so
+  // CSS can draw a single border around the whole block (Excel-style) rather
+  // than one box per cell. Returns space-prefixed class names for the cell.
+  const selectionEdgeClasses = (row, col) => {
+    if (!selection || !isCellInSelection(row, col)) return '';
+    return (row === selection.sr ? ' sel-top' : '')
+         + (row === selection.er ? ' sel-bottom' : '')
+         + (col === selection.sc ? ' sel-left' : '')
+         + (col === selection.ec ? ' sel-right' : '');
   };
   const isRowInSelection = (row) => {
     if (selection) return row >= selection.sr && row <= selection.er;
@@ -771,9 +787,13 @@ const NuGrid = ({ data }) => {
                         ? findCurrentData(inputComponentId)
                         : null;
 
+                      // The active cell shows its editor only as a single-cell
+                      // focus; during a multi-cell range it renders its value as
+                      // text like every other selected cell (so the last-selected
+                      // cell doesn't pop out as a widget). ShowInput=1 still wins.
                       const showWidget = inputComponentData
                             && inputComponentData?.Properties?.Type !== 'Label'
-                            && (shouldShowInput(rowIndex, colIndex) || isSelected);
+                            && (shouldShowInput(rowIndex, colIndex) || (isSelected && !selection));
 
                       // Per-cellType styling
                       const cellTypeIdx = getCellTypeIndex(rowIndex, colIndex);
@@ -787,7 +807,7 @@ const NuGrid = ({ data }) => {
                       return (
                         <td
                           key={colIndex}
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inRange ? ' range-selected' : ''}${showWidget ? ' has-component' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inRange ? ' range-selected' : ''}${selectionEdgeClasses(rowIndex + 1, colIndex + 1)}${showWidget ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={colIndex + 1}
                           style={{
@@ -811,12 +831,20 @@ const NuGrid = ({ data }) => {
                           }}
                           onMouseDown={(e) => {
                             if (e.shiftKey) return; // handled in capture
-                            // Plain mousedown: only start drag-select if the
-                            // event hit the cell itself (not a widget child).
-                            // For widget cells, mousedown opens the widget as
-                            // usual; users start drags from non-widget cells.
-                            if (e.target !== e.currentTarget) return;
                             const r = rowIndex + 1, c = colIndex + 1;
+                            // Clicking into a cell's widget (Combo/Button/editor)
+                            // doesn't start a drag-select — but going into a cell
+                            // cancels any active range so a stale selection doesn't
+                            // linger while editing. Plain cells start a drag.
+                            if (e.target !== e.currentTarget) {
+                              if (selection) {
+                                fireGridSelect(r, c, r, c);
+                                setAnchor({ r, c });
+                                setSelection(null);
+                                handleCellClick(rowIndex, colIndex);
+                              }
+                              return;
+                            }
                             if (selection) fireGridSelect(r, c, r, c);
                             setAnchor({ r, c });
                             setSelection(null);
@@ -847,6 +875,8 @@ const NuGrid = ({ data }) => {
                               componentData={inputComponentData}
                               gridId={data?.ID}
                               onCellChange={handleCellChange}
+                              cellFontId={cellFontId}
+                              cellFCol={FCol}
                             />
                           ) : (
                             formatCellValue(cell, cellType, FormattedValues?.[rowIndex]?.[colIndex])
@@ -866,9 +896,11 @@ const NuGrid = ({ data }) => {
                         ? findCurrentData(inputComponentId)
                         : null;
 
+                      // See the multi-column path above: hide the active cell's
+                      // editor during a multi-cell range so the selection is uniform.
                       const showWidget = inputComponentData
                             && inputComponentData?.Properties?.Type !== 'Label'
-                            && (shouldShowInput(rowIndex, 0) || isSelected);
+                            && (shouldShowInput(rowIndex, 0) || (isSelected && !selection));
 
                       // Per-cellType styling
                       const cellTypeIdx = getCellTypeIndex(rowIndex, 0);
@@ -880,7 +912,7 @@ const NuGrid = ({ data }) => {
 
                       return (
                         <td
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${isCellInSelection(rowIndex + 1, 1) ? ' range-selected' : ''}${showWidget ? ' has-component' : ''}`}
+                          className={`nugrid-cell${isSelected ? ' selected' : ''}${isCellInSelection(rowIndex + 1, 1) ? ' range-selected' : ''}${selectionEdgeClasses(rowIndex + 1, 1)}${showWidget ? ' has-component' : ''}`}
                           data-row={rowIndex + 1}
                           data-col={1}
                           style={{
@@ -901,8 +933,18 @@ const NuGrid = ({ data }) => {
                           }}
                           onMouseDown={(e) => {
                             if (e.shiftKey) return;
-                            if (e.target !== e.currentTarget) return;
                             const r = rowIndex + 1;
+                            // See the multi-column path: going into a widget cell
+                            // cancels any active range without starting a drag.
+                            if (e.target !== e.currentTarget) {
+                              if (selection) {
+                                fireGridSelect(r, 1, r, 1);
+                                setAnchor({ r, c: 1 });
+                                setSelection(null);
+                                handleCellClick(rowIndex, 0);
+                              }
+                              return;
+                            }
                             if (selection) fireGridSelect(r, 1, r, 1);
                             setAnchor({ r, c: 1 });
                             setSelection(null);
@@ -928,6 +970,8 @@ const NuGrid = ({ data }) => {
                               componentData={inputComponentData}
                               gridId={data?.ID}
                               onCellChange={handleCellChange}
+                              cellFontId={cellFontId}
+                              cellFCol={FCol}
                             />
                           ) : (
                             formatCellValue(row, cellType, FormattedValues?.[rowIndex]?.[0])

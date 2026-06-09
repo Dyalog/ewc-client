@@ -13,6 +13,8 @@ const NuGridCell = ({
   componentData, // Full data object of the Input component
   gridId,        // ID of the grid (e.g., 'F.G')
   onCellChange,  // Callback to update Values and fire CellChanged
+  cellFontId,    // FontObj id from the grid's CellFonts for this cell type
+  cellFCol,      // FCol from the grid (raw colour value)
 }) => {
   // Use refs to capture current values without causing re-renders
   // This prevents the infinite update loop
@@ -52,8 +54,14 @@ const NuGridCell = ({
       // context) — but the native ⎕WC grid never honours that inside a cell.
       // Force visible here so cells don't render as display:none.
       Visible: 1,
+      // Inherit the cell's typography so the editor matches the static cell:
+      // hand the embedded widget the column's CellFonts/FCol as its own
+      // FontObj/FCol (resolved via inheritedProperty), unless the template
+      // already specifies its own.
+      ...(cellFontId && componentData?.Properties?.FontObj == null ? { FontObj: cellFontId } : {}),
+      ...(cellFCol != null && componentData?.Properties?.FCol == null ? { FCol: cellFCol } : {}),
     },
-  }), [componentData]);
+  }), [componentData, cellFontId, cellFCol]);
 
   return (
     <NuGridProvider value={contextValue}>

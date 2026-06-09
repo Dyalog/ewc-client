@@ -50,24 +50,23 @@ test.describe('DemoNuGridFormat - FormatString support', () => {
     const cell = page.locator('.nugrid-cell[data-row="1"][data-col="2"]');
     await expect(cell).toBeVisible();
 
-    const input = cell.locator('input');
-    const value = await input.inputValue();
+    // Non-selected Numeric cell shows the ⎕FMT-formatted text — ShowInput only
+    // applies to Combo/Button, so Numeric cells aren't always-on editors.
+    const value = await cell.textContent();
     expect(value).toContain('8,500,000.00');
   });
 
   test('large revenue has multiple comma separators', async () => {
     // Row 6: Fibonacci revenue = 97500000 → "97,500,000.00"
     const cell = page.locator('.nugrid-cell[data-row="6"][data-col="2"]');
-    const input = cell.locator('input');
-    const value = await input.inputValue();
+    const value = await cell.textContent();
     expect(value).toContain('97,500,000.00');
   });
 
   test('headcount shows comma-separated integer (CI8)', async () => {
     // Row 2: Boltzmann headcount = 31000 → "31,000"
     const cell = page.locator('.nugrid-cell[data-row="2"][data-col="3"]');
-    const input = cell.locator('input');
-    const value = await input.inputValue();
+    const value = await cell.textContent();
     expect(value).toContain('31,000');
   });
 
@@ -104,17 +103,17 @@ test.describe('DemoNuGridFormat - FormatString support', () => {
   // produce a visible gap. The client trims them on display.
   test('formatted values have no leading or trailing whitespace', async () => {
     // Headcount column (CI8) — original server value would be "   8,500".
-    const headcount = await page.locator('.nugrid-cell[data-row="1"][data-col="3"] input').inputValue();
+    const headcount = (await page.locator('.nugrid-cell[data-row="1"][data-col="3"]').textContent()) ?? '';
     expect(headcount).toBe(headcount.trim());
     expect(headcount).toBe('8,500');
 
     // Revenue column (CF15.2) — original would be "       8,500,000.00".
-    const revenue = await page.locator('.nugrid-cell[data-row="1"][data-col="2"] input').inputValue();
+    const revenue = (await page.locator('.nugrid-cell[data-row="1"][data-col="2"]').textContent()) ?? '';
     expect(revenue).toBe(revenue.trim());
     expect(revenue).toBe('8,500,000.00');
 
     // Growth column (F8.1) — negatives produce a leading space too.
-    const negGrowth = await page.locator('.nugrid-cell[data-row="3"][data-col="5"] input').inputValue();
+    const negGrowth = (await page.locator('.nugrid-cell[data-row="3"][data-col="5"]').textContent()) ?? '';
     expect(negGrowth).toBe(negGrowth.trim());
     expect(negGrowth).toBe('-8.7');
   });
@@ -125,16 +124,12 @@ test.describe('DemoNuGridFormat - FormatString support', () => {
     const HIGH_MINUS = '¯';
 
     // Row 3: Cantor — Growth = ¯8.7, formatted via F8.1
-    const cantorGrowth = page.locator('.nugrid-cell[data-row="3"][data-col="5"]');
-    const cantorInput = cantorGrowth.locator('input');
-    const cantorVal = await cantorInput.inputValue();
+    const cantorVal = (await page.locator('.nugrid-cell[data-row="3"][data-col="5"]').textContent()) ?? '';
     expect(cantorVal).not.toContain(HIGH_MINUS);
     expect(cantorVal).toMatch(/-\s*8\.7|-8\.7/);
 
     // Row 7: Gauss — Growth = ¯4.2
-    const gaussGrowth = page.locator('.nugrid-cell[data-row="7"][data-col="5"]');
-    const gaussInput = gaussGrowth.locator('input');
-    const gaussVal = await gaussInput.inputValue();
+    const gaussVal = (await page.locator('.nugrid-cell[data-row="7"][data-col="5"]').textContent()) ?? '';
     expect(gaussVal).not.toContain(HIGH_MINUS);
     expect(gaussVal).toMatch(/-\s*4\.2|-4\.2/);
   });
@@ -176,8 +171,8 @@ test.describe('DemoNuGridFormat - FormatString support', () => {
     // Row 1 Headcount: cellValue=8500, formatted via CI8 → "   8,500"
     const cell = page.locator('.nugrid-cell[data-row="1"][data-col="3"]');
 
-    // Sanity: before focus, the cell shows the formatted (comma) value.
-    const before = await cell.locator('input').inputValue();
+    // Sanity: before focus, the cell shows the formatted (comma) text.
+    const before = (await cell.textContent()) ?? '';
     expect(before).toContain(',');
 
     await cell.click();

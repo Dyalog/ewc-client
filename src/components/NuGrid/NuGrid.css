@@ -79,6 +79,9 @@
   cursor: cell;
   user-select: none;
   background-color: #fff;
+  /* Positioning context for the selection overlay (::after), which paints the
+     selection on top of the cell's own (possibly BCol) background. */
+  position: relative;
 }
 
 /* Simple flat header styles */
@@ -93,6 +96,9 @@
   border-right: 1px solid #a0a0a0;
   border-bottom: 1px solid #a0a0a0;
   padding: 0 6px;
+  /* Title text isn't selectable — dragging across cells shouldn't highlight
+     the row/column header text (data cells already set this). */
+  user-select: none;
   font-weight: normal;
   font-family: inherit;
   font-size: inherit;
@@ -155,6 +161,7 @@
   border-right: 1px solid #a0a0a0;
   border-bottom: 1px solid #a0a0a0;
   background-color: #f0f0f0;
+  user-select: none;
   position: sticky;
   top: 0;
   left: 0;
@@ -171,21 +178,46 @@
   font-size: inherit;
 }
 
-/* Range selection — cells inside a row/column/all selection get a light tint.
-   The anchor (current) cell still gets the blue border via .selected; its
-   white background wins, mimicking Excel's "active inside selection" look. */
-.nugrid-cell.range-selected {
-  background-color: #cfe2f3;
+/* Selection is drawn as an overlay layer (::after) ON TOP of the cell's own
+   background. This is the key to showing selection in coloured (BCol) cells:
+   BCol is an inline background-color that beats any class background rule, but
+   it can't beat a separate element stacked above it. pointer-events:none keeps
+   clicks and embedded widgets (Edit/Combo/checkbox) fully interactive. */
+.nugrid-cell.range-selected::after,
+.nugrid-cell.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
 }
 
-/* Cell selection - blue border matching theme */
-.nugrid-cell.selected {
-  border: 1px solid blue;
-  background-color: #fff;
+/* Range fill: a translucent blue wash layered over whatever colour the cell
+   has — the "shadow on top" that stays visible on coloured cells. Applied to
+   every range cell including the active one, so the whole selection reads
+   uniformly (the active cell no longer renders its editor mid-range). */
+.nugrid-cell.range-selected::after {
+  background-color: rgba(0, 120, 215, 0.22);
 }
 
-/* Subtle highlight for the selected cell on hover */
-.nugrid-cell:hover:not(.selected) {
+/* Active (current) cell: ⎕WC-style focus highlight on the right + bottom edges
+   only (matching the legacy Grid), drawn on the overlay so it shows over
+   coloured fills with no layout shift. */
+.nugrid-cell.selected::after {
+  border-right: 1px solid #0078d7;
+  border-bottom: 1px solid #0078d7;
+}
+
+/* Perimeter of a multi-cell selection: one continuous slim outline around the
+   whole block (Excel-style), assembled from each edge cell's outer side. */
+.nugrid-cell.sel-top::after    { border-top: 1px solid #0078d7; }
+.nugrid-cell.sel-bottom::after { border-bottom: 1px solid #0078d7; }
+.nugrid-cell.sel-left::after   { border-left: 1px solid #0078d7; }
+.nugrid-cell.sel-right::after  { border-right: 1px solid #0078d7; }
+
+/* Subtle highlight for cells on hover (skip selected/range so the overlay
+   reads cleanly). */
+.nugrid-cell:hover:not(.selected):not(.range-selected) {
   background-color: #f0f0f0;
 }
 
