@@ -172,4 +172,59 @@ test.describe('NuGrid long-cell selection border', () => {
     });
     console.log('GRID C wide cell:', JSON.stringify(m));
   });
+
+  // Grid A's 3rd column sits beyond the ~700px viewport and its 60 rows
+  // overflow vertically. Arrow-key navigation must scroll the focused cell
+  // into view (it previously moved CurCell off-screen with no scroll).
+  test('keyboard navigation scrolls the focused cell into view (Grid A)', async () => {
+    const gridA = page.locator('.nugrid').nth(0);
+    const container = gridA.locator('.nugrid-container');
+
+    await gridA.locator('.nugrid-cell[data-row="1"][data-col="1"]').click();
+    await new Promise(r => setTimeout(r, 150));
+
+    // Arrow right past the visible columns → container scrolls, cell stays visible.
+    await gridA.press('ArrowRight');
+    await gridA.press('ArrowRight');
+    await new Promise(r => setTimeout(r, 150));
+    const right = await container.evaluate((el: HTMLElement) => {
+      const sel = el.querySelector('.nugrid-cell.selected') as HTMLElement | null;
+      const cr = sel!.getBoundingClientRect(), pr = el.getBoundingClientRect();
+      return { scrollLeft: el.scrollLeft, inView: cr.right <= pr.right + 1 && cr.left >= pr.left - 1 };
+    });
+    expect(right.scrollLeft).toBeGreaterThan(0);
+    expect(right.inView).toBe(true);
+
+    // Arrow down past the visible rows → container scrolls vertically too.
+    for (let i = 0; i < 25; i++) await gridA.press('ArrowDown');
+    await new Promise(r => setTimeout(r, 150));
+    const down = await container.evaluate((el: HTMLElement) => {
+      const sel = el.querySelector('.nugrid-cell.selected') as HTMLElement | null;
+      const cr = sel!.getBoundingClientRect(), pr = el.getBoundingClientRect();
+      return { scrollTop: el.scrollTop, inView: cr.bottom <= pr.bottom + 1 && cr.top >= pr.top - 1 };
+    });
+    expect(down.scrollTop).toBeGreaterThan(0);
+    expect(down.inView).toBe(true);
+  });
+
+  // ⎕WC-style edge navigation: in an editing cell, ArrowRight at the end of the
+  // text moves to the next cell (ArrowLeft at the start → previous). After a
+  // click the cursor lands at the end, so a single ArrowRight advances — the
+  // reported "click a cell, press right, nothing happens" case.
+  test('edge navigation: ArrowRight at the end of an edit moves to the next cell', async () => {
+    const gridA = page.locator('.nugrid').nth(0);
+    const selectedCol = () => gridA.locator('.nugrid-cell.selected').getAttribute('data-col');
+
+    await gridA.locator('.nugrid-cell[data-row="2"][data-col="1"]').click();
+    await new Promise(r => setTimeout(r, 200));
+    expect(await selectedCol()).toBe('1');
+
+    await page.keyboard.press('ArrowRight');
+    await new Promise(r => setTimeout(r, 200));
+    expect(await selectedCol()).toBe('2');
+
+    await page.keyboard.press('ArrowRight');
+    await new Promise(r => setTimeout(r, 200));
+    expect(await selectedCol()).toBe('3');
+  });
 });

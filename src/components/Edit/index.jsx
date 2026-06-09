@@ -468,10 +468,19 @@ const Edit = ({
     updateSelText(); // Update global tree with current selection
     // Cursor-movement keys stay in the input; Up/Down/Tab/Enter still bubble
     // to NuGrid for Excel-style commit + cell move.
-    if (isInNuGrid && isEditing &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
-         e.key === "Home" || e.key === "End")) {
-      e.stopPropagation();
+    if (isInNuGrid && isEditing) {
+      const inp = e.currentTarget;
+      const len = inp.value?.length ?? 0;
+      const atStart = inp.selectionStart === 0 && inp.selectionEnd === 0;
+      const atEnd = inp.selectionStart === len && inp.selectionEnd === len;
+      // Keep Home/End and mid-text Left/Right inside the editor (move the text
+      // cursor). At the text boundary, let Left/Right bubble to NuGrid so the
+      // arrow advances to the previous/next cell (Excel-style edge navigation).
+      if (e.key === "Home" || e.key === "End"
+          || (e.key === "ArrowLeft" && !atStart)
+          || (e.key === "ArrowRight" && !atEnd)) {
+        e.stopPropagation();
+      }
     }
     if (e.key == "ArrowRight") handleRightArrow();
     else if (e.key == "ArrowLeft") handleLeftArrow();

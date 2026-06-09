@@ -633,6 +633,30 @@ const NuGrid = ({ data }) => {
   const showRowTitles = hasRowTitles && effectiveTitleWidth !== 0;
   const showColTitles = hasColTitles && effectiveTitleHeight !== 0;
 
+  // Keep the focused cell visible: keyboard navigation can move CurCell to a
+  // cell hidden behind the native scroll, so scroll the container the minimum
+  // amount to reveal it. The sticky row/col title bands cover the left/top
+  // edges, so a cell must clear those bands too — not just the raw viewport.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !curCell) return;
+    const [r, c] = curCell;
+    const cellEl = container.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+    if (!cellEl) return;
+    const cell = cellEl.getBoundingClientRect();
+    const cont = container.getBoundingClientRect();
+    const bandW = showRowTitles ? effectiveTitleWidth : 0; // sticky row-title band
+    const bandH = showColTitles ? effectiveTitleHeight : 0; // sticky col-title band
+    const left = cell.left - cont.left;
+    const right = cell.right - cont.left;
+    const top = cell.top - cont.top;
+    const bottom = cell.bottom - cont.top;
+    if (right > container.clientWidth) container.scrollLeft += right - container.clientWidth;
+    else if (left < bandW) container.scrollLeft -= bandW - left;
+    if (bottom > container.clientHeight) container.scrollTop += bottom - container.clientHeight;
+    else if (top < bandH) container.scrollTop -= bandH - top;
+  }, [curCell, effectiveTitleWidth, effectiveTitleHeight, showRowTitles, showColTitles]);
+
   return (
     <div
       ref={gridRef}
