@@ -555,7 +555,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         }),
       }}
       onMouseDown={(e) => {
-        e.stopPropagation();
+        // In NuGrid, let the mousedown bubble to the grid cell so it can move
+        // CurCell + fire CellMove; standalone, keep it contained as before.
+        if (!isInNuGrid) e.stopPropagation();
         handleMouseDown(e, socket, Event, data?.ID);
       }}
       onMouseUp={(e) => {

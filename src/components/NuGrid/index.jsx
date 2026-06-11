@@ -357,22 +357,41 @@ const NuGrid = ({ data }) => {
 
   // Handle keyboard events
   const handleKeyDown = (event) => {
+    // Keys typed inside an embedded cell editor (the Edit <input>, etc.) bubble
+    // up to this grid-level handler because the widget is a React child. When
+    // that happens, the editor owns text keys — the grid must not steal Space
+    // (insert a space), Ctrl/Cmd+A (select the input text), or Ctrl/Cmd+C (copy
+    // the input text). Cell-movement keys (arrows/Tab/Enter) still fall through
+    // to drive the grid, matching Edit's own handleKeyPress which lets them
+    // bubble. Checkboxes are excluded so Space still toggles them via activate.
+    const inEditor = event.target !== gridRef.current
+      && typeof event.target.closest === 'function'
+      && !!event.target.closest(
+        'input:not([type="checkbox"]), textarea, select, [contenteditable="true"]'
+      );
+
+    // Space must insert a literal space when editing. navigationKeyDown
+    // preventDefault()s Space before returning 'activate', so we have to bail
+    // here, before it runs, or the character is lost.
+    if (inEditor && event.key === ' ') return;
+
     // Ctrl/Cmd+C copies the current selection as TSV. Tab-delimited within
     // rows, newline-delimited between rows — pastes into Excel/Sheets.
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
+    if (!inEditor && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
       event.preventDefault();
       copySelectionToClipboard();
       return;
     }
     // Ctrl/Cmd+A selects all (Excel-style).
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+    if (!inEditor && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
       event.preventDefault();
       selectAll();
       return;
     }
     // Shift+arrow extends the selection from `anchor` toward the new cell.
-    // Without shift, arrows just navigate (existing path).
-    if (event.shiftKey
+    // Without shift, arrows just navigate (existing path). Inside an editor,
+    // shift+arrow extends the text selection, so the grid stays out of it.
+    if (!inEditor && event.shiftKey
         && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
       event.preventDefault();
       const [r, c] = curCell;
@@ -435,8 +454,10 @@ const NuGrid = ({ data }) => {
       // Fire CellMove event if registered (mouseFlag=0 for keyboard)
       fireCellMove(newCell[0], newCell[1], 0);
     } else {
-      // Not a navigation key - fire KeyPress for other keys
-      fireKeyPress(event);
+      // Not a navigation key. Inside an embedded editor the key belongs to the
+      // input (and Edit fires its own KeyPress if registered), so suppress the
+      // grid-level KeyPress to avoid sending the server a duplicate event.
+      if (!inEditor) fireKeyPress(event);
     }
   };
 
@@ -857,16 +878,18 @@ const NuGrid = ({ data }) => {
                             if (e.shiftKey) return; // handled in capture
                             const r = rowIndex + 1, c = colIndex + 1;
                             // Clicking into a cell's widget (Combo/Button/editor)
-                            // doesn't start a drag-select — but going into a cell
-                            // cancels any active range so a stale selection doesn't
-                            // linger while editing. Plain cells start a drag.
+                            // doesn't start a drag-select, but must still move
+                            // CurCell + fire CellMove (mouseFlag=1) and cancel any
+                            // active range. Previously this only ran when a range
+                            // was active, so clicking an always-shown widget
+                            // (ShowInput) never moved the current cell.
                             if (e.target !== e.currentTarget) {
                               if (selection) {
                                 fireGridSelect(r, c, r, c);
-                                setAnchor({ r, c });
                                 setSelection(null);
-                                handleCellClick(rowIndex, colIndex);
                               }
+                              setAnchor({ r, c });
+                              handleCellClick(rowIndex, colIndex);
                               return;
                             }
                             if (selection) fireGridSelect(r, c, r, c);
@@ -958,15 +981,16 @@ const NuGrid = ({ data }) => {
                           onMouseDown={(e) => {
                             if (e.shiftKey) return;
                             const r = rowIndex + 1;
-                            // See the multi-column path: going into a widget cell
-                            // cancels any active range without starting a drag.
+                            // See the multi-column path: a widget click moves
+                            // CurCell + fires CellMove and cancels any active
+                            // range, without starting a drag.
                             if (e.target !== e.currentTarget) {
                               if (selection) {
                                 fireGridSelect(r, 1, r, 1);
-                                setAnchor({ r, c: 1 });
                                 setSelection(null);
-                                handleCellClick(rowIndex, 0);
                               }
+                              setAnchor({ r, c: 1 });
+                              handleCellClick(rowIndex, 0);
                               return;
                             }
                             if (selection) fireGridSelect(r, 1, r, 1);
