@@ -208,9 +208,12 @@ test.describe('DemoNuGrid - Phase 7 Embedded Components', () => {
     const comboButton = comboCell.locator('button[role="combobox"]');
     await expect(comboButton).toBeVisible();
 
-    // Should have reasonable height (not thin line)
+    // Combo fills its cell; the height tracks the data-row content box
+    // (15px = the 16px row pitch minus the 1px collapsed gridline). Guards
+    // against the combo collapsing to a thin line while matching the current
+    // cell sizing (the row pitch was tightened in the cell-height work).
     const box = await comboButton.boundingBox();
-    expect(box?.height).toBeGreaterThan(15);
+    expect(box?.height).toBeGreaterThanOrEqual(15);
   });
 });
 

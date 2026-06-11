@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   setStyle,
   parseFlexStyles,
-  getObjectById,
   rgbColor,
   getFontStyles,
   handleMouseDown,
@@ -21,7 +20,7 @@ import useNuGridState from './useNuGridState';
 import useNuGridNavigation from './useNuGridNavigation';
 import useNuGridEvents from './useNuGridEvents';
 import useNuGridTitleSize from './useNuGridTitleSize';
-import NuGridCell from './NuGridCell';
+import NuGridDataCell from './NuGridDataCell';
 import './NuGrid.css';
 
 // Pre-mount / unknown-column fallback before useLayoutEffect measures.
@@ -31,6 +30,10 @@ const FALLBACK_CELL_WIDTH = 100;
 // (paired with line-height:15px on .nugrid-cell in NuGrid.css). Only used to
 // fill sparse CellHeights-array holes; explicit APL CellHeights still win.
 const FALLBACK_CELL_HEIGHT = 16;
+// Shared stable empty-style object for cells with no per-cellType font. Reusing
+// one frozen reference keeps the cellFontStyles prop identity constant across
+// renders so it doesn't defeat NuGridDataCell's React.memo.
+const EMPTY_STYLE = {};
 
 // Excel-style column letter for index i (0→'A', 25→'Z', 26→'AA', …).
 // Matches legacy Grid's `generateHeader(columns)` for missing ColTitles.
@@ -56,7 +59,7 @@ const getOverflowStyle = (scrollValue) => {
 // NuGrid - Modern Grid reimplementation with embedded EWC components,
 // explicit type awareness, and modular architecture
 const NuGrid = ({ data }) => {
-  const { dataRef, handleData, socket, findCurrentData } = useAppData();
+  const { handleData, socket, findCurrentData } = useAppData();
 
   const {
     Size,
@@ -111,6 +114,14 @@ const NuGrid = ({ data }) => {
   // (installed once on mount) reads the latest values without re-attaching.
   const selectionRef = useRef(null);
   const fireGridSelectRef = useRef(null);
+  // Mirror anchor/curCell/handleData/handleCellChange into refs so the cell
+  // mouse handlers can be stable useCallbacks (read latest values without
+  // listing them as deps). Stable handlers are what let NuGridDataCell's memo
+  // actually skip unchanged cells on every selection/drag/navigation change.
+  const anchorRef = useRef(null);
+  const curCellRef = useRef(null);
+  const handleDataRef = useRef(handleData);
+  const handleCellChangeRef = useRef(null);
 
   useEffect(() => {
     setValues(propsValues);
@@ -160,9 +171,13 @@ const NuGrid = ({ data }) => {
     };
   }, []);
 
-  // Keep refs in sync with the latest values for the window listener.
+  // Keep refs in sync with the latest values for the window listener and the
+  // stable cell handlers.
   useEffect(() => { selectionRef.current = selection; });
   useEffect(() => { fireGridSelectRef.current = fireGridSelect; });
+  useEffect(() => { anchorRef.current = anchor; });
+  useEffect(() => { curCellRef.current = curCell; });
+  useEffect(() => { handleDataRef.current = handleData; });
 
   // Normalize Input to an array (can be single string or array of strings)
   // useMemo ensures stable reference for useCallback dependencies
@@ -196,42 +211,11 @@ const NuGrid = ({ data }) => {
   const cellTypesRef = useRef(CellTypes);
   cellTypesRef.current = CellTypes;
 
-  // Get the Input component ID for a specific cell based on CellTypes matrix
-  const getInputComponentId = useCallback((rowIndex, colIndex) => {
-    if (!inputArray.length || !CellTypes) return null;
-
-    // CellTypes is a matrix of 1-based indices into the Input array
-    const cellType = CellTypes[rowIndex]?.[colIndex];
-    if (!cellType || cellType < 1) return null;
-
-    // Convert 1-based index to 0-based for array access
-    return inputArray[cellType - 1] || null;
-  }, [inputArray, CellTypes]);
-
-  // Get the 1-based CellType index for a cell, or null if none
-  const getCellTypeIndex = useCallback((rowIndex, colIndex) => {
-    const cellType = CellTypes?.[rowIndex]?.[colIndex];
-    return (cellType && cellType >= 1) ? cellType : null;
-  }, [CellTypes]);
-
-  // Check if a cell's input widget should be shown (even when not selected).
-  // Per ⎕WC, ShowInput only applies to cells displayed with a Combo or Button
-  // object — Edit/Numeric/Label cells ignore it and show as text until selected
-  // (otherwise a column of always-on text editors looks broken).
-  const shouldShowInput = useCallback((rowIndex, colIndex) => {
-    const inputId = getInputComponentId(rowIndex, colIndex);
-    const inputType = inputId ? findCurrentData(inputId)?.Properties?.Type : null;
-    if (inputType !== 'Combo' && inputType !== 'Button') return false;
-    if (ShowInput === 1) return true;
-    if (ShowInput === 0) return false;
-    if (Array.isArray(ShowInput)) {
-      const cellType = CellTypes?.[rowIndex]?.[colIndex];
-      if (cellType && cellType >= 1) {
-        return ShowInput[cellType - 1] === 1;
-      }
-    }
-    return false;
-  }, [ShowInput, CellTypes, getInputComponentId, findCurrentData]);
+  // Per-cell Input-template resolution and the ShowInput rule (which only
+  // applies to Combo/Button cells) are computed inline in the render loop now,
+  // indexing the pre-resolved `resolvedInputs` array by CellTypes — so neither
+  // costs a per-cell findCurrentData full-tree walk. (Replaces the old
+  // getInputComponentId / getCellTypeIndex / shouldShowInput helpers.)
 
   // Handle cell value changes from embedded components
   // Uses valuesRef to avoid recreating this callback when Values changes
@@ -287,6 +271,11 @@ const NuGrid = ({ data }) => {
       }
     }
   }, [data?.ID, handleData, fireCellChanged]); // Note: Values removed from deps!
+
+  // handleCellChange's identity changes whenever App recreates handleData, which
+  // would defeat NuGridDataCell's memo. Pass cells this stable wrapper instead.
+  useEffect(() => { handleCellChangeRef.current = handleCellChange; });
+  const stableOnCellChange = useCallback((r, c, v) => handleCellChangeRef.current(r, c, v), []);
 
   // Refs for the grid element and scrollable container
   const gridRef = useRef(null);
@@ -425,12 +414,13 @@ const NuGrid = ({ data }) => {
 
       // Boundary: navigation clamped at edge — fire KeyPress for virtual scrolling
       if (newCell[0] === curCell[0] && newCell[1] === curCell[1]) {
-        // Still update CurCell in data tree so the re-render picks up
-        // any Values changes made by commitActiveEdit above
+        // Update CurCell in the data tree silently (no app re-render) so the
+        // server can read it via eWG. Any Values change from commitActiveEdit
+        // is already reflected by handleCellChange's local setValues.
         handleData({
           ID: data?.ID,
           Properties: { CurCell: newCell },
-        }, 'WS');
+        }, 'WS', { render: false });
         // Find an Input component with KeyPress registered to use as event source
         // (mirrors old Grid where the Edit child fires the event to the server)
         let sourceId = null;
@@ -446,11 +436,12 @@ const NuGrid = ({ data }) => {
         return;
       }
 
-      // Always update data tree so server can read CurCell via eWG
+      // Update data tree so server can read CurCell via eWG. Silent (no app
+      // re-render): NuGrid already re-renders from its own curCell state.
       handleData({
         ID: data?.ID,
         Properties: { CurCell: newCell },
-      }, 'WS');
+      }, 'WS', { render: false });
       // Fire CellMove event if registered (mouseFlag=0 for keyboard)
       fireCellMove(newCell[0], newCell[1], 0);
     } else {
@@ -461,14 +452,16 @@ const NuGrid = ({ data }) => {
     }
   };
 
-  // Handle cell click - update selection and notify server
-  const handleCellClick = (rowIndex, colIndex) => {
+  // Handle cell click - update selection and notify server. Stable identity
+  // (reads curCell/handleData via refs) so the cell mouse handlers stay stable.
+  const handleCellClick = useCallback((rowIndex, colIndex) => {
     // Convert from 0-based to 1-based
     const row = rowIndex + 1;
     const col = colIndex + 1;
 
     // Skip if already selected
-    if (curCell[0] === row && curCell[1] === col) return;
+    const cc = curCellRef.current;
+    if (cc && cc[0] === row && cc[1] === col) return;
 
     // Commit any in-progress edit before changing selection
     commitActiveEdit();
@@ -476,17 +469,21 @@ const NuGrid = ({ data }) => {
     // Update local state
     moveTo(row, col);
 
-    // Always update data tree so server can read CurCell via eWG
-    handleData({
+    // Update data tree (silently — no app re-render) so server can read CurCell
+    // via eWG; NuGrid re-renders from its own curCell state.
+    handleDataRef.current({
       ID: data?.ID,
       Properties: { CurCell: [row, col] },
-    }, 'WS');
+    }, 'WS', { render: false });
     // Fire CellMove event if registered (mouseFlag=1 for mouse)
     fireCellMove(row, col, 1);
-  };
+  }, [commitActiveEdit, moveTo, fireCellMove, data?.ID]);
 
-  // Get locale separators from EWC's Locale object
-  const localeData = JSON.parse(getObjectById(dataRef.current, 'Locale') || '{}');
+  // Get locale separators from EWC's Locale object. findCurrentData is an
+  // O(depth) path walk returning the live node; the old getObjectById did a
+  // full-tree DFS plus a JSON.stringify/parse round-trip on every render
+  // (Locale is set once at startup and never changes).
+  const localeData = findCurrentData('Locale');
   const { Thousand = ',', Decimal = '.' } = localeData?.Properties || {};
   const { formatNumber } = useNumericFormatter(Thousand, Decimal);
 
@@ -564,9 +561,11 @@ const NuGrid = ({ data }) => {
 
   // Extend the selection to (r, c) from the current anchor (or curCell if no
   // anchor exists yet). Used by shift+click on a cell, shift+arrow, and drag.
-  const extendSelectionTo = (r, c) => {
-    const a = anchor ?? { r: curCell[0], c: curCell[1] };
-    if (!anchor) setAnchor(a);
+  // Stable (reads anchor/curCell via refs) so it doesn't churn the cell handlers.
+  const extendSelectionTo = useCallback((r, c) => {
+    const cc = curCellRef.current || [1, 1];
+    const a = anchorRef.current ?? { r: cc[0], c: cc[1] };
+    if (!anchorRef.current) setAnchor(a);
     const sr = Math.min(a.r, r), er = Math.max(a.r, r);
     const sc = Math.min(a.c, c), ec = Math.max(a.c, c);
     if (sr === er && sc === ec) {
@@ -576,7 +575,57 @@ const NuGrid = ({ data }) => {
     }
     moveTo(r, c);
     fireGridSelect(sr, sc, er, ec);
-  };
+  }, [moveTo, fireGridSelect]);
+
+  // Stable per-cell mouse handlers shared by every NuGridDataCell. They take the
+  // 0-based (rowIndex, colIndex) and read selection/anchor from refs, so their
+  // identity never changes — the precondition for the cells' memo to hold.
+  const onCellMouseDownCapture = useCallback((e, rowIndex, colIndex) => {
+    // Shift+click extends the selection — intercept at capture so it works even
+    // on cells with widgets (Combo, checkbox), preventing widget activation.
+    if (e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      extendSelectionTo(rowIndex + 1, colIndex + 1);
+    }
+  }, [extendSelectionTo]);
+
+  const onCellMouseDown = useCallback((e, rowIndex, colIndex) => {
+    if (e.shiftKey) return; // handled in capture
+    const r = rowIndex + 1, c = colIndex + 1;
+    // Clicking into a cell's widget (Combo/Button/editor) doesn't start a
+    // drag-select, but must still move CurCell + fire CellMove and cancel any
+    // active range (so an always-shown ShowInput widget still selects its cell).
+    if (e.target !== e.currentTarget) {
+      if (selectionRef.current) {
+        fireGridSelect(r, c, r, c);
+        setSelection(null);
+      }
+      setAnchor({ r, c });
+      handleCellClick(rowIndex, colIndex);
+      return;
+    }
+    if (selectionRef.current) fireGridSelect(r, c, r, c);
+    setAnchor({ r, c });
+    setSelection(null);
+    isDraggingRef.current = true;
+    handleCellClick(rowIndex, colIndex);
+  }, [fireGridSelect, handleCellClick]);
+
+  const onCellMouseEnter = useCallback((rowIndex, colIndex) => {
+    // While dragging, sweep the selection rectangle from the anchor.
+    if (!isDraggingRef.current || !anchorRef.current) return;
+    const a = anchorRef.current;
+    const r = rowIndex + 1, c = colIndex + 1;
+    const sr = Math.min(a.r, r), er = Math.max(a.r, r);
+    const sc = Math.min(a.c, c), ec = Math.max(a.c, c);
+    if (sr === er && sc === ec) {
+      setSelection(null);
+    } else {
+      setSelection({ sr, sc, er, ec });
+    }
+    moveTo(r, c);
+  }, [moveTo]);
 
   // Build TSV from the current selection (or just curCell). Cells in a row
   // join with tab; rows join with newline — pastes directly into Excel/Sheets.
@@ -612,6 +661,23 @@ const NuGrid = ({ data }) => {
     return String(value);
   };
 
+  // Resolve the small per-cellType Input templates + fonts ONCE per render
+  // (length = number of distinct cell types, not R×C). Cells then index these
+  // by cellType instead of each doing its own findCurrentData full-tree walk —
+  // the change from O(R×C × tree) lookups to O(types) per render.
+  const resolvedInputs = inputArray.map((id) => findCurrentData(id));
+  // Font styles are memoized: getFontStyles builds a fresh object each call, so
+  // recomputing per render would hand cells a new cellFontStyles identity and
+  // defeat their memo. Keyed on CellFonts (font definitions are static).
+  const resolvedFontStyles = useMemo(
+    () => (CellFonts || []).map((id) => {
+      const obj = id ? findCurrentData(id) : null;
+      return obj ? getFontStyles(obj) : EMPTY_STYLE;
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [CellFonts],
+  );
+
   const customStyles = parseFlexStyles(CSS);
   const baseStyles = setStyle(data?.Properties);
 
@@ -633,12 +699,17 @@ const NuGrid = ({ data }) => {
     && (Array.isArray(ColTitles) ? ColTitles.length > 0 : true);
   const explicitRowTitles = RowTitles != null
     && (Array.isArray(RowTitles) ? RowTitles.length > 0 : true);
-  const colTitlesArray = explicitColTitles
+  // Memoized so the array reference is stable across renders. Without this,
+  // useNuGridTitleSize's rowKey/colKey memos (which depend on these arrays)
+  // never cache and rebuild their O(rows+cols) string fingerprints every render.
+  const colTitlesArray = useMemo(() => (explicitColTitles
     ? (Array.isArray(ColTitles) ? ColTitles : [ColTitles])
-    : Array.from({ length: numCols }, (_, i) => columnLetter(i));
-  const rowTitlesArray = explicitRowTitles
+    : Array.from({ length: numCols }, (_, i) => columnLetter(i))),
+    [explicitColTitles, ColTitles, numCols]);
+  const rowTitlesArray = useMemo(() => (explicitRowTitles
     ? (Array.isArray(RowTitles) ? RowTitles : [RowTitles])
-    : Array.from({ length: numRows }, (_, i) => String(i + 1));
+    : Array.from({ length: numRows }, (_, i) => String(i + 1))),
+    [explicitRowTitles, RowTitles, numRows]);
   const hasColTitles = colTitlesArray.length > 0;
   const hasRowTitles = rowTitlesArray.length > 0;
 
@@ -779,8 +850,13 @@ const NuGrid = ({ data }) => {
               </thead>
             )}
             <tbody>
-              {Values.map((row, rowIndex) => (
-                <tr key={rowIndex} className="nugrid-row" style={{ height: getCellHeight(rowIndex) }}>
+              {Values.map((row, rowIndex) => {
+                // One render path for array rows and scalar (single-column)
+                // rows alike: normalize to an array, then map once.
+                const cells = Array.isArray(row) ? row : [row];
+                const rowHeight = getCellHeight(rowIndex);
+                return (
+                <tr key={rowIndex} className="nugrid-row" style={{ height: rowHeight }}>
                   {showRowTitles && (
                     <th
                       className={`nugrid-row-header${isRowInSelection(rowIndex + 1) ? ' selected-row' : ''}`}
@@ -807,7 +883,7 @@ const NuGrid = ({ data }) => {
                       }}
                       style={{
                         width: effectiveTitleWidth,
-                        height: getCellHeight(rowIndex),
+                        height: rowHeight,
                         cursor: 'cell',
                         backgroundColor: isRowInSelection(rowIndex + 1)
                           ? '#b8d4e8'
@@ -820,216 +896,72 @@ const NuGrid = ({ data }) => {
                         : ''}
                     </th>
                   )}
-                  {Array.isArray(row) ? (
-                    row.map((cell, colIndex) => {
-                      const cellType = inferCellType(cell);
-                      const textAlign = getAlignmentForType(cellType);
-                      const isSelected = isCurrentCell(rowIndex, colIndex);
+                  {cells.map((cell, colIndex) => {
+                    const row1 = rowIndex + 1;
+                    const col1 = colIndex + 1;
+                    const cellType = inferCellType(cell);
+                    const isSelected = isCurrentCell(rowIndex, colIndex);
 
-                      // Check if this cell has an embedded Input component
-                      const inputComponentId = getInputComponentId(rowIndex, colIndex);
-                      const inputComponentData = inputComponentId
-                        ? findCurrentData(inputComponentId)
-                        : null;
+                    // Resolve the embedded Input template by indexing the
+                    // pre-resolved arrays — no per-cell full-tree lookup.
+                    const inputIdx = CellTypes?.[rowIndex]?.[colIndex];
+                    const inputComponentData = inputIdx >= 1
+                      ? (resolvedInputs[inputIdx - 1] || null)
+                      : null;
+                    const inputType = inputComponentData?.Properties?.Type;
 
-                      // The active cell shows its editor only as a single-cell
-                      // focus; during a multi-cell range it renders its value as
-                      // text like every other selected cell (so the last-selected
-                      // cell doesn't pop out as a widget). ShowInput=1 still wins.
-                      const showWidget = inputComponentData
-                            && inputComponentData?.Properties?.Type !== 'Label'
-                            && (shouldShowInput(rowIndex, colIndex) || (isSelected && !selection));
+                    // shouldShowInput inlined against the resolved template:
+                    // ShowInput only applies to Combo/Button cells.
+                    let showInputForced = false;
+                    if (inputType === 'Combo' || inputType === 'Button') {
+                      if (ShowInput === 1) showInputForced = true;
+                      else if (Array.isArray(ShowInput) && inputIdx >= 1) {
+                        showInputForced = ShowInput[inputIdx - 1] === 1;
+                      }
+                    }
+                    // The active cell shows its editor only as a single-cell
+                    // focus; during a multi-cell range it renders as text.
+                    const showWidget = !!inputComponentData
+                      && inputType !== 'Label'
+                      && (showInputForced || (isSelected && !selection));
 
-                      // Per-cellType styling
-                      const cellTypeIdx = getCellTypeIndex(rowIndex, colIndex);
-                      const bgColor = cellTypeIdx ? rgbColor(BCol?.[cellTypeIdx - 1]) : undefined;
-                      const fgColor = FCol ? rgbColor(FCol) : undefined;
-                      const cellFontId = cellTypeIdx ? CellFonts?.[cellTypeIdx - 1] : null;
-                      const cellFontObj = cellFontId ? findCurrentData(cellFontId) : null;
-                      const cellFontStyles = cellFontObj ? getFontStyles(cellFontObj) : {};
-
-                      const inRange = isCellInSelection(rowIndex + 1, colIndex + 1);
-                      return (
-                        <td
-                          key={colIndex}
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${inRange ? ' range-selected' : ''}${selectionEdgeClasses(rowIndex + 1, colIndex + 1)}${showWidget ? ' has-component' : ''}`}
-                          data-row={rowIndex + 1}
-                          data-col={colIndex + 1}
-                          style={{
-                            width: getCellWidth(colIndex),
-                            height: getCellHeight(rowIndex),
-                            textAlign: showWidget ? undefined : textAlign,
-                            padding: showWidget ? 0 : undefined,
-                            backgroundColor: bgColor,
-                            color: fgColor,
-                            ...cellFontStyles,
-                          }}
-                          onMouseDownCapture={(e) => {
-                            // Shift+click extends selection — intercept at
-                            // capture so it works even on cells with widgets
-                            // (Combo, checkbox), preventing widget activation.
-                            if (e.shiftKey) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              extendSelectionTo(rowIndex + 1, colIndex + 1);
-                            }
-                          }}
-                          onMouseDown={(e) => {
-                            if (e.shiftKey) return; // handled in capture
-                            const r = rowIndex + 1, c = colIndex + 1;
-                            // Clicking into a cell's widget (Combo/Button/editor)
-                            // doesn't start a drag-select, but must still move
-                            // CurCell + fire CellMove (mouseFlag=1) and cancel any
-                            // active range. Previously this only ran when a range
-                            // was active, so clicking an always-shown widget
-                            // (ShowInput) never moved the current cell.
-                            if (e.target !== e.currentTarget) {
-                              if (selection) {
-                                fireGridSelect(r, c, r, c);
-                                setSelection(null);
-                              }
-                              setAnchor({ r, c });
-                              handleCellClick(rowIndex, colIndex);
-                              return;
-                            }
-                            if (selection) fireGridSelect(r, c, r, c);
-                            setAnchor({ r, c });
-                            setSelection(null);
-                            isDraggingRef.current = true;
-                            handleCellClick(rowIndex, colIndex);
-                          }}
-                          onMouseEnter={() => {
-                            // While dragging, sweep the selection rectangle.
-                            if (!isDraggingRef.current || !anchor) return;
-                            const r = rowIndex + 1, c = colIndex + 1;
-                            const sr = Math.min(anchor.r, r), er = Math.max(anchor.r, r);
-                            const sc = Math.min(anchor.c, c), ec = Math.max(anchor.c, c);
-                            if (sr === er && sc === ec) {
-                              setSelection(null);
-                            } else {
-                              setSelection({ sr, sc, er, ec });
-                            }
-                            moveTo(r, c);
-                          }}
-                        >
-                          {showWidget ? (
-                            <NuGridCell
-                              row={rowIndex + 1}
-                              col={colIndex + 1}
-                              cellValue={cell}
-                              formattedValue={normalizeAplFormatted(FormattedValues?.[rowIndex]?.[colIndex])}
-                              componentId={inputComponentId}
-                              componentData={inputComponentData}
-                              gridId={data?.ID}
-                              onCellChange={handleCellChange}
-                              cellFontId={cellFontId}
-                              cellFCol={FCol}
-                            />
-                          ) : (
-                            formatCellValue(cell, cellType, FormattedValues?.[rowIndex]?.[colIndex])
-                          )}
-                        </td>
-                      );
-                    })
-                  ) : (
-                    (() => {
-                      const cellType = inferCellType(row);
-                      const textAlign = getAlignmentForType(cellType);
-                      const isSelected = isCurrentCell(rowIndex, 0);
-
-                      // Check if this cell has an embedded Input component
-                      const inputComponentId = getInputComponentId(rowIndex, 0);
-                      const inputComponentData = inputComponentId
-                        ? findCurrentData(inputComponentId)
-                        : null;
-
-                      // See the multi-column path above: hide the active cell's
-                      // editor during a multi-cell range so the selection is uniform.
-                      const showWidget = inputComponentData
-                            && inputComponentData?.Properties?.Type !== 'Label'
-                            && (shouldShowInput(rowIndex, 0) || (isSelected && !selection));
-
-                      // Per-cellType styling
-                      const cellTypeIdx = getCellTypeIndex(rowIndex, 0);
-                      const bgColor = cellTypeIdx ? rgbColor(BCol?.[cellTypeIdx - 1]) : undefined;
-                      const fgColor = FCol ? rgbColor(FCol) : undefined;
-                      const cellFontId = cellTypeIdx ? CellFonts?.[cellTypeIdx - 1] : null;
-                      const cellFontObj = cellFontId ? findCurrentData(cellFontId) : null;
-                      const cellFontStyles = cellFontObj ? getFontStyles(cellFontObj) : {};
-
-                      return (
-                        <td
-                          className={`nugrid-cell${isSelected ? ' selected' : ''}${isCellInSelection(rowIndex + 1, 1) ? ' range-selected' : ''}${selectionEdgeClasses(rowIndex + 1, 1)}${showWidget ? ' has-component' : ''}`}
-                          data-row={rowIndex + 1}
-                          data-col={1}
-                          style={{
-                            width: getCellWidth(0),
-                            height: getCellHeight(rowIndex),
-                            textAlign: showWidget ? undefined : textAlign,
-                            padding: showWidget ? 0 : undefined,
-                            backgroundColor: bgColor,
-                            color: fgColor,
-                            ...cellFontStyles,
-                          }}
-                          onMouseDownCapture={(e) => {
-                            if (e.shiftKey) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              extendSelectionTo(rowIndex + 1, 1);
-                            }
-                          }}
-                          onMouseDown={(e) => {
-                            if (e.shiftKey) return;
-                            const r = rowIndex + 1;
-                            // See the multi-column path: a widget click moves
-                            // CurCell + fires CellMove and cancels any active
-                            // range, without starting a drag.
-                            if (e.target !== e.currentTarget) {
-                              if (selection) {
-                                fireGridSelect(r, 1, r, 1);
-                                setSelection(null);
-                              }
-                              setAnchor({ r, c: 1 });
-                              handleCellClick(rowIndex, 0);
-                              return;
-                            }
-                            if (selection) fireGridSelect(r, 1, r, 1);
-                            setAnchor({ r, c: 1 });
-                            setSelection(null);
-                            isDraggingRef.current = true;
-                            handleCellClick(rowIndex, 0);
-                          }}
-                          onMouseEnter={() => {
-                            if (!isDraggingRef.current || !anchor) return;
-                            const r = rowIndex + 1;
-                            const sr = Math.min(anchor.r, r), er = Math.max(anchor.r, r);
-                            if (sr === er) setSelection(null);
-                            else setSelection({ sr, sc: 1, er, ec: 1 });
-                            moveTo(r, 1);
-                          }}
-                        >
-                          {showWidget ? (
-                            <NuGridCell
-                              row={rowIndex + 1}
-                              col={1}
-                              cellValue={row}
-                              formattedValue={normalizeAplFormatted(FormattedValues?.[rowIndex]?.[0])}
-                              componentId={inputComponentId}
-                              componentData={inputComponentData}
-                              gridId={data?.ID}
-                              onCellChange={handleCellChange}
-                              cellFontId={cellFontId}
-                              cellFCol={FCol}
-                            />
-                          ) : (
-                            formatCellValue(row, cellType, FormattedValues?.[rowIndex]?.[0])
-                          )}
-                        </td>
-                      );
-                    })()
-                  )}
+                    const cellTypeIdx = inputIdx >= 1 ? inputIdx : null;
+                    const rawFormatted = FormattedValues?.[rowIndex]?.[colIndex];
+                    return (
+                      <NuGridDataCell
+                        key={colIndex}
+                        row={row1}
+                        col={col1}
+                        rowIndex={rowIndex}
+                        colIndex={colIndex}
+                        value={cell}
+                        rawFormatted={rawFormatted}
+                        displayValue={formatCellValue(cell, cellType, rawFormatted)}
+                        width={getCellWidth(colIndex)}
+                        height={rowHeight}
+                        textAlign={getAlignmentForType(cellType)}
+                        isSelected={isSelected}
+                        inRange={isCellInSelection(row1, col1)}
+                        edgeClasses={selectionEdgeClasses(row1, col1)}
+                        showWidget={showWidget}
+                        bgColor={cellTypeIdx ? rgbColor(BCol?.[cellTypeIdx - 1]) : undefined}
+                        fgColor={FCol ? rgbColor(FCol) : undefined}
+                        cellFontStyles={cellTypeIdx ? (resolvedFontStyles[cellTypeIdx - 1] ?? EMPTY_STYLE) : EMPTY_STYLE}
+                        inputComponentData={inputComponentData}
+                        componentId={inputComponentData?.ID ?? null}
+                        cellFontId={cellTypeIdx ? (CellFonts?.[cellTypeIdx - 1] ?? null) : null}
+                        gridId={data?.ID}
+                        fcol={FCol}
+                        onCellChange={stableOnCellChange}
+                        onCellMouseDownCapture={onCellMouseDownCapture}
+                        onCellMouseDown={onCellMouseDown}
+                        onCellMouseEnter={onCellMouseEnter}
+                      />
+                    );
+                  })}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         ) : (

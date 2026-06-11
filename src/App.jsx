@@ -204,7 +204,11 @@ const App = () => {
     return newValue;
   }
 
-  const handleData = (data, mode) => {
+  // options.render === false updates dataRef.current WITHOUT triggering an
+  // app-wide reRender — used for ref-only writes (e.g. NuGrid syncing CurCell
+  // for server eWG reads) where the writing component re-renders from its own
+  // local state and a full-tree re-render would be pure waste per keystroke.
+  const handleData = (data, mode, options) => {
 //     console.log("handleData", data, mode);
     const splitID = data.ID.split(".");
     const currentLevel = locateParentByPath(dataRef.current, data.ID);
@@ -371,7 +375,7 @@ const App = () => {
 //       console.log('compare', { data, newData })
     }
 
-    reRender();
+    if (options?.render !== false) reRender();
   };
 
   // const deleteObjectsById = (data, idsToDelete) => {

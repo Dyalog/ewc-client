@@ -5,7 +5,6 @@ import {
   calculateDateAfterDays,
   calculateDaysFromDate,
   rgbColor,
-  getObjectById,
   getObjectTypeById,
   handleMouseDown,
   handleMouseUp,
@@ -51,7 +50,9 @@ const Edit = ({
   const nuGridContext = useNuGridContext();
   const isInNuGrid = !!nuGridContext;
 
-  const dateFormat = JSON.parse(getObjectById(dataRef.current, "Locale"));
+  // findCurrentData is an O(depth) path walk; the old getObjectById did a
+  // full-tree DFS + JSON round-trip every render. Locale is static after startup.
+  const dateFormat = findCurrentData("Locale");
 
   const {
     ShortDate,
