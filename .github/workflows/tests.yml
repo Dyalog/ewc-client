@@ -142,7 +142,17 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Cache Playwright browsers
+        # Hit → install step skips the ~170 MB Chromium download.
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Install Playwright browsers
+        timeout-minutes: 6
         run: npx playwright install --with-deps chromium
 
       - name: Build ewc-client

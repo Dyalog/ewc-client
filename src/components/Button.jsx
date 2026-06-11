@@ -435,17 +435,6 @@ const Button = ({
   };
 
   if (isCheckBox) {
-    let checkBoxPosition = null;
-    if (Align && Align == "Left") {
-      checkBoxPosition = { position: "absolute", right: 0, top: 3 };
-    } else if (!Align || Align == "Right") {
-      checkBoxPosition = { position: "absolute", left: 0, top: 3 };
-    }
-
-    if (location == "inGrid") {
-      checkBoxPosition = { ...checkBoxPosition, marginLeft: "5px" };
-    }
-
     return (
       <div
         id={data.ID + ".$CONTAINER"}
@@ -453,17 +442,15 @@ const Button = ({
         style={{
           ...styles,
           zIndex: 1,
-          display: Visible == 0 ? "none" : "block",
+          display: Visible == 0 ? "none" : "flex",
+          alignItems: "center",
+          gap: 4,
+          flexDirection: Align == "Left" ? "row-reverse" : "row",
+          justifyContent: Align == "Left" ? "flex-end" : "flex-start",
+          ...customStyles,
+          ...fontStyles,
         }}
       >
-        {Align && Align == "Left" ? (
-          <div
-            style={{ position: "absolute", top: 0, left: 0, ...customStyles, ...fontStyles }}
-          >
-            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
-          </div>
-        ) : null}
-
         <input
           onFocus={handleGotFocus}
           ref={inputRef}
@@ -471,7 +458,7 @@ const Button = ({
           id={data?.ID}
           tabIndex={TabIndex}
           type="checkbox"
-          style={checkBoxPosition}
+          style={{ margin: 0, marginLeft: location == "inGrid" ? 5 : 0, flexShrink: 0 }}
           checked={checkInput}
           disabled={Active === 0}
           onChange={(e) => {
@@ -479,32 +466,12 @@ const Button = ({
             handleCheckBoxEvent(e.target.checked);
           }}
         />
-        {!Align || Align == "Right" ? (
-          <div
-            style={{
-              fontSize: "12px",
-              position: "absolute",
-              top: 0,
-              left: 16,
-              ...customStyles,
-              ...fontStyles
-            }}
-          >
-            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
-          </div>
-        ) : null}
+        <label style={{ whiteSpace: "nowrap", ...customStyles }} htmlFor={data?.ID}>{Caption}</label>
       </div>
     );
   }
 
   if (isRadio) {
-    let radioPosition = null;
-    if (Align && Align == "Left") {
-      radioPosition = { position: "absolute", right: 0, top: 3 };
-    } else if (!Align || Align == "Right") {
-      radioPosition = { position: "absolute", left: 0, top: 3 };
-    }
-
     const handleRadioSelectEvent = (value) => {
       const emitEvent = JSON.stringify({
         Event: {
@@ -580,24 +547,15 @@ const Button = ({
         style={{
           ...styles,
           zIndex: 1,
-          display: Visible == 0 ? "none" : "block",
+          display: Visible == 0 ? "none" : "flex",
+          alignItems: "center",
+          gap: 4,
+          flexDirection: Align == "Left" ? "row-reverse" : "row",
+          justifyContent: Align == "Left" ? "flex-end" : "flex-start",
           ...customStyles,
-          ...fontStyles
+          ...fontStyles,
         }}
       >
-        {Align && Align == "Left" ? (
-          <div
-            style={{
-              position: "absolute",
-              top: 2,
-              left: 0,
-              ...customStyles,
-              ...fontStyles,
-            }}
-          >
-            {Caption}
-          </div>
-        ) : null}
         <input
           onFocus={handleGotFocus}
           name={extractStringUntilLastPeriod(data?.ID)}
@@ -607,23 +565,12 @@ const Button = ({
           type="radio"
           value={Caption}
           disabled={Active === 0}
+          style={{ margin: 0, flexShrink: 0 }}
           onChange={(e) => {
             handleRadioButton(data?.ID, e.target.checked);
           }}
         />
-        {!Align || Align == "Right" ? (
-          <div
-            style={{
-              position: "absolute",
-              top: 2,
-              left: 16,
-              ...customStyles,
-              ...fontStyles,
-            }}
-          >
-            <label style={{whiteSpace: "nowrap"}} htmlFor={data?.ID}>{Caption}</label>
-          </div>
-        ) : null}
+        <label style={{ whiteSpace: "nowrap", ...customStyles }} htmlFor={data?.ID}>{Caption}</label>
       </div>
     );
   }

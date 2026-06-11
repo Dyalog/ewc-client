@@ -17,6 +17,14 @@ set -e
 
 NAME="ewc-demo"
 
+# EWC_SRC=... overrides the default sibling `ewc` directory (worktree pairs).
+EWC_SRC="${EWC_SRC:-$PWD/../ewc}"
+if [ ! -d "$EWC_SRC" ]; then
+    echo "ERROR: EWC source not found at $EWC_SRC" >&2
+    echo "       Set EWC_SRC=/path/to/ewc to override." >&2
+    exit 1
+fi
+
 # Warn if the user hasn't built ewc-client recently — without dist/,
 # EWC's JSClientFolder auto-discovery falls back to the bundled
 # `<repo>/client/dist/` inside Dyalog/ewc, which means visual
@@ -37,7 +45,7 @@ docker run -d --name "$NAME" \
   -p 4502:4502 \
   -p 22322:22322 \
   --entrypoint /scripts/run-server.sh \
-  -v "$PWD/../ewc:/work/ewc:ro" \
+  -v "$EWC_SRC:/work/ewc:ro" \
   -v "$PWD/dist:/work/ewc-client/dist:ro" \
   -v "$PWD/ci:/scripts:ro" \
   dyalog/dyalog:latest >/dev/null
