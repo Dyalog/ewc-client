@@ -227,3 +227,60 @@ test.describe('DemoNuGridScroll - Virtual Scrolling', () => {
     expect(cellValue).toMatch(/^\d+\/\d+$/);
   });
 });
+
+// Regression guard for PageUp/PageDown paging (review finding #37 had zero
+// coverage). The grid is a 10-row virtual window over 1000 rows; each PageDown
+// must advance the data window by exactly one page (n=10 rows) per press, and
+// PageUp must retreat by one page — consistently, not every-other-press.
+test.describe('DemoNuGridScroll - PageUp/PageDown paging', () => {
+  let browser: Browser;
+  let page: Page;
+
+  test.beforeAll(async () => {
+    const result = await connectAndFindEWCPage(CDP_PORT);
+    browser = result.browser;
+    page = await navigateToDemo(result.page, 'NuGridScroll', '.nugrid-table', 10000);
+  });
+
+  // Absolute first-visible row number, parsed from the top row header ("Row N").
+  // Delta-based so the assertions don't depend on the exact starting window.
+  const firstRowNum = async () => {
+    const t = (await page.locator('.nugrid-row-header').first().textContent()) ?? '';
+    const m = t.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : NaN;
+  };
+
+  test('PageDown advances the window by one page (10 rows) on every press', async () => {
+    await page.locator('.nugrid-cell').first().click();
+    await new Promise((r) => setTimeout(r, 300));
+
+    let prev = await firstRowNum();
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press('PageDown');
+      // web-first wait for the websocket round-trip; window must advance by 10.
+      await expect.poll(firstRowNum, { timeout: 4000 }).toBe(prev + 10);
+      prev += 10;
+    }
+  });
+
+  test('PageUp retreats the window by one page (10 rows) on every press', async () => {
+    // Start deeper into the data so there is room to page up.
+    await page.locator('.nugrid-cell').first().click();
+    await page.keyboard.press('PageDown');
+    await page.keyboard.press('PageDown');
+    await page.keyboard.press('PageDown');
+    await new Promise((r) => setTimeout(r, 400));
+
+    // First PageUp after paging down repositions the cursor to the top row;
+    // from there each PageUp retreats the window by a full page.
+    await page.keyboard.press('PageUp');
+    await new Promise((r) => setTimeout(r, 400));
+
+    let prev = await firstRowNum();
+    for (let i = 0; i < 2; i++) {
+      await page.keyboard.press('PageUp');
+      await expect.poll(firstRowNum, { timeout: 4000 }).toBe(prev - 10);
+      prev -= 10;
+    }
+  });
+});

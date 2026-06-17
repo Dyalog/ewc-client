@@ -122,6 +122,26 @@ const NuGrid = ({ data }) => {
   const curCellRef = useRef(null);
   const handleDataRef = useRef(handleData);
   const handleCellChangeRef = useRef(null);
+  // Refs for the grid element and scrollable container. Declared up here so
+  // getPageRows and the navigation hook (both below) can read containerRef.
+  const gridRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // The "page" step for PageUp/PageDown: how many data rows fit in the scroll
+  // viewport, measured from the live DOM (container height minus the sticky
+  // column-title band, divided by the actual rendered row pitch) rather than a
+  // hardcoded stride. One row of overlap is kept for context (Excel-style).
+  // Falls back to 9 before the grid has mounted / been measured.
+  const getPageRows = useCallback(() => {
+    const c = containerRef.current;
+    if (!c) return 9;
+    const rowEl = c.querySelector('tbody .nugrid-row');
+    const pitch = rowEl ? rowEl.getBoundingClientRect().height : FALLBACK_CELL_HEIGHT;
+    const head = c.querySelector('thead');
+    const headH = head ? head.getBoundingClientRect().height : 0;
+    const visible = Math.floor((c.clientHeight - headH) / Math.max(pitch, 1));
+    return Math.max(1, visible - 1);
+  }, []);
 
   useEffect(() => {
     setValues(propsValues);
@@ -195,7 +215,7 @@ const NuGrid = ({ data }) => {
 
   // Keyboard navigation
   const { handleKeyDown: navigationKeyDown } = useNuGridNavigation(
-    moveBy, moveTo, curCell, numRows, numCols
+    moveBy, moveTo, curCell, numRows, numCols, getPageRows
   );
 
   // Event handling (CellMove, KeyPress, CellChanged)
@@ -277,9 +297,6 @@ const NuGrid = ({ data }) => {
   useEffect(() => { handleCellChangeRef.current = handleCellChange; });
   const stableOnCellChange = useCallback((r, c, v) => handleCellChangeRef.current(r, c, v), []);
 
-  // Refs for the grid element and scrollable container
-  const gridRef = useRef(null);
-  const containerRef = useRef(null);
 
   // Commit any in-progress cell edit by blurring the active element.
   // Must be called synchronously BEFORE React processes curCell state changes,

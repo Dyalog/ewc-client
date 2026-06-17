@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 // Keyboard navigation hook for NuGrid
 // Handles arrow keys, Tab, Enter, Home, End, Page Up/Down, Space
 // Returns: newCell array for navigation, 'activate' for Space, null for other keys
-const useNuGridNavigation = (moveBy, moveTo, curCell, numRows, numCols) => {
+const useNuGridNavigation = (moveBy, moveTo, curCell, numRows, numCols, getPageRows) => {
   const handleKeyDown = useCallback((event) => {
     let newCell = null;
     const [row, col] = curCell;
@@ -81,17 +81,21 @@ const useNuGridNavigation = (moveBy, moveTo, curCell, numRows, numCols) => {
         }
         break;
 
-      case 'PageUp':
+      case 'PageUp': {
         event.preventDefault();
-        // Page Up: move up 9 rows (like Grid)
-        newCell = moveBy(-9, 0);
+        // Page Up: move up by one viewport of rows (measured), not a fixed stride.
+        const step = getPageRows ? getPageRows() : 9;
+        newCell = moveBy(-step, 0);
         break;
+      }
 
-      case 'PageDown':
+      case 'PageDown': {
         event.preventDefault();
-        // Page Down: move down 9 rows (like Grid)
-        newCell = moveBy(9, 0);
+        // Page Down: move down by one viewport of rows (measured), not a fixed stride.
+        const step = getPageRows ? getPageRows() : 9;
+        newCell = moveBy(step, 0);
         break;
+      }
 
       default:
         // Don't prevent default for other keys
@@ -99,7 +103,7 @@ const useNuGridNavigation = (moveBy, moveTo, curCell, numRows, numCols) => {
     }
 
     return newCell;
-  }, [curCell, moveBy, moveTo, numRows, numCols]);
+  }, [curCell, moveBy, moveTo, numRows, numCols, getPageRows]);
 
   return { handleKeyDown };
 };
