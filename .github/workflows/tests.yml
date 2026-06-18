@@ -98,7 +98,11 @@ jobs:
   e2e:
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Job cap is a backstop only. The Playwright STEP carries its own,
+    # lower timeout (see below) so a hung suite is stopped gracefully
+    # well before this fires — leaving headroom for cold-cache setup
+    # (yarn + Playwright browser download) plus the report upload.
+    timeout-minutes: 25
     # Skip if any of:
     #   - the check job found [NOTEST] in the latest commit / PR
     #   - the push was made by github-actions[bot] (Build and Commit
@@ -210,6 +214,15 @@ jobs:
         run: npx wait-on tcp:22322 --timeout 120000
 
       - name: Run Playwright tests
+        # Step-level timeout, deliberately LOWER than the job cap. When a
+        # test or beforeAll wedges the shared session, GitHub cancels the
+        # step with SIGINT, which Playwright traps to stop the run and
+        # flush its reporters (the html report gets written, the list
+        # summary prints) — THEN steps 13/14 still run under `if: always()`
+        # to capture Dyalog logs and upload the report. The previous
+        # job-level SIGKILL killed Playwright mid-suite, so the report was
+        # never written and the artifact came up empty.
+        timeout-minutes: 15
         # Run Playwright natively on the Linux runner — same env that
         # update-baselines.yml uses to *generate* visual baselines, so
         # comparison is byte-identical and the tight maxDiffPixels: 100
