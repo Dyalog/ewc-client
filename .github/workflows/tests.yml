@@ -98,10 +98,20 @@ jobs:
   e2e:
     needs: check
     runs-on: ubuntu-latest
+    # Sharded across N parallel jobs, each with its OWN fresh Dyalog/EWC
+    # container. EWC is a single long-lived Dyalog session that degrades
+    # after a few hundred tests' worth of events/WS reconnects (see the
+    # reconnect-storm in the post-run Dyalog log), so holding each shard to
+    # ~1/N of the suite keeps every session well under that ceiling.
+    # fail-fast: false so one wedged shard doesn't cancel the others. The
+    # per-shard blob reports are recombined by the `merge` job below.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
     # Job cap is a backstop only. The Playwright STEP carries its own,
-    # lower timeout (see below) so a hung suite is stopped gracefully
-    # well before this fires — leaving headroom for cold-cache setup
-    # (yarn + Playwright browser download) plus the report upload.
+    # lower timeout (see below) so a hung shard is stopped gracefully
+    # well before this fires — leaving headroom for cold-cache setup.
     timeout-minutes: 25
     # Skip if any of:
     #   - the check job found [NOTEST] in the latest commit / PR
@@ -247,43 +257,84 @@ jobs:
         # GET when it loads the page.
         run: npx wait-on tcp:22322 --timeout 120000
 
-      - name: Run Playwright tests
-        # Step-level timeout, deliberately LOWER than the job cap. When a
-        # test or beforeAll wedges the shared session, GitHub cancels the
-        # step with SIGINT, which Playwright traps to stop the run and
-        # flush its reporters (the html report gets written, the list
-        # summary prints) — THEN steps 13/14 still run under `if: always()`
-        # to capture Dyalog logs and upload the report. The previous
-        # job-level SIGKILL killed Playwright mid-suite, so the report was
-        # never written and the artifact came up empty.
-        timeout-minutes: 15
-        # Run Playwright natively on the Linux runner — same env that
-        # update-baselines.yml uses to *generate* visual baselines, so
-        # comparison is byte-identical and the tight maxDiffPixels: 100
-        # threshold (in playwright.config.ts) catches real layout
-        # regressions without tripping on rendering jitter.
+      - name: Run Playwright tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
+        # Step-level timeout, deliberately LOWER than the job cap, so a
+        # wedged shard is SIGINT-stopped (Playwright flushes its blob) and
+        # the post-run steps still run under `if: always()`, rather than the
+        # job-level SIGKILL that left artifacts empty.
         #
-        # We don't wrap Playwright in Microsoft's Docker image here:
-        # its headless-shell variant mishandles certain keyboard-event
-        # dispatches (Alt+Arrow, character search) in the combo specs.
-        # Native runner Playwright avoids that issue. The image is
-        # only used by `yarn demotests:visual` for local previews.
+        # --shard splits at the spec-FILE boundary (fullyParallel: false),
+        # so whole describes stay on one backend. --reporter=blob,list
+        # overrides the config: `blob` is the mergeable per-shard artifact
+        # (recombined by the `merge` job), `list` streams named results into
+        # this shard's log so a failure or wedge is legible live.
+        #
+        # Native runner Playwright (not MS's Docker image, whose
+        # headless-shell mishandles Alt+Arrow / character-search in the
+        # combo specs). maxDiffPixels: 100 (playwright.config.ts) stays
+        # tight because baselines are generated on this same runner.
+        timeout-minutes: 15
         env:
           BROWSER_URL: http://localhost:22322
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --reporter=blob,list
 
       - name: Capture Dyalog container logs (post-run)
         if: always()
         run: docker logs ewc-demo || true
 
-      - name: Upload Playwright report
+      - name: Upload blob report (shard ${{ matrix.shard }})
+        # always() so a wedged/failed shard still uploads its (possibly
+        # partial) blob — the merge job tolerates partials. The merged,
+        # browsable html report is produced once by the `merge` job.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Recombine the per-shard blob reports into ONE browsable html report
+  # with aggregate pass/fail. Runs even when shards fail (visual diffs, a
+  # wedged shard) via !cancelled(); skipped only if the whole e2e matrix
+  # was skipped (e.g. [NOTEST]). Needs no browsers or EWC backend — just
+  # @playwright/test for `merge-reports`.
+  merge:
+    needs: e2e
+    if: ${{ !cancelled() && needs.e2e.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Download all shard blob reports
+        # merge-multiple flattens every blob-report-N artifact into one
+        # directory (report-1.zip … report-N.zip) for merge-reports.
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Merge into one HTML report
+        # html → the single browsable artifact; github → aggregated inline
+        # annotations. CI=true keeps the html reporter from opening a
+        # browser. Tolerates a partial blob from a wedged shard.
+        run: npx playwright merge-reports --reporter html,github ./all-blob-reports
+
+      - name: Upload merged Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: ignore
-          # Default retention is 90 days; we don't need that long
-          # for run-by-run reports — old failures get fixed within
-          # days, and storage adds up quickly with 100+ tests/run.
           retention-days: 7

@@ -481,17 +481,6 @@ const Button = ({
       );
     }
 
-    let checkBoxPosition = null;
-    if (Align && Align == "Left") {
-      checkBoxPosition = { position: "absolute", right: 0, top: 3 };
-    } else if (!Align || Align == "Right") {
-      checkBoxPosition = { position: "absolute", left: 0, top: 3 };
-    }
-
-    if (location == "inGrid") {
-      checkBoxPosition = { ...checkBoxPosition, marginLeft: "5px" };
-    }
-
     return (
       <div
         id={data.ID + ".$CONTAINER"}
