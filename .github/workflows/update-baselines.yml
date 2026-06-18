@@ -11,10 +11,19 @@ name: update visual baselines
 #
 #   1. Trigger: GitHub → Actions → "update visual baselines"
 #      → Run workflow → select branch
-#   2. Bot regenerates PNGs and opens a PR titled
-#      "Update visual baselines (<branch>)" against that branch
+#   2. Generation is SHARDED: N parallel `update` jobs, each on its own
+#      fresh EWC container, regenerate ~1/N of the specs' PNGs. A final
+#      `collect` job unions them and opens one PR titled
+#      "Update visual baselines (<branch>)" against that branch.
 #   3. Reviewer inspects the PR's "Files changed" tab to confirm the
 #      diffs match an intentional UI change, then merges
+#
+# Why sharded: EWC is a single long-lived Dyalog session that wedges
+# partway through the suite (see tests.yml). Run unsharded, the specs
+# after the wedge would never regenerate — a silent PARTIAL baseline
+# set. Sharding holds each session to ~1/N of the suite, and (because
+# tests.yml is also sharded) generates baselines under the same
+# fresh-backend conditions the comparison runs use.
 #
 # DO NOT commit baselines generated on a different OS (e.g. local
 # macOS); they'll show false-positive diffs against CI even when
@@ -44,23 +53,30 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  # Regenerate baselines in parallel shards, each with its OWN fresh
+  # Dyalog/EWC container. Each shard uploads ONLY the PNGs it changed —
+  # shards run disjoint spec files, so their changed paths never overlap,
+  # which lets the `collect` job union them without a stale PNG from one
+  # shard clobbering a fresh one from another.
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
     steps:
       - name: Checkout ewc-client
         uses: actions/checkout@v4
         with:
-          # No explicit `ref:` — defaults to the branch selected in
-          # the workflow_dispatch "Use workflow from" dropdown
-          # (github.ref_name), which is also our PR target below.
+          # No explicit `ref:` — defaults to the branch selected in the
+          # workflow_dispatch dropdown (github.ref_name), our PR target.
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Dyalog/ewc
         # The dispatched-branch's same-name branch on Dyalog/ewc is the
-        # default; the workflow_dispatch input above lets a maintainer
-        # pin a different ref when regenerating baselines for paired
-        # cross-repo work. See .github/actions/checkout-ewc-server.
+        # default; the workflow_dispatch input lets a maintainer pin a
+        # different ref. See .github/actions/checkout-ewc-server.
         uses: ./.github/actions/checkout-ewc-server
         with:
           ref: ${{ inputs.ewc_server_ref }}
@@ -118,10 +134,9 @@ jobs:
         run: yarn build
 
       - name: Start Dyalog EWC server (Docker)
-        # Same setup as tests.yml — see that workflow for the rationale
-        # on entrypoint script, mounts, and --network host. Identical
-        # environment is the whole point: baselines generated here will
-        # compare byte-identically against tests.yml's runs.
+        # Same setup as tests.yml — identical environment is the whole
+        # point: baselines generated here compare byte-identically against
+        # tests.yml's runs. One fresh container PER SHARD.
         run: |
           docker run -d --name ewc-demo --network host \
             --entrypoint /scripts/run-server.sh \
@@ -135,47 +150,97 @@ jobs:
         # EWC's WSS doesn't handle. See tests.yml for full notes.
         run: npx wait-on tcp:22322 --timeout 120000
 
-      - name: Regenerate baselines
-        # Run the FULL suite (no --grep filter): visual baselines
-        # capture the post-mutation state of each spec file, so the
-        # earlier mutating tests must run first. Same shape as
-        # tests.yml — only difference is UPDATE_BASELINES=1 to
-        # overwrite committed PNGs instead of compare.
+      - name: Regenerate baselines (shard ${{ matrix.shard }}/${{ strategy.job-total }})
+        # --shard splits at the spec-file boundary; UPDATE_BASELINES=1
+        # (see playwright.config.ts) overwrites this shard's PNGs instead
+        # of comparing. Step timeout < job cap so a wedged shard is stopped
+        # while the capture/upload steps (always()) still run — we keep
+        # whatever baselines DID regenerate.
+        timeout-minutes: 15
         env:
           BROWSER_URL: http://localhost:22322
           UPDATE_BASELINES: '1'
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+
+      - name: Capture this shard's changed baselines
+        # Stage only the PNGs this shard regenerated (added/modified) and
+        # copy them — preserving repo-relative paths — to an upload dir.
+        # always() so a partially-wedged shard still contributes what it
+        # managed before stalling.
+        if: always()
+        run: |
+          mkdir -p /tmp/baselines-out
+          git add -A e2e/demo/tests/baselines/screenshots/ 2>/dev/null || true
+          git diff --cached --name-only --diff-filter=AM \
+            -- e2e/demo/tests/baselines/screenshots/ > /tmp/changed.txt || true
+          echo "shard ${{ matrix.shard }} changed $(wc -l < /tmp/changed.txt) baseline file(s)"
+          if [ -s /tmp/changed.txt ]; then
+            rsync -a --files-from=/tmp/changed.txt ./ /tmp/baselines-out/
+          fi
+
+      - name: Upload this shard's changed baselines
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: baselines-shard-${{ matrix.shard }}
+          path: /tmp/baselines-out/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Capture Dyalog container logs (post-run)
+        if: always()
+        run: docker logs ewc-demo || true
+
+  # Union every shard's changed PNGs onto a clean checkout and open ONE
+  # reviewable PR. Runs even if some shards failed (!cancelled()) so a
+  # flaky-wedged shard doesn't block PRing the baselines that DID update —
+  # re-run the workflow to fill any gap. (The PR body flags this.)
+  collect:
+    needs: update
+    if: ${{ !cancelled() && needs.update.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download all shard baselines
+        # merge-multiple flattens every baselines-shard-N artifact into one
+        # tree. Disjoint paths ⇒ no clobbering.
+        uses: actions/download-artifact@v4
+        with:
+          pattern: baselines-shard-*
+          path: /tmp/all-baselines
+          merge-multiple: true
+
+      - name: Overlay regenerated PNGs onto the working tree
+        run: |
+          if [ -d /tmp/all-baselines ]; then
+            rsync -a /tmp/all-baselines/ ./
+          fi
+          echo '=== changed baseline files ==='
+          git status --porcelain e2e/demo/tests/baselines/screenshots/ | head -80 || true
 
       - name: Open PR with updated baselines
-        # Open (or update) a PR targeting the dispatched branch with
-        # the regenerated baselines. PR-based instead of direct push
-        # so the visual diffs are reviewable before becoming truth.
-        #
-        # peter-evans/create-pull-request handles:
-        #   - creating the head branch if absent, updating if present
-        #   - committing only the paths in `add-paths`
-        #   - opening or updating the PR
-        #   - cleaning up the branch after the PR is merged
-        #
-        # The bot uses GITHUB_TOKEN. One known caveat: PRs opened by
-        # GITHUB_TOKEN don't trigger downstream workflows, so
-        # tests.yml won't auto-fire on this PR. Click "Re-run all
-        # jobs" on a previous tests.yml run, or push an empty commit,
-        # to verify the new baselines actually pass tests.
+        # peter-evans/create-pull-request commits only `add-paths`, creates
+        # or updates the fixed head branch, and opens/updates the PR. Uses
+        # GITHUB_TOKEN — PRs it opens don't trigger downstream workflows, so
+        # tests.yml won't auto-fire on this PR; re-run a tests.yml run or
+        # push an empty commit to verify the new baselines pass.
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           add-paths: e2e/demo/tests/baselines/screenshots/
-          # Fixed branch name per target — running this workflow twice
-          # against the same branch updates the existing PR rather
-          # than spawning duplicates.
+          # Fixed branch name per target — re-running updates the existing
+          # PR rather than spawning duplicates.
           branch: visual-baselines/${{ github.ref_name }}
           base: ${{ github.ref_name }}
           delete-branch: true
           commit-message: "Update visual baselines (run #${{ github.run_number }})"
           title: "Update visual baselines (${{ github.ref_name }})"
           body: |
-            Regenerated visual-regression baselines via the **update visual baselines** workflow.
+            Regenerated visual-regression baselines via the **update visual baselines** workflow (generation sharded across parallel runners).
 
             ### Review checklist
 
@@ -183,24 +248,20 @@ jobs:
             - [ ] Confirm the visual changes match an intentional UI change
             - [ ] If a baseline looks wrong, **close this PR and investigate** before re-running the workflow
 
+            > **Partial-update guard:** baselines are regenerated in parallel shards. If any `update` shard failed (e.g. an EWC backend wedge), this PR is missing that shard's specs. Check the triggering run for failed shards and **re-run the workflow** to fill any gap before merging.
+
             Once merged, future `tests.yml` runs on `${{ github.ref_name }}` will compare against these baselines.
 
             ---
             _Generated by run #${{ github.run_number }}_
 
-      - name: Capture Dyalog container logs (post-run)
-        if: always()
-        run: docker logs ewc-demo || true
-
-      - name: Upload regenerated baselines as artifact
+      - name: Upload combined baselines as artifact
+        # Backup of the full regenerated set in case the PR step fails
+        # (e.g. token can't open PRs). The canonical artefact is the PR.
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: visual-baselines
           path: e2e/demo/tests/baselines/screenshots/
           if-no-files-found: ignore
-          # Backup of the regenerated PNGs in case the PR step fails
-          # (e.g. token can't open PRs against this branch). The
-          # canonical artefact is the PR itself; this is the fallback
-          # for manual review and download.
           retention-days: 7

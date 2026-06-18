@@ -10,11 +10,17 @@ on:
   # does its own `yarn build` so it doesn't depend on the build's
   # auto-committed dist anyway.
   #
-  # Build and Commit Dist's auto-commit of dist/ does NOT re-trigger
-  # this workflow: GitHub's GITHUB_TOKEN protection prevents pushes
-  # made by GITHUB_TOKEN from spawning new workflow runs. The
-  # `actor != github-actions[bot]` skip below is belt-and-suspenders
-  # for the case where a future change uses a PAT instead.
+  # Build and Commit Dist pushes a github-actions[bot] "Build <sha>"
+  # commit (rebuilds dist/ when a human forgets). On a PR branch that
+  # commit becomes HEAD and — contrary to the usual GITHUB_TOKEN
+  # re-trigger protection — DOES spawn an (approval-gated) pull_request
+  # run here. The `actor != github-actions[bot]` skip below then no-ops
+  # that run. That's deliberate, not just defensive: the e2e job runs
+  # its own `yarn build`, so the human-commit run already tested a fresh
+  # build of the identical source — re-testing the bot's dist would be
+  # pure redundancy. Caveat: the bot commit (as PR HEAD) shows these
+  # jobs skipped, which is fine UNLESS e2e is made a *required* check
+  # (HEAD would then lack a passing result). See the e2e `if:` below.
   push:
     branches: [main, next]
     paths-ignore:
@@ -113,13 +119,16 @@ jobs:
     # lower timeout (see below) so a hung shard is stopped gracefully
     # well before this fires — leaving headroom for cold-cache setup.
     timeout-minutes: 25
-    # Skip if any of:
-    #   - the check job found [NOTEST] in the latest commit / PR
-    #   - the push was made by github-actions[bot] (Build and Commit
-    #     Dist's auto-commit of dist/). GITHUB_TOKEN protection
-    #     should already prevent that push from triggering us, but
-    #     this is belt-and-suspenders if someone later swaps in a
-    #     PAT. PRs and direct human pushes still run normally.
+    # Skip if either:
+    #   - the check job found [NOTEST] in the latest commit / PR, or
+    #   - the run is on Build and Commit Dist's github-actions[bot]
+    #     dist/ commit. That commit DOES trigger us (approval-gated on
+    #     PRs); we skip it because the e2e job rebuilds dist via `yarn
+    #     build`, so the human-commit run already tested this exact
+    #     source — the bot-commit run would only re-test identical
+    #     output. Human / PR pushes run normally. (If e2e ever becomes a
+    #     required status check, revisit: the bot commit is PR HEAD and
+    #     would show skipped. See the on: header for the full rationale.)
     if: |
       needs.check.outputs.skip != 'true' &&
       github.actor != 'github-actions[bot]'

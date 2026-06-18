@@ -50,7 +50,12 @@ const useNuGridEvents = (socket, Event, gridId) => {
     const isCtrlPressed = event.ctrlKey ? 2 : 0;
     const isShiftPressed = event.shiftKey ? 1 : 0;
     const shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
-    const charCode = event.key.charCodeAt(0);
+    // Character code [4] of the Dyalog KeyPress event: the Unicode code point of
+    // the character entered, or 0 when the key resolves to no character (the
+    // object-reference KeyPress doc reports Cursor Up as `UC 0 38 0`). A single-
+    // char event.key gives its code point; named keys (ArrowDown, Tab, …) give 0.
+    // The server (processEvent.aplf) refines Enter/Tab/Backspace to 13/9/8.
+    const charCode = event.key.length === 1 ? event.key.charCodeAt(0) : 0;
 
     socket.send(JSON.stringify({
       Event: {
