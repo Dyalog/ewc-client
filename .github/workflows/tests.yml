@@ -155,9 +155,43 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      - name: Install Playwright browsers
+      - name: Keep apt archives (so the deb cache below persists them)
+        # Playwright's install-deps runs apt-get; by default the runner
+        # purges downloaded .debs after install, which would leave the
+        # archive cache empty. This keeps them on disk for caching.
+        run: |
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
+            | sudo tee /etc/apt/apt.conf.d/01keep-debs >/dev/null
+
+      - name: Cache apt archives (Playwright system deps)
+        # The slow/flaky part of `--with-deps` is the Azure Ubuntu mirror
+        # FETCH (it once took >6 min and timed out), NOT the browser
+        # binary (cached above). Caching the .debs means a hit installs
+        # from local disk and skips the mirror entirely. Bump the -vN
+        # suffix to force a refresh if the dependency set changes.
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-playwright-${{ runner.os }}-v1
+
+      - name: Install Playwright system deps (apt)
+        # apt only. Generous timeout + retry to ride out a slow mirror or
+        # a transient `Ign` fetch — a failure here has no `if:` guard, so
+        # it skips the ENTIRE suite (and starves the cache). install-deps
+        # installs the same packages as --with-deps, keeping the font set
+        # identical to the baselines.
+        timeout-minutes: 12
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && npx playwright install-deps chromium && break
+            echo "::warning::apt attempt $i failed; retrying in 15s"; sleep 15
+          done
+
+      - name: Install Playwright browser
+        # Browser binary only — backed by the ms-playwright cache above,
+        # so this is a fast no-op on a cache hit.
         timeout-minutes: 6
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Build ewc-client
         run: yarn build

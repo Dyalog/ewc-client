@@ -83,9 +83,36 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      - name: Install Playwright browsers
+      - name: Keep apt archives (so the deb cache below persists them)
+        run: |
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
+            | sudo tee /etc/apt/apt.conf.d/01keep-debs >/dev/null
+
+      - name: Cache apt archives (Playwright system deps)
+        # Shares the key with tests.yml so both workflows reuse one apt
+        # cache AND install the identical font set — essential, since this
+        # workflow GENERATES the baselines that tests.yml compares against.
+        # The slow part of --with-deps is the mirror fetch, not the cached
+        # browser binary; caching the .debs skips the mirror on a hit.
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-playwright-${{ runner.os }}-v1
+
+      - name: Install Playwright system deps (apt)
+        # apt only — generous timeout + retry to survive a slow/`Ign`-ing
+        # mirror. Mirrors tests.yml so the rendering environment matches.
+        timeout-minutes: 12
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && npx playwright install-deps chromium && break
+            echo "::warning::apt attempt $i failed; retrying in 15s"; sleep 15
+          done
+
+      - name: Install Playwright browser
+        # Browser binary only — backed by the ms-playwright cache above.
         timeout-minutes: 6
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Build ewc-client
         run: yarn build
