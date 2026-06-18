@@ -41,6 +41,25 @@ export async function connectToEWC(cdpPort: number = 8080): Promise<Browser> {
   }
 }
 
+// Wait for the demo menu (first combobox) to populate after a navigation.
+// Combo uses role="combobox" (custom dropdown, not native select). Known
+// bug: the page sometimes needs a reload for the WebSocket to connect, so
+// retry a few times before giving up. Shared by the initial page load and
+// the per-describe refresh in connectAndFindEWCPage.
+async function waitForMenu(page: Page): Promise<void> {
+  await page.waitForLoadState('networkidle');
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await page.waitForSelector('[role="combobox"]', { timeout: 5000 });
+      return;
+    } catch {
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+    }
+  }
+  await page.waitForSelector('[role="combobox"]', { timeout: 10000 });
+}
+
 // Find the EWC page among HTMLRenderer windows
 export async function findEWCPage(browser: Browser, pageTitle: string = 'EWC'): Promise<Page> {
   // Browser mode: create new page and navigate
@@ -48,20 +67,7 @@ export async function findEWCPage(browser: Browser, pageTitle: string = 'EWC'): 
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(BROWSER_URL);
-    await page.waitForLoadState('networkidle');
-    // Wait for WebSocket connection and menu to populate
-    // Combo uses role="combobox" (custom dropdown, not native select)
-    // Known bug: page may need a reload for WebSocket to connect
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        await page.waitForSelector('[role="combobox"]', { timeout: 5000 });
-        return page;
-      } catch {
-        await page.reload();
-        await page.waitForLoadState('networkidle');
-      }
-    }
-    await page.waitForSelector('[role="combobox"]', { timeout: 10000 });
+    await waitForMenu(page);
     return page;
   }
 
@@ -95,14 +101,39 @@ export async function findEWCPage(browser: Browser, pageTitle: string = 'EWC'): 
   );
 }
 
+// One browser + page reused for the whole run. With workers: 1 this module
+// is loaded once, so the singleton persists across every spec; running a
+// single spec in isolation still works because the first beforeAll launches
+// it on demand. This replaces the old launch-per-beforeAll, which leaked a
+// browser (and a WebSocket into the single-session EWC backend) per describe
+// — ~45 per full run — and wedged the constrained CI runner into a cascade
+// of 60s beforeAll timeouts. Collapsing to one browser/one session removes
+// both the process leak and the backend session contention.
+let shared: { browser: Browser; page: Page } | null = null;
+
 // Connect to EWC and find the EWC page (convenience function)
 export async function connectAndFindEWCPage(
   cdpPort: number = 8080,
   pageTitle: string = 'EWC'
 ): Promise<{ browser: Browser; page: Page }> {
+  // Reuse the live browser+page if we have one. The guards self-heal: if the
+  // browser crashed or the page closed mid-run, fall through and relaunch so
+  // a single failure doesn't cascade into every subsequent beforeAll.
+  if (shared && shared.browser.isConnected() && !shared.page.isClosed()) {
+    // Browser mode: refresh back to the menu so each describe starts from a
+    // clean client state ("just reload the page"). CDP/desktop mode leaves
+    // its externally-owned page untouched, as before.
+    if (BROWSER_URL) {
+      await shared.page.goto(BROWSER_URL);
+      await waitForMenu(shared.page);
+    }
+    return shared;
+  }
+
   const browser = await connectToEWC(cdpPort);
   const page = await findEWCPage(browser, pageTitle);
-  return { browser, page };
+  shared = { browser, page };
+  return shared;
 }
 
 // Reload the current page to reset state
