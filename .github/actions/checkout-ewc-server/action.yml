@@ -100,7 +100,7 @@ runs:
         echo "ref=main" >> "$GITHUB_OUTPUT"
 
     - name: Checkout Dyalog/ewc
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: Dyalog/ewc
         ref: ${{ steps.resolve.outputs.ref }}

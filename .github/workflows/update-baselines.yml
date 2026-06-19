@@ -46,12 +46,6 @@ permissions:
   contents: write
   pull-requests: write
 
-# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
-# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
-# the deprecation warnings now and makes the cutover a non-event.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
   # Regenerate baselines in parallel shards, each with its OWN fresh
   # Dyalog/EWC container. Each shard uploads ONLY the PNGs it changed —
@@ -67,7 +61,7 @@ jobs:
         shard: [1, 2, 3, 4, 5]
     steps:
       - name: Checkout ewc-client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # No explicit `ref:` — defaults to the branch selected in the
           # workflow_dispatch dropdown (github.ref_name), our PR target.
@@ -82,7 +76,7 @@ jobs:
           ref: ${{ inputs.ewc_server_ref }}
           branch: ${{ github.ref_name }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: yarn
@@ -92,28 +86,12 @@ jobs:
 
       - name: Cache Playwright browsers
         # Shares key shape with tests.yml so both workflows reuse one cache.
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             playwright-${{ runner.os }}-
-
-      - name: Keep apt archives (so the deb cache below persists them)
-        run: |
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
-            | sudo tee /etc/apt/apt.conf.d/01keep-debs >/dev/null
-
-      - name: Cache apt archives (Playwright system deps)
-        # Shares the key with tests.yml so both workflows reuse one apt
-        # cache AND install the identical font set — essential, since this
-        # workflow GENERATES the baselines that tests.yml compares against.
-        # The slow part of --with-deps is the mirror fetch, not the cached
-        # browser binary; caching the .debs skips the mirror on a hit.
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: apt-playwright-${{ runner.os }}-v1
 
       - name: Install Playwright system deps (apt)
         # apt only — generous timeout + retry to survive a slow/`Ign`-ing
@@ -180,7 +158,7 @@ jobs:
 
       - name: Upload this shard's changed baselines
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: baselines-shard-${{ matrix.shard }}
           path: /tmp/baselines-out/
@@ -201,14 +179,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ewc-client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download all shard baselines
         # merge-multiple flattens every baselines-shard-N artifact into one
         # tree. Disjoint paths ⇒ no clobbering.
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: baselines-shard-*
           path: /tmp/all-baselines
@@ -259,7 +237,7 @@ jobs:
         # Backup of the full regenerated set in case the PR step fails
         # (e.g. token can't open PRs). The canonical artefact is the PR.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-baselines
           path: e2e/demo/tests/baselines/screenshots/

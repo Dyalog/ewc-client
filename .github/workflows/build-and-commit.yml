@@ -10,19 +10,13 @@ on:
 permissions:
   contents: write
 
-# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
-# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
-# the deprecation warnings now and makes the cutover a non-event.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check for NOBUILD in commit message
         id: check_nobuild
@@ -37,7 +31,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.check_nobuild.outputs.skip != 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: 'yarn'

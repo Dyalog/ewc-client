@@ -46,12 +46,6 @@ on:
         required: false
         default: ''
 
-# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
-# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
-# the deprecation warnings now and makes the cutover a non-event.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
   # Look for the [NOTEST] marker in any of: latest commit message, PR
   # title, PR body. A separate job because GitHub doesn't expose
@@ -66,7 +60,7 @@ jobs:
       skip: ${{ steps.notest.outputs.skip }}
     steps:
       - name: Checkout for commit-message inspection
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # pull_request → PR's HEAD commit (not the merge commit, so
           #                                  git log -1 sees the PR's
@@ -134,7 +128,7 @@ jobs:
       github.actor != 'github-actions[bot]'
     steps:
       - name: Checkout ewc-client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Checkout Dyalog/ewc
         # Resolves the ewc-server ref in this order:
@@ -157,7 +151,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           pr-body: ${{ github.event.pull_request.body || '' }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: yarn
@@ -167,38 +161,19 @@ jobs:
 
       - name: Cache Playwright browsers
         # Hit → install step skips the ~170 MB Chromium download.
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      - name: Keep apt archives (so the deb cache below persists them)
-        # Playwright's install-deps runs apt-get; by default the runner
-        # purges downloaded .debs after install, which would leave the
-        # archive cache empty. This keeps them on disk for caching.
-        run: |
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
-            | sudo tee /etc/apt/apt.conf.d/01keep-debs >/dev/null
-
-      - name: Cache apt archives (Playwright system deps)
-        # The slow/flaky part of `--with-deps` is the Azure Ubuntu mirror
-        # FETCH (it once took >6 min and timed out), NOT the browser
-        # binary (cached above). Caching the .debs means a hit installs
-        # from local disk and skips the mirror entirely. Bump the -vN
-        # suffix to force a refresh if the dependency set changes.
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: apt-playwright-${{ runner.os }}-v1
-
       - name: Install Playwright system deps (apt)
         # apt only. Generous timeout + retry to ride out a slow mirror or
         # a transient `Ign` fetch — a failure here has no `if:` guard, so
-        # it skips the ENTIRE suite (and starves the cache). install-deps
-        # installs the same packages as --with-deps, keeping the font set
-        # identical to the baselines.
+        # it skips the ENTIRE suite. install-deps installs the same
+        # packages as --with-deps, keeping the font set identical to
+        # the baselines.
         timeout-minutes: 12
         run: |
           for i in 1 2 3; do
@@ -296,7 +271,7 @@ jobs:
         # partial) blob — the merge job tolerates partials. The merged,
         # browsable html report is produced once by the `merge` job.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: blob-report-${{ matrix.shard }}
           path: blob-report/
@@ -314,9 +289,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ewc-client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: yarn
@@ -327,7 +302,7 @@ jobs:
       - name: Download all shard blob reports
         # merge-multiple flattens every blob-report-N artifact into one
         # directory (report-1.zip … report-N.zip) for merge-reports.
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: blob-report-*
           path: all-blob-reports
@@ -341,7 +316,7 @@ jobs:
 
       - name: Upload merged Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
