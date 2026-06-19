@@ -86,14 +86,7 @@ const SelectComponent = ({
       <div
         style={
           location == 'inGrid'
-            ? {
-                display: 'flex',
-                justifyContent:
-                  data?.Properties?.FieldType == 'Numeric' ||
-                  data?.Properties?.FieldType == 'LongNumeric'
-                    ? 'end'
-                    : 'start',
-              }
+            ? { display: 'flex', flex: 1, width: '100%', height: '100%' }
             : null
         }
       >

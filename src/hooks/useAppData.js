@@ -1,6 +1,6 @@
 import { AppDataContext } from '../context';
 import { useContext } from 'react';
-import { flattenJsonToArray } from './../utils/index';
+import { findByIdPath } from './../utils/index';
 import { parentId } from "../utils";
 
 // Generate a single windowId for this app instance
@@ -21,8 +21,7 @@ const useAppData = () => {
   
   const findCurrentData = (ID) => {
     if (!ID) return null;
-    const findData = flattenJsonToArray(dataRef.current).find((obj) => obj.ID == ID);
-    return findData;
+    return findByIdPath(dataRef.current, ID);
   };
 
   const inheritedProperty = (data, prop, allowedTypes = null) => {

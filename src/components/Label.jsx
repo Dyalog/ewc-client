@@ -2,8 +2,12 @@ import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, h
 import { getBorderStyles } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
+import { useGridContext } from "./Grid/GridContext";
 
 const Label = ({ data, gridValue }) => {
+  // Check if we're inside a Grid cell
+  const gridContext = useGridContext();
+  const isInGrid = !!gridContext;
   let styles = setStyle(data?.Properties);
 
   const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
@@ -17,7 +21,8 @@ const Label = ({ data, gridValue }) => {
 
   // If a newline is used anywhere, it's a wrapping, multiline label, otherwise
   // it is always a single line label
-  if (Caption.indexOf('\n') !== -1) {
+  // When in Grid or when Caption is undefined, use nowrap
+  if (Caption && Caption.indexOf('\n') !== -1) {
     styles.whiteSpace = 'pre-wrap';
   } else {
     styles.textWrapMode = 'nowrap';
@@ -100,7 +105,22 @@ const Label = ({ data, gridValue }) => {
         handleMouseLeave(e, socket, Event, data?.ID);
       }}
     >
-      {!Caption ? (
+      {isInGrid ? (
+        // In Grid: display cellValue from context
+        <span
+          style={{
+            display: "flex",
+            justifyContent: typeof gridContext.cellValue == "string" ? "start" : "end",
+            fontSize: "12px",
+            marginLeft: "5px",
+            width: "100%",
+            height: "100%",
+            alignItems: "center",
+          }}
+        >
+          {gridContext.cellValue}
+        </span>
+      ) : !Caption ? (
         <span
           style={{
             display: "flex",

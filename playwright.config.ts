@@ -46,10 +46,30 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
-  reporter: 'html',
+  // CI needs a STREAMING, NAMED reporter — that's what makes a run
+  // legible. The old `html`-only setup was opaque on CI for two reasons:
+  // html writes its report only at the very end (a job-timeout SIGKILL
+  // left `playwright-report/` empty, so the upload silently uploaded
+  // nothing), and Playwright's default CI progress reporter is `dot`,
+  // which emits anonymous `·F T°` symbols and block-buffers — a killed
+  // run showed one line of symbols and nothing else.
+  //   - list   → prints `✓/✘ <test title> (Ns)` as each test finishes,
+  //              flushed to the step log live. The last line before a
+  //              stall NAMES the wedging test (which dot never could).
+  //   - github → inline `::error::` annotations on the failing lines in
+  //              the PR "Files changed" view and the run summary.
+  //   - html   → keep the rich artifact (traces/screenshots) for runs
+  //              that finish; `open: 'never'` stops it trying to spawn a
+  //              browser on the headless runner.
+  reporter: process.env.CI
+    ? [['list'], ['github'], ['html', { open: 'never' }]]
+    : 'html',
   use: {
     actionTimeout: 10000,
-    trace: 'on-first-retry',
+    // retries: 0, so `on-first-retry` captured a trace exactly never on
+    // CI. Keep one for every failed test instead — it lands in the html
+    // report for post-mortem (DOM snapshots, console, network log).
+    trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     screenshot: getScreenshotMode(),
   },
   // Screenshot storage configuration

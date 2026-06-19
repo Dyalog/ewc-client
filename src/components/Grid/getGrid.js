@@ -1,98 +1,41 @@
-// HACK this is a make-shift way to pull some logic out from App.jsx. It's not
-// intended as a template for a general solution, but more to feel out the right
-// direction to go...
-export function getGrid({
+// WG response handler for Grid. Mirrors the pattern of Grid/getGrid.js.
+// CurCell is kept in sync with the data tree by Grid's click/keyboard
+// handlers via handleData, so reads are satisfied directly from refData
+// without any DOM/state inspection.
+export const getGrid = ({
   Properties,
   serverEvent,
-  setSocketData,
-  handleData,
   webSocket,
   checkSupportedProperties,
-  refData,
-}) {
-  const { Values, CurCell } = Properties;
-
-  const supportedProperties = ["Values", "CurCell"];
+}) => {
+  // Properties this handler can answer. Anything else asked for shows up in
+  // the response's NotSupported list so the server can warn / fall back.
+  const supportedProperties = [
+    "CurCell", "Values", "Posn", "Size",
+    "ColTitles", "RowTitles", "VScroll", "HScroll", "Input",
+  ];
 
   const result = checkSupportedProperties(
     supportedProperties,
     serverEvent?.Properties
   );
 
-  if (!localStorage.getItem(serverEvent.ID)) {
-    const serverPropertiesObj = {};
-    serverEvent.Properties.map((key) => {
-      if (key === "Values") {
-        // Ensure Values is returned from the current grid state
-        serverPropertiesObj[key] = Values || Properties[key] || [];
-      } else {
-        serverPropertiesObj[key] = Properties[key];
-      }
-    });
-
-    const event = JSON.stringify({
-      WG: {
-        ID: serverEvent.ID,
-        Properties: serverPropertiesObj,
-        WGID: serverEvent.WGID,
-        ...(result &&
-          result.NotSupported &&
-          result.NotSupported.length > 0
-          ? { NotSupported: result.NotSupported }
-          : null),
-      },
-    });
-
-    return webSocket.send(event);
-  }
-
-  const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
+  // Build the response from refData in the order the server asked.
   const serverPropertiesObj = {};
-  serverEvent.Properties.map((key) => {
-    if (key === "CurCell") {
-      serverPropertiesObj[key] = CurCell;
-    } else if (key === "Values") {
-      // Ensure Values is returned from the current grid state
-      serverPropertiesObj[key] = Values || refData?.Properties?.Values || [];
-    } else {
-      serverPropertiesObj[key] =
-        Event[key] || refData?.Properties?.[key];
-    }
+  serverEvent.Properties.forEach((key) => {
+    // ?? (not ||) so falsy-but-valid values like 0 or "" round-trip;
+    // [] is zilde (⍬) for unset.
+    serverPropertiesObj[key] = Properties[key] ?? [];
   });
 
-  // Modify the data store in the ref to get the updated value
-
-  setSocketData((prevData) => [
-    ...prevData,
-    {
+  return webSocket.send(JSON.stringify({
+    WG: {
       ID: serverEvent.ID,
-      Properties: {
-        ...Properties,
-        Values,
-      },
+      Properties: serverPropertiesObj,
+      WGID: serverEvent.WGID,
+      ...(result?.NotSupported?.length > 0
+        ? { NotSupported: result.NotSupported }
+        : null),
     },
-  ]);
-
-  handleData({
-    ID: serverEvent.ID,
-    Properties: {
-      ...Properties,
-      Values,
-    },
-  });
-
-  webSocket.send(
-    JSON.stringify({
-      WG: {
-        ID: serverEvent.ID,
-        Properties: serverPropertiesObj,
-        WGID: serverEvent.WGID,
-        ...(result &&
-          result.NotSupported &&
-          result.NotSupported.length > 0
-          ? { NotSupported: result.NotSupported }
-          : null),
-      },
-    })
-  );
-}
+  }));
+};

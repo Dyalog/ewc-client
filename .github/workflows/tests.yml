@@ -10,11 +10,17 @@ on:
   # does its own `yarn build` so it doesn't depend on the build's
   # auto-committed dist anyway.
   #
-  # Build and Commit Dist's auto-commit of dist/ does NOT re-trigger
-  # this workflow: GitHub's GITHUB_TOKEN protection prevents pushes
-  # made by GITHUB_TOKEN from spawning new workflow runs. The
-  # `actor != github-actions[bot]` skip below is belt-and-suspenders
-  # for the case where a future change uses a PAT instead.
+  # Build and Commit Dist pushes a github-actions[bot] "Build <sha>"
+  # commit (rebuilds dist/ when a human forgets). On a PR branch that
+  # commit becomes HEAD and — contrary to the usual GITHUB_TOKEN
+  # re-trigger protection — DOES spawn an (approval-gated) pull_request
+  # run here. The `actor != github-actions[bot]` skip below then no-ops
+  # that run. That's deliberate, not just defensive: the e2e job runs
+  # its own `yarn build`, so the human-commit run already tested a fresh
+  # build of the identical source — re-testing the bot's dist would be
+  # pure redundancy. Caveat: the bot commit (as PR HEAD) shows these
+  # jobs skipped, which is fine UNLESS e2e is made a *required* check
+  # (HEAD would then lack a passing result). See the e2e `if:` below.
   push:
     branches: [main, next]
     paths-ignore:
@@ -40,12 +46,6 @@ on:
         required: false
         default: ''
 
-# Opt JavaScript-based actions (checkout, setup-node, upload-artifact)
-# into Node.js 24 ahead of GitHub's June 2026 forced migration. Silences
-# the deprecation warnings now and makes the cutover a non-event.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
   # Look for the [NOTEST] marker in any of: latest commit message, PR
   # title, PR body. A separate job because GitHub doesn't expose
@@ -60,7 +60,7 @@ jobs:
       skip: ${{ steps.notest.outputs.skip }}
     steps:
       - name: Checkout for commit-message inspection
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # pull_request → PR's HEAD commit (not the merge commit, so
           #                                  git log -1 sees the PR's
@@ -98,20 +98,37 @@ jobs:
   e2e:
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # Skip if any of:
-    #   - the check job found [NOTEST] in the latest commit / PR
-    #   - the push was made by github-actions[bot] (Build and Commit
-    #     Dist's auto-commit of dist/). GITHUB_TOKEN protection
-    #     should already prevent that push from triggering us, but
-    #     this is belt-and-suspenders if someone later swaps in a
-    #     PAT. PRs and direct human pushes still run normally.
+    # Sharded across N parallel jobs, each with its OWN fresh Dyalog/EWC
+    # container. EWC is a single long-lived Dyalog session that degrades
+    # after a few hundred tests' worth of events/WS reconnects (see the
+    # reconnect-storm in the post-run Dyalog log), so holding each shard to
+    # ~1/N of the suite keeps every session well under that ceiling.
+    # fail-fast: false so one wedged shard doesn't cancel the others. The
+    # per-shard blob reports are recombined by the `merge` job below.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
+    # Job cap is a backstop only. The Playwright STEP carries its own,
+    # lower timeout (see below) so a hung shard is stopped gracefully
+    # well before this fires — leaving headroom for cold-cache setup.
+    timeout-minutes: 25
+    # Skip if either:
+    #   - the check job found [NOTEST] in the latest commit / PR, or
+    #   - the run is on Build and Commit Dist's github-actions[bot]
+    #     dist/ commit. That commit DOES trigger us (approval-gated on
+    #     PRs); we skip it because the e2e job rebuilds dist via `yarn
+    #     build`, so the human-commit run already tested this exact
+    #     source — the bot-commit run would only re-test identical
+    #     output. Human / PR pushes run normally. (If e2e ever becomes a
+    #     required status check, revisit: the bot commit is PR HEAD and
+    #     would show skipped. See the on: header for the full rationale.)
     if: |
       needs.check.outputs.skip != 'true' &&
       github.actor != 'github-actions[bot]'
     steps:
       - name: Checkout ewc-client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Checkout Dyalog/ewc
         # Resolves the ewc-server ref in this order:
@@ -134,7 +151,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           pr-body: ${{ github.event.pull_request.body || '' }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: yarn
@@ -144,16 +161,31 @@ jobs:
 
       - name: Cache Playwright browsers
         # Hit → install step skips the ~170 MB Chromium download.
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      - name: Install Playwright browsers
+      - name: Install Playwright system deps (apt)
+        # apt only. Generous timeout + retry to ride out a slow mirror or
+        # a transient `Ign` fetch — a failure here has no `if:` guard, so
+        # it skips the ENTIRE suite. install-deps installs the same
+        # packages as --with-deps, keeping the font set identical to
+        # the baselines.
+        timeout-minutes: 12
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && npx playwright install-deps chromium && break
+            echo "::warning::apt attempt $i failed; retrying in 15s"; sleep 15
+          done
+
+      - name: Install Playwright browser
+        # Browser binary only — backed by the ms-playwright cache above,
+        # so this is a fast no-op on a cache hit.
         timeout-minutes: 6
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Build ewc-client
         run: yarn build
@@ -209,34 +241,84 @@ jobs:
         # GET when it loads the page.
         run: npx wait-on tcp:22322 --timeout 120000
 
-      - name: Run Playwright tests
-        # Run Playwright natively on the Linux runner — same env that
-        # update-baselines.yml uses to *generate* visual baselines, so
-        # comparison is byte-identical and the tight maxDiffPixels: 100
-        # threshold (in playwright.config.ts) catches real layout
-        # regressions without tripping on rendering jitter.
+      - name: Run Playwright tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
+        # Step-level timeout, deliberately LOWER than the job cap, so a
+        # wedged shard is SIGINT-stopped (Playwright flushes its blob) and
+        # the post-run steps still run under `if: always()`, rather than the
+        # job-level SIGKILL that left artifacts empty.
         #
-        # We don't wrap Playwright in Microsoft's Docker image here:
-        # its headless-shell variant mishandles certain keyboard-event
-        # dispatches (Alt+Arrow, character search) in the combo specs.
-        # Native runner Playwright avoids that issue. The image is
-        # only used by `yarn demotests:visual` for local previews.
+        # --shard splits at the spec-FILE boundary (fullyParallel: false),
+        # so whole describes stay on one backend. --reporter=blob,list
+        # overrides the config: `blob` is the mergeable per-shard artifact
+        # (recombined by the `merge` job), `list` streams named results into
+        # this shard's log so a failure or wedge is legible live.
+        #
+        # Native runner Playwright (not MS's Docker image, whose
+        # headless-shell mishandles Alt+Arrow / character-search in the
+        # combo specs). maxDiffPixels: 100 (playwright.config.ts) stays
+        # tight because baselines are generated on this same runner.
+        timeout-minutes: 15
         env:
           BROWSER_URL: http://localhost:22322
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --reporter=blob,list
 
       - name: Capture Dyalog container logs (post-run)
         if: always()
         run: docker logs ewc-demo || true
 
-      - name: Upload Playwright report
+      - name: Upload blob report (shard ${{ matrix.shard }})
+        # always() so a wedged/failed shard still uploads its (possibly
+        # partial) blob — the merge job tolerates partials. The merged,
+        # browsable html report is produced once by the `merge` job.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Recombine the per-shard blob reports into ONE browsable html report
+  # with aggregate pass/fail. Runs even when shards fail (visual diffs, a
+  # wedged shard) via !cancelled(); skipped only if the whole e2e matrix
+  # was skipped (e.g. [NOTEST]). Needs no browsers or EWC backend — just
+  # @playwright/test for `merge-reports`.
+  merge:
+    needs: e2e
+    if: ${{ !cancelled() && needs.e2e.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Download all shard blob reports
+        # merge-multiple flattens every blob-report-N artifact into one
+        # directory (report-1.zip … report-N.zip) for merge-reports.
+        uses: actions/download-artifact@v8
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Merge into one HTML report
+        # html → the single browsable artifact; github → aggregated inline
+        # annotations. CI=true keeps the html reporter from opening a
+        # browser. Tolerates a partial blob from a wedged shard.
+        run: npx playwright merge-reports --reporter html,github ./all-blob-reports
+
+      - name: Upload merged Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: ignore
-          # Default retention is 90 days; we don't need that long
-          # for run-by-run reports — old failures get fixed within
-          # days, and storage adds up quickly with 100+ tests/run.
           retention-days: 7

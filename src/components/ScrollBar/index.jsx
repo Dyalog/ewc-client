@@ -13,13 +13,9 @@ import {
   handleMouseWheel,
   parseFlexStyles
 } from '../../utils';
+import { thumbValueInRange } from './clamp';
 
 const arrowButtonSize = 20;
-
-export const thumbValueInRange = (thumb, range) => {
-  if (!thumb) return 1
-  return thumb < 1 ? 1 : thumb > range ? range : thumb
-}
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
@@ -290,7 +286,9 @@ const ScrollBar = ({ data }) => {
       window.removeEventListener('mouseup', handleMouseUpEvent);
 
       const finalScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
-      const roundedScaledValue = Math.round(finalScaledValue) || 1;
+      // Clamp the emitted position to the valid [1, Range] (was `|| 1`, which
+      // only guarded the floor, not the ceiling).
+      const roundedScaledValue = thumbValueInRange(Math.round(finalScaledValue), maxValue);
       setThumbPosition(newThumbPosition);
 
       // handleData(
@@ -343,19 +341,21 @@ const ScrollBar = ({ data }) => {
       //   : trackHeight - 100;
 //       console.log("temp scled value si as",tempScaledValue)
 
-      let lastValue = tempScaledValue;
+      const prevValue = tempScaledValue;
 
       const newThumbPosition = Math.max(
         0,
         Math.min(maxThumbPosition, clickPosition - 20)
       );
 
-      // const newScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
-      const newScaledValue = lastValue === 1 ? lastValue + 10 : lastValue + 10;
-
-
-      // if (newScaledValue >= 1 && newScaledValue <= maxValue) {
-      // setScaledValue(newScaledValue);
+      // Map the click pixel position back to a value (inverse of
+      // calculateThumbPosition) and clamp to the valid [1, Range]. Previously
+      // this was `lastValue + 10`, which ignored where you clicked and never
+      // clamped — so a far-track click could emit 0 (below the min of 1).
+      const newScaledValue = thumbValueInRange(
+        Math.round((newThumbPosition / maxThumbPosition) * maxValue),
+        maxValue
+      );
       setTempScaledValue(newScaledValue)
       // if (thumbRef.current) {
       //   thumbRef.current.style[
@@ -397,8 +397,8 @@ const ScrollBar = ({ data }) => {
             ID: data?.ID,
             EventID: eventId,
             Info: [
-              Math.round(tempScaledValue) < Math.round(newScaledValue) ? 2 : -2,
-              Math.round(newScaledValue),
+              Math.round(prevValue) < newScaledValue ? 2 : -2,
+              newScaledValue,
             ],
           },
         });

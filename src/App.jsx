@@ -18,9 +18,8 @@ import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
 import { getGrid } from "./components/Grid/getGrid";
-import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
-import keypressHandlers from "./utils/keypressHandlers";
+import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
 
@@ -203,7 +202,11 @@ const App = () => {
     return newValue;
   }
 
-  const handleData = (data, mode) => {
+  // options.render === false updates dataRef.current WITHOUT triggering an
+  // app-wide reRender — used for ref-only writes (e.g. Grid syncing CurCell
+  // for server eWG reads) where the writing component re-renders from its own
+  // local state and a full-tree re-render would be pure waste per keystroke.
+  const handleData = (data, mode, options) => {
 //     console.log("handleData", data, mode);
     const splitID = data.ID.split(".");
     const currentLevel = locateParentByPath(dataRef.current, data.ID);
@@ -225,14 +228,6 @@ const App = () => {
       } else if (mode === "WS") {
         // TODO move to a new home and organise it better!
         // Catch if we're moving outside of bounds and bring us back in
-        if (currentLevel[finalKey]?.Properties?.Type === 'Grid') {
-          setGrid({
-            data,
-            currentLevel,
-            finalKey,
-          });
-        }
-
         if(currentLevel[finalKey]?.Properties?.Type === 'StatusField'){
           StatusField.WS(wsSend, data, currentLevel[finalKey]);
           return;
@@ -370,7 +365,7 @@ const App = () => {
 //       console.log('compare', { data, newData })
     }
 
-    reRender();
+    if (options?.render !== false) reRender();
   };
 
   // const deleteObjectsById = (data, idsToDelete) => {
@@ -732,7 +727,7 @@ const App = () => {
               const { Properties } = refData;
 
               if (Type == "Grid") {
-                return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
+                return getGrid({ Properties, serverEvent, webSocket, checkSupportedProperties });
               }
               if (Type == "Form") {
                 const supportedProperties = ["Posn", "Size"];
@@ -894,7 +889,8 @@ const App = () => {
                   })
                 );
               } else if (Type == "Combo") {
-                const { SelItems, Items, Text } = Properties;
+                const { SelItems, Text } = Properties;
+                const Items = Properties.Items || [];
                 const supportedProperties = ["Text", "SelItems", "Posn", "Size"];
 
                 const result = checkSupportedProperties(
@@ -1439,11 +1435,23 @@ const App = () => {
                 }));
               }
             } catch (e) {
-              // There should be a proper error response here, but for now, we just log.
-              // This is because we know something failed, but APL doesn't and
-              // just waits 3s to mark the WG as failed.
+              // Without a response, APL waits 3s and then signals VALUE ERROR
+              // on the caller (e.g. CBRunDemo[27] sel←(⊃args)eWG'SelItems').
+              // Send an error back so the wait short-circuits and the APL
+              // side gets a real signalable error instead of a hang.
               console.error("WG Error: ", e);
-              // wsSend({...});
+              try {
+                webSocket.send(JSON.stringify({
+                  WG: {
+                    ID: evData.WG?.ID,
+                    Error: {
+                      Code: 2,
+                      Message: `WG handler threw: ${e?.message || String(e)}`,
+                      WGID: evData.WG?.WGID,
+                    },
+                  },
+                }));
+              } catch {}
             }
           }
           // Retry on WG - if it's not in the page, wait for next render
@@ -1577,6 +1585,27 @@ const App = () => {
                   Info,
                 })
               );
+              // Grid reads CurCell from the data tree (Properties.CurCell),
+              // not from localStorage. Update the tree so the grid actually
+              // moves when the server NQ's a CellMove (e.g. a KeyPress
+              // handler that decides to advance the cursor).
+              handleData(
+                {
+                  ID,
+                  Properties: {
+                    ...(existingData?.Properties || {}),
+                    CurCell: [Info[0], Info[1]],
+                  },
+                },
+                "WS"
+              );
+              // Echo back since NoCallback=0 means the server expects
+              // confirmation. Matches the convention in the trailing else.
+              nqCallback({
+                EventName: "CellMove",
+                ID,
+                Info,
+              });
             } else if (Event == "Select") {
               const element = document.getElementById(nqEvent.ID);
               if (element) element.click();
@@ -1630,47 +1659,48 @@ const App = () => {
           const currentPendingEvent = pendingKeypressEventRef.current;
           if (currentPendingEvent && currentPendingEvent.eventId === EventID) {
             if (Proceed === 1) {
-              // Apply the pending keystroke to the Edit field
-              const editElement = document.getElementById(currentPendingEvent.componentId);
-              
-              if (editElement) {
-                const componentData = JSON.parse(getObjectById(dataRef.current, currentPendingEvent.componentId));
-                
-                // Map JavaScript key names to keypressHandler names
-                const keyMap = {
-                  'Tab': 'HT',
-                  'ArrowLeft': currentPendingEvent.shiftKey ? 'Lc' : 'LC',
-                  'ArrowRight': currentPendingEvent.shiftKey ? 'Rc' : 'RC', 
-                  'Backspace': 'DB',
-                  'Delete': 'DI'
-                };
-                
-                const handlerKey = keyMap[currentPendingEvent.key] || currentPendingEvent.key;
-                
-                if (handlerKey && keypressHandlers[handlerKey]) {
-                  // Use the appropriate keypress handler for special keys
-                  keypressHandlers[handlerKey](handleData, currentPendingEvent.componentId, componentData.Properties);
-                } else if (currentPendingEvent.key.length === 1) {
-                  // Handle regular character input
-                  const start = editElement.selectionStart;
-                  const end = editElement.selectionEnd;
-                  const currentValue = editElement.value;
-                  
-                  const newValue = currentValue.slice(0, start) + currentPendingEvent.key + currentValue.slice(end);
-                  
-                  // Update the DOM
-                  editElement.value = newValue;
-                  editElement.setSelectionRange(start + 1, start + 1);
-                  
-                  // Update the global tree so WG requests see the new value
-                  handleData({
-                    ID: currentPendingEvent.componentId,
-                    Properties: {
-                      Text: newValue,
-                      Value: newValue,
-                      SelText: [start + 2, start + 2], // 1-indexed for APL
-                    },
-                  }, "WS");
+              const { key, shiftKey, componentId, applyKey } = currentPendingEvent;
+
+              // Navigation / editing keys are delegated to a registered EWC
+              // keypress handler (resolved by code; see keyNameToCode).
+              // Printable characters have no handler and fall to the `else`.
+              const specialHandler = keypressHandlers[keyNameToCode(key, shiftKey)];
+
+              if (specialHandler) {
+                // Special key: delegate to its handler (operates on the data
+                // tree via componentId/handleData, not the DOM element).
+                const componentData = JSON.parse(getObjectById(dataRef.current, componentId));
+                specialHandler(handleData, componentId, componentData.Properties);
+              } else if (key && key.length === 1) {
+                // Printable character.
+                if (typeof applyKey === 'function') {
+                  // Per-instance apply (registered by Edit's handleKeyPress):
+                  // mutates this Edit's own React state, never the shared
+                  // Grid column template (data.Properties). Writing a typed
+                  // char into Properties.Text would contaminate every cell in
+                  // the column.
+                  applyKey(key);
+                } else {
+                  // Legacy fallback for components that don't register applyKey:
+                  // mutate the DOM input directly and push Text/Value to the tree.
+                  const editElement = document.getElementById(componentId);
+                  if (editElement) {
+                    const start = editElement.selectionStart;
+                    const end = editElement.selectionEnd;
+                    const newValue = editElement.value.slice(0, start) + key + editElement.value.slice(end);
+
+                    editElement.value = newValue;
+                    editElement.setSelectionRange(start + 1, start + 1);
+
+                    handleData({
+                      ID: componentId,
+                      Properties: {
+                        Text: newValue,
+                        Value: newValue,
+                        SelText: [start + 2, start + 2], // 1-indexed for APL
+                      },
+                    }, "WS");
+                  }
                 }
               }
             }

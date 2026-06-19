@@ -42,3 +42,5 @@ TODO.md
 
 # Local Dyalog workspace (built from setup-ewc.apl, not source)
 /.local-dyalog/
+
+notes/
