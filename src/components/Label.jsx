@@ -2,12 +2,12 @@ import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, h
 import { getBorderStyles } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData } from "../hooks";
-import { useNuGridContext } from "./NuGrid/NuGridContext";
+import { useGridContext } from "./Grid/GridContext";
 
 const Label = ({ data, gridValue }) => {
-  // Check if we're inside a NuGrid cell
-  const nuGridContext = useNuGridContext();
-  const isInNuGrid = !!nuGridContext;
+  // Check if we're inside a Grid cell
+  const gridContext = useGridContext();
+  const isInGrid = !!gridContext;
   let styles = setStyle(data?.Properties);
 
   const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
@@ -21,7 +21,7 @@ const Label = ({ data, gridValue }) => {
 
   // If a newline is used anywhere, it's a wrapping, multiline label, otherwise
   // it is always a single line label
-  // When in NuGrid or when Caption is undefined, use nowrap
+  // When in Grid or when Caption is undefined, use nowrap
   if (Caption && Caption.indexOf('\n') !== -1) {
     styles.whiteSpace = 'pre-wrap';
   } else {
@@ -105,12 +105,12 @@ const Label = ({ data, gridValue }) => {
         handleMouseLeave(e, socket, Event, data?.ID);
       }}
     >
-      {isInNuGrid ? (
-        // In NuGrid: display cellValue from context
+      {isInGrid ? (
+        // In Grid: display cellValue from context
         <span
           style={{
             display: "flex",
-            justifyContent: typeof nuGridContext.cellValue == "string" ? "start" : "end",
+            justifyContent: typeof gridContext.cellValue == "string" ? "start" : "end",
             fontSize: "12px",
             marginLeft: "5px",
             width: "100%",
@@ -118,7 +118,7 @@ const Label = ({ data, gridValue }) => {
             alignItems: "center",
           }}
         >
-          {nuGridContext.cellValue}
+          {gridContext.cellValue}
         </span>
       ) : !Caption ? (
         <span

@@ -2,7 +2,6 @@ import {
   setStyle,
   getFontStyles,
   extractStringUntilLastPeriod,
-  getObjectTypeById,
   handleMouseMove,
   handleMouseLeave,
   handleMouseEnter,
@@ -14,19 +13,13 @@ import {
   handleKeyPressUtils,
 } from "../utils";
 import { useAppData, useResizeObserver } from "../hooks";
-import { useNuGridContext } from "./NuGrid/NuGridContext";
+import { useGridContext } from "./Grid/GridContext";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 import { getObjectById, getImageStyles } from "../utils";
 
 const Button = ({
   data,
-  inputValue,
-  event = "",
-  row = "",
-  column = "",
-  location = "",
-  values = [],
 }) => {
 
   const parentSize = JSON.parse(
@@ -36,9 +29,9 @@ const Button = ({
   const styles = setStyle(data?.Properties);
   const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
 
-  // Check if we're inside a NuGrid cell
-  const nuGridContext = useNuGridContext();
-  const isInNuGrid = !!nuGridContext;
+  // Check if we're inside a Grid cell
+  const gridContext = useGridContext();
+  const isInGrid = !!gridContext;
   const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, TabIndex } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
@@ -81,12 +74,9 @@ const Button = ({
   );
 
   const decideInput = () => {
-    // When in NuGrid, use cellValue from context (0 or 1)
-    if (isInNuGrid && nuGridContext) {
-      return setCheckInput(nuGridContext.cellValue === 1);
-    }
-    if (location == "inGrid") {
-      return setCheckInput(inputValue);
+    // When in Grid, use cellValue from context (0 or 1)
+    if (isInGrid && gridContext) {
+      return setCheckInput(gridContext.cellValue === 1);
     }
     // Ensure we always set a boolean (not undefined) to avoid controlled/uncontrolled warning
     setCheckInput(State === 1 || State === true);
@@ -95,7 +85,7 @@ const Button = ({
   useEffect(() => {
     decideInput();
     setPosition({ top: Posn && Posn[0], left: Posn && Posn[1] });
-  }, [data, nuGridContext?.cellValue]);
+  }, [data, gridContext?.cellValue]);
 
   const shortcutKey = Caption?.includes("&")
     ? Caption?.charAt(Caption.indexOf("&") + 1).toLowerCase()
@@ -253,59 +243,6 @@ const Button = ({
     reRender();
   }, [dimensions]);
 
-  const handleCellChangedEvent = (value) => {
-    const gridEvent = findCurrentData(extractStringUntilLastPeriod(data?.ID));
-    (values[parseInt(row) - 1][parseInt(column) - 1] = value ? 1 : 0),
-      handleData(
-        {
-          ID: extractStringUntilLastPeriod(data?.ID),
-          Properties: {
-            ...gridEvent.Properties,
-            Values: values,
-            CurCell: [row, column],
-          },
-        },
-        "WS"
-      );
-
-    const triggerEvent = JSON.stringify({
-      Event: {
-        EventName: "CellChanged",
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Row: parseInt(row),
-        Col: parseInt(column),
-        Value: value ? 1 : 0,
-      },
-    });
-
-    const updatedGridValues = JSON.stringify({
-      Event: {
-        EventName: "CellChanged",
-        Values: values,
-        CurCell: [row, column],
-      },
-    });
-
-    const formatCellEvent = JSON.stringify({
-      FormatCell: {
-        Cell: [row, column],
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Value: value ? 1 : 0,
-      },
-    });
-
-    localStorage.setItem(
-      extractStringUntilLastPeriod(data?.ID),
-      updatedGridValues
-    );
-    const exists = event && event.some((item) => item[0] === "CellChanged");
-    if (!exists) return;
-//     console.log(triggerEvent);
-//     console.log(formatCellEvent);
-    socket.send(formatCellEvent);
-    socket.send(triggerEvent);
-  };
-
   const handleSelectEvent = (value) => {
     const newState = value ? 1 : 0;
     handleData(
@@ -335,100 +272,16 @@ const Button = ({
   };
 
   const handleCheckBoxEvent = (value) => {
-    // When in NuGrid, report change via context callback
-    if (isInNuGrid && nuGridContext) {
-      nuGridContext.onCellChange(value ? 1 : 0);
+    // When in Grid, report change via context callback
+    if (isInGrid && gridContext) {
+      gridContext.onCellChange(value ? 1 : 0);
       return;
     }
-    if (location == "inGrid") {
-      handleSelectEvent(value);
-      handleCellChangedEvent(value);
-    } else {
-      handleSelectEvent(value);
-    }
-  };
-
-  const triggerCellMoveEvent = (row, column, mouseClick) => {
-    const isKeyboard = !mouseClick ? 1 : 0;
-    const Event = JSON.stringify({
-      Event: {
-        ID: extractStringUntilLastPeriod(data?.ID),
-        EventName: "CellMove",
-        Info: [row, column, isKeyboard, 0, mouseClick, checkInput ? 1 : 0],
-      },
-    });
-    const exists = event && event.some((item) => item[0] === "CellMove");
-    if (!exists) return;
-//     console.log(Event);
-    socket.send(Event);
-  };
-
-  const handleCellMove = () => {
-    if (location !== "inGrid") return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const superParent = grandParent.parentElement;
-    const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(row + 1, column, 0);
-    const element = nextSibling?.querySelectorAll("input");
-    element &&
-      element.forEach((inputElement) => {
-        if (inputElement.id === data?.ID) {
-          inputElement.focus();
-        }
-      });
-  };
-
-  const handleRightArrow = () => {
-    if (location !== "inGrid") return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const nextSibling = grandParent.nextSibling;
-    const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column + 1, 0);
-    const element = nextSibling?.querySelectorAll(querySelector);
-
-    if (querySelector == "select") return element && element[0].focus();
-
-    return element && element[0].select();
-  };
-  const handleLeftArrow = () => {
-    if (location !== "inGrid") return;
-//     console.log(inputRef);
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const nextSibling = grandParent.previousSibling;
-    const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column - 1, 0);
-    const element = nextSibling?.querySelectorAll(querySelector);
-
-    element && element[0]?.focus();
-
-    return element && element[0]?.select();
-  };
-  const handleUpArrow = () => {
-    if (location !== "inGrid") return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const superParent = grandParent.parentElement;
-    const nextSibling = superParent.previousSibling;
-    triggerCellMoveEvent(row - 1, column, 0);
-    const element = nextSibling?.querySelectorAll("input");
-    element &&
-      element.forEach((inputElement) => {
-        if (inputElement.id === data?.ID) {
-          inputElement.focus();
-        }
-      });
+    handleSelectEvent(value);
   };
 
   const handleKeyPress = (e) => {
     handleKeyPressUtils(e, socket, Event, data?.ID);
-    if (e.key == "Enter") handleCellMove();
-    else if (e.key == "ArrowRight") handleRightArrow();
-    else if (e.key == "ArrowLeft") handleLeftArrow();
-    else if (e.key == "ArrowDown") handleCellMove();
-    else if (e.key == "ArrowUp") handleUpArrow();
   };
 
   //handle got focus event on all controls
@@ -450,8 +303,8 @@ const Button = ({
   };
 
   if (isCheckBox) {
-    // When in NuGrid, render a centered checkbox without labels
-    if (isInNuGrid) {
+    // When in Grid, render a centered checkbox without labels
+    if (isInGrid) {
       return (
         <div
           id={data.ID + ".$CONTAINER"}
@@ -504,7 +357,7 @@ const Button = ({
           id={data?.ID}
           tabIndex={TabIndex}
           type="checkbox"
-          style={{ margin: 0, marginLeft: location == "inGrid" ? 5 : 0, flexShrink: 0 }}
+          style={{ margin: 0, marginLeft: 0, flexShrink: 0 }}
           checked={checkInput}
           disabled={Active === 0}
           onChange={(e) => {

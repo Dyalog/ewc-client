@@ -1,17 +1,15 @@
-import { setStyle, getFontStyles, extractStringUntilLastPeriod, getObjectTypeById, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
+import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { createPortal } from 'react-dom';
 import { useAppData, useResizeObserver } from '../hooks';
-import { useNuGridContext } from './NuGrid/NuGridContext';
+import { useGridContext } from './Grid/GridContext';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-const Combo = ({ data, value, event = '', row = '', column = '', location = '', values = [] }) => {
-  // Check if we're inside a NuGrid cell
-  const nuGridContext = useNuGridContext();
-  const isInNuGrid = !!nuGridContext;
+const Combo = ({ data, value }) => {
+  // Check if we're inside a Grid cell
+  const gridContext = useGridContext();
+  const isInGrid = !!gridContext;
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
-
-  const inputRef = useRef();
 
   // Custom dropdown state and refs
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +22,7 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   const triggerRef = useRef(null);
   const optionRefs = useRef([]);
 
-  const { socket, handleData, findCurrentData, reRender, dataRef, inheritedProperties } = useAppData();
+  const { socket, handleData, findCurrentData, reRender, inheritedProperties } = useAppData();
 
   const { CSS } = data.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
@@ -43,9 +41,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
 
   // Initialize with selected item, or Text property, or first item
   const initialSelected = () => {
-    // When in NuGrid, use cellValue from context
-    if (isInNuGrid && nuGridContext) {
-      return nuGridContext.cellValue || '';
+    // When in Grid, use cellValue from context
+    if (isInGrid && gridContext) {
+      return gridContext.cellValue || '';
     }
     const index = SelItems?.findIndex((element) => element == 1);
     if (index !== undefined && index !== -1 && Items) {
@@ -56,19 +54,19 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   };
   const [comboInput, setComboInput] = useState(initialSelected);
 
-  // Update combo input when NuGrid cellValue changes
+  // Update combo input when Grid cellValue changes
   useEffect(() => {
-    if (isInNuGrid && nuGridContext) {
-      setComboInput(nuGridContext.cellValue || '');
+    if (isInGrid && gridContext) {
+      setComboInput(gridContext.cellValue || '');
     }
-  }, [isInNuGrid, nuGridContext?.cellValue]);
+  }, [isInGrid, gridContext?.cellValue]);
   const [position, setPosition] = useState({ top: Posn && Posn[0], left: Posn && Posn[1] });
 
   const [parentOldDimensions, setParentOldDimensions] = useState(parentSize?.Size);
 
-  // Sync selection from SelItems - skip when in NuGrid (values come from grid context)
+  // Sync selection from SelItems - skip when in Grid (values come from grid context)
   useEffect(() => {
-    if (isInNuGrid) return;
+    if (isInGrid) return;
 
     const index = SelItems?.findIndex((element) => element == 1);
     if (index == undefined || index == -1) {
@@ -87,46 +85,6 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     });
     localStorage.setItem(data?.ID, triggerEvent);
   }, [data]);
-
-  const handleCellChangeEvent = (value) => {
-    const gridEvent = findCurrentData(extractStringUntilLastPeriod(data?.ID));
-    values[parseInt(row) - 1][parseInt(column) - 1] = value;
-    handleData(
-      {
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Properties: {
-          ...gridEvent.Properties,
-          Values: values,
-          CurCell: [row, column],
-        },
-      },
-      'WS'
-    );
-
-    // Info array: [Row, Col, Value] - APL callback receives (ID Event),Info
-    const triggerEvent = JSON.stringify({
-      Event: {
-        EventName: 'CellChanged',
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Info: [parseInt(row), parseInt(column), value],
-      },
-    });
-
-    const updatedGridValues = JSON.stringify({
-      Event: {
-        EventName: 'CellChanged',
-        Values: values,
-        CurCell: [row, column],
-      },
-    });
-
-    localStorage.setItem(extractStringUntilLastPeriod(data?.ID), updatedGridValues);
-    const exists = event && event.some((item) => item[0] === 'CellChanged');
-    if (!exists) return;
-
-//     console.log(triggerEvent);
-    socket.send(triggerEvent);
-  };
 
   const handleSelectEvent = (value) => {
     const NewSelItems = new Array(Items.length).fill(0);
@@ -282,20 +240,15 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
     setIsOpen(false);
     setHighlightedIndex(-1);
 
-    // When in NuGrid, report change via context callback
-    if (isInNuGrid && nuGridContext) {
-      nuGridContext.onCellChange(item);
+    // When in Grid, report change via context callback
+    if (isInGrid && gridContext) {
+      gridContext.onCellChange(item);
       return;
     }
 
     // ALWAYS fire Select event, even when reselecting same value
-    if (location === 'inGrid') {
-      handleSelectEvent(index);
-      handleCellChangeEvent(item);
-    } else {
-      handleSelectEvent(index);
-    }
-  }, [location, handleSelectEvent, handleCellChangeEvent, isInNuGrid, nuGridContext]);
+    handleSelectEvent(index);
+  }, [handleSelectEvent, isInGrid, gridContext]);
 
   // Calculate dropdown position (fixed positioning for grid context)
   const getDropdownPosition = useCallback(() => {
@@ -333,91 +286,11 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       maxHeight,
       zIndex: 9999
     };
-  }, [location, Rows, Items]);
-
-  const triggerCellMoveEvent = (row, column, mouseClick, value) => {
-//     console.log("265 combo")
-    const isKeyboard = !mouseClick ? 1 : 0;
-    const Event = JSON.stringify({
-      Event: {
-        ID: extractStringUntilLastPeriod(data?.ID),
-        EventName: 'CellMove',
-        Info: [row, column, isKeyboard, 0, mouseClick, value],
-      },
-    });
-
-    const exists = event && event.some((item) => item[0] === 'CellMove');
-    if (!exists) return;
-//     console.log(Event);
-    socket.send(Event);
-  };
-
-  const handleRightArrow = (value) => {
-    if (location !== 'inGrid') return;
-//     console.log(inputRef);
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const nextSibling = grandParent.nextSibling;
-    const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-
-    triggerCellMoveEvent(row, column + 1, 0, value);
-    const element = nextSibling?.querySelectorAll(querySelector);
-//     console.log({ element });
-
-    if (querySelector == 'select') return element && element[0].focus();
-
-    return element && element[0].select();
-  };
-  const handleLeftArrow = (value) => {
-    if (location !== 'inGrid') return;
-//     console.log(inputRef);
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const nextSibling = grandParent.previousSibling;
-    const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    triggerCellMoveEvent(row, column - 1, 0, value);
-    const element = nextSibling?.querySelectorAll(querySelector);
-
-    if (querySelector == 'select') return element && element[0].focus();
-
-    return element && element[0].select();
-  };
-  const handleUpArrow = (value) => {
-    if (location !== 'inGrid') return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const superParent = grandParent.parentElement;
-    const nextSibling = superParent.previousSibling;
-    const element = nextSibling?.querySelectorAll('select');
-    triggerCellMoveEvent(row - 1, column, 0, value);
-    element &&
-      element.forEach((inputElement) => {
-        if (inputElement.id === data?.ID) {
-          inputElement.focus();
-        }
-      });
-  };
-  const handleCellMove = (value) => {
-    if (location !== 'inGrid') return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const superParent = grandParent.parentElement;
-    const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(row + 1, column, 0, value);
-    const element = nextSibling?.querySelectorAll('select');
-    element &&
-      element.forEach((inputElement) => {
-        if (inputElement.id === data?.ID) {
-          inputElement.focus();
-        }
-      });
-  };
+  }, [Rows, Items]);
 
   const handleKeyPress = (e) => {
     e.stopPropagation();
     handleKeyPressUtils(e, socket, Event, data?.ID);
-
-    const currentValue = value || comboInput;
 
     // Type-to-search: handle printable characters
     const handleTypeSearch = (char) => {
@@ -518,13 +391,6 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         setIsOpen(true);
-      } else if (location === 'inGrid') {
-        // In grid context, arrow keys navigate cells when closed
-        e.preventDefault();
-        if (e.key === 'ArrowRight') handleRightArrow(currentValue);
-        else if (e.key === 'ArrowLeft') handleLeftArrow(currentValue);
-        else if (e.key === 'ArrowDown') handleCellMove(currentValue);
-        else if (e.key === 'ArrowUp') handleUpArrow(currentValue);
       } else {
         // Not in grid - arrow keys open dropdown
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -542,10 +408,10 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
   return (
     <div
       style={{
-        ...(isInNuGrid ? {} : styles),
+        ...(isInGrid ? {} : styles),
         borderColor: '#ccc',
         display: Visible == 0 ? 'none' : 'block',
-        ...(isInNuGrid ? {
+        ...(isInGrid ? {
           position: 'relative',
           width: '100%',
           height: '100%',
@@ -555,9 +421,9 @@ const Combo = ({ data, value, event = '', row = '', column = '', location = '', 
         }),
       }}
       onMouseDown={(e) => {
-        // In NuGrid, let the mousedown bubble to the grid cell so it can move
+        // In Grid, let the mousedown bubble to the grid cell so it can move
         // CurCell + fire CellMove; standalone, keep it contained as before.
-        if (!isInNuGrid) e.stopPropagation();
+        if (!isInGrid) e.stopPropagation();
         handleMouseDown(e, socket, Event, data?.ID);
       }}
       onMouseUp={(e) => {

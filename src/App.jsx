@@ -18,8 +18,6 @@ import version from "../version.json";
 import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
 import { getGrid } from "./components/Grid/getGrid";
-import { getNuGrid } from "./components/NuGrid/getNuGrid";
-import { setGrid } from "./components/Grid/setGrid";
 import * as Globals from "./Globals";
 import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
@@ -205,7 +203,7 @@ const App = () => {
   }
 
   // options.render === false updates dataRef.current WITHOUT triggering an
-  // app-wide reRender — used for ref-only writes (e.g. NuGrid syncing CurCell
+  // app-wide reRender — used for ref-only writes (e.g. Grid syncing CurCell
   // for server eWG reads) where the writing component re-renders from its own
   // local state and a full-tree re-render would be pure waste per keystroke.
   const handleData = (data, mode, options) => {
@@ -230,14 +228,6 @@ const App = () => {
       } else if (mode === "WS") {
         // TODO move to a new home and organise it better!
         // Catch if we're moving outside of bounds and bring us back in
-        if (currentLevel[finalKey]?.Properties?.Type === 'Grid') {
-          setGrid({
-            data,
-            currentLevel,
-            finalKey,
-          });
-        }
-
         if(currentLevel[finalKey]?.Properties?.Type === 'StatusField'){
           StatusField.WS(wsSend, data, currentLevel[finalKey]);
           return;
@@ -579,7 +569,6 @@ const App = () => {
           // TODO move to a new home!
           const defaultProperties = {
             Grid: { CurCell: [1, 1] },
-            NuGrid: { CurCell: [1, 1] },
           };
           const dflts = defaultProperties[evData.WC?.Properties?.Type];
           if (dflts) {
@@ -738,10 +727,7 @@ const App = () => {
               const { Properties } = refData;
 
               if (Type == "Grid") {
-                return getGrid({ Properties, serverEvent, setSocketData, handleData, webSocket, checkSupportedProperties, refData })
-              }
-              if (Type == "NuGrid") {
-                return getNuGrid({ Properties, serverEvent, webSocket, checkSupportedProperties });
+                return getGrid({ Properties, serverEvent, webSocket, checkSupportedProperties });
               }
               if (Type == "Form") {
                 const supportedProperties = ["Posn", "Size"];
@@ -1599,7 +1585,7 @@ const App = () => {
                   Info,
                 })
               );
-              // NuGrid reads CurCell from the data tree (Properties.CurCell),
+              // Grid reads CurCell from the data tree (Properties.CurCell),
               // not from localStorage. Update the tree so the grid actually
               // moves when the server NQ's a CellMove (e.g. a KeyPress
               // handler that decides to advance the cursor).
@@ -1690,7 +1676,7 @@ const App = () => {
                 if (typeof applyKey === 'function') {
                   // Per-instance apply (registered by Edit's handleKeyPress):
                   // mutates this Edit's own React state, never the shared
-                  // NuGrid column template (data.Properties). Writing a typed
+                  // Grid column template (data.Properties). Writing a typed
                   // char into Properties.Text would contaminate every cell in
                   // the column.
                   applyKey(key);

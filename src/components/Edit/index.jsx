@@ -1,11 +1,9 @@
 import {
   setStyle,
-  extractStringUntilLastPeriod,
   generateAsteriskString,
   calculateDateAfterDays,
   calculateDaysFromDate,
   rgbColor,
-  getObjectTypeById,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -19,8 +17,8 @@ import {
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
-import { useNuGridContext } from "../NuGrid/NuGridContext";
-import { normalizeAplFormatted } from "../NuGrid/useNumericFormatter";
+import { useGridContext } from "../Grid/GridContext";
+import { normalizeAplFormatted } from "../Grid/useNumericFormatter";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
 import * as Globals from "../../Globals";
@@ -28,17 +26,11 @@ import * as Globals from "../../Globals";
 const Edit = ({
   data,
   value,
-  event = "",
-  row = "",
-  column = "",
   location = "",
-  values = [],
   T = "",
 }) => {
   const {
     socket,
-    dataRef,
-    findDesiredData,
     findCurrentData,
     handleData,
     fontScale,
@@ -46,9 +38,9 @@ const Edit = ({
     pendingKeypressEventRef
   } = useAppData();
 
-  // Check if we're inside a NuGrid cell
-  const nuGridContext = useNuGridContext();
-  const isInNuGrid = !!nuGridContext;
+  // Check if we're inside a Grid cell
+  const gridContext = useGridContext();
+  const isInGrid = !!gridContext;
 
   // findCurrentData is an O(depth) path walk; the old getObjectById did a
   // full-tree DFS + JSON round-trip every render. Locale is static after startup.
@@ -99,12 +91,12 @@ const Edit = ({
 
 //   console.log("291", {dateFormat, emitValue, parse:parseInt(emitValue), data})
   // Extract cellValue to avoid stale closure issues
-  const cellValue = nuGridContext?.cellValue;
-  const formattedValue = nuGridContext?.formattedValue;
+  const cellValue = gridContext?.cellValue;
+  const formattedValue = gridContext?.formattedValue;
 
   const decideInputValue = useCallback(() => {
-    // When in NuGrid, use the cellValue from context
-    if (isInNuGrid && cellValue !== undefined) {
+    // When in Grid, use the cellValue from context
+    if (isInGrid && cellValue !== undefined) {
       const cellVal = cellValue;
       if (FieldType === "Date" && cellVal !== undefined && cellVal !== "") {
         setEmitValue(cellVal);
@@ -122,22 +114,6 @@ const Edit = ({
     let propsValue = data?.Properties?.Value;
     if (propsValue === undefined) {
       propsValue = data?.Properties?.Text;
-    }
-
-    if (location === "inGrid") {
-      if (FieldType === "Date") {
-        setEmitValue(value);
-        const date = calculateDateAfterDays(value); // Custom function to calculate date
-        return setInputValue(dayjs(date).format(ShortDate));
-      }
-
-      if (FieldType === "LongNumeric") {
-        setEmitValue(value);
-        return setInputValue(value);
-      }
-
-      setEmitValue(value);
-      return setInputValue(value);
     }
 
     // Handle Date fields outside of grids
@@ -177,7 +153,7 @@ const Edit = ({
     isPassword,
     data,
     hasValueProperty,
-    isInNuGrid,
+    isInGrid,
     cellValue, // The extracted cellValue from context
     formattedValue,
     isEditing,
@@ -236,7 +212,7 @@ const Edit = ({
   }, [decideInputType]);
 
   useEffect(() => {
-    // Don't overwrite user input while actively editing (NuGrid sets isEditing on focus)
+    // Don't overwrite user input while actively editing (Grid sets isEditing on focus)
     if (isEditing) return;
     decideInputValue();
     // isEditing intentionally excluded: it should guard, not trigger.
@@ -249,9 +225,9 @@ const Edit = ({
 
 
   // Single Properties observer to handle all property changes atomically
-  // Skip when in NuGrid - values come from grid context, not the shared Input component
+  // Skip when in Grid - values come from grid context, not the shared Input component
   useEffect(() => {
-    if (isInNuGrid) return;
+    if (isInGrid) return;
 
     const textFromProperties = data?.Properties?.Text;
     const valueFromProperties = data?.Properties?.Value;
@@ -326,9 +302,9 @@ const Edit = ({
   }, [data?.Properties?.Text, data?.Properties?.Value, data?.Properties?.SelText]);
 
   // Update global tree when input changes (for WG requests)
-  // Skip when in NuGrid - the grid handles value updates through onCellChange
+  // Skip when in Grid - the grid handles value updates through onCellChange
   useEffect(() => {
-    if (isInNuGrid) return;
+    if (isInGrid) return;
 
     if (inputValue !== undefined && inputValue !== prevInputValueRef.current) {
       prevInputValueRef.current = inputValue;
@@ -343,24 +319,18 @@ const Edit = ({
         "WS"
       );
     }
-  }, [inputValue]); // isInNuGrid is constant - no need to track it
+  }, [inputValue]); // isInGrid is constant - no need to track it
 
 
   // Checks for the Styling of the Edit Field
 
-  if (isInNuGrid) {
-    // Inside NuGrid: fill the cell, no border
+  if (isInGrid) {
+    // Inside Grid: fill the cell, no border
     styles = {
       ...styles,
       position: 'relative',
       width: '100%',
       height: '100%',
-      border: "none",
-      color: FCol ? rgbColor(FCol) : "black",
-    };
-  } else if (location == "inGrid") {
-    styles = {
-      ...styles,
       border: "none",
       color: FCol ? rgbColor(FCol) : "black",
     };
@@ -375,107 +345,17 @@ const Edit = ({
     };
   }
 
-  const triggerCellMoveEvent = (row, column,mouseClick, value) => {
-    const isKeyboard = !mouseClick ? 1 : 0;
-    const Event = JSON.stringify({
-      Event: {
-        ID: extractStringUntilLastPeriod(data?.ID),
-        EventName: "CellMove",
-        Info: [row, column, isKeyboard, 0, mouseClick, value],
-      },
-    });
-
-    const exists = event && event.some((item) => item[0] === "CellMove");
-    if (!exists) return;
-//     console.log(Event);
-    socket.send(Event);
-  };
-
-  const handleCellMove = () => {
-    if (location !== "inGrid") return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const superParent = grandParent.parentElement;
-    const nextSibling = superParent.nextSibling;
-    triggerCellMoveEvent(parseInt(row) + 1, parseInt(column),0, emitValue);
-
-    const element = nextSibling?.querySelectorAll("input");
-    if (!element) return;
-    element &&
-      element.forEach((inputElement) => {
-        if (inputElement.id === data?.ID) {
-          inputElement.select();
-        }
-      });
-  };
-
-  const handleRightArrow = () => {
-    if (location !== "inGrid") return;
-
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const nextSibling = grandParent.nextSibling;
-    const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-
-    let element = nextSibling?.querySelectorAll(querySelector);
-
-    if (element?.length == 0) element = nextSibling?.querySelectorAll("span");
-
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
-    element && element[0]?.focus();
-
-    element && element[0]?.select();
-  };
-  const handleLeftArrow = () => {
-    if (location !== "inGrid") return;
-
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const nextSibling = grandParent.previousSibling;
-
-    const querySelector = getObjectTypeById(dataRef.current, nextSibling?.id);
-    const element = nextSibling?.querySelectorAll(querySelector);
-
-    triggerCellMoveEvent(parseInt(row), parseInt(column) + 1,0, emitValue);
-
-    // for (let i = 0; i < children.length; i++) {
-    //   children[i].focus();
-    // }
-
-    if (!element) return;
-    if (querySelector == "select") return element && element[0].focus();
-
-    return element && element[0]?.select();
-  };
-  const handleUpArrow = () => {
-    if (location !== "inGrid") return;
-    const parent = inputRef.current.parentElement;
-    const grandParent = parent.parentElement;
-    const superParent = grandParent.parentElement;
-    const nextSibling = superParent.previousSibling;
-
-    triggerCellMoveEvent(parseInt(row) - 1, parseInt(column),0, emitValue);
-    const element = nextSibling?.querySelectorAll("input");
-    if (!element) return;
-    element &&
-      element.forEach((inputElement) => {
-        if (inputElement.id === data?.ID) {
-          inputElement.select();
-        }
-      });
-  };
-
   const handleKeyPress = (e) => {
     updateSelText(); // Update global tree with current selection
     // Cursor-movement keys stay in the input; Up/Down/Tab/Enter still bubble
-    // to NuGrid for Excel-style commit + cell move.
-    if (isInNuGrid && isEditing) {
+    // to Grid for Excel-style commit + cell move.
+    if (isInGrid && isEditing) {
       const inp = e.currentTarget;
       const len = inp.value?.length ?? 0;
       const atStart = inp.selectionStart === 0 && inp.selectionEnd === 0;
       const atEnd = inp.selectionStart === len && inp.selectionEnd === len;
       // Keep Home/End and mid-text Left/Right inside the editor (move the text
-      // cursor). At the text boundary, let Left/Right bubble to NuGrid so the
+      // cursor). At the text boundary, let Left/Right bubble to Grid so the
       // arrow advances to the previous/next cell (Excel-style edge navigation).
       if (e.key === "Home" || e.key === "End"
           || (e.key === "ArrowLeft" && !atStart)
@@ -483,11 +363,6 @@ const Edit = ({
         e.stopPropagation();
       }
     }
-    if (e.key == "ArrowRight") handleRightArrow();
-    else if (e.key == "ArrowLeft") handleLeftArrow();
-    else if (e.key == "ArrowDown") handleCellMove();
-    else if (e.key == "Enter") handleCellMove();
-    else if (e.key == "ArrowUp") handleUpArrow();
     const exists = Event && Event.some((item) => item[0] === "KeyPress");
     if (!exists) return;
     // We utilise the browser for certain events (eg HT is just a dispatchEvent)
@@ -507,10 +382,10 @@ const Edit = ({
     // Register a per-instance callback so the EC=1 (Proceed=1) replay path
     // in App.jsx can apply the typed character to *this* input's own state
     // — never to data.Properties.Text. data.Properties is the per-column
-    // template shared across every NuGrid cell, so writing to it from EC
+    // template shared across every Grid cell, so writing to it from EC
     // replay contaminates every cell in the column. Mutating local state
     // via setInputValue keeps the change scoped to this Edit instance.
-    // For standalone (non-NuGrid) Edits, the useEffect on [inputValue]
+    // For standalone (non-Grid) Edits, the useEffect on [inputValue]
     // still propagates to data.Properties via handleData WS, so behavior
     // is preserved.
     pendingKeypressEventRef.current = {
@@ -670,67 +545,9 @@ const Edit = ({
     localStorage.setItem("change-event", event);
   };
 
-  const triggerCellChangedEvent = () => {
-    const gridEvent = findDesiredData(extractStringUntilLastPeriod(data?.ID));
-    values[parseInt(row) - 1][parseInt(column) - 1] = emitValue;
-    handleData(
-      {
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Properties: {
-          ...gridEvent.Properties,
-          Values: values,
-          CurCell: [parseInt(row), parseInt(column)],
-        },
-      },
-      "WS"
-    );
-
-    const cellChangedEvent = JSON.stringify({
-      Event: {
-        EventName: "CellChanged",
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Row: parseInt(row),
-        Col: parseInt(column),
-        Value: emitValue,
-      },
-    });
-
-    const updatedGridValues = JSON.stringify({
-      Event: {
-        EventName: "CellChanged",
-        Values: values,
-        CurCell: [row, column],
-      },
-    });
-
-    const formatCellEvent = JSON.stringify({
-      FormatCell: {
-        Cell: [row, column],
-        ID: extractStringUntilLastPeriod(data?.ID),
-        Value: emitValue,
-      },
-    });
-
-    localStorage.setItem(
-      extractStringUntilLastPeriod(data?.ID),
-      updatedGridValues
-    );
-
-    // localStorage.setItem(extractStringUntilSecondPeriod(data?.ID), cellChangedEvent);
-    const exists = event && event.some((item) => item[0] === "CellChanged");
-    if (!exists) return;
-//     console.log(cellChangedEvent);
-    socket.send(cellChangedEvent);
-
-    if (!formatString) return;
-
-//     console.log(formatCellEvent);
-    socket.send(formatCellEvent);
-  };
-
   const handleBlur = () => {
     // Clear editing flag first so decideInputValue can run after blur if needed
-    if (isInNuGrid) setIsEditing(false);
+    if (isInGrid) setIsEditing(false);
     setIsFocused(false);
 
     updateSelText(); // Update global tree with final selection
@@ -744,44 +561,35 @@ const Edit = ({
       }));
     }
 
-    // Check if we're inside a NuGrid cell
-    if (isInNuGrid && nuGridContext) {
+    // Check if we're inside a Grid cell
+    if (isInGrid && gridContext) {
       // Convert APL ¯→'-' and trim only at commit, so editing stays verbatim.
       const committedEmit = normalizeAplFormatted(emitValue);
       // Compare with original value from context
-      const originalValue = nuGridContext.cellValue;
+      const originalValue = gridContext.cellValue;
       const currentValue = (FieldType === "LongNumeric" || FieldType === "Numeric")
         ? (committedEmit !== "" ? Number(committedEmit) : committedEmit)
         : committedEmit;
       if (originalValue !== currentValue) {
-        nuGridContext.onCellChange(currentValue);
+        gridContext.onCellChange(currentValue);
       }
       return;
     }
 
-    // check that the Edit is inside the old Grid
-    if (location == "inGrid") {
-      if (value != emitValue) {
-        triggerChangeEvent();
-        triggerCellChangedEvent();
-      }
-    } else {
-      triggerChangeEvent();
-    }
-
+    triggerChangeEvent();
   };
 
   const handleGotFocus = () => {
     setIsFocused(true);
     // Mark editing so decideInputValue stops overwriting user input.
-    if (isInNuGrid) {
+    if (isInGrid) {
       setIsEditing(true);
       // Swap formatted display (e.g. "8,500") for the raw cellValue so
       // Number() can parse after edits — the useEffect guard skips this.
       if ((FieldType === "LongNumeric" || FieldType === "Numeric")
-          && nuGridContext?.cellValue !== undefined
-          && nuGridContext?.cellValue !== "") {
-        const raw = String(nuGridContext.cellValue);
+          && gridContext?.cellValue !== undefined
+          && gridContext?.cellValue !== "") {
+        const raw = String(gridContext.cellValue);
         setInputValue(raw);
         setEmitValue(raw);
       }
@@ -904,9 +712,9 @@ const Edit = ({
 
 
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
-    // Inside NuGrid: plain input (not NumericFormat) so ⎕FMT strings survive.
+    // Inside Grid: plain input (not NumericFormat) so ⎕FMT strings survive.
     // inputValue holds raw value while editing, formatted string otherwise.
-    if (isInNuGrid) {
+    if (isInGrid) {
       return (
         <input
           id={data?.ID}
@@ -957,8 +765,8 @@ const Edit = ({
           width: !Size ? "100%" : Size[1],
           zIndex: 1,
           display: Visible == 0 ? "none" : "block",
-          // In NuGrid: borderless, no extra padding
-          ...(isInNuGrid
+          // In Grid: borderless, no extra padding
+          ...(isInGrid
             ? { border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle' }
             : {
               ...(EdgeStyle
@@ -1039,8 +847,8 @@ const Edit = ({
         width: !Size ? "100%" : Size[1],
         zIndex: 1,
         display: Visible == 0 ? "none" : "block",
-        // In NuGrid: borderless, consistent padding
-        ...(isInNuGrid
+        // In Grid: borderless, consistent padding
+        ...(isInGrid
           ? { border: 0, outline: 0, background: 'transparent', borderRadius: 0, padding: '0 4px' }
           : {
             borderRadius: "2px",

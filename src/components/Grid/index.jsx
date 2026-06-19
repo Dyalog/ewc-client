@@ -1,755 +1,993 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   setStyle,
-  getFontStyles,
-  generateHeader,
-  extractStringUntilLastPeriod,
-  rgbColor,
-  handleMouseDown,
-  handleMouseMove,
-  handleMouseLeave,
-  handleMouseEnter,
-  handleMouseUp,
   parseFlexStyles,
-  handleMouseWheel,
+  rgbColor,
+  getFontStyles,
+  handleMouseDown,
+  handleMouseUp,
+  handleMouseEnter,
+  handleMouseLeave,
+  handleMouseMove,
   handleMouseDoubleClick,
-} from "../../utils";
-import { useResizeObserver, useAppData } from "../../hooks";
-import GridEdit from "./GridEdit";
-import GridSelect from "./GridSelect";
-import GridButton from "./GridButton";
-import GridCell from "./GridCell";
-import Header from "./Header";
-import GridLabel from "./GridLabel";
-import GridDiv from "./GridDiv";
+  handleMouseWheel,
+} from '../../utils';
+import { useAppData } from '../../hooks';
+import { getBorderStyles } from '../../styles/edgeStyles';
+import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
+import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
+import useGridState from './useGridState';
+import useGridNavigation from './useGridNavigation';
+import useGridEvents from './useGridEvents';
+import useGridTitleSize from './useGridTitleSize';
+import GridDataCell from './GridDataCell';
+import './Grid.css';
 
-const Component = ({ data,onKeyDown1 }) => {
-  if (data?.type == "Edit") return <GridEdit data={data} onKeyDown1={onKeyDown1} />;
-  else if (data?.type == "Button") return <GridButton data={data} />;
-  else if (data?.type == "cell" || data?.type == "rowTitle") return <GridCell data={data} />;
-  else if (data?.type == "header") return <Header data={data} />;
-  else if (data?.type == "Combo") return <GridSelect data={data} />;
-  else if (data?.type == "Label") return <GridLabel data={data} />;
-  else if (data?.type == "Div") return <GridDiv data={data} />;
+// Pre-mount / unknown-column fallback before useLayoutEffect measures.
+// Matches the legacy Grid component's `!CellWidths ? 100` default.
+const FALLBACK_CELL_WIDTH = 100;
+// Default data-row height. 16px matches the native Win32 grid row pitch
+// (paired with line-height:15px on .grid-cell in Grid.css). Only used to
+// fill sparse CellHeights-array holes; explicit APL CellHeights still win.
+const FALLBACK_CELL_HEIGHT = 16;
+// Shared stable empty-style object for cells with no per-cellType font. Reusing
+// one frozen reference keeps the cellFontStyles prop identity constant across
+// renders so it doesn't defeat GridDataCell's React.memo.
+const EMPTY_STYLE = {};
+
+// Excel-style column letter for index i (0→'A', 25→'Z', 26→'AA', …).
+// Matches legacy Grid's `generateHeader(columns)` for missing ColTitles.
+const columnLetter = (i) => {
+  let s = '';
+  let n = i;
+  do {
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return s;
 };
 
+// Map EWC scroll values to CSS overflow values
+// 0 = hidden, -1/-2 = auto (default), -3 = always visible
+const getOverflowStyle = (scrollValue) => {
+  const val = Number(scrollValue);
+  if (val === 0) return 'hidden';
+  if (val === -3) return 'scroll';
+  return 'auto'; // -1, -2, or any other value defaults to auto
+};
+
+// Grid - Modern Grid reimplementation with embedded EWC components,
+// explicit type awareness, and modular architecture
 const Grid = ({ data }) => {
-  const gridId = data?.ID;
-  const {
-    findDesiredData,
-    findCurrentData,
-    socket,
-    proceed,
-    setProceed,
-    proceedEventArray,
-    setProceedEventArray,
-    findAggregatedPropertiesData,
-    handleData,
-    currentEventRef,
-    updateCurrentEvent,
-    inheritedProperties,
-  } = useAppData();
-
-  const [eventId, setEventId] = useState(null);
-
-  const dimensions = useResizeObserver(
-    document.getElementById(extractStringUntilLastPeriod(data?.ID))
-  );
-  // console.log("Dimesnions is as",dimensions)
-
-
-  const gridRef = useRef(null);
+  const { handleData, socket, findCurrentData } = useAppData();
 
   const {
     Size,
-    Values,
-    Input,
+    Visible,
+    Posn,
+    Values: propsValues,
     ColTitles,
     RowTitles,
+    // No defaults here — undefined means "auto" per ⎕WC, resolved below.
+    TitleWidth,
+    TitleHeight,
+    // No default: undefined = auto-size per column from col titles.
     CellWidths,
-    CellHeights,
-    Visible,
+    CellHeights = 16,
     CurCell,
+    VScroll = -1,
+    HScroll = -1,
+    Input,
     CellTypes,
-    ShowInput,
-    FormattedValues,
+    ShowInput = 0,
+    FormatString,
+    FormattedValues: propsFormattedValues,
+    FCol,
     BCol,
     CellFonts,
     ColTitleBCol,
     ColTitleFCol,
-    TitleHeight,
-    TitleWidth,
-    FormatString,
-    VScroll,
-    HScroll,
-    Attach,
-    Event,
+    RowTitleBCol,
+    RowTitleFCol,
     CSS,
-    TabIndex,
-  } = data?.Properties;
-  const { FontObj } = inheritedProperties(data, 'FontObj');
+    Event,
+    Border,
+    EdgeStyle,
+  } = data?.Properties || {};
 
-  const [height, setHeight] = useState(Size[0]);
-  const [width, setWidth] = useState(Size[1]);
-  const [rows, setRows] = useState(0);
-  const [columns, setColumns] = useState(0);
+  // Values and FormattedValues are kept in local state so handleCellChange
+  // updates are immediately visible without depending on the App re-rendering.
+  // Server updates (FormatCell responses, server-set Values) arrive via props
+  // and are synced here.
+  const [Values, setValues] = useState(propsValues);
+  const [FormattedValues, setFormattedValues] = useState(propsFormattedValues);
+  // Selection rectangle (1-based inclusive bounds) for row/column/range
+  // selection via header clicks. null = single-cell mode (just curCell).
+  const [selection, setSelection] = useState(null);
+  // The corner that doesn't move during shift+click / shift+arrow extension.
+  // Set on every non-shift click; used by extendSelectionTo to grow/shrink
+  // the rectangle while preserving the user's directional intent.
+  const [anchor, setAnchor] = useState(null);
+  // Mouse drag-select tracking (mousedown on cell → enter cells → mouseup).
+  const isDraggingRef = useRef(false);
+  // Mirror selection + fireGridSelect into refs so the window mouseup listener
+  // (installed once on mount) reads the latest values without re-attaching.
+  const selectionRef = useRef(null);
+  const fireGridSelectRef = useRef(null);
+  // Mirror anchor/curCell/handleData/handleCellChange into refs so the cell
+  // mouse handlers can be stable useCallbacks (read latest values without
+  // listing them as deps). Stable handlers are what let GridDataCell's memo
+  // actually skip unchanged cells on every selection/drag/navigation change.
+  const anchorRef = useRef(null);
+  const curCellRef = useRef(null);
+  const handleDataRef = useRef(handleData);
+  const handleCellChangeRef = useRef(null);
+  // Refs for the grid element and scrollable container. Declared up here so
+  // getPageRows and the navigation hook (both below) can read containerRef.
+  const gridRef = useRef(null);
+  const containerRef = useRef(null);
 
-  // The Grid is treated as an entire Grid, including column and row headers -
-  // this has led to some complexity in converting between current cell position
-  // as far as JS is concerned and as far as APL is concerned.
-  // If the Title* is set to 0, no title should be shown, so the origin of the
-  // first data cell is 0 in that dimension.
-  // CurCell is 1-based, but we want 0-based, hence the little dance below.
-  const originY = TitleHeight === 0 ? 0 : 1;
-  const originX = TitleWidth === 0 ? 0 : 1;
-  const [selectedRow, setSelectedRow] = useState((CurCell ? CurCell[0] : 1)+originY-1);
-  const [selectedColumn, setSelectedColumn] = useState((CurCell ? CurCell[1] : 1)+originX-1);
- 
-  const [clickData, setClickData] = useState({ isClicked: false, row: selectedRow, column: selectedColumn })
-
-  useEffect(() => {
-    if (Size && Size.length > 0) {
-      setHeight(Size[0]);
-      setWidth(Size[1])
-    }
-  }, [Size]);
-
-  useEffect(() => {
-    // TODO TEMPORARILY disabled as it's causing havoc; just changing CurCell
-    // should ONLY refocus if we want it to. eg an action outside of the Grid
-    // that moves it around, should keep the focus on the outside component.
-    // If the focus was already in the Grid and we eg clicked on a ScrollBar,
-    // then that needs to be handled there...
-    // gridRef.current.focus();
-    if (CurCell) {  
-      let defaultRow
-      let defaultCol
-      // gridRef.current.focus();
-      defaultRow = !CurCell ? (RowTitles?.length > 0 ? 1 : 0) : CurCell[0];
-      defaultCol = !CurCell ? (TitleWidth === 0 ? 1 : 0) : CurCell[1];
-      setSelectedRow((prev) => (prev !== CurCell[0] ? defaultRow : prev));
-      setSelectedColumn((prev) => (prev !== CurCell[1] ? defaultCol : prev));
-    }
-  }, [CurCell]);
-
-
-
-  useEffect(() => {
-     if (proceedEventArray[currentEventRef.eventID + "KeyPress"] == 1) {
-      const event = currentEventRef.keyEvent
-      updatePosition(event)
-      setProceed(false);
-      setProceedEventArray((prev) => ({ ...prev, [currentEventRef.eventID + "KeyPress"]: 0 }));
-      // updateRowColumn(event)
-    }
-    else if (
-      (proceedEventArray[currentEventRef.eventID + "CellMove"] == 1)
-    ) {
-      if (clickData.isClicked) {
-        handleCellClickUpdate(clickData.row, clickData.column)
-        
-        setClickData({ isClicked: false })
-        return
-      }
-      
-      const event = currentEventRef.keyEvent
-      updateRowColumn(event)
-    }
-  }, [Object.keys(proceedEventArray).length])
-
-
-  const style = setStyle(data?.Properties);
-
-
+  // The "page" step for PageUp/PageDown: how many data rows fit in the scroll
+  // viewport, measured from the live DOM (container height minus the sticky
+  // column-title band, divided by the actual rendered row pitch) rather than a
+  // hardcoded stride. One row of overlap is kept for context (Excel-style).
+  // Falls back to 9 before the grid has mounted / been measured.
+  const getPageRows = useCallback(() => {
+    const c = containerRef.current;
+    if (!c) return 9;
+    const rowEl = c.querySelector('tbody .grid-row');
+    const pitch = rowEl ? rowEl.getBoundingClientRect().height : FALLBACK_CELL_HEIGHT;
+    const head = c.querySelector('thead');
+    const headH = head ? head.getBoundingClientRect().height : 0;
+    const visible = Math.floor((c.clientHeight - headH) / Math.max(pitch, 1));
+    return Math.max(1, visible - 1);
+  }, []);
 
   useEffect(() => {
-    if (!Attach) return;
-    setWidth(dimensions?.width - 73);
-    setHeight(dimensions?.height - 73);
-  }, [dimensions]);
+    setValues(propsValues);
+  }, [propsValues]);
 
   useEffect(() => {
-    if (!ColTitles) setColumns(Values[0]?.length + 1);
-    else setColumns(ColTitles?.length);
+    setFormattedValues(propsFormattedValues);
+  }, [propsFormattedValues]);
 
-    if (Values) setRows(Values?.length + 1);
-  }, [data]);
+  // Track whether the most recent mouseup ended a drag, so the click event
+  // that fires immediately after can be suppressed at capture phase.
+  const justEndedDragRef = useRef(false);
 
-  const handleCellMove = (row, column, mouseClick) => {
-    // localStorage.setItem("current-event", "CellMove")
-    if (column > columns || column <= 0) return;
-    const isKeyboard = !mouseClick ? 1 : 0;
-    const eventId = crypto.randomUUID();
-    setEventId(eventId);
-    // localStorage.setItem("keyPressEventId", eventId)
-    // if (clickData.isClicked) {
-
-      updateCurrentEvent({
-        curEvent: "CellMove",
-        eventID: eventId,
-        keyEvent: currentEventRef.keyEvent,
-      });
-    // }
-    // setCurrentEvent({...currentEvent, curEvent:"CellMove", eventID:eventId})
-    const cellChanged = JSON.parse(localStorage.getItem("isChanged"));
-    const cellMoveEvent = JSON.stringify({
-      Event: {
-        ID: data?.ID,
-        EventName: "CellMove",
-        EventID: eventId,
-        Info: [
-          row,
-          column,
-          isKeyboard,
-          0,
-          mouseClick,
-          cellChanged && cellChanged.isChange ? 1 : 0,
-          cellChanged && cellChanged ? cellChanged.value : "",
-        ],
-      },
-    });
-
-    const exists = Event && Event?.some((item) => item[0] === "CellMove");
-    if (!exists) {
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [row, column],
-          },
-        },
-        'WS'
-      );
-    }
-    else {
-      socket.send(cellMoveEvent);
-    }
-
-  };
-
-
-  const handleKeyDown = (event) => {
-    // localStorage.setItem("event", JSON.stringify(event.key))
-    // localStorage.setItem("current-event", "KeyPress")
-    const isAltPressed = event.altKey ? 4 : 0;
-    const isCtrlPressed = event.ctrlKey ? 2 : 0;
-    const isShiftPressed = event.shiftKey ? 1 : 0;
-    const charCode = event.key.charCodeAt(0);
-    const eventId = crypto.randomUUID();
-    setEventId(eventId);
-    updateCurrentEvent({
-      curEvent: "KeyPress",
-      eventID: eventId,
-      keyEvent: event.key,
-    });
-    let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
-
-    let knownKeyPress = true;
-
-    const parentExists =
-      Event && Event?.some((item) => item[0].toLowerCase() === "keypress");
-
-    let keys = Object.keys(data);
-    let childKey;
-    const checkArray = keys.reduce((prev, current) => {
-      if (
-        data[current]?.Properties?.Event?.some(
-          (item) => item[0].toLowerCase() === "keypress"
-        )
-      )
-        childKey = current;
-      return [
-        ...prev,
-        data[current]?.Properties?.Event?.some(
-          (item) => item[0].toLowerCase() === "keypress"
-        ),
-      ];
-    }, []);
-    const childExists = checkArray.some((item) => item === true);
-
-    const parentKeyPressEvent = JSON.stringify({
-      Event: {
-        EventName: "KeyPress",
-        ID: data?.ID,
-        EventID: eventId,
-        Info: [event.key, charCode, event.keyCode, shiftState],
-      },
-    });
-    // localStorage.setItem("keyPressEventId", eventId)
-    const keyPressEvent = JSON.stringify({
-      Event: {
-        EventName: "KeyPress",
-        ID: data[childKey]?.ID,
-        EventID: eventId,
-        Info: [event.key, charCode, event.keyCode, shiftState],
-      },
-    });
-
-    if (parentExists && !!!childExists) {
-      socket.send(parentKeyPressEvent);
-    }
-
-    if (childExists) {
-      socket.send(keyPressEvent);
-    }
-    const isNavigationKeys = [
-      "ArrowRight",
-      "ArrowLeft",
-      "ArrowUp",
-      "ArrowDown",
-    ].some((key) => event.key === key);
-
-    if (!parentExists && !childExists) {
-      updateRowColumn(event.key)
-      return
-    }
-
-    if (isNavigationKeys) {
-      gridRef.current.focus();
-    }
-
-    // Don't propagate the event if we handled it
-    if (knownKeyPress) event.preventDefault();
-  };
-
-  const updatePosition = (key) => {
-    if (key === "ArrowRight") {
-      const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
-      if (selectedColumn === updatedColumn) return
-
-      handleCellMove(
-        selectedRow,
-        updatedColumn,
-        0
-      );
-    } else if (key === "ArrowLeft") {
-      const updatedColumn = Math.max(selectedColumn - 1, 1)
-      if (selectedColumn === updatedColumn) return
-      handleCellMove(
-        selectedRow,
-        updatedColumn,
-        0
-      );
-    } else if (key === "ArrowUp") {
-      const updatedRow = Math.max(selectedRow - 1, 1)
-      if (selectedRow === updatedRow) return
-      handleCellMove(
-        updatedRow,
-        selectedColumn,
-        0
-      );
-    } else if (key === "ArrowDown" || key==="Enter") {
-      const updatedRow = Math.min(selectedRow + 1, rows - 1)
-      if (selectedRow == rows - 1) return;
-      if (selectedRow === updatedRow) return
-      handleCellMove(
-        updatedRow,
-        selectedColumn,
-        0
-      );
-    
-    } else if (key === "PageDown") {
-      const demoRow = Math.min(selectedRow + 9, rows - 1);
-      handleCellMove(
-        demoRow,
-        selectedColumn,
-        0
-      );
-    } else if (key === "PageUp") {
-      const updatedRow = Math.max(selectedRow - 9, 1)
-      if (selectedRow == updatedRow) return;
-      handleCellMove(
-        updatedRow,
-        selectedColumn,
-        0
-      );
-    }
-  };
-  const updateRowColumn = (key) => {
-    if (key === "ArrowRight") {
-      const updatedColumn = Math.min(selectedColumn + 1, !ColTitles ? columns - 1 : columns)
-      setSelectedColumn(updatedColumn);
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [selectedRow, updatedColumn],
-          },
-        },
-        'WS'
-      );
-    } else if (key === "ArrowLeft") {
-      const updatedColumn = Math.max(selectedColumn - 1, 1)
-      setSelectedColumn(updatedColumn);
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [selectedRow, updatedColumn],
-          },
-        },
-        'WS'
-      );
-    } else if (key === "ArrowUp") {
-      const updatedRow = Math.max(selectedRow - 1, 1)
-      setSelectedRow(updatedRow);
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [updatedRow, selectedColumn],
-          },
-        },
-        'WS'
-      );
-    } else if (key === "ArrowDown") {
-      const updatedRow = Math.min(selectedRow + 1, rows - 1)
-      setSelectedRow(updatedRow);
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [updatedRow, selectedColumn],
-          },
-        },
-        'WS'
-      );
-    } else if (key === "PageDown") {
-      const demoRow = Math.min(selectedRow + 9, rows - 1);
-      setSelectedRow(demoRow);
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [demoRow, selectedColumn],
-          },
-        },
-        'WS'
-      );
-    } else if (key === "PageUp") {
-      const updatedRow = Math.max(selectedRow - 9, 1)
-      setSelectedRow(updatedRow);
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            CurCell: [updatedRow, selectedColumn],
-          },
-        },
-        'WS'
-      );
-    }
-
-  };
-
-  const modifyGridData = () => {
-    let data = [];
-    // Push the header Information
-    if (ColTitles) {
-      // Add the empty cell in the header when the default Row Titles is present
-      let header = [];
-      let emptyobj = {
-        value: "",
-        type: "header",
-        width: !TitleWidth ? 100 : TitleWidth,
-        height: !TitleHeight ? 20 : TitleHeight,
-      };
-      TitleWidth === 0 ? null : header.push(emptyobj);
-
-      for (let i = 0; i < ColTitles?.length; i++) {
-        let obj = {
-          value: ColTitles[i],
-          type: "header",
-          backgroundColor: rgbColor(ColTitleBCol),
-          color: rgbColor(ColTitleFCol),
-          width: !CellWidths
-            ? 100
-            : Array.isArray(CellWidths)
-              ? CellWidths[i]
-              : CellWidths,
-          height: !TitleHeight ? 20 : TitleHeight,
-        };
-
-        header.push(obj);
-      }
-
-
-      data.push(header);
-    } else if (!ColTitles) {
-      let headerArray = generateHeader(columns).map((alphabet) => {
-        return {
-          value: alphabet,
-          type: "header",
-          width: !TitleWidth ? 100 : TitleWidth,
-          height: !TitleHeight ? 20 : TitleHeight,
-        };
-      });
-      data.push(headerArray);
-    }
-
-    // Make the body the Grid Like if it have Input Array that means it have types
-    if (!Input) {
-      for (let i = 0; i < Values?.length; i++) {
-        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
-        const backgroundColor = BCol && BCol[cellType - 1];
-        let body = [];
-        let obj = {
-          type: "rowTitle",
-          value: RowTitles ? RowTitles[i] : i + 1,
-          width: !TitleWidth ? 100 : TitleWidth,
-          height: !CellHeights
-            ? 20
-            : Array.isArray(CellHeights)
-              ? CellHeights[i]
-              : CellHeights,
-          align: "end",
-          backgroundColor: rgbColor(backgroundColor),
-        };
-        TitleWidth == undefined
-          ? body.push(obj)
-          : TitleWidth == 0
-            ? null
-            : body.push(obj);
-        for (let j = 0; j <= columns; j++) {
-          if (Values[i][j] === undefined) continue;
-          let obj = {
-            type: "cell",
-            value: Values[i][j],
-            width: !CellWidths
-              ? 100
-              : Array.isArray(CellWidths)
-                ? CellWidths[j]
-                : CellWidths,
-            height: !CellHeights
-              ? 20
-              : Array.isArray(CellHeights)
-                ? CellHeights[j]
-                : CellHeights,
-            align: !isNaN(Values[i][j]) ? "end" : "start",
-            paddingLeft: !isNaN(parseInt(Values[i][j])) ? "0px" : "5px",
-          };
-          body.push(obj);
+  // Window-level mouseup ends any active drag-select. Registered with capture
+  // so we run BEFORE widget descendants (Combo, checkbox) see mouseup — that
+  // way we can stopPropagation + preventDefault to suppress their click when
+  // the drag terminates over them.
+  useEffect(() => {
+    const mouseup = (e) => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      const sel = selectionRef.current;
+      if (sel) {
+        e.preventDefault();
+        e.stopPropagation();
+        justEndedDragRef.current = true;
+        if (fireGridSelectRef.current) {
+          fireGridSelectRef.current(sel.sr, sel.sc, sel.er, sel.ec);
         }
-        data.push(body);
       }
-    } else if (Input) {
-      for (let i = 0; i < Values?.length; i++) {
-        let body = [];
-        let cellType = CellTypes && CellTypes[i] && CellTypes[i][0];
-        const backgroundColor = BCol && BCol[cellType - 1];
-
-        // Decide to add the RowTitles If the TitleWidth is Greater than 0
-        let obj = {
-          type: "rowTitle",
-          value: RowTitles ? RowTitles[i] : i + 1,
-          width: !TitleWidth ? 100 : TitleWidth,
-          height: !CellHeights
-            ? 20
-            : Array.isArray(CellHeights)
-              ? CellHeights[i]
-              : CellHeights,
-          align: "end",
-          backgroundColor: rgbColor(backgroundColor),
-        };
-
-        TitleWidth == undefined
-          ? body.push(obj)
-          : TitleWidth == 0
-            ? null
-            : body.push(obj);
-
-        for (let j = 0; j < columns; j++) {
-          let cellType = CellTypes && CellTypes[i] && CellTypes[i][j];
-          const type = findAggregatedPropertiesData(
-            Input?.length > 1 ? Input && Input[cellType - 1] : Input[0]
-          );
-
-          // findAggregatedPropertiesData(Input?.length > 1 ? Input && Input[cellType - 1] : Input[0])
-            const event = data?.Properties?.Event && data?.Properties?.Event;
-          const backgroundColor = BCol && BCol[cellType - 1];
-          const cellFont = findDesiredData(
-            CellFonts && CellFonts[cellType - 1]
-          );
-
-          let obj = {
-            type: !type ? "cell" : type?.Properties?.Type,
-            value: Values[i][j],
-            event,
-            backgroundColor: rgbColor(backgroundColor),
-            cellFont,
-            typeObj: type,
-            formattedValue: FormattedValues && FormattedValues[i][j],
-            formatString: FormatString && FormatString[cellType - 1],
-            width: !CellWidths
-              ? 100
-              : Array.isArray(CellWidths)
-                ? CellWidths[j]
-                : CellWidths,
-            height: !CellHeights
-              ? 20
-              : Array.isArray(CellHeights)
-                ? CellHeights[i]
-                : CellHeights,
-          };
-          body.push(obj);
-        }
-        data.push(body);
+    };
+    // The click event browsers synthesize after mouseup must also be
+    // suppressed during drag-end — otherwise a Combo at the release
+    // point opens via its click handler.
+    const click = (e) => {
+      if (justEndedDragRef.current) {
+        justEndedDragRef.current = false;
+        e.preventDefault();
+        e.stopPropagation();
       }
+    };
+    window.addEventListener('mouseup', mouseup, true);
+    window.addEventListener('click', click, true);
+    return () => {
+      window.removeEventListener('mouseup', mouseup, true);
+      window.removeEventListener('click', click, true);
+    };
+  }, []);
+
+  // Keep refs in sync with the latest values for the window listener and the
+  // stable cell handlers.
+  useEffect(() => { selectionRef.current = selection; });
+  useEffect(() => { fireGridSelectRef.current = fireGridSelect; });
+  useEffect(() => { anchorRef.current = anchor; });
+  useEffect(() => { curCellRef.current = curCell; });
+  useEffect(() => { handleDataRef.current = handleData; });
+
+  // Normalize Input to an array (can be single string or array of strings)
+  // useMemo ensures stable reference for useCallback dependencies
+  const inputArray = useMemo(() => {
+    return Input ? (Array.isArray(Input) ? Input : [Input]) : [];
+  }, [Input]);
+
+  // Calculate grid dimensions for bounds checking
+  const numRows = Values?.length || 0;
+  const numCols = Values?.[0]?.length || (numRows > 0 ? 1 : 0);
+
+  // State management for current cell selection
+  const { curCell, moveTo, moveBy, isCurrentCell } = useGridState(CurCell, numRows, numCols);
+
+
+  // Keyboard navigation
+  const { handleKeyDown: navigationKeyDown } = useGridNavigation(
+    moveBy, moveTo, curCell, numRows, numCols, getPageRows
+  );
+
+  // Event handling (CellMove, KeyPress, CellChanged)
+  const { fireCellMove, fireKeyPress, fireCellChanged, fireGridSelect } = useGridEvents(socket, Event, data?.ID);
+
+  // Use a ref for Values to avoid recreating handleCellChange on every Values change
+  // This prevents the infinite re-render loop when embedded components update values
+  const valuesRef = useRef(Values);
+  valuesRef.current = Values;
+
+  const formatStringRef = useRef(FormatString);
+  formatStringRef.current = FormatString;
+  const cellTypesRef = useRef(CellTypes);
+  cellTypesRef.current = CellTypes;
+
+  // Per-cell Input-template resolution and the ShowInput rule (which only
+  // applies to Combo/Button cells) are computed inline in the render loop now,
+  // indexing the pre-resolved `resolvedInputs` array by CellTypes — so neither
+  // costs a per-cell findCurrentData full-tree walk. (Replaces the old
+  // getInputComponentId / getCellTypeIndex / shouldShowInput helpers.)
+
+  // Handle cell value changes from embedded components
+  // Uses valuesRef to avoid recreating this callback when Values changes
+  const handleCellChange = useCallback((row, col, newValue) => {
+    // Validate row/col to prevent errors
+    if (typeof row !== 'number' || typeof col !== 'number' || row < 1 || col < 1) {
+      console.error('Grid handleCellChange: invalid row/col', { row, col, newValue });
+      return;
     }
 
-    return data;
-  };
+    const currentValues = valuesRef.current;
+    if (!currentValues || !currentValues[row - 1]) {
+      console.error('Grid handleCellChange: invalid Values matrix', { row, col, currentValues });
+      return;
+    }
 
-  const handleCellClick = (row, column) => {
-    setClickData({ isClicked: true, row, column })
+    // Clone the Values matrix
+    const newValues = currentValues.map(r => [...r]);
+    newValues[row - 1][col - 1] = newValue;
 
-    if (row == selectedRow && column == selectedColumn) return;
+    // Update local state immediately — this guarantees a re-render
+    // even when App's reRender() toggle cancels out
+    setValues(newValues);
 
-    handleCellMove(row, column, 1);
+    // Clear stale FormattedValue for this cell so formatCellValue
+    // falls through to the raw value until the server responds
+    setFormattedValues(prev => {
+      if (!prev || !prev[row - 1]) return prev;
+      const updated = prev.map(r => [...r]);
+      updated[row - 1][col - 1] = null;
+      return updated;
+    });
 
-  };
-  const handleCellClickUpdate = (row, column) => {
-    setSelectedColumn(column);
-    setSelectedRow(row);
+    // Also update the data tree for server sync
+    handleData({
+      ID: data?.ID,
+      Properties: { Values: newValues },
+    }, 'WS');
 
-    if (row == selectedRow && column == selectedColumn) return;
+    // Fire CellChanged event if registered
+    fireCellChanged(row, col, newValue);
 
-    handleData(
-      {
-        ID: data?.ID,
-        Properties: {
-          CurCell: [row, column],
-        },
-      },
-      'WS'
+    // Send FormatCell to server if a format string applies to this cell
+    const fs = formatStringRef.current;
+    const ct = cellTypesRef.current;
+    if (fs && ct) {
+      const cellType = ct[row - 1]?.[col - 1];
+      const fmt = cellType ? fs[cellType - 1] : null;
+      if (fmt) {
+        socket.send(JSON.stringify({
+          FormatCell: { Cell: [row, col], ID: data?.ID, Value: newValue },
+        }));
+      }
+    }
+  }, [data?.ID, handleData, fireCellChanged]); // Note: Values removed from deps!
+
+  // handleCellChange's identity changes whenever App recreates handleData, which
+  // would defeat GridDataCell's memo. Pass cells this stable wrapper instead.
+  useEffect(() => { handleCellChangeRef.current = handleCellChange; });
+  const stableOnCellChange = useCallback((r, c, v) => handleCellChangeRef.current(r, c, v), []);
+
+
+  // Commit any in-progress cell edit by blurring the active element.
+  // Must be called synchronously BEFORE React processes curCell state changes,
+  // so the Edit's handleBlur fires while the component is still mounted.
+  const commitActiveEdit = useCallback(() => {
+    const activeEl = document.activeElement;
+    if (activeEl && containerRef.current?.contains(activeEl)) {
+      activeEl.blur();
+      gridRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  // Blur any focused element in non-selected cells when curCell changes
+  // This ensures only the currently selected cell can be edited
+  useEffect(() => {
+    if (!containerRef.current || !curCell) return;
+    const [row, col] = curCell;
+    const activeElement = document.activeElement;
+
+    // Check if the focused element is inside the grid but not in the current cell
+    if (activeElement && containerRef.current.contains(activeElement)) {
+      const cellElement = activeElement.closest('[data-row][data-col]');
+      if (cellElement) {
+        const focusedRow = parseInt(cellElement.getAttribute('data-row'), 10);
+        const focusedCol = parseInt(cellElement.getAttribute('data-col'), 10);
+        // If the focused element is in a different cell, blur it and refocus the grid
+        if (focusedRow !== row || focusedCol !== col) {
+          activeElement.blur();
+          // Focus the grid so keyboard navigation continues to work
+          gridRef.current?.focus({ preventScroll: true });
+        }
+      }
+    }
+  }, [curCell]);
+
+  // Activate the current cell's component (for Space key)
+  const activateCurrentCell = () => {
+    if (!containerRef.current || !curCell) return;
+    const [row, col] = curCell;
+    const cellElement = containerRef.current.querySelector(
+      `[data-row="${row}"][data-col="${col}"]`
     );
+    if (!cellElement) return;
 
-  };
+    // Find interactive element in the cell and click/focus it
+    const checkbox = cellElement.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+      checkbox.click();
+      return;
+    }
 
-  const gridData = modifyGridData();
-  const customStyles = parseFlexStyles(CSS);
+    const comboButton = cellElement.querySelector('button[role="combobox"]');
+    if (comboButton) {
+      comboButton.click();
+      return;
+    }
 
-  const font = findCurrentData(FontObj);
-  const fontStyles = getFontStyles(font, 12);
-
-  // Returns the right overflow for HScroll and VScroll.
-  const overflowFor = (scroll) => {
-    if (scroll !== undefined) {
-      return {
-        '0': 'hidden',
-        '-1': 'auto',
-        '-2': 'auto',
-        '-3': 'scroll',
-      }['' + scroll];
-    } else {
-      return 'auto';
+    const input = cellElement.querySelector('input');
+    if (input) {
+      input.focus();
+      return;
     }
   };
+
+  // Handle keyboard events
+  const handleKeyDown = (event) => {
+    // Keys typed inside an embedded cell editor (the Edit <input>, etc.) bubble
+    // up to this grid-level handler because the widget is a React child. When
+    // that happens, the editor owns text keys — the grid must not steal Space
+    // (insert a space), Ctrl/Cmd+A (select the input text), or Ctrl/Cmd+C (copy
+    // the input text). Cell-movement keys (arrows/Tab/Enter) still fall through
+    // to drive the grid, matching Edit's own handleKeyPress which lets them
+    // bubble. Checkboxes are excluded so Space still toggles them via activate.
+    const inEditor = event.target !== gridRef.current
+      && typeof event.target.closest === 'function'
+      && !!event.target.closest(
+        'input:not([type="checkbox"]), textarea, select, [contenteditable="true"]'
+      );
+
+    // Space must insert a literal space when editing. navigationKeyDown
+    // preventDefault()s Space before returning 'activate', so we have to bail
+    // here, before it runs, or the character is lost.
+    if (inEditor && event.key === ' ') return;
+
+    // Ctrl/Cmd+C copies the current selection as TSV. Tab-delimited within
+    // rows, newline-delimited between rows — pastes into Excel/Sheets.
+    if (!inEditor && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
+      event.preventDefault();
+      copySelectionToClipboard();
+      return;
+    }
+    // Ctrl/Cmd+A selects all (Excel-style).
+    if (!inEditor && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      selectAll();
+      return;
+    }
+    // Shift+arrow extends the selection from `anchor` toward the new cell.
+    // Without shift, arrows just navigate (existing path). Inside an editor,
+    // shift+arrow extends the text selection, so the grid stays out of it.
+    if (!inEditor && event.shiftKey
+        && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      event.preventDefault();
+      const [r, c] = curCell;
+      const dr = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
+      const dc = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      const nr = Math.min(Math.max(r + dr, 1), numRows);
+      const nc = Math.min(Math.max(c + dc, 1), numCols);
+      extendSelectionTo(nr, nc);
+      return;
+    }
+
+    const result = navigationKeyDown(event);
+
+    if (result === 'activate') {
+      // Space key - activate the current cell's component
+      activateCurrentCell();
+    } else if (result) {
+      const newCell = result;
+      // Non-shift arrow navigation clears any range and re-anchors at the
+      // new cell — matches Excel's "arrow without shift drops the selection".
+      if (selection) {
+        fireGridSelect(newCell[0], newCell[1], newCell[0], newCell[1]);
+      }
+      setSelection(null);
+      setAnchor({ r: newCell[0], c: newCell[1] });
+
+      // Commit any in-progress edit before the widget unmounts.
+      // This fires Edit's handleBlur synchronously while still mounted,
+      // so onCellChange updates Values before React re-renders.
+      commitActiveEdit();
+
+      // Boundary: navigation clamped at edge — fire KeyPress for virtual scrolling
+      if (newCell[0] === curCell[0] && newCell[1] === curCell[1]) {
+        // Update CurCell in the data tree silently (no app re-render) so the
+        // server can read it via eWG. Any Values change from commitActiveEdit
+        // is already reflected by handleCellChange's local setValues.
+        handleData({
+          ID: data?.ID,
+          Properties: { CurCell: newCell },
+        }, 'WS', { render: false });
+        // Find an Input component with KeyPress registered to use as event source
+        // (mirrors old Grid where the Edit child fires the event to the server)
+        let sourceId = null;
+        for (const id of inputArray) {
+          const inputData = findCurrentData(id);
+          const inputEvent = inputData?.Properties?.Event;
+          if (inputEvent && inputEvent.some(item => item[0] === 'KeyPress')) {
+            sourceId = id;
+            break;
+          }
+        }
+        fireKeyPress(event, sourceId);
+        return;
+      }
+
+      // Update data tree so server can read CurCell via eWG. Silent (no app
+      // re-render): Grid already re-renders from its own curCell state.
+      handleData({
+        ID: data?.ID,
+        Properties: { CurCell: newCell },
+      }, 'WS', { render: false });
+      // Fire CellMove event if registered (mouseFlag=0 for keyboard)
+      fireCellMove(newCell[0], newCell[1], 0);
+    } else {
+      // Not a navigation key. Inside an embedded editor the key belongs to the
+      // input (and Edit fires its own KeyPress if registered), so suppress the
+      // grid-level KeyPress to avoid sending the server a duplicate event.
+      if (!inEditor) fireKeyPress(event);
+    }
+  };
+
+  // Handle cell click - update selection and notify server. Stable identity
+  // (reads curCell/handleData via refs) so the cell mouse handlers stay stable.
+  const handleCellClick = useCallback((rowIndex, colIndex) => {
+    // Convert from 0-based to 1-based
+    const row = rowIndex + 1;
+    const col = colIndex + 1;
+
+    // Skip if already selected
+    const cc = curCellRef.current;
+    if (cc && cc[0] === row && cc[1] === col) return;
+
+    // Commit any in-progress edit before changing selection
+    commitActiveEdit();
+
+    // Update local state
+    moveTo(row, col);
+
+    // Update data tree (silently — no app re-render) so server can read CurCell
+    // via eWG; Grid re-renders from its own curCell state.
+    handleDataRef.current({
+      ID: data?.ID,
+      Properties: { CurCell: [row, col] },
+    }, 'WS', { render: false });
+    // Fire CellMove event if registered (mouseFlag=1 for mouse)
+    fireCellMove(row, col, 1);
+  }, [commitActiveEdit, moveTo, fireCellMove, data?.ID]);
+
+  // Get locale separators from EWC's Locale object. findCurrentData is an
+  // O(depth) path walk returning the live node; the old getObjectById did a
+  // full-tree DFS plus a JSON.stringify/parse round-trip on every render
+  // (Locale is set once at startup and never changes).
+  const localeData = findCurrentData('Locale');
+  const { Thousand = ',', Decimal = '.' } = localeData?.Properties || {};
+  const { formatNumber } = useNumericFormatter(Thousand, Decimal);
+
+  // Width for a column: auto (measured from col title) if user didn't set
+  // CellWidths, else scalar or per-column array as provided.
+  const getCellWidth = (colIndex) => {
+    if (wantsAutoCols) return autoColWidths[colIndex] ?? FALLBACK_CELL_WIDTH;
+    if (Array.isArray(CellWidths)) {
+      return CellWidths[colIndex] ?? CellWidths[0] ?? FALLBACK_CELL_WIDTH;
+    }
+    return CellWidths || FALLBACK_CELL_WIDTH;
+  };
+
+  // Helper to get height for a row (scalar or per-row array)
+  const getCellHeight = (rowIndex) => {
+    if (Array.isArray(CellHeights)) {
+      return CellHeights[rowIndex] ?? CellHeights[0] ?? FALLBACK_CELL_HEIGHT;
+    }
+    return CellHeights || FALLBACK_CELL_HEIGHT;
+  };
+
+  // Selection helpers (1-based row/col). Selection is a rectangle that
+  // covers row/column/range/all selections uniformly.
+  const isCellInSelection = (row, col) => {
+    if (!selection) return false;
+    return row >= selection.sr && row <= selection.er
+        && col >= selection.sc && col <= selection.ec;
+  };
+  // Which sides of an in-range cell lie on the selection's outer boundary, so
+  // CSS can draw a single border around the whole block (Excel-style) rather
+  // than one box per cell. Returns space-prefixed class names for the cell.
+  const selectionEdgeClasses = (row, col) => {
+    if (!selection || !isCellInSelection(row, col)) return '';
+    return (row === selection.sr ? ' sel-top' : '')
+         + (row === selection.er ? ' sel-bottom' : '')
+         + (col === selection.sc ? ' sel-left' : '')
+         + (col === selection.ec ? ' sel-right' : '');
+  };
+  const isRowInSelection = (row) => {
+    if (selection) return row >= selection.sr && row <= selection.er;
+    return curCell[0] === row;
+  };
+  const isColInSelection = (col) => {
+    if (selection) return col >= selection.sc && col <= selection.ec;
+    return curCell[1] === col;
+  };
+
+  // Click handlers for the three header surfaces. Each fires GridSelect with
+  // the resulting rectangle so APL handlers can react (e.g. log, export).
+  // The `shift` flag extends from the existing anchor (Excel-style).
+  const selectRow = (row, shift = false) => {
+    const anchorR = shift && anchor ? anchor.r : row;
+    const sr = Math.min(anchorR, row);
+    const er = Math.max(anchorR, row);
+    if (!shift) setAnchor({ r: row, c: 1 });
+    setSelection({ sr, sc: 1, er, ec: numCols });
+    moveTo(row, 1);
+    fireGridSelect(sr, 1, er, numCols);
+  };
+  const selectColumn = (col, shift = false) => {
+    const anchorC = shift && anchor ? anchor.c : col;
+    const sc = Math.min(anchorC, col);
+    const ec = Math.max(anchorC, col);
+    if (!shift) setAnchor({ r: 1, c: col });
+    setSelection({ sr: 1, sc, er: numRows, ec });
+    moveTo(1, col);
+    fireGridSelect(1, sc, numRows, ec);
+  };
+  const selectAll = () => {
+    setAnchor({ r: 1, c: 1 });
+    setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
+    moveTo(1, 1);
+    fireGridSelect(1, 1, numRows, numCols);
+  };
+
+  // Extend the selection to (r, c) from the current anchor (or curCell if no
+  // anchor exists yet). Used by shift+click on a cell, shift+arrow, and drag.
+  // Stable (reads anchor/curCell via refs) so it doesn't churn the cell handlers.
+  const extendSelectionTo = useCallback((r, c) => {
+    const cc = curCellRef.current || [1, 1];
+    const a = anchorRef.current ?? { r: cc[0], c: cc[1] };
+    if (!anchorRef.current) setAnchor(a);
+    const sr = Math.min(a.r, r), er = Math.max(a.r, r);
+    const sc = Math.min(a.c, c), ec = Math.max(a.c, c);
+    if (sr === er && sc === ec) {
+      setSelection(null);
+    } else {
+      setSelection({ sr, sc, er, ec });
+    }
+    moveTo(r, c);
+    fireGridSelect(sr, sc, er, ec);
+  }, [moveTo, fireGridSelect]);
+
+  // Stable per-cell mouse handlers shared by every GridDataCell. They take the
+  // 0-based (rowIndex, colIndex) and read selection/anchor from refs, so their
+  // identity never changes — the precondition for the cells' memo to hold.
+  const onCellMouseDownCapture = useCallback((e, rowIndex, colIndex) => {
+    // Shift+click extends the selection — intercept at capture so it works even
+    // on cells with widgets (Combo, checkbox), preventing widget activation.
+    if (e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      extendSelectionTo(rowIndex + 1, colIndex + 1);
+    }
+  }, [extendSelectionTo]);
+
+  const onCellMouseDown = useCallback((e, rowIndex, colIndex) => {
+    if (e.shiftKey) return; // handled in capture
+    const r = rowIndex + 1, c = colIndex + 1;
+    // Clicking into a cell's widget (Combo/Button/editor) doesn't start a
+    // drag-select, but must still move CurCell + fire CellMove and cancel any
+    // active range (so an always-shown ShowInput widget still selects its cell).
+    if (e.target !== e.currentTarget) {
+      if (selectionRef.current) {
+        fireGridSelect(r, c, r, c);
+        setSelection(null);
+      }
+      setAnchor({ r, c });
+      handleCellClick(rowIndex, colIndex);
+      return;
+    }
+    if (selectionRef.current) fireGridSelect(r, c, r, c);
+    setAnchor({ r, c });
+    setSelection(null);
+    isDraggingRef.current = true;
+    handleCellClick(rowIndex, colIndex);
+  }, [fireGridSelect, handleCellClick]);
+
+  const onCellMouseEnter = useCallback((rowIndex, colIndex) => {
+    // While dragging, sweep the selection rectangle from the anchor.
+    if (!isDraggingRef.current || !anchorRef.current) return;
+    const a = anchorRef.current;
+    const r = rowIndex + 1, c = colIndex + 1;
+    const sr = Math.min(a.r, r), er = Math.max(a.r, r);
+    const sc = Math.min(a.c, c), ec = Math.max(a.c, c);
+    if (sr === er && sc === ec) {
+      setSelection(null);
+    } else {
+      setSelection({ sr, sc, er, ec });
+    }
+    moveTo(r, c);
+  }, [moveTo]);
+
+  // Build TSV from the current selection (or just curCell). Cells in a row
+  // join with tab; rows join with newline — pastes directly into Excel/Sheets.
+  const copySelectionToClipboard = async () => {
+    const sr = selection?.sr ?? curCell[0];
+    const sc = selection?.sc ?? curCell[1];
+    const er = selection?.er ?? curCell[0];
+    const ec = selection?.ec ?? curCell[1];
+    const lines = [];
+    for (let r = sr; r <= er; r++) {
+      const cells = [];
+      for (let c = sc; c <= ec; c++) {
+        const v = Array.isArray(Values[r - 1]) ? Values[r - 1][c - 1] : Values[r - 1];
+        cells.push(v == null ? '' : String(v));
+      }
+      lines.push(cells.join('\t'));
+    }
+    const text = lines.join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Fallback for non-secure contexts (some embedded browsers reject the
+      // async API); silently no-op — test paths use the async branch.
+    }
+    return text;
+  };
+
+  // Format cell value based on its type
+  const formatCellValue = (value, cellType, formattedValue) => {
+    if (formattedValue != null) return normalizeAplFormatted(formattedValue);
+    if (value === null || value === undefined) return '';
+    if (isNumericType(cellType)) return formatNumber(value);
+    return String(value);
+  };
+
+  // Resolve the small per-cellType Input templates + fonts ONCE per render
+  // (length = number of distinct cell types, not R×C). Cells then index these
+  // by cellType instead of each doing its own findCurrentData full-tree walk —
+  // the change from O(R×C × tree) lookups to O(types) per render.
+  const resolvedInputs = inputArray.map((id) => findCurrentData(id));
+  // Font styles are memoized: getFontStyles builds a fresh object each call, so
+  // recomputing per render would hand cells a new cellFontStyles identity and
+  // defeat their memo. Keyed on CellFonts (font definitions are static).
+  const resolvedFontStyles = useMemo(
+    () => (CellFonts || []).map((id) => {
+      const obj = id ? findCurrentData(id) : null;
+      return obj ? getFontStyles(obj) : EMPTY_STYLE;
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [CellFonts],
+  );
+
+  const customStyles = parseFlexStyles(CSS);
+  const baseStyles = setStyle(data?.Properties);
+
+  const styles = {
+    ...baseStyles,
+    display: Visible === 0 ? 'none' : 'block',
+    width: Size?.[1] ?? 275,
+    height: Size?.[0] ?? 225,
+    // Honor APL Border/EdgeStyle; default keeps the historical #b4b4b4 line.
+    ...getBorderStyles(EdgeStyle, Border, '#b4b4b4'),
+    ...customStyles,
+  };
+
+  // Normalize titles to arrays. Missing/empty → Excel-style auto-labels
+  // (A,B,C… for columns, 1,2,3… for rows). Matches legacy Grid behavior:
+  // titles are always present unless explicitly suppressed with TitleWidth/
+  // TitleHeight = 0.
+  const explicitColTitles = ColTitles != null
+    && (Array.isArray(ColTitles) ? ColTitles.length > 0 : true);
+  const explicitRowTitles = RowTitles != null
+    && (Array.isArray(RowTitles) ? RowTitles.length > 0 : true);
+  // Memoized so the array reference is stable across renders. Without this,
+  // useGridTitleSize's rowKey/colKey memos (which depend on these arrays)
+  // never cache and rebuild their O(rows+cols) string fingerprints every render.
+  const colTitlesArray = useMemo(() => (explicitColTitles
+    ? (Array.isArray(ColTitles) ? ColTitles : [ColTitles])
+    : Array.from({ length: numCols }, (_, i) => columnLetter(i))),
+    [explicitColTitles, ColTitles, numCols]);
+  const rowTitlesArray = useMemo(() => (explicitRowTitles
+    ? (Array.isArray(RowTitles) ? RowTitles : [RowTitles])
+    : Array.from({ length: numRows }, (_, i) => String(i + 1))),
+    [explicitRowTitles, RowTitles, numRows]);
+  const hasColTitles = colTitlesArray.length > 0;
+  const hasRowTitles = rowTitlesArray.length > 0;
+
+  // ⎕WC behavior: undefined/empty/negative TitleWidth/Height/CellWidths
+  // auto-size to fit content; 0 hides titles; positive is fixed.
+  const {
+    effectiveTitleWidth, effectiveTitleHeight, autoColWidths, wantsAutoCols,
+  } = useGridTitleSize(
+    TitleWidth, TitleHeight, CellWidths, rowTitlesArray, colTitlesArray, gridRef,
+  );
+
+  // ⎕WC: TitleWidth/Height = 0 fully hides the row/col title band (no DOM at all).
+  const showRowTitles = hasRowTitles && effectiveTitleWidth !== 0;
+  const showColTitles = hasColTitles && effectiveTitleHeight !== 0;
+
+  // Keep the focused cell visible: keyboard navigation can move CurCell to a
+  // cell hidden behind the native scroll, so scroll the container the minimum
+  // amount to reveal it. The sticky row/col title bands cover the left/top
+  // edges, so a cell must clear those bands too — not just the raw viewport.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !curCell) return;
+    const [r, c] = curCell;
+    const cellEl = container.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+    if (!cellEl) return;
+    const cell = cellEl.getBoundingClientRect();
+    const cont = container.getBoundingClientRect();
+    const bandW = showRowTitles ? effectiveTitleWidth : 0; // sticky row-title band
+    const bandH = showColTitles ? effectiveTitleHeight : 0; // sticky col-title band
+    const left = cell.left - cont.left;
+    const right = cell.right - cont.left;
+    const top = cell.top - cont.top;
+    const bottom = cell.bottom - cont.top;
+    if (right > container.clientWidth) container.scrollLeft += right - container.clientWidth;
+    else if (left < bandW) container.scrollLeft -= bandW - left;
+    if (bottom > container.clientHeight) container.scrollTop += bottom - container.clientHeight;
+    else if (top < bandH) container.scrollTop -= bandH - top;
+  }, [curCell, effectiveTitleWidth, effectiveTitleHeight, showRowTitles, showColTitles]);
 
   return (
-    <>
+    <div
+      ref={gridRef}
+      id={data?.ID}
+      className="grid"
+      style={styles}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
+      onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
+      onMouseEnter={(e) => handleMouseEnter(e, socket, Event, data?.ID)}
+      onMouseLeave={(e) => handleMouseLeave(e, socket, Event, data?.ID)}
+      onMouseMove={(e) => handleMouseMove(e, socket, Event, data?.ID)}
+      onDoubleClick={(e) => handleMouseDoubleClick(e, socket, Event, data?.ID)}
+      onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}
+    >
       <div
-        tabIndex={TabIndex ?? 0}
-        ref={gridRef}
-        onKeyDown={handleKeyDown}
-        onMouseDown={(e) => {
-          handleMouseDown(e, socket, Event, data?.ID);
-        }}
-        onMouseUp={(e) => {
-          handleMouseUp(e, socket, Event, data?.ID);
-        }}
-        onMouseEnter={(e) => {
-          handleMouseEnter(e, socket, Event, data?.ID);
-        }}
-        onMouseMove={(e) => {
-          handleMouseMove(e, socket, Event, data?.ID);
-        }}
-        onMouseLeave={(e) => {
-          handleMouseLeave(e, socket, Event, data?.ID);
-        }}
-        onWheel={(e) => {
-          handleMouseWheel(e, socket, Event, data?.ID);
-        }}
-        onDoubleClick={(e) => {
-          handleMouseDoubleClick(e, socket, Event, data?.typeObj?.ID);
-        }}
-        id={data?.ID}
+        ref={containerRef}
+        className={`grid-container${Number(VScroll) === -3 ? ' force-vscroll' : ''}${Number(HScroll) === -3 ? ' force-hscroll' : ''}`}
         style={{
-          ...style,
-          height,
-          width,
-          border: "1px solid black",
-          background: "white",
-          display: Visible == 0 ? "none" : "block",
-          // Default to auto - it should be ignored if overflowX or overflowY
-          // are defined below.
-          overflow: "auto",
-          overflowX: overflowFor(HScroll),
-          overflowY: overflowFor(VScroll),
-          ...customStyles,
-          ...fontStyles,
+          overflowX: getOverflowStyle(HScroll),
+          overflowY: getOverflowStyle(VScroll),
         }}
       >
-        {gridData?.map((row, rowi) => {
-          return (
-            <div style={{ display: "flex" }} id={`row-${rowi}-cell`}>
-              {row.map((data, columni) => {
-                 const isFocused =
-                  selectedRow === rowi && selectedColumn === (TitleWidth === 0 ? columni + 1 : columni);
-
-                return (
-                  <div
-                    onClick={() => {
-                      if (data.type === "rowTitle" || data.type === "header") return
-                      handleCellClick(rowi, TitleWidth === 0 ? columni + 1 : columni);
-                      // handleCellMove(rowi, columni + 1, '');
-                    }}
-                    id={`${gridId}`}
-                    style={{
-                      borderRight: isFocused
-                        ? "1px solid blue"
-                        : "1px solid  #EFEFEF",
-                      borderBottom: isFocused
-                        ? "1px solid blue"
-                        : "1px solid  #EFEFEF",
-                      // fontSize: "12px",
-                      minHeight: `${data?.height}px`,
-                      maxHeight: `${data?.height}px`,
-                      minWidth: `${data?.width}px`,
-                      maxWidth: `${data?.width}px`,
-                      backgroundColor:
-                        (selectedRow === rowi && data.type == "rowTitle") ||
-                          (selectedColumn === (TitleWidth === 0 ? columni + 1 : columni) && data.type == "header")
-                          ? "lightblue"
-                          : rgbColor(data?.backgroundColor),
-                      textAlign: data.type == "header" ? "center" : data?.align,
-                      overflow: "hidden",
-                      ...((data?.type !== "header" && !Array.isArray(data?.value)) && { lineHeight: `${data?.height}px` }),
-                      paddingLeft: data?.paddingLeft,
-                    }}
-                  >
-                    <Component
-                      key={data?.type}
-                      data={{
-                        ...data,
-                        row: rowi,
-                        column: TitleWidth === 0 ? columni + 1 : columni,
-                        gridValues: Values,
-                        gridEvent: Event,
-                        showInput: ShowInput,
-                        gridId: gridId,
-                        focused: isFocused,
-                        backgroundColor: data?.backgroundColor,
+        {Values && Values.length > 0 ? (
+          <table className="grid-table">
+            {/* <colgroup> is the cross-engine reliable way to pin column
+                widths under table-layout: fixed. Cell-level widths can be
+                ignored by some browsers (notably CEF) when the table itself
+                doesn't have an explicit declared width. */}
+            <colgroup>
+              {showRowTitles && <col style={{ width: effectiveTitleWidth }} />}
+              {(Array.isArray(Values[0]) ? Values[0] : [Values[0]]).map((_, colIndex) => (
+                <col key={colIndex} style={{ width: getCellWidth(colIndex) }} />
+              ))}
+            </colgroup>
+            {showColTitles && (
+              <thead>
+                <tr className="grid-header-row" style={{ height: effectiveTitleHeight }}>
+                  {showRowTitles && (
+                    <th
+                      className="grid-corner-cell"
+                      style={{ width: effectiveTitleWidth, height: effectiveTitleHeight, cursor: 'cell' }}
+                      onMouseDown={() => {
+                        setAnchor({ r: 1, c: 1 });
+                        setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
+                        moveTo(1, 1);
+                        isDraggingRef.current = true;
                       }}
                     />
-                  </div>
+                  )}
+                  {colTitlesArray.map((title, colIndex) => (
+                    <th
+                      key={colIndex}
+                      className={`grid-col-header${Array.isArray(title) ? ' multi-line' : ''}${isColInSelection(colIndex + 1) ? ' selected-col' : ''}`}
+                      onMouseDown={(e) => {
+                        const col = colIndex + 1;
+                        if (e.shiftKey && anchor) {
+                          const sc = Math.min(anchor.c, col), ec = Math.max(anchor.c, col);
+                          setSelection({ sr: 1, sc, er: numRows, ec });
+                          moveTo(1, col);
+                          fireGridSelect(1, sc, numRows, ec);
+                        } else {
+                          setAnchor({ r: 1, c: col });
+                          setSelection({ sr: 1, sc: col, er: numRows, ec: col });
+                          moveTo(1, col);
+                          isDraggingRef.current = true;
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (!isDraggingRef.current || !anchor) return;
+                        const col = colIndex + 1;
+                        const sc = Math.min(anchor.c, col), ec = Math.max(anchor.c, col);
+                        setSelection({ sr: 1, sc, er: numRows, ec });
+                        moveTo(1, col);
+                      }}
+                      style={{
+                        width: getCellWidth(colIndex),
+                        height: effectiveTitleHeight,
+                        cursor: 'cell',
+                        backgroundColor: isColInSelection(colIndex + 1)
+                          ? '#b8d4e8'
+                          : ColTitleBCol ? rgbColor(ColTitleBCol) : undefined,
+                        color: ColTitleFCol ? rgbColor(ColTitleFCol) : undefined,
+                      }}
+                    >
+                      {Array.isArray(title)
+                        ? <div className="grid-col-header-lines">
+                            {title.map((line, i) => (
+                              <div key={i} className="grid-col-header-line">
+                                {line ? String(line) : '\u00A0'}
+                              </div>
+                            ))}
+                          </div>
+                        : (title !== null && title !== undefined ? String(title) : '')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {Values.map((row, rowIndex) => {
+                // One render path for array rows and scalar (single-column)
+                // rows alike: normalize to an array, then map once.
+                const cells = Array.isArray(row) ? row : [row];
+                const rowHeight = getCellHeight(rowIndex);
+                return (
+                <tr key={rowIndex} className="grid-row" style={{ height: rowHeight }}>
+                  {showRowTitles && (
+                    <th
+                      className={`grid-row-header${isRowInSelection(rowIndex + 1) ? ' selected-row' : ''}`}
+                      onMouseDown={(e) => {
+                        const row = rowIndex + 1;
+                        if (e.shiftKey && anchor) {
+                          const sr = Math.min(anchor.r, row), er = Math.max(anchor.r, row);
+                          setSelection({ sr, sc: 1, er, ec: numCols });
+                          moveTo(row, 1);
+                          fireGridSelect(sr, 1, er, numCols);
+                        } else {
+                          setAnchor({ r: row, c: 1 });
+                          setSelection({ sr: row, sc: 1, er: row, ec: numCols });
+                          moveTo(row, 1);
+                          isDraggingRef.current = true;
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (!isDraggingRef.current || !anchor) return;
+                        const row = rowIndex + 1;
+                        const sr = Math.min(anchor.r, row), er = Math.max(anchor.r, row);
+                        setSelection({ sr, sc: 1, er, ec: numCols });
+                        moveTo(row, 1);
+                      }}
+                      style={{
+                        width: effectiveTitleWidth,
+                        height: rowHeight,
+                        cursor: 'cell',
+                        backgroundColor: isRowInSelection(rowIndex + 1)
+                          ? '#b8d4e8'
+                          : RowTitleBCol ? rgbColor(RowTitleBCol) : undefined,
+                        color: RowTitleFCol ? rgbColor(RowTitleFCol) : undefined,
+                      }}
+                    >
+                      {rowTitlesArray[rowIndex] !== null && rowTitlesArray[rowIndex] !== undefined
+                        ? String(rowTitlesArray[rowIndex])
+                        : ''}
+                    </th>
+                  )}
+                  {cells.map((cell, colIndex) => {
+                    const row1 = rowIndex + 1;
+                    const col1 = colIndex + 1;
+                    const cellType = inferCellType(cell);
+                    const isSelected = isCurrentCell(rowIndex, colIndex);
+
+                    // Resolve the embedded Input template by indexing the
+                    // pre-resolved arrays — no per-cell full-tree lookup.
+                    const inputIdx = CellTypes?.[rowIndex]?.[colIndex];
+                    const inputComponentData = inputIdx >= 1
+                      ? (resolvedInputs[inputIdx - 1] || null)
+                      : null;
+                    const inputType = inputComponentData?.Properties?.Type;
+
+                    // shouldShowInput inlined against the resolved template:
+                    // ShowInput only applies to Combo/Button cells.
+                    let showInputForced = false;
+                    if (inputType === 'Combo' || inputType === 'Button') {
+                      if (ShowInput === 1) showInputForced = true;
+                      else if (Array.isArray(ShowInput) && inputIdx >= 1) {
+                        showInputForced = ShowInput[inputIdx - 1] === 1;
+                      }
+                    }
+                    // The active cell shows its editor only as a single-cell
+                    // focus; during a multi-cell range it renders as text.
+                    const showWidget = !!inputComponentData
+                      && inputType !== 'Label'
+                      && (showInputForced || (isSelected && !selection));
+
+                    const cellTypeIdx = inputIdx >= 1 ? inputIdx : null;
+                    const rawFormatted = FormattedValues?.[rowIndex]?.[colIndex];
+                    return (
+                      <GridDataCell
+                        key={colIndex}
+                        row={row1}
+                        col={col1}
+                        rowIndex={rowIndex}
+                        colIndex={colIndex}
+                        value={cell}
+                        rawFormatted={rawFormatted}
+                        displayValue={formatCellValue(cell, cellType, rawFormatted)}
+                        width={getCellWidth(colIndex)}
+                        height={rowHeight}
+                        textAlign={getAlignmentForType(cellType)}
+                        isSelected={isSelected}
+                        inRange={isCellInSelection(row1, col1)}
+                        edgeClasses={selectionEdgeClasses(row1, col1)}
+                        showWidget={showWidget}
+                        bgColor={cellTypeIdx ? rgbColor(BCol?.[cellTypeIdx - 1]) : undefined}
+                        fgColor={FCol ? rgbColor(FCol) : undefined}
+                        cellFontStyles={cellTypeIdx ? (resolvedFontStyles[cellTypeIdx - 1] ?? EMPTY_STYLE) : EMPTY_STYLE}
+                        inputComponentData={inputComponentData}
+                        componentId={inputComponentData?.ID ?? null}
+                        cellFontId={cellTypeIdx ? (CellFonts?.[cellTypeIdx - 1] ?? null) : null}
+                        gridId={data?.ID}
+                        fcol={FCol}
+                        onCellChange={stableOnCellChange}
+                        onCellMouseDownCapture={onCellMouseDownCapture}
+                        onCellMouseDown={onCellMouseDown}
+                        onCellMouseEnter={onCellMouseEnter}
+                      />
+                    );
+                  })}
+                </tr>
                 );
               })}
-            </div>
-          );
-        })}
+            </tbody>
+          </table>
+        ) : (
+          <div className="grid-empty">
+            No data
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 
