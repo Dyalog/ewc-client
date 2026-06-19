@@ -1,8 +1,18 @@
-import { test, Browser, Page } from '@playwright/test';
+import { test, Page } from '@playwright/test';
 import { connectAndFindEWCPage } from '../helpers/cdp-helper';
 import { navigateToDemo } from '../helpers/navigation';
 
 const CDP_PORT = parseInt(process.env.CDP_PORT || '8080', 10);
+
+// This spec DELIBERATELY provokes the CBRunDemo re-entrancy race (rapid
+// menu-selects with sub-150ms gaps) to wedge the EWC backend — see the
+// "SYNTAX ERROR: The function does not take a left argument" in the Dyalog
+// log and ci-playwright-known-failures. It is a LOCAL debugging repro
+// only: in CI it would intentionally stall the shared backend and fail the
+// whole shard (plus every spec after it). GitHub Actions sets CI=true, so
+// skip the entire file there; it still runs locally (CI unset) to reproduce
+// the race.
+test.skip(!!process.env.CI, 'CBRunDemo wedge repro — local-only; deliberately stalls the shared EWC backend');
 
 // Try a bunch of variations to reproduce CBRunDemo VALUE ERROR
 test('navigate menu rapidly and many times', async () => {
