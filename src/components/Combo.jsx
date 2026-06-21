@@ -188,7 +188,9 @@ const Combo = ({ data, value }) => {
     reRender();
   }, [dimensions]);
 
-  // Click-outside detection to close dropdown
+  // Close dropdown on outside click, or on scroll (the dropdown is portalled
+  // and position:fixed, so a page scroll would otherwise leave it floating
+  // detached from its trigger — native <select> collapses on scroll).
   useEffect(() => {
     const handleClickOutside = (event) => {
       const inTrigger = dropdownRef.current?.contains(event.target);
@@ -198,11 +200,23 @@ const Combo = ({ data, value }) => {
         setHighlightedIndex(-1);
       }
     };
+    const handleScroll = (event) => {
+      // Allow scrolling the dropdown's own (long) list; close on any other scroll.
+      if (portalRef.current?.contains(event.target)) return;
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    };
     if (isOpen) {
       // Use capture phase so we see the event before any stopPropagation
       // in other Combos' bubble-phase handlers — ensures only one is open.
       document.addEventListener('mousedown', handleClickOutside, true);
-      return () => document.removeEventListener('mousedown', handleClickOutside, true);
+      // Capture so scrolls in ANY ancestor scroll container (form, grid, page)
+      // are caught — scroll events don't bubble.
+      window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside, true);
+        window.removeEventListener('scroll', handleScroll, true);
+      };
     }
   }, [isOpen]);
 
@@ -261,14 +275,17 @@ const Combo = ({ data, value }) => {
       ? Rows * itemHeight
       : (Items?.length || 1) * itemHeight;
 
-    // Constrain to the containing Form rather than the full viewport,
-    // so the dropdown doesn't overflow the form's visible area.
-    const parentId = extractStringUntilLastPeriod(data?.ID);
-    const formEl = document.getElementById(parentId);
-    const container = formEl ? formEl.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-
-    const spaceBelow = container.bottom - rect.bottom - margin;
-    const spaceAbove = rect.top - container.top - margin;
+    // Measure against the viewport, not the containing Form: in Browser mode
+    // the Form rarely fills the window, so constraining the dropdown to the
+    // Form's height needlessly clips it (a combo in a small SubForm or a
+    // one-row grid had almost no room). Harmless on Desktop, where the Form
+    // fills the window anyway. (#459)
+    // Use documentElement.clientHeight (excludes scrollbars) rather than
+    // window.innerHeight, so it matches the position:fixed containing block —
+    // otherwise a horizontal scrollbar leaves a gap when rendering above.
+    const viewportHeight = document.documentElement.clientHeight;
+    const spaceBelow = viewportHeight - rect.bottom - margin;
+    const spaceAbove = rect.top - margin;
 
     // Determine if dropdown should appear above or below
     const showAbove = spaceBelow < contentHeight && spaceAbove > spaceBelow;
@@ -280,7 +297,7 @@ const Combo = ({ data, value }) => {
     return {
       position: 'fixed',
       top: showAbove ? 'auto' : rect.bottom,
-      bottom: showAbove ? (window.innerHeight - rect.top) : 'auto',
+      bottom: showAbove ? (viewportHeight - rect.top) : 'auto',
       left: rect.left,
       width: rect.width,
       maxHeight,
