@@ -289,8 +289,11 @@ const Combo = ({ data, value }) => {
 
     // Determine if dropdown should appear above or below
     const showAbove = spaceBelow < contentHeight && spaceAbove > spaceBelow;
-    // Fit content or fill available space, whichever is smaller
-    const maxHeight = Math.min(contentHeight, showAbove ? spaceAbove : spaceBelow);
+    // Cap at the available space only — let the list size to its REAL content.
+    // The itemHeight estimate undercounts the rendered row height, so capping
+    // maxHeight to contentHeight showed a scrollbar even when every item would
+    // fit (e.g. a 2-item "Last/First" combo).
+    const maxHeight = showAbove ? spaceAbove : spaceBelow;
 
       // Always use fixed positioning so the dropdown escapes any
       // ancestor overflow:clip/hidden (e.g. SubForm's overflow:"clip").
@@ -496,7 +499,11 @@ const Combo = ({ data, value }) => {
             top: 0,
             left: 0,
             width: '100%',
-            height: '100%',
+            // Size to the button's own content (font height), NOT the wrapper's
+            // height. GAMA sends inconsistent combo Size heights (16 vs 24);
+            // native ⎕WC ignores them and snaps to a uniform font-based height,
+            // so content-sizing the trigger gives the same uniform result.
+            height: 'auto',
             border: '1px solid #6A6A6A',
             borderRadius: 0,
             padding: '0 20px 0 4px',
