@@ -21,7 +21,12 @@ type Row = 'E' | 'L' | 'LST' | 'G' | 'SF';
 async function borderStyleOf(page: Page, id: string): Promise<string> {
   const escaped = id.replace(/\./g, '\\.');
   return page.locator(`#${escaped}`).evaluate((el) => {
-    const target = el.querySelector('input') || el;
+    // Edit carries the border on its <input>; Group draws its frame on an inset
+    // child overlay [data-group-frame]; everything else on the element itself.
+    const target =
+      el.querySelector('input') ||
+      el.querySelector('[data-group-frame]') ||
+      el;
     return getComputedStyle(target as Element).borderStyle;
   });
 }

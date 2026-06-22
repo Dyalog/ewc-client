@@ -769,12 +769,9 @@ const Edit = ({
           ...(isInGrid
             ? { border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle' }
             : {
-              ...(EdgeStyle
-                ? getEdgeStyleBorder(EdgeStyle)
-                : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
-              verticalAlign: "text-top",
-              paddingBottom: "6px",
+              borderRadius: "2px",
               paddingRight: "2px",
+              ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
               // Focus underline — placed after getBorderStyles so borderBottom wins.
               ...(isFocused ? { borderBottom: '2px solid blue' } : {}),
             }),

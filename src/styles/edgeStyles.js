@@ -25,7 +25,8 @@ export const getEdgeStyleBorder = (edgeStyle) => {
     case 'Ridge':
       return { borderWidth: '2px', borderStyle: 'ridge', borderColor: '#E9E9E9' };
     case 'Groove':
-      return { borderWidth: '2px', borderStyle: 'groove', borderColor: '#E9E9E9' };
+      // Native group-box edge is a thin light line; 2px groove was too heavy.
+      return { borderWidth: '1px', borderStyle: 'groove', borderColor: '#dcdcdc' };
     case 'Recess':
       return { borderWidth: '2px', borderStyle: 'inset', borderColor: '#E9E9E9' };
     case 'Plinth':

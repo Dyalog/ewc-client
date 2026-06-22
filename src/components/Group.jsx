@@ -154,6 +154,7 @@ const Group = ({ data }) => {
           group's bounds — avoids the parent SubForm's overflow:clip cutting
           the caption off. (#445) */}
       <div
+        data-group-frame=""
         style={{
           position: "absolute",
           top: hasCaption ? CAPTION_HEIGHT / 2 : 0,
