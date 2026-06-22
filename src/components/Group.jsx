@@ -6,6 +6,7 @@ import {
   getImageStyles,
   extractStringUntilLastPeriod,
   parseFlexStyles,
+  rgbColor,
   handleMouseWheel,
   handleMouseEnter,
   handleMouseLeave,
@@ -23,15 +24,21 @@ const Group = ({ data }) => {
   const {
     Visible,
     Picture,
-    Border = 1,
+    Border = 0,
     Size,
     Flex = 0,
     CSS,
+    BCol,
     Event,
     FontObj,
     EdgeStyle,
   } = data?.Properties;
   const { findCurrentData, socket } = useAppData();
+  // A ⎕WC Group draws its etched frame by default — Border does NOT gate it,
+  // and only an explicit EdgeStyle='None' suppresses it. Customer groups send
+  // Border:0 with no EdgeStyle, so default the EdgeStyle to 'Groove' (etched)
+  // to restore the frame, matching native ⎕WC. (#445)
+  const effectiveEdgeStyle = EdgeStyle ?? 'Groove';
   const dimensions = useResizeObserver(
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
@@ -99,13 +106,16 @@ const Group = ({ data }) => {
   //   socket.send(mouseUpEvent);
   // };
 
+  const hasCaption =
+    data?.Properties?.Caption != null && data?.Properties?.Caption !== "";
+  const CAPTION_HEIGHT = 14; // line-box height; the frame's top line sits at its centre
+
   return (
     <div
       style={{
         ...styles,
         width,
         height,
-        ...getBorderStyles(EdgeStyle, Border),
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,
@@ -139,15 +149,33 @@ const Group = ({ data }) => {
         handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
     >
-      {data?.Properties?.Caption != "" && (
+      {/* Etched frame, inset from the top by half the caption height so the
+          caption can sit CENTRED on its top line while staying inside the
+          group's bounds — avoids the parent SubForm's overflow:clip cutting
+          the caption off. (#445) */}
+      <div
+        style={{
+          position: "absolute",
+          top: hasCaption ? CAPTION_HEIGHT / 2 : 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          ...getBorderStyles(effectiveEdgeStyle, Border),
+          pointerEvents: "none",
+        }}
+      />
+      {hasCaption && (
         <span
           style={{
-            fontSize: "12px",
-            // fontSize: '10px',
-            position: "relative",
-            bottom: 14,
+            position: "absolute",
+            top: 0,
             left: 10,
-            background: "#F1F1F1 ",
+            height: CAPTION_HEIGHT,
+            lineHeight: `${CAPTION_HEIGHT}px`,
+            padding: "0 3px",
+            fontSize: "12px",
+            // Mask the frame's top line behind the text with the group's BCol.
+            background: BCol ? rgbColor(BCol) : "#F1F1F1",
           }}
         >
           {data?.Properties?.Caption}

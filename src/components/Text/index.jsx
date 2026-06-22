@@ -103,7 +103,13 @@ const Text = ({ data, fontProperties }) => {
       <div
         id={data?.ID}
         style={{
+          // Anchor the wrapper at the parent's origin so each line's Points
+          // (which the app sends parent-relative — e.g. a group-child label at
+          // [[14],[8]]) position deterministically, rather than drifting with
+          // the wrapper's static/flow position. (#445)
           position: "absolute",
+          top: 0,
+          left: 0,
           display: Visible == 0 ? "none" : "block",
         }}
       >
