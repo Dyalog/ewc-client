@@ -435,6 +435,13 @@ test.describe('DemoGrid - Phase 8 Interaction Tests', () => {
     const comboCell = cells.nth(3); // row 1, column 4 (Color combo)
     const comboBtn = comboCell.locator('button[role="combobox"]');
 
+    // Reset any dropdown left open by a prior test (the suite shares one page),
+    // so this test starts from a clean, closed state.
+    await page.keyboard.press('Escape');
+    await cells.nth(0).click();
+    await new Promise(r => setTimeout(r, 150));
+    expect(await page.locator('[role="listbox"]').count()).toBe(0);
+
     await comboCell.click();
     await new Promise(r => setTimeout(r, 200));
     expect(await page.locator('.grid-cell.selected').getAttribute('data-col')).toBe('4');

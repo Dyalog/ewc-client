@@ -518,11 +518,20 @@ const Combo = ({ data, value }) => {
             top: 0,
             left: 0,
             width: '100%',
-            // Size to the button's own content (font height), NOT the wrapper's
-            // height. GAMA sends inconsistent combo Size heights (16 vs 24);
-            // native ⎕WC ignores them and snaps to a uniform font-based height,
-            // so content-sizing the trigger gives the same uniform result.
-            height: 'auto',
+            // Standalone: size to the button's own content (font height), NOT
+            // the wrapper's. GAMA sends inconsistent combo Size heights (16 vs
+            // 24); native ⎕WC ignores them and snaps to a uniform font-based
+            // height, so content-sizing the trigger gives the same uniform
+            // result. In a Grid, though, the cell height IS authoritative: fill
+            // it so the trigger's border aligns with the cell gridline instead
+            // of overshooting (content height > row height) and getting clipped.
+            height: isInGrid ? '100%' : 'auto',
+            // In a Grid, vertically centre the value the way a plain cell's
+            // text is centred (the cell uses line-height to centre in the row).
+            // A block button with line-height:normal top-anchors its single
+            // line, leaving the combo text sitting ~2px below the neighbouring
+            // cells' text; flex centring lines them up at any row height.
+            ...(isInGrid ? { display: 'flex', alignItems: 'center' } : {}),
             border: '1px solid #6A6A6A',
             borderRadius: 0,
             padding: '0 20px 0 4px',
@@ -539,7 +548,16 @@ const Combo = ({ data, value }) => {
             ...fontStyles
           }}
         >
-          {value || comboInput || ''}
+          {/* In a Grid the button is a flex container (for vertical centring),
+              so the value lives in a flex item that still truncates with an
+              ellipsis. Standalone keeps the bare text node, unchanged. */}
+          {isInGrid ? (
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {value || comboInput || ''}
+            </span>
+          ) : (
+            value || comboInput || ''
+          )}
           {/* Dropdown arrow */}
           <span
             style={{
