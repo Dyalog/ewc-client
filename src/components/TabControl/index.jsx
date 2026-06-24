@@ -1,7 +1,7 @@
 import { setStyle,getFontStyles, excludeKeys, getLastTabButton, rgbColor, parseFlexStyles } from '../../utils';
 import SubForm from '../SubForm';
 import TabButton from '../TabButton';
-import { useAppData } from '../../hooks';
+import { useAppData, useAutoConfStyle } from '../../hooks';
 import { useEffect, useState } from 'react';
 
 const TabControl = ({ data }) => {
@@ -12,7 +12,7 @@ const TabControl = ({ data }) => {
   const font = findCurrentData(FontObj);
   const fontStyles = font && getFontStyles(font, 12);
 
-  let styles = setStyle(data?.Properties);
+  let styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
   const customStyles = parseFlexStyles(CSS)
   const updatedData = excludeKeys(data);
   const Id = getLastTabButton(updatedData);

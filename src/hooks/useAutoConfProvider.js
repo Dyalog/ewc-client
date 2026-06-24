@@ -1,37 +1,35 @@
 import { useRef } from "react";
-import useResizeObserver from "./useResizeObserver";
-import { acPropagates, acBaseline, acScale } from "../utils";
+import { acPropagates, acScale } from "../utils";
 
-// Computes the AutoConfContext value a container publishes to its children.
+// Computes the AutoConfContext value a container publishes to its children,
+// driven by the container's authored Size — NOT by a measured DOM box.
 //
-//   contentEl   : the DOM element whose content box children are positioned in
-//                 (measured live; null until mounted, which is fine)
-//   designSize  : [height, width] the app authored for this container — the
-//                 fixed reference the live size is compared against
-//   ownAutoConf : the container's own AutoConf (bit 1 => it propagates resize)
-//   inset       : { x, y } px subtracted from designSize to get the baseline
-//                 content box (e.g. a Form's menu-bar offset, a border)
+//   currentSize : the container's current [height, width] from its Properties.
+//   ownAutoConf : the container's AutoConf (bit 1 => it propagates resize).
 //
-// The baseline is captured ONCE, from the first numeric designSize, and held
-// fixed for the life of the layout. It deliberately does NOT reset when the
-// container's own Size later changes (e.g. an app ⎕WS grow): that is exactly
-// the signal that the container should reflow its children by
-// currentSize/baseline. Because reflow is derived at render time from the
-// unchanged design geometry, there is no compounding drift.
-const useAutoConfProvider = (contentEl, designSize, ownAutoConf = 3, inset = { x: 0, y: 0 }) => {
-  // Measure the CONTENT box (excludes border) so the scale is exactly 1 at rest
-  // even for bordered containers — see useResizeObserver.
-  const measured = useResizeObserver(contentEl, { box: "content" });
+// The baseline is the FIRST Size we see (the design size), captured once; the
+// scale a bit-0 child reflows by is currentSize / baseline, per axis. Because
+// BOTH values come from the data, the scale is EXACTLY 1 until the app actually
+// changes the container's Size (a ⎕WS grow, or — for a viewport-sized form —
+// the viewport changing). There is no border/inset/sub-pixel/timing noise, so
+// NOTHING reflows at rest: a container that hasn't been resized leaves its
+// children untouched.
+const useAutoConfProvider = (currentSize, ownAutoConf = 3) => {
   const propagate = acPropagates(ownAutoConf);
 
-  // Capture the baseline once, from the first valid design size, and hold it.
+  const valid =
+    Array.isArray(currentSize) &&
+    typeof currentSize[0] === "number" &&
+    typeof currentSize[1] === "number";
+  const size = valid ? { width: currentSize[1], height: currentSize[0] } : null;
+
+  // Capture the design size once, from the first valid Size.
   const baselineRef = useRef(null);
-  if (baselineRef.current === null) {
-    const b = acBaseline(designSize, inset);
-    if (b) baselineRef.current = b;
+  if (baselineRef.current === null && size) {
+    baselineRef.current = size;
   }
 
-  return acScale(measured, baselineRef.current, propagate);
+  return acScale(size, baselineRef.current, propagate);
 };
 
 export default useAutoConfProvider;

@@ -12,7 +12,7 @@ import {
 } from "../../utils";
 import "./textArea.css";
 import "../../styles/font.css";
-import { useAppData } from "../../hooks";
+import { useAppData, useAutoConfStyle } from "../../hooks";
 
 const TextArea = ({ data }) => {
   const { handleData, socket,dataRef } = useAppData();
@@ -33,7 +33,7 @@ const TextArea = ({ data }) => {
 
   const [localText, setLocalText] = useState(initialText);
 
-  let styles = setStyle(data?.Properties);
+  let styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
   const { Font, CSS, Event } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 

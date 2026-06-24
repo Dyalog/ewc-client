@@ -65,11 +65,7 @@ const SubForm = ({ data }) => {
   // AutoConf provider: a SubForm is also a container — it publishes its own
   // scale (current box vs its authored/effective size) and propagate bit so its
   // children reflow when it is resized (e.g. an app ⎕WS grow, or a parent reflow).
-  const autoConfValue = useAutoConfProvider(
-    document.getElementById(data?.ID),
-    effSize,
-    AutoConf
-  );
+  const autoConfValue = useAutoConfProvider(effSize, AutoConf);
 
   const flexStyles = parseFlexStyles(CSS);
 

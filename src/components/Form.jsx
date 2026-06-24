@@ -54,10 +54,10 @@ const Form = ({ data }) => {
   const updatedData = excludeKeys(data);
   const ImageData = findCurrentData(Picture && Picture[0]);
 
-  // AutoConf: the Form is the top-level reflow provider. Its content children
-  // live in the absolute box below the menu bar, so we measure THAT box and
-  // publish the scale factor (current vs the Form's authored/viewport size) to
-  // descendants. A child reflows only if the Form propagates (AutoConf bit 1).
+  // AutoConf: the Form is the top-level reflow provider. Reflow is driven by the
+  // Form's authored Size (NOT a measured DOM box), so children only move when the
+  // app actually changes the Size — never at rest. Children live in the absolute
+  // box below the menu bar, so the content height excludes the menu-bar offset.
   const hasMenuBar = Object.keys(updatedData).some(
     (key) => updatedData[key]?.Properties?.Type === "MenuBar"
   );
@@ -67,10 +67,8 @@ const Form = ({ data }) => {
   const designSize =
     Size && Size.length ? Size : [window.innerHeight, window.innerWidth];
   const autoConfValue = useAutoConfProvider(
-    document.getElementById(contentId),
-    designSize,
-    AutoConf,
-    { x: 0, y: menuBarOffset }
+    [designSize[0] - menuBarOffset, designSize[1]],
+    AutoConf
   );
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);

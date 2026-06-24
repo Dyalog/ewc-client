@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   getFontStyles,
   setStyle,
+  scaleGeometry,
+  acShouldReflow,
   excludeKeys,
   getImageStyles,
   extractStringUntilLastPeriod,
@@ -18,7 +20,8 @@ import {
 } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import SelectComponent from "./SelectComponent";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useResizeObserver, useAutoConfProvider } from "../hooks";
+import { AutoConfContext } from "../context";
 
 const Group = ({ data }) => {
   const {
@@ -32,6 +35,7 @@ const Group = ({ data }) => {
     Event,
     FontObj,
     EdgeStyle,
+    AutoConf = 3,
   } = data?.Properties;
   const { findCurrentData, socket } = useAppData();
   // A ⎕WC Group draws its etched frame by default — Border does NOT gate it,
@@ -65,7 +69,23 @@ const Group = ({ data }) => {
 
   const updatedData = excludeKeys(data);
 
-  const styles = setStyle(data?.Properties, "absolute", Flex);
+  // AutoConf consumer: the Group's own box reflows when it is a bit-0 child of a
+  // propagating container (mirrors SubForm, which also keeps an explicit
+  // width/height override below).
+  const parentAutoConf = useContext(AutoConfContext);
+  const reflow = acShouldReflow(
+    parentAutoConf.propagate,
+    AutoConf,
+    parentAutoConf.baseline
+  );
+  const scaledProps = reflow
+    ? scaleGeometry(data?.Properties, parentAutoConf.scaleX, parentAutoConf.scaleY)
+    : data?.Properties;
+  const styles = setStyle(scaledProps, "absolute", Flex);
+
+  // AutoConf provider: a Group is a container — publish its scale + propagate bit
+  // so its children reflow when it is resized.
+  const autoConfValue = useAutoConfProvider(Size, AutoConf);
 
   //   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   //   const x = e.clientX;
@@ -114,8 +134,9 @@ const Group = ({ data }) => {
     <div
       style={{
         ...styles,
-        width,
-        height,
+        width: scaledProps?.Size ? scaledProps.Size[1] : width,
+        height: scaledProps?.Size ? scaledProps.Size[0] : height,
+        ...getBorderStyles(EdgeStyle, Border),
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,
@@ -182,9 +203,11 @@ const Group = ({ data }) => {
           {data?.Properties?.Caption}
         </span>
       )}
-      {Object.keys(updatedData).map((key) => (
-        <SelectComponent data={updatedData[key]} />
-      ))}
+      <AutoConfContext.Provider value={autoConfValue}>
+        {Object.keys(updatedData).map((key) => (
+          <SelectComponent data={updatedData[key]} key={key} />
+        ))}
+      </AutoConfContext.Provider>
     </div>
   );
 };

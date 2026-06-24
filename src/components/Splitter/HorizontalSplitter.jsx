@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAppData, useResizeObserver } from '../../hooks';
+import { useAppData, useResizeObserver, useAutoConfStyle } from '../../hooks';
 import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
 
 const HorizontalSplitter = ({ data }) => {
@@ -11,7 +11,7 @@ const HorizontalSplitter = ({ data }) => {
 
 
   const { Posn, SplitObj1, SplitObj2, Event, Size, CSS } = data?.Properties;
-  const style = setStyle(data.Properties)
+  const style = useAutoConfStyle(data.Properties, data.Properties?.AutoConf ?? 3)
 
   const customStyles = parseFlexStyles(CSS)
 

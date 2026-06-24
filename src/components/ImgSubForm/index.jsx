@@ -1,12 +1,12 @@
 import { setStyle, getImageStyles } from '../../utils';
-import { useAppData } from '../../hooks';
+import { useAppData, useAutoConfStyle } from '../../hooks';
 import { useEffect } from 'react';
 
 const ImageSubForm = ({ data }) => {
 
   const { findDesiredData } = useAppData();
 
-  const styles = setStyle(data?.Properties);
+  const styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
   const { Size, Picture, Posn } = data?.Properties;
 
   const ImageData = findDesiredData(Picture && Picture[0]);

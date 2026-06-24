@@ -13,11 +13,11 @@ import {
 } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import { useEffect, useRef, useState } from "react";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useResizeObserver, useAutoConfStyle } from "../hooks";
 
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
-  const styles = setStyle(data?.Properties);
+  const styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
   const { Items, SelItems, Visible, Size, Event, CSS, EdgeStyle, Border, TabIndex } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
   const customStyles = parseFlexStyles(CSS);

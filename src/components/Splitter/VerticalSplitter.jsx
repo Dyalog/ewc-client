@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useAppData, useResizeObserver } from '../../hooks';
+import { useAppData, useResizeObserver, useAutoConfStyle } from '../../hooks';
 import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../utils';
 
 const VerticalSplitter = ({ data }) => {
@@ -10,7 +10,7 @@ const VerticalSplitter = ({ data }) => {
   );
 
   const { Posn, SplitObj1, SplitObj2, Event, CSS } = data?.Properties;
-  const style = setStyle(data.Properties)
+  const style = useAutoConfStyle(data.Properties, data.Properties?.AutoConf ?? 3)
   const customStyles = parseFlexStyles(CSS)
   const [position, setPosition] = useState({ left: Posn && Posn[1] });
   const [isResizing, setResizing] = useState(false);

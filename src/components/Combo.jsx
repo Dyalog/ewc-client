@@ -1,7 +1,7 @@
 import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { createPortal } from 'react-dom';
-import { useAppData, useResizeObserver } from '../hooks';
+import { useAppData, useResizeObserver, useAutoConfStyle } from '../hooks';
 import { useGridContext } from './Grid/GridContext';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -28,7 +28,7 @@ const Combo = ({ data, value }) => {
   const { FontObj } = inheritedProperties(data, 'FontObj');
 
   const customStyles = parseFlexStyles(CSS)
-  const styles = setStyle(data?.Properties);
+  const styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
 
   const { Items, SelItems, Event, Visible, Posn, Size, Rows, TabIndex } = data?.Properties;
 

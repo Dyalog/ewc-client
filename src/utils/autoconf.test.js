@@ -243,3 +243,51 @@ test("interaction 2 (Grow boxes): 2/3 reflow their children, 0/1 pin them", () =
     }
   }
 });
+
+// --- ⎕WC fidelity invariants -----------------------------------------------
+// The DEFINING property of AutoConf 1/3 under Pixel coords (per the Dyalog doc):
+// a reflowed object keeps its RELATIVE size and position within its parent. We
+// assert that property directly, not just "the function multiplies".
+const relClose = (a, b) => Math.abs(a - b) < 0.01; // within 1% of the box
+
+test("reflow preserves a child's relative position and size within its parent", () => {
+  const B = { h: 170, w: 340 }; // baseline content box
+  const M = { h: 230, w: 410 }; // measured (grown) content box
+  const Posn = [140, 278], Size = [22, 56];
+  const out = scaleGeometry({ Posn, Size }, M.w / B.w, M.h / B.h);
+  assert.ok(relClose(out.Posn[0] / M.h, Posn[0] / B.h), "top fraction preserved");
+  assert.ok(relClose(out.Posn[1] / M.w, Posn[1] / B.w), "left fraction preserved");
+  assert.ok(relClose(out.Size[0] / M.h, Size[0] / B.h), "height fraction preserved");
+  assert.ok(relClose(out.Size[1] / M.w, Size[1] / B.w), "width fraction preserved");
+});
+
+test("a child filling its parent keeps filling it after reflow", () => {
+  const out = scaleGeometry({ Posn: [0, 0], Size: [170, 340] }, 410 / 340, 230 / 170);
+  assert.deepEqual(out.Posn, [0, 0]);
+  assert.deepEqual(out.Size, [230, 410]);
+});
+
+test("nested reflow composes (grandchild scales by the cumulative factor)", () => {
+  // Form grows ×1.5 → a bit-0 SubForm reflows; a button inside reflows within
+  // the grown SubForm. Each level measures its own box, so the net is the product.
+  const sub = scaleGeometry({ Posn: [44, 470], Size: [170, 340] }, 1.5, 1.5);
+  assert.deepEqual(sub.Size, [255, 510]); // 170×1.5, 340×1.5
+  const btn = scaleGeometry({ Posn: [10, 10], Size: [20, 20] }, 510 / 340, 255 / 170);
+  assert.deepEqual(btn.Size, [30, 30]); // 20 × 1.5 (cumulative)
+  assert.deepEqual(btn.Posn, [15, 15]); // 10 × 1.5
+});
+
+test("scaling up then back down returns the original (no systematic drift)", () => {
+  const props = { Posn: [44, 470], Size: [170, 340] };
+  const back = scaleGeometry(scaleGeometry(props, 2, 2), 0.5, 0.5);
+  assert.deepEqual(back.Posn, props.Posn);
+  assert.deepEqual(back.Size, props.Size);
+});
+
+test("0/2 (ignore) keep EXACT pixels under a parent resize — no rounding drift", () => {
+  // A non-accepting child must be byte-for-byte unchanged, however the parent moves.
+  const ctx = acScale({ width: 999, height: 777 }, acBaseline([170, 340]), acPropagates(3));
+  const fixed = child(ctx, 0, [140, 278], [22, 56]); // AutoConf 0 → never reflow
+  assert.deepEqual(fixed.Posn, [140, 278]);
+  assert.deepEqual(fixed.Size, [22, 56]);
+});

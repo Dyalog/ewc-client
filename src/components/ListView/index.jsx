@@ -14,7 +14,7 @@ import {
   handleMouseDoubleClick,
   handleKeyPressUtils,
 } from "../../utils";
-import { useAppData } from "../../hooks";
+import { useAppData, useAutoConfStyle } from "../../hooks";
 
 const ListView = ({ data }) => {
   const { findCurrentData, socket } = useAppData();
@@ -34,7 +34,7 @@ const ListView = ({ data }) => {
   } = data && data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
-  const styles = setStyle(data?.Properties);
+  const styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);

@@ -16,7 +16,7 @@ import {
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useAppData } from "../../hooks";
+import { useAppData, useAutoConfStyle } from "../../hooks";
 import { useGridContext } from "../Grid/GridContext";
 import { normalizeAplFormatted } from "../Grid/useNumericFormatter";
 import dayjs from "dayjs";
@@ -52,7 +52,7 @@ const Edit = ({
     Decimal: decimalSeparator,
   } = dateFormat?.Properties;
 
-  let styles = { ...setStyle(data?.Properties) };
+  let styles = { ...useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3) };
   const [inputType, setInputType] = useState("text");
   const [inputValue, setInputValue] = useState("");
   const [emitValue, setEmitValue] = useState("");
