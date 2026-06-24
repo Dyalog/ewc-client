@@ -188,9 +188,9 @@ const Combo = ({ data, value }) => {
     reRender();
   }, [dimensions]);
 
-  // Close dropdown on outside click, or on scroll (the dropdown is portalled
-  // and position:fixed, so a page scroll would otherwise leave it floating
-  // detached from its trigger — native <select> collapses on scroll).
+  // Close dropdown on outside click, or when the USER scrolls (the dropdown is
+  // portalled and position:fixed, so a page scroll would otherwise leave it
+  // floating detached from its trigger — native <select> collapses on scroll).
   useEffect(() => {
     const handleClickOutside = (event) => {
       const inTrigger = dropdownRef.current?.contains(event.target);
@@ -200,7 +200,15 @@ const Combo = ({ data, value }) => {
         setHighlightedIndex(-1);
       }
     };
-    const handleScroll = (event) => {
+    // Listen for the user's scroll GESTURE (wheel/touch), NOT the generic
+    // 'scroll' event. Opening the dropdown programmatically scrolls things —
+    // clicking/focusing the trigger nudges its scroll-parent (e.g. a Grid cell
+    // scrolls a pixel to reveal it) and scrollIntoView reveals the highlighted
+    // option — and a generic 'scroll' listener can't tell those apart from a
+    // user scroll, so it slammed the dropdown shut the instant it opened.
+    // wheel/touchmove fire only on real user input, so the dropdown survives
+    // its own opening while still closing when the user actually scrolls away.
+    const handleUserScroll = (event) => {
       // Allow scrolling the dropdown's own (long) list; close on any other scroll.
       if (portalRef.current?.contains(event.target)) return;
       setIsOpen(false);
@@ -210,12 +218,14 @@ const Combo = ({ data, value }) => {
       // Use capture phase so we see the event before any stopPropagation
       // in other Combos' bubble-phase handlers — ensures only one is open.
       document.addEventListener('mousedown', handleClickOutside, true);
-      // Capture so scrolls in ANY ancestor scroll container (form, grid, page)
-      // are caught — scroll events don't bubble.
-      window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+      // Capture so gestures over ANY ancestor scroll container (form, grid,
+      // page) are caught — these events don't usefully bubble to window.
+      window.addEventListener('wheel', handleUserScroll, { capture: true, passive: true });
+      window.addEventListener('touchmove', handleUserScroll, { capture: true, passive: true });
       return () => {
         document.removeEventListener('mousedown', handleClickOutside, true);
-        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('wheel', handleUserScroll, true);
+        window.removeEventListener('touchmove', handleUserScroll, true);
       };
     }
   }, [isOpen]);
@@ -309,6 +319,15 @@ const Combo = ({ data, value }) => {
   }, [Rows, Items]);
 
   const handleKeyPress = (e) => {
+    // In a Grid, a CLOSED combo must not trap horizontal cell navigation:
+    // Left/Right have no meaning for the combo itself, so let them bubble to the
+    // Grid's keydown handler, which moves CurCell and refocuses the grid (its
+    // curCell effect blurs this trigger). Mirrors Edit, which lets boundary
+    // Left/Right bubble for the same Excel-style cell movement. Returning before
+    // stopPropagation is what frees the event to reach the grid.
+    if (isInGrid && !isOpen && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      return;
+    }
     e.stopPropagation();
     handleKeyPressUtils(e, socket, Event, data?.ID);
 
