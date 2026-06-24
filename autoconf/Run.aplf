@@ -1,0 +1,18 @@
+ {r}←Run mode
+⍝ Build the AutoConf demo layout (via the xWC/xWS dispatchers) and DQ it,
+⍝ natively or through EWC, so AutoConf + WS-on-Size can be compared:
+⍝   #.autoconf.Run 'WC'    ⍝ native ⎕WC (Windows)
+⍝   #.autoconf.Run 'EWC'   ⍝ web client (connect a browser to the EWC port)
+⍝ Set #.AC_PORT before calling to override the EWC port (default 22322).
+ AC_RENDER←mode
+ :If mode≡'EWC'
+     EWC←##.EWC
+     EWC.PORT←{6::⍵ ⋄ #.AC_PORT}22322
+     EWC.SHOWDEVTOOLS←0
+     EWC.RESOURCES←0 2⍴⊂''
+     'e'EWC.Init 'Desktop'
+     BuildAutoConf
+ :Else
+     BuildAutoConf
+     r←⎕DQ'F1'
+ :EndIf

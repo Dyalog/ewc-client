@@ -1,14 +1,16 @@
-import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
+import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import "../styles/font.css";
-import { useAppData } from "../hooks";
+import { useAppData, useAutoConfStyle } from "../hooks";
 import { useGridContext } from "./Grid/GridContext";
 
 const Label = ({ data, gridValue }) => {
   // Check if we're inside a Grid cell
   const gridContext = useGridContext();
   const isInGrid = !!gridContext;
-  let styles = setStyle(data?.Properties);
+  // AutoConf consumer: scaled geometry when this label is a bit-0 child of a
+  // propagating container; otherwise identical to setStyle.
+  let styles = useAutoConfStyle(data?.Properties, data?.Properties?.AutoConf ?? 3);
 
   const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
   const haveColor = data?.Properties.hasOwnProperty("FCol");

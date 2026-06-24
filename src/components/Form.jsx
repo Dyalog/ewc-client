@@ -15,7 +15,13 @@ import {
   handleKeyPressUtils,
 } from "../utils";
 import SelectComponent from "./SelectComponent";
-import { useAppData, useResizeObserver, useWindowDimensions } from "../hooks";
+import {
+  useAppData,
+  useResizeObserver,
+  useWindowDimensions,
+  useAutoConfProvider,
+} from "../hooks";
+import { AutoConfContext } from "../context";
 import { useEffect, useState } from "react";
 
 const Form = ({ data }) => {
@@ -36,7 +42,8 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
-    FontObj
+    FontObj,
+    AutoConf = 3,
   } = data?.Properties;
 
 //   console.log("Dtaa is as",data,Posn);
@@ -46,6 +53,25 @@ const Form = ({ data }) => {
 //   console.log("form after parsing", { styles, CSS, Flex });
   const updatedData = excludeKeys(data);
   const ImageData = findCurrentData(Picture && Picture[0]);
+
+  // AutoConf: the Form is the top-level reflow provider. Its content children
+  // live in the absolute box below the menu bar, so we measure THAT box and
+  // publish the scale factor (current vs the Form's authored/viewport size) to
+  // descendants. A child reflows only if the Form propagates (AutoConf bit 1).
+  const hasMenuBar = Object.keys(updatedData).some(
+    (key) => updatedData[key]?.Properties?.Type === "MenuBar"
+  );
+  // TODO: This needs to be determined by menubar styling and font size, etc
+  const menuBarOffset = hasMenuBar ? 25 : 0;
+  const contentId = `${data?.ID}.$ACCONTENT`;
+  const designSize =
+    Size && Size.length ? Size : [window.innerHeight, window.innerWidth];
+  const autoConfValue = useAutoConfProvider(
+    document.getElementById(contentId),
+    designSize,
+    AutoConf,
+    { x: 0, y: menuBarOffset }
+  );
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
 
@@ -181,42 +207,35 @@ const Form = ({ data }) => {
         // handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
     >
-      {(() => {
-        const hasMenuBar = Object.keys(updatedData).some(
-          key => updatedData[key]?.Properties?.Type === 'MenuBar'
-        );
-        // TODO: This needs to be determined by menubar styling and font size, etc
-        const menuBarOffset = hasMenuBar ? 25 : 0;
-        
-        return (
-          <>
-            {/* We separate the MenuBar out, whenever you declare it */}
-            {hasMenuBar && (
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-                {Object.keys(updatedData).filter(key => 
-                  updatedData[key]?.Properties?.Type === 'MenuBar'
-                ).map((key, i) => (
-                  <SelectComponent data={updatedData[key]} key={`menubar-${i}`} />
-                ))}
-              </div>
-            )}
-            
-            <div style={{ 
-              position: 'absolute', 
-              top: menuBarOffset, 
-              left: 0, 
-              right: 0, 
-              bottom: 0 
-            }}>
-              {Object.keys(updatedData).filter(key => 
-                updatedData[key]?.Properties?.Type !== 'MenuBar'
-              ).map((key, i) => (
-                <SelectComponent data={updatedData[key]} key={`content-${i}`} />
-              ))}
-            </div>
-          </>
-        );
-      })()}
+      {/* We separate the MenuBar out, whenever you declare it */}
+      {hasMenuBar && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+          {Object.keys(updatedData).filter(key =>
+            updatedData[key]?.Properties?.Type === 'MenuBar'
+          ).map((key, i) => (
+            <SelectComponent data={updatedData[key]} key={`menubar-${i}`} />
+          ))}
+        </div>
+      )}
+
+      <AutoConfContext.Provider value={autoConfValue}>
+        <div
+          id={contentId}
+          style={{
+            position: 'absolute',
+            top: menuBarOffset,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+        >
+          {Object.keys(updatedData).filter(key =>
+            updatedData[key]?.Properties?.Type !== 'MenuBar'
+          ).map((key, i) => (
+            <SelectComponent data={updatedData[key]} key={`content-${i}`} />
+          ))}
+        </div>
+      </AutoConfContext.Provider>
     </div>
   );
 };

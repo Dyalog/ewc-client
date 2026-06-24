@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 
 import {
   excludeKeys,
   setStyle,
+  scaleGeometry,
+  acShouldReflow,
   getFontStyles,
   getImageStyles,
   rgbColor,
@@ -18,7 +20,8 @@ import {
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import SelectComponent from "../SelectComponent";
-import { useAppData } from "../../hooks";
+import { useAppData, useAutoConfProvider } from "../../hooks";
+import { AutoConfContext } from "../../context";
 
 const SubForm = ({ data }) => {
   const { findCurrentData, socket, inheritedProperty } = useAppData();
@@ -33,10 +36,40 @@ const SubForm = ({ data }) => {
     Event,
     EdgeStyle,
     Border = 0,
+    AutoConf = 3,
   } = data?.Properties;
 
   const observedDiv = useRef(null);
-  const styles = setStyle(data?.Properties, "absolute", Flex);
+
+  // AutoConf consumer: a SubForm's own box reflows when it is a bit-0 child of a
+  // propagating container. Resolve its effective size (own Size, else inherited),
+  // then scale that geometry by the container's published factor when reflowing.
+  // We work from the primitives (not useAutoConfStyle) because SubForm keeps an
+  // explicit height/width/top/left override below for its inherited-size fallback.
+  const inheritedSize = inheritedProperty(data, "Size", ["Form", "SubForm"]);
+  const effSize = Size && Size.length ? Size : inheritedSize;
+  const parentAutoConf = useContext(AutoConfContext);
+  const reflow = acShouldReflow(
+    parentAutoConf.propagate,
+    AutoConf,
+    parentAutoConf.baseline
+  );
+  const geomProps = { ...data?.Properties, ...(effSize ? { Size: effSize } : {}) };
+  const scaledProps = reflow
+    ? scaleGeometry(geomProps, parentAutoConf.scaleX, parentAutoConf.scaleY)
+    : geomProps;
+  const scaledSize = scaledProps.Size;
+  const scaledPosn = scaledProps.Posn;
+  const styles = setStyle(scaledProps, "absolute", Flex);
+
+  // AutoConf provider: a SubForm is also a container — it publishes its own
+  // scale (current box vs its authored/effective size) and propagate bit so its
+  // children reflow when it is resized (e.g. an app ⎕WS grow, or a parent reflow).
+  const autoConfValue = useAutoConfProvider(
+    document.getElementById(data?.ID),
+    effSize,
+    AutoConf
+  );
 
   const flexStyles = parseFlexStyles(CSS);
 
@@ -109,7 +142,6 @@ const SubForm = ({ data }) => {
     }
   }, [data]);
 
-  const inheritedSize = inheritedProperty(data, "Size", ["Form", "SubForm"]);
   const inheritedBCol = inheritedProperty(data, "BCol", ["Form", "SubForm"]);
 
   // Zilde is no background, otherwise inherited, otherwise default
@@ -134,10 +166,10 @@ const SubForm = ({ data }) => {
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
-        height: Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined,
-        width:  Size ? Size[1] : inheritedSize ? inheritedSize[1] : undefined,
-        top: Posn && Posn[0],
-        left: Posn && Posn[1],
+        height: scaledSize ? scaledSize[0] : undefined,
+        width:  scaledSize ? scaledSize[1] : undefined,
+        top: scaledPosn && scaledPosn[0],
+        left: scaledPosn && scaledPosn[1],
       }}
       ref={observedDiv}
       onMouseDown={(e) => {
@@ -165,9 +197,11 @@ const SubForm = ({ data }) => {
         handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
     >
-      {Object.keys(updatedData).map((key) => {
-        return <SelectComponent data={updatedData[key]} />;
-      })}
+      <AutoConfContext.Provider value={autoConfValue}>
+        {Object.keys(updatedData).map((key) => {
+          return <SelectComponent data={updatedData[key]} key={key} />;
+        })}
+      </AutoConfContext.Provider>
     </div>
   );
 };

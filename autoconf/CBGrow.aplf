@@ -1,0 +1,11 @@
+ CBGrow msg
+⍝ WS-on-Size demo: enlarge ALL FOUR SubForms by the same amount, so the
+⍝ propagate-vs-not half of AutoConf is visible across 0/1/2/3 side by side:
+⍝   AutoConf 0/1 → box grows, but its TL/BR children stay pinned in pixels
+⍝   AutoConf 2/3 → box grows AND propagates Configure → TL/BR children reflow
+⍝ (In native ⎕WC this is exactly what dragging a Sizeable box's edge does.)
+⍝ The question is whether EWC applies each Size update and reflows to match.
+ 'F1.S0' xWS ('Size')(230 410)
+ 'F1.S1' xWS ('Size')(230 410)
+ 'F1.S2' xWS ('Size')(230 410)
+ 'F1.S3' xWS ('Size')(230 410)

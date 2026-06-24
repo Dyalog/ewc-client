@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "demotests:browser:headed": "HEADED=1 BROWSER_URL=http://localhost:5173 playwright test --headed",

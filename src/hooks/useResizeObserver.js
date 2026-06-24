@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 
-const useResizeObserver = (parent) => {
+// box: 'border' (default — offsetWidth/Height) or 'content' (clientWidth/Height,
+// which EXCLUDES the border). AutoConf must measure the CONTENT box: a child's
+// position:absolute coordinates are relative to its container's padding box, not
+// its border box, so measuring offsetWidth would make the reflow scale ≠ 1 at
+// rest for any bordered container (e.g. a Groove SubForm).
+const useResizeObserver = (parent, { box = 'border' } = {}) => {
+  const contentBox = box === 'content';
   const [dimensions, setDimensions] = useState({
     width: parent?.clientWidth,
     height: parent?.clientHeight,
@@ -12,12 +18,13 @@ const useResizeObserver = (parent) => {
     }
 
     const resizeObserver = new ResizeObserver((entries) => {
-      const { offsetWidth, offsetHeight } = entries[0].target;
+      const t = entries[0].target;
 
-      setDimensions({
-        width: offsetWidth,
-        height: offsetHeight,
-      });
+      setDimensions(
+        contentBox
+          ? { width: t.clientWidth, height: t.clientHeight }
+          : { width: t.offsetWidth, height: t.offsetHeight }
+      );
     });
 
     resizeObserver.observe(parent);
@@ -25,7 +32,7 @@ const useResizeObserver = (parent) => {
     return function cleanup() {
       resizeObserver.disconnect();
     };
-  }, [parent]);
+  }, [parent, contentBox]);
 
   return dimensions;
 };

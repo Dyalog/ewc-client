@@ -1,5 +1,4 @@
 import {
-  setStyle,
   getFontStyles,
   extractStringUntilLastPeriod,
   handleMouseMove,
@@ -12,7 +11,7 @@ import {
   handleMouseDoubleClick,
   handleKeyPressUtils,
 } from "../utils";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useResizeObserver, useAutoConfStyle } from "../hooks";
 import { useGridContext } from "./Grid/GridContext";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
@@ -26,14 +25,17 @@ const Button = ({
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
   );
 
-  const styles = setStyle(data?.Properties);
   const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
 
   // Check if we're inside a Grid cell
   const gridContext = useGridContext();
   const isInGrid = !!gridContext;
-  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, TabIndex } = data?.Properties;
+  const { Picture, State, Visible, Event, Caption, Align, Posn, Size, CSS, Active, TabIndex, AutoConf = 3 } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
+
+  // AutoConf consumer: scaled position:absolute geometry when this button is a
+  // bit-0 child of a propagating container; otherwise identical to setStyle.
+  const styles = useAutoConfStyle(data?.Properties, AutoConf);
 
 //   console.log("data Button", data);
 
@@ -520,12 +522,6 @@ const Button = ({
         paddingLeft: '3px',
         paddingRight: '3px',
         display: Visible == 0 ? "none" : "flex",
-        ...(data?.Properties?.hasOwnProperty("Posn")
-          ? { top: position?.top }
-          : {}),
-        ...(data?.Properties?.hasOwnProperty("Posn")
-          ? { left: position?.left }
-          : {}),
         ...customStyles,
         ...fontStyles
       }}
