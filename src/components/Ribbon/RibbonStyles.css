@@ -383,3 +383,27 @@
   gap: 3px;
   padding: 6px;
 }
+
+/* --------------------------------------------- collapsed group + flyout --- */
+.ewc-ribbon-collapsed {
+  min-width: 48px;
+  max-width: 96px;
+}
+
+/* The flyout reuses `.ewc-ribbon` for the tokens/font but must shed the band's
+   full-width / fixed-height / bottom-hairline chrome and behave like a popup. */
+.ewc-ribbon-flyout.ewc-ribbon {
+  width: auto;
+  min-width: auto;
+  height: auto;
+  display: block;
+  border: 1px solid var(--popup-border);
+  border-bottom: 1px solid var(--popup-border);
+  padding: 2px;
+  overflow: visible;
+}
+.ewc-ribbon-flyout > .ewc-ribbon-group {
+  height: 90px;
+  border-right: none;
+  padding: 0 4px;
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { excludeKeys, getObjectById, getStringafterPeriod, parseFlexStyles } from '../../utils';
 import './RibbonStyles.css';
 
@@ -27,19 +27,16 @@ const CustomRibbon = ({ data }) => {
   const groupKeys = Object.keys(updatedData);
   const fontPx = 12 * (fontScale || 1);
 
-  // Precompute each group's [w0,w1,w2,w3] natural widths. Recomputed only when
-  // the data tree or font changes — not per frame.
-  const widths = useMemo(
-    () =>
-      groupKeys.map((k) => {
-        const g = updatedData[k];
-        const t = g?.Properties?.Title;
-        const title = Array.isArray(t) ? t[0] : t;
-        return measureGroup(g, title, fontPx);
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, fontPx]
-  );
+  // Each group's [w0,w1,w2,w3] natural widths, computed fresh every render. The
+  // EWC tree is mutated in place (handleData), so `data` keeps its identity as
+  // children stream in — memoizing on it would measure an empty tree once and
+  // never refresh. Measuring a handful of captions via canvas is cheap.
+  const widths = groupKeys.map((k) => {
+    const g = updatedData[k];
+    const t = g?.Properties?.Title;
+    const title = Array.isArray(t) ? t[0] : t;
+    return measureGroup(g, title, fontPx);
+  });
 
   // Available width = how much horizontal room there is before the viewport
   // edge, capped by the band's actual container. This is what must not be
@@ -66,10 +63,7 @@ const CustomRibbon = ({ data }) => {
     };
   }, [node, recompute]);
 
-  const states = useMemo(
-    () => computeStates(widths, available - 4),
-    [widths, available]
-  );
+  const states = computeStates(widths, available - 4);
 
   return (
     <div

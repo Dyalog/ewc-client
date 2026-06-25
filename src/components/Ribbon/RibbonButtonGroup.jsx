@@ -60,39 +60,48 @@ const CustomRibbonButtonGroup = ({ data }) => {
       : undefined,
   };
 
-  return (
-    <div className="ewc-ribbon-small-stack" style={customStyles}>
-      {Captions?.map((title, i) => {
-        const result = getImageDataByCaption(title);
-        const image = result && result.imgUrl ? result.imgUrl : ImagesData?.[i] || ImageList;
-        const iconKey = Icons?.[i] || "MdOutlineQuestionMark";
-        const IconComponent = AppIcons?.[iconKey] || MdOutlineQuestionMark;
+  // Chunk into columns of at most 3 rows so a >3 caption group never spills
+  // past the band height — it grows wider into a second column (Office behavior).
+  const captions = Captions || [];
+  const columns = [];
+  for (let i = 0; i < captions.length; i += 3) columns.push(captions.slice(i, i + 3));
 
-        return (
-          <div
-            key={`${data?.ID}-${title}`}
-            id={`${data?.ID}-${i}`}
-            className="ewc-ribbon-small"
-            onClick={() => handleButtonEvent(i + 1)}
-          >
-            <span className="ewc-ribbon-small-icon">
-              {result && result?.imgUrl ? (
-                <img src={`${getCurrentUrl()}${result.imgUrl}`} alt={title} />
-              ) : image && ImageList?.Properties?.Files ? (
-                <img
-                  src={`${getCurrentUrl()}${image?.Properties?.Files?.[i]}`}
-                  alt={title}
-                />
-              ) : (
-                <IconComponent size={16} />
-              )}
-            </span>
-            <span className="ewc-ribbon-small-caption" style={captionStyle}>
-              {title}
-            </span>
-          </div>
-        );
-      })}
+  const renderRow = (title, i) => {
+    const result = getImageDataByCaption(title);
+    const image = result && result.imgUrl ? result.imgUrl : ImagesData?.[i] || ImageList;
+    const iconKey = Icons?.[i] || "MdOutlineQuestionMark";
+    const IconComponent = AppIcons?.[iconKey] || MdOutlineQuestionMark;
+
+    return (
+      <div
+        key={`${data?.ID}-${title}`}
+        id={`${data?.ID}-${i}`}
+        className="ewc-ribbon-small"
+        onClick={() => handleButtonEvent(i + 1)}
+      >
+        <span className="ewc-ribbon-small-icon">
+          {result && result?.imgUrl ? (
+            <img src={`${getCurrentUrl()}${result.imgUrl}`} alt={title} />
+          ) : image && ImageList?.Properties?.Files ? (
+            <img src={`${getCurrentUrl()}${image?.Properties?.Files?.[i]}`} alt={title} />
+          ) : (
+            <IconComponent size={16} />
+          )}
+        </span>
+        <span className="ewc-ribbon-small-caption" style={captionStyle}>
+          {title}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: "flex", flexFlow: "row nowrap", alignItems: "stretch", ...customStyles }}>
+      {columns.map((col, ci) => (
+        <div className="ewc-ribbon-small-stack" key={`${data?.ID}-col-${ci}`}>
+          {col.map((title, ri) => renderRow(title, ci * 3 + ri))}
+        </div>
+      ))}
     </div>
   );
 };
