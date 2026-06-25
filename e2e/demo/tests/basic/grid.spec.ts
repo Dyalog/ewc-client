@@ -427,6 +427,40 @@ test.describe('DemoGrid - Phase 8 Interaction Tests', () => {
     await page.keyboard.press('Escape');
   });
 
+  // Left/Right on a focused (closed) Combo cell navigate to the adjacent cell
+  // rather than being trapped by the combo — the combo has no horizontal use
+  // for them, so they bubble to the grid (mirrors Edit's edge navigation).
+  test('Left/Right arrows on a focused Combo move to the adjacent cell', async () => {
+    const cells = page.locator('.grid-cell');
+    const comboCell = cells.nth(3); // row 1, column 4 (Color combo)
+    const comboBtn = comboCell.locator('button[role="combobox"]');
+
+    // Reset any dropdown left open by a prior test (the suite shares one page),
+    // so this test starts from a clean, closed state.
+    await page.keyboard.press('Escape');
+    await cells.nth(0).click();
+    await new Promise(r => setTimeout(r, 150));
+    expect(await page.locator('[role="listbox"]').count()).toBe(0);
+
+    await comboCell.click();
+    await new Promise(r => setTimeout(r, 200));
+    expect(await page.locator('.grid-cell.selected').getAttribute('data-col')).toBe('4');
+
+    // ArrowRight: move to column 5 without opening the dropdown
+    await comboBtn.press('ArrowRight');
+    await new Promise(r => setTimeout(r, 200));
+    expect(await page.locator('[role="listbox"]').count()).toBe(0);
+    expect(await page.locator('.grid-cell.selected').getAttribute('data-col')).toBe('5');
+
+    // Re-select the combo cell, then ArrowLeft moves to column 3
+    await comboCell.click();
+    await new Promise(r => setTimeout(r, 200));
+    await comboBtn.press('ArrowLeft');
+    await new Promise(r => setTimeout(r, 200));
+    expect(await page.locator('[role="listbox"]').count()).toBe(0);
+    expect(await page.locator('.grid-cell.selected').getAttribute('data-col')).toBe('3');
+  });
+
   test('Space focuses Edit input in selected cell', async () => {
     const grid = page.locator('.grid');
     const cells = page.locator('.grid-cell');

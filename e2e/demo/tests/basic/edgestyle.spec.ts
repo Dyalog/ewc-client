@@ -5,7 +5,7 @@ import { navigateToDemo } from '../helpers/navigation';
 const CDP_PORT = parseInt(process.env.CDP_PORT || '8080', 10);
 
 // DemoEdgeStyle covers the rendering of two INDEPENDENT APL properties:
-//   EdgeStyle = Ridge|Groove|Recess|Plinth|Shadow|None
+//   EdgeStyle = Ridge|Groove|Recess|Plinth|Shadow|None|Default
 //   Border    = 0 | 1
 // across all five supported components (Edit, Label, List, Group, SubForm).
 //
@@ -21,7 +21,12 @@ type Row = 'E' | 'L' | 'LST' | 'G' | 'SF';
 async function borderStyleOf(page: Page, id: string): Promise<string> {
   const escaped = id.replace(/\./g, '\\.');
   return page.locator(`#${escaped}`).evaluate((el) => {
-    const target = el.querySelector('input') || el;
+    // Edit carries the border on its <input>; Group draws its frame on an inset
+    // child overlay [data-group-frame]; everything else on the element itself.
+    const target =
+      el.querySelector('input') ||
+      el.querySelector('[data-group-frame]') ||
+      el;
     return getComputedStyle(target as Element).borderStyle;
   });
 }
@@ -89,17 +94,16 @@ test.describe('DemoEdgeStyle', () => {
   }
 
   // ─── EdgeStyle='None' fallback per component ───────────────────────
-  // 'None' is treated as "EdgeStyle absent", so the result is whatever
-  // each component would render with no EdgeStyle set:
+  // 'None' is the explicit "no edge styling / no frame" opt-out:
   //   Edit / Label / SubForm — Border defaults to 0 → no border
-  //   Group                  — Border defaults to 1 → plain solid border
+  //   Group                  — 'None' overrides the etched default → no border (#445)
   //   List                   — no Border default, no EdgeStyle, falls back
   //                            to the focus-aware default (1px solid darkgrey)
   const NONE_FALLBACK: Record<Row, string> = {
     E: 'none',
     L: 'none',
     SF: 'none',
-    G: 'solid',
+    G: 'none',
     LST: 'solid',
   };
 
@@ -111,17 +115,35 @@ test.describe('DemoEdgeStyle', () => {
     });
   }
 
-  // ─── Border-only behaviour ─────────────────────────────────────────
-  // Border=0 → no border; Border=1 → a plain solid border.
+  // ─── EdgeStyle='Default' fallback per component (#445) ──────────────
+  // Per ⎕WC, 'Default' means "no 3-D border on the object itself", so for
+  // border rendering it behaves exactly like 'None' — fall through to Border.
+  // Regression guard: 'Default' previously routed to getEdgeStyleBorder and
+  // rendered NOTHING (the customer's groups using EdgeStyle='Default' came out
+  // borderless). It must now match the per-component 'None' fallback.
   for (const { row, name } of COMPONENTS) {
-    test(`${name} Border=0 has no border`, async () => {
+    const expected = NONE_FALLBACK[row];
+    test(`${name} EdgeStyle="Default" falls back to ${expected} (#445)`, async () => {
+      const style = await borderStyleOf(page, `F1.${row}_Default`);
+      expect(style).toContain(expected);
+    });
+  }
+
+  // ─── Border-only behaviour ─────────────────────────────────────────
+  // Border=0 → no border; Border=1 → a plain solid border — EXCEPT Group,
+  // which always shows its etched frame (default EdgeStyle 'Groove') regardless
+  // of Border, since these cells carry no explicit EdgeStyle. (#445)
+  const B0_EXPECT: Record<Row, string> = { E: 'none', L: 'none', SF: 'none', LST: 'none', G: 'groove' };
+  const B1_EXPECT: Record<Row, string> = { E: 'solid', L: 'solid', SF: 'solid', LST: 'solid', G: 'groove' };
+  for (const { row, name } of COMPONENTS) {
+    test(`${name} Border=0 → ${B0_EXPECT[row]}`, async () => {
       const style = await borderStyleOf(page, `F1.${row}_B0`);
-      expect(style).toContain('none');
+      expect(style).toContain(B0_EXPECT[row]);
     });
 
-    test(`${name} Border=1 draws a solid border`, async () => {
+    test(`${name} Border=1 → ${B1_EXPECT[row]}`, async () => {
       const style = await borderStyleOf(page, `F1.${row}_B1`);
-      expect(style).toContain('solid');
+      expect(style).toContain(B1_EXPECT[row]);
     });
   }
 
@@ -140,6 +162,15 @@ test.describe('DemoEdgeStyle', () => {
   for (const { row, name } of COMPONENTS) {
     test(`${name} Border=1 + EdgeStyle=None still draws a plain border`, async () => {
       const style = await borderStyleOf(page, `F1.${row}_B1None`);
+      expect(style).toContain('solid');
+    });
+  }
+
+  // B=1 + EdgeStyle='Default' must draw a plain border for every component —
+  // the core #445 fix (these were previously borderless).
+  for (const { row, name } of COMPONENTS) {
+    test(`${name} Border=1 + EdgeStyle=Default still draws a plain border (#445)`, async () => {
+      const style = await borderStyleOf(page, `F1.${row}_B1Default`);
       expect(style).toContain('solid');
     });
   }

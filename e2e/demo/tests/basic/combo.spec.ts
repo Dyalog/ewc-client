@@ -17,7 +17,12 @@ test.describe('DemoCombo', () => {
   test.beforeAll(async () => {
     const result = await connectAndFindEWCPage(CDP_PORT);
     browser = result.browser;
-    page = await navigateToDemo(result.page, 'Combo', '[role="combobox"]', 10000);
+    // Wait for a Combo-demo-specific element, NOT a generic [role="combobox"]:
+    // every demo re-adds the menu (itself a combobox), so a generic selector is
+    // satisfied by the menu before this demo's own combos render. Tests then run
+    // against [role="combobox"].first() === the menu and can select a menu item
+    // (navigating away), which is what made the reselection test flaky.
+    page = await navigateToDemo(result.page, 'Combo', '#F1\\.SizeCombo', 10000);
   });
 
   test.beforeEach(async () => {
@@ -77,21 +82,26 @@ test.describe('DemoCombo', () => {
     // Find the SizeCombo and its counter
     const sizeCombo = page.locator('#F1\\.SizeCombo');
     const counter = page.locator('#F1\\.SizeCount');
+    // Scope option clicks to THIS combo's own portalled listbox. A page-wide
+    // [role="option"] selector can match another open dropdown (e.g. the demo
+    // menu), and a rapid reselect then clicks the wrong option and navigates
+    // away — the source of this test's flakiness.
+    const sizeOptions = page.locator('#F1\\.SizeCombo-listbox [role="option"]');
 
     const initialCount = parseInt(await counter.textContent() || '0');
 
     // Get current selection
-    const currentText = await sizeCombo.textContent();
+    const currentText = (await sizeCombo.textContent())?.trim();
 
-    // Reselect same item 3 times
-    for (let i = 0; i < 3; i++) {
+    // Reselect the SAME item 3 times — each reselect must still fire a Change
+    // event, so the counter increments every time. Wait for the count to
+    // advance after each click (web-first assertion, auto-retried) rather than
+    // a fixed delay, so the server round-trip can't race the next reselect.
+    for (let i = 1; i <= 3; i++) {
       await sizeCombo.click();
-      await page.locator('[role="option"]').filter({ hasText: currentText! }).click();
-      await page.waitForTimeout(50);
+      await sizeOptions.filter({ hasText: currentText! }).first().click();
+      await expect(counter).toHaveText(String(initialCount + i));
     }
-
-    const finalCount = parseInt(await counter.textContent() || '0');
-    expect(finalCount).toBe(initialCount + 3);
   });
 
   // ─────────────────────────────────────────────────────────────

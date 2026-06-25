@@ -11,16 +11,7 @@ import {
   rgbColor,
 } from "../../utils";
 import { useAppData } from "../../hooks";
-import { useState } from "react";
 import * as Globals from "../../Globals";
-
-function useForceRerender() {
-  const [_state, setState] = useState(true);
-  const reRender = () => {
-    setState((prev) => !prev);
-  };
-  return { reRender };
-}
 
 const getNestingLevel = (array) => {
   if (!Array.isArray(array)) {
@@ -112,7 +103,13 @@ const Text = ({ data, fontProperties }) => {
       <div
         id={data?.ID}
         style={{
+          // Anchor the wrapper at the parent's origin so each line's Points
+          // (which the app sends parent-relative — e.g. a group-child label at
+          // [[14],[8]]) position deterministically, rather than drifting with
+          // the wrapper's static/flow position. (#445)
           position: "absolute",
+          top: 0,
+          left: 0,
           display: Visible == 0 ? "none" : "block",
         }}
       >
@@ -134,16 +131,18 @@ const Text = ({ data, fontProperties }) => {
             : `${12 * fontScale}px`;
 
           // Check if FCol is a single color [R,G,B] or array of colors [[R,G,B], [R,G,B], ...]
+          // A separator-split Text (⎕UCS 8743) renders as multiple lines, but the color
+          // may be given as a single color or an array shorter than the line count; clamp
+          // the index so trailing lines reuse the last color instead of falling back to
+          // black (rgbColor returns null for an out-of-bounds undefined). (#440)
           const isFColArray = FCol && Array.isArray(FCol[0]);
-          const textColor = FCol
-            ? rgbColor(isFColArray ? FCol[index] : FCol)
-            : "black";
+          const fcolForLine = isFColArray ? FCol[Math.min(index, FCol.length - 1)] : FCol;
+          const textColor = fcolForLine ? rgbColor(fcolForLine) ?? "black" : "black";
 
           // Check if BCol is a single color [R,G,B] or array of colors [[R,G,B], [R,G,B], ...]
           const isBColArray = BCol && Array.isArray(BCol[0]);
-          const bgColor = BCol
-            ? rgbColor(isBColArray ? BCol[index] : BCol)
-            : "transparent";
+          const bcolForLine = isBColArray ? BCol[Math.min(index, BCol.length - 1)] : BCol;
+          const bgColor = bcolForLine ? rgbColor(bcolForLine) ?? "transparent" : "transparent";
 
           const fontStyle = fontProperties?.Italic == 1 ? "italic" : "normal";
           const fontWeight = fontProperties?.Weight || "normal";

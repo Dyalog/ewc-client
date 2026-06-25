@@ -188,7 +188,9 @@ const Combo = ({ data, value }) => {
     reRender();
   }, [dimensions]);
 
-  // Click-outside detection to close dropdown
+  // Close dropdown on outside click, or when the USER scrolls (the dropdown is
+  // portalled and position:fixed, so a page scroll would otherwise leave it
+  // floating detached from its trigger — native <select> collapses on scroll).
   useEffect(() => {
     const handleClickOutside = (event) => {
       const inTrigger = dropdownRef.current?.contains(event.target);
@@ -198,11 +200,33 @@ const Combo = ({ data, value }) => {
         setHighlightedIndex(-1);
       }
     };
+    // Listen for the user's scroll GESTURE (wheel/touch), NOT the generic
+    // 'scroll' event. Opening the dropdown programmatically scrolls things —
+    // clicking/focusing the trigger nudges its scroll-parent (e.g. a Grid cell
+    // scrolls a pixel to reveal it) and scrollIntoView reveals the highlighted
+    // option — and a generic 'scroll' listener can't tell those apart from a
+    // user scroll, so it slammed the dropdown shut the instant it opened.
+    // wheel/touchmove fire only on real user input, so the dropdown survives
+    // its own opening while still closing when the user actually scrolls away.
+    const handleUserScroll = (event) => {
+      // Allow scrolling the dropdown's own (long) list; close on any other scroll.
+      if (portalRef.current?.contains(event.target)) return;
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    };
     if (isOpen) {
       // Use capture phase so we see the event before any stopPropagation
       // in other Combos' bubble-phase handlers — ensures only one is open.
       document.addEventListener('mousedown', handleClickOutside, true);
-      return () => document.removeEventListener('mousedown', handleClickOutside, true);
+      // Capture so gestures over ANY ancestor scroll container (form, grid,
+      // page) are caught — these events don't usefully bubble to window.
+      window.addEventListener('wheel', handleUserScroll, { capture: true, passive: true });
+      window.addEventListener('touchmove', handleUserScroll, { capture: true, passive: true });
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside, true);
+        window.removeEventListener('wheel', handleUserScroll, true);
+        window.removeEventListener('touchmove', handleUserScroll, true);
+      };
     }
   }, [isOpen]);
 
@@ -229,8 +253,12 @@ const Combo = ({ data, value }) => {
   const toggleDropdown = useCallback((e) => {
     e?.stopPropagation();
     setIsOpen(prev => !prev);
-    // Ensure button keeps focus for keyboard events
-    triggerRef.current?.focus();
+    // Ensure button keeps focus for keyboard events. preventScroll matters in a
+    // Grid: focusing a combo embedded in a scrollable cell would otherwise
+    // scroll the cell into view, and that scroll fires the close-on-scroll
+    // handler below — collapsing the dropdown the instant it opens (this is why
+    // Grid "Space opens Combo dropdown" failed while a mouse click worked).
+    triggerRef.current?.focus({ preventScroll: true });
   }, []);
 
   // Handle option click - fires event EVERY time including reselect
@@ -261,26 +289,32 @@ const Combo = ({ data, value }) => {
       ? Rows * itemHeight
       : (Items?.length || 1) * itemHeight;
 
-    // Constrain to the containing Form rather than the full viewport,
-    // so the dropdown doesn't overflow the form's visible area.
-    const parentId = extractStringUntilLastPeriod(data?.ID);
-    const formEl = document.getElementById(parentId);
-    const container = formEl ? formEl.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-
-    const spaceBelow = container.bottom - rect.bottom - margin;
-    const spaceAbove = rect.top - container.top - margin;
+    // Measure against the viewport, not the containing Form: in Browser mode
+    // the Form rarely fills the window, so constraining the dropdown to the
+    // Form's height needlessly clips it (a combo in a small SubForm or a
+    // one-row grid had almost no room). Harmless on Desktop, where the Form
+    // fills the window anyway. (#459)
+    // Use documentElement.clientHeight (excludes scrollbars) rather than
+    // window.innerHeight, so it matches the position:fixed containing block —
+    // otherwise a horizontal scrollbar leaves a gap when rendering above.
+    const viewportHeight = document.documentElement.clientHeight;
+    const spaceBelow = viewportHeight - rect.bottom - margin;
+    const spaceAbove = rect.top - margin;
 
     // Determine if dropdown should appear above or below
     const showAbove = spaceBelow < contentHeight && spaceAbove > spaceBelow;
-    // Fit content or fill available space, whichever is smaller
-    const maxHeight = Math.min(contentHeight, showAbove ? spaceAbove : spaceBelow);
+    // Cap at the available space only — let the list size to its REAL content.
+    // The itemHeight estimate undercounts the rendered row height, so capping
+    // maxHeight to contentHeight showed a scrollbar even when every item would
+    // fit (e.g. a 2-item "Last/First" combo).
+    const maxHeight = showAbove ? spaceAbove : spaceBelow;
 
       // Always use fixed positioning so the dropdown escapes any
       // ancestor overflow:clip/hidden (e.g. SubForm's overflow:"clip").
     return {
       position: 'fixed',
       top: showAbove ? 'auto' : rect.bottom,
-      bottom: showAbove ? (window.innerHeight - rect.top) : 'auto',
+      bottom: showAbove ? (viewportHeight - rect.top) : 'auto',
       left: rect.left,
       width: rect.width,
       maxHeight,
@@ -289,6 +323,15 @@ const Combo = ({ data, value }) => {
   }, [Rows, Items]);
 
   const handleKeyPress = (e) => {
+    // In a Grid, a CLOSED combo must not trap horizontal cell navigation:
+    // Left/Right have no meaning for the combo itself, so let them bubble to the
+    // Grid's keydown handler, which moves CurCell and refocuses the grid (its
+    // curCell effect blurs this trigger). Mirrors Edit, which lets boundary
+    // Left/Right bubble for the same Excel-style cell movement. Returning before
+    // stopPropagation is what frees the event to reach the grid.
+    if (isInGrid && !isOpen && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      return;
+    }
     e.stopPropagation();
     handleKeyPressUtils(e, socket, Event, data?.ID);
 
@@ -479,7 +522,20 @@ const Combo = ({ data, value }) => {
             top: 0,
             left: 0,
             width: '100%',
-            height: '100%',
+            // Standalone: size to the button's own content (font height), NOT
+            // the wrapper's. GAMA sends inconsistent combo Size heights (16 vs
+            // 24); native ⎕WC ignores them and snaps to a uniform font-based
+            // height, so content-sizing the trigger gives the same uniform
+            // result. In a Grid, though, the cell height IS authoritative: fill
+            // it so the trigger's border aligns with the cell gridline instead
+            // of overshooting (content height > row height) and getting clipped.
+            height: isInGrid ? '100%' : 'auto',
+            // In a Grid, vertically centre the value the way a plain cell's
+            // text is centred (the cell uses line-height to centre in the row).
+            // A block button with line-height:normal top-anchors its single
+            // line, leaving the combo text sitting ~2px below the neighbouring
+            // cells' text; flex centring lines them up at any row height.
+            ...(isInGrid ? { display: 'flex', alignItems: 'center' } : {}),
             border: '1px solid #6A6A6A',
             borderRadius: 0,
             padding: '0 20px 0 4px',
@@ -496,7 +552,16 @@ const Combo = ({ data, value }) => {
             ...fontStyles
           }}
         >
-          {value || comboInput || ''}
+          {/* In a Grid the button is a flex container (for vertical centring),
+              so the value lives in a flex item that still truncates with an
+              ellipsis. Standalone keeps the bare text node, unchanged. */}
+          {isInGrid ? (
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {value || comboInput || ''}
+            </span>
+          ) : (
+            value || comboInput || ''
+          )}
           {/* Dropdown arrow */}
           <span
             style={{

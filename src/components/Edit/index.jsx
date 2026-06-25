@@ -714,13 +714,16 @@ const Edit = ({
   if (FieldType == "LongNumeric" || FieldType == "Numeric") {
     // Inside Grid: plain input (not NumericFormat) so ⎕FMT strings survive.
     // inputValue holds raw value while editing, formatted string otherwise.
-    if (isInGrid) {
+    // Plain right-aligned <input> for Numeric (and all grid numerics). The
+    // NumericFormat "currency" component is the wrong tool for plain integers
+    // and clipped them vertically — reserve it for LongNumeric (thousands seps).
+    if (isInGrid || FieldType === "Numeric") {
       return (
         <input
           id={data?.ID}
           ref={inputRef}
           value={inputValue}
-          readOnly={!isEditing}
+          readOnly={isInGrid && !isEditing}
           onChange={(e) => {
             // Local-only; commit via handleBlur. Never write data.Properties
             // (shared column template). ¯→'-' conversion is in handleBlur.
@@ -732,8 +735,15 @@ const Edit = ({
             width: !Size ? "100%" : Size[1],
             zIndex: 1,
             display: Visible == 0 ? "none" : "block",
-            border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle',
             textAlign: "right",
+            ...(isInGrid
+              ? { border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle' }
+              : {
+                  borderRadius: "2px",
+                  paddingRight: "2px",
+                  ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
+                  ...(isFocused ? { borderBottom: '2px solid blue' } : {}),
+                }),
             ...customStyles,
             ...fontStyles,
           }}
@@ -769,12 +779,9 @@ const Edit = ({
           ...(isInGrid
             ? { border: 0, outline: 0, background: 'transparent', padding: '0 4px', verticalAlign: 'middle' }
             : {
-              ...(EdgeStyle
-                ? getEdgeStyleBorder(EdgeStyle)
-                : { border: Border && Border == "1" ? "1px solid #6A6A6A" : "none" }),
-              verticalAlign: "text-top",
-              paddingBottom: "6px",
+              borderRadius: "2px",
               paddingRight: "2px",
+              ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
               // Focus underline — placed after getBorderStyles so borderBottom wins.
               ...(isFocused ? { borderBottom: '2px solid blue' } : {}),
             }),
