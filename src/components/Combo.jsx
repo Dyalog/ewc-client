@@ -253,8 +253,12 @@ const Combo = ({ data, value }) => {
   const toggleDropdown = useCallback((e) => {
     e?.stopPropagation();
     setIsOpen(prev => !prev);
-    // Ensure button keeps focus for keyboard events
-    triggerRef.current?.focus();
+    // Ensure button keeps focus for keyboard events. preventScroll matters in a
+    // Grid: focusing a combo embedded in a scrollable cell would otherwise
+    // scroll the cell into view, and that scroll fires the close-on-scroll
+    // handler below — collapsing the dropdown the instant it opens (this is why
+    // Grid "Space opens Combo dropdown" failed while a mouse click worked).
+    triggerRef.current?.focus({ preventScroll: true });
   }, []);
 
   // Handle option click - fires event EVERY time including reselect
