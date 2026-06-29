@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Icons } from '../../common';
 import './ScrollBar.css';
 import { useAppData } from '../../hooks';
@@ -11,7 +11,6 @@ import {
   handleMouseMove,
   handleMouseUp,
   handleMouseWheel,
-  parseFlexStyles
 } from '../../utils';
 import { thumbValueInRange } from './clamp';
 
@@ -19,184 +18,51 @@ const arrowButtonSize = 20;
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, CSS, Thumb, TabIndex } = data?.Properties;
-  const rangedThumb = thumbValueInRange(Thumb, Range)
+  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, Thumb, TabIndex } = data?.Properties || {};
+  const rangedThumb = thumbValueInRange(Thumb, Range);
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(rangedThumb);
   const [tempScaledValue, setTempScaledValue] = useState(rangedThumb);
-  const customStyles = parseFlexStyles(CSS);
   const [showButtons, setShowButtons] = useState(false);
   const emitEvent = Event && Event[0];
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
-  const { socket, handleData, proceed,
-    setProceed,
-    proceedEventArray,
-    setProceedEventArray, nqEvents, setNqEvents } = useAppData();
+  const { socket, handleData, setProceed, proceedEventArray, setProceedEventArray, nqEvents } = useAppData();
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   const maxValue = Range;
+  const keyPressEventId = localStorage.getItem('keyPressEventId');
 
+  const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
+  const trackWidth = !Size ? parentSize && parentSize[1] - arrowButtonSize : Size && Size[1];
 
-//   console.log("300 thumb", data, Thumb, scaledValue)
-//   console.log("300 here", proceedEventArray, nqEvents)
-  // useEffect(() => {
-  //   if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]  || proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]==0 ) {
-  //     const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  //     const eventId = crypto.randomUUID()
-  //     if (curCell) {
-  //       const { Info, ID } = curCell
-  //       handleData(
-  //         {
-  //           ID: curCell.ID,
-  //           Properties: {
-  //             CurCell: [Info[0], Info[1]],
-  //           },
-  //         },
-  //         'WS'
+  // The thumb travels between 0 and maxThumbPosition. Guard against tracks
+  // smaller than the arrow buttons + slack (or an unsized track that resolves
+  // to null/NaN): a non-positive maxThumbPosition would divide-by-zero in the
+  // drag/track-click value math and push the thumb off the track.
+  const rawMaxThumbPosition = (isHorizontal ? trackWidth : trackHeight) - arrowButtonSize * 2 - 40;
+  const maxThumbPosition = Math.max(1, Number.isFinite(rawMaxThumbPosition) ? rawMaxThumbPosition : 1);
 
-  //       );
-  //       socket.send(
-  //         JSON.stringify({
-  //           Event: {
-  //             EventName: 'CellMove',
-  //             EventID: eventId,
-  //             ID,
-  //             Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-  //           },
-  //         })
-  //       );
-  //     }
-  //     nqEvents.shift()
-  //     setScaledValue(tempScaledValue)
-  //     const newPosition = calculateThumbPosition(rangedThumb);
-  //     setThumbPosition(newPosition);
-  //     updateThumbPosition(newPosition + arrowButtonSize);
-  //     setProceed(false);
-  //     setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
-  //   }
-  //   // else 
-  //   // if (proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"]) {
-  //   //   const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
-  //   //   const eventId = crypto.randomUUID()
-  //   //   // if (curCell) {
-  //   //   //   const { Info, ID } = curCell
-  //   //   //   handleData(
-  //   //   //     {
-  //   //   //       ID: curCell.ID,
-  //   //   //       Properties: {
-  //   //   //         CurCell: [Info[0], Info[1]],
-  //   //   //       },
-  //   //   //     },
-  //   //   //     'WS'
+  const calculateThumbPosition = (value) => (value / maxValue) * maxThumbPosition;
+  const [thumbPosition, setThumbPosition] = useState(calculateThumbPosition(scaledValue));
 
-  //   //   //   );
-  //   //   //   socket.send(
-  //   //   //     JSON.stringify({
-  //   //   //       Event: {
-  //   //   //         EventName: 'CellMove',
-  //   //   //         EventID: eventId,
-  //   //   //         ID,
-  //   //   //         Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-  //   //   //       },
-  //   //   //     })
-  //   //   //   );
-  //   //   // }
-  //   //   nqEvents.shift()
-  //   //   setScaledValue(tempScaledValue)
-  //   //   const newPosition = calculateThumbPosition(rangedThumb);
-  //   //   setThumbPosition(newPosition);
-  //   //   updateThumbPosition(newPosition + arrowButtonSize);
-  //   //   setProceed(false);
-  //   //   // setProceedEventArray((prev) => ({ ...prev, [localStorage.getItem("keyPressEventId") + "ArrowClick"]: 0 }));
-  //   // }
-  //   // else if(proceedEventArray[localStorage.getItem("keyPressEventId") + "ArrowClick"] == 0) {
-  //   //   console.log("300 proceed",nqEvents, scaledValue )
-  //   //   // socket.send(
-  //   //   //   JSON.stringify({
-  //   //   //     Event: {
-  //   //   //       EventName: 'Scroll',
-  //   //   //       ID: data?.ID,
-  //   //   //       Info: [ -2,
-  //   //   //         Math.round(scaledValue)],
-  //   //   //       },
-  //   //   //     })
-  //   //   //   );
-  //   //   //   handleData(
-  //   //   //     { ID: "F1.LEFTRIGHT", Properties: { Thumb: scaledValue-1} },
-  //   //   //     'WS'
-  //   //   //   );
-  //   //   if (!nqEvents.length) return
-  //   //   const { ID, Info } = nqEvents.shift()
-  //   //   socket.send(
-  //   //     JSON.stringify({
-  //   //       Event: {
-  //   //         EventName: 'CellMove',
-  //   //         EventID: eventId,
-  //   //         ID,
-  //   //         Info: [Info[0], Info[1], 0, 0, Info[2], 0, ""]
-  //   //       },
-  //   //     })
-  //   //   );      
-  //   // }
-  // }, [Object.keys(proceedEventArray).length])
-
-  const keyPressEventId = localStorage.getItem("keyPressEventId");
-
-  // useEffect(() => {
-  //   const key = keyPressEventId + "ArrowClick";
-  //   if (proceedEventArray[key] || proceedEventArray[key] === 0) {
-  //     const curCell = JSON.parse(localStorage.getItem("nqCurCell"));
-  //     const eventId = crypto.randomUUID();
-
-  //     if (nqEvents.length) {
-  //       const { Info, ID } = nqEvents.shift();
-  //       handleData(
-  //         {
-  //           ID: curCell.ID,
-  //           Properties: {
-  //             CurCell: [Info[0], Info[1]],
-  //           },
-  //         },
-  //         'WS'
-  //       );
-  //       socket.send(
-  //         JSON.stringify({
-  //           Event: {
-  //             EventName: 'CellMove',
-  //             EventID: eventId,
-  //             ID,
-  //             Info: Info
-  //           },
-  //         })
-  //       );
-  //     }
-  //     setScaledValue(rangedThumb);
-  //     const newPosition = calculateThumbPosition(rangedThumb);
-  //     setThumbPosition(newPosition);
-  //     updateThumbPosition(newPosition + arrowButtonSize);
-  //     setProceed(false);
-  //     setProceedEventArray((prev) => ({ ...prev, [key]: 0 }));
-  //   }
-  // }, [proceedEventArray[keyPressEventId + "ArrowClick"]]);
-
-
+  const updateThumbPosition = (newPosition) => {
+    if (thumbRef.current) {
+      thumbRef.current.style[isHorizontal ? 'left' : 'top'] = `${newPosition}px`;
+    }
+  };
 
   useEffect(() => {
-    const key = keyPressEventId + "ArrowClick";
+    const key = keyPressEventId + 'ArrowClick';
     if (proceedEventArray[key] || proceedEventArray[key] === 0) {
       const eventId = crypto.randomUUID();
       if (nqEvents.length) {
         const { Info, ID } = nqEvents.shift();
-        // const newCurCell = { Info, ID };
-        // localStorage.setItem("nqCurCell", JSON.stringify(newCurCell));
-        // setCurCell(newCurCell);
-
-        localStorage.setItem("current-event", "CellMove");
-        localStorage.setItem("keyPressEventId", eventId);
+        localStorage.setItem('current-event', 'CellMove');
+        localStorage.setItem('keyPressEventId', eventId);
         socket.send(
           JSON.stringify({
             Event: {
-              EventName: "CellMove",
+              EventName: 'CellMove',
               EventID: eventId,
               ID,
               Info: Info,
@@ -211,14 +77,13 @@ const ScrollBar = ({ data }) => {
       setProceed(false);
       setProceedEventArray((prev) => ({ ...prev, [key]: 0 }));
     }
-  }, [proceedEventArray[keyPressEventId + "ArrowClick"]]);
+  }, [proceedEventArray[keyPressEventId + 'ArrowClick']]);
 
-  const curCell = JSON.parse(localStorage.getItem("nqCurCell"))
+  const curCell = JSON.parse(localStorage.getItem('nqCurCell'));
   useEffect(() => {
-    const key = keyPressEventId + "CellMove";
+    const key = keyPressEventId + 'CellMove';
     if (proceedEventArray[key] || proceedEventArray[key] === 0) {
       if (curCell) {
-//         console.log("Inside curCell", key);
         const { Info, ID } = curCell;
         handleData(
           {
@@ -227,22 +92,11 @@ const ScrollBar = ({ data }) => {
               CurCell: [Info[0], Info[1]],
             },
           },
-          "WS"
+          'WS'
         );
       }
     }
-  }, [proceedEventArray[keyPressEventId + "CellMove"], rangedThumb]);
-
-
-  const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
-  const trackWidth = !Size ? parentSize && parentSize[1] - arrowButtonSize : Size && Size[1];
-
-  const maxThumbPosition = isHorizontal
-    ? trackWidth - arrowButtonSize * 2 - 40
-    : trackHeight - arrowButtonSize * 2 - 40;
-
-  const calculateThumbPosition = (value) => (value / maxValue) * maxThumbPosition;
-  const [thumbPosition, setThumbPosition] = useState(calculateThumbPosition(scaledValue));
+  }, [proceedEventArray[keyPressEventId + 'CellMove'], rangedThumb]);
 
   const handleTrackMouseEnter = (e) => {
     setShowButtons(true);
@@ -254,18 +108,11 @@ const ScrollBar = ({ data }) => {
     handleMouseLeave(e, socket, Event, data?.ID);
   };
 
-  const updateThumbPosition = (newPosition) => {
-    if (thumbRef.current) {
-      thumbRef.current.style[isHorizontal ? 'left' : 'top'] = `${newPosition}px`;
-    }
-  };
-
   const handleThumbDrag = (event) => {
     event.preventDefault();
     event.stopPropagation();
 
     const startPosition = isHorizontal ? event.clientX : event.clientY;
-    const thumbStyleProp = isHorizontal ? 'left' : 'top';
     const initialThumbPosition = thumbPosition;
     let newThumbPosition = initialThumbPosition;
 
@@ -281,8 +128,7 @@ const ScrollBar = ({ data }) => {
       // snaps into place only on release when the server pushes Thumb back.
       updateThumbPosition(newThumbPosition + arrowButtonSize);
       const newScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
-      // setScaledValue(newScaledValue);
-      setTempScaledValue(newScaledValue)
+      setTempScaledValue(newScaledValue);
     };
 
     const handleMouseUpEvent = () => {
@@ -290,19 +136,13 @@ const ScrollBar = ({ data }) => {
       window.removeEventListener('mouseup', handleMouseUpEvent);
 
       const finalScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
-      // Clamp the emitted position to the valid [1, Range] (was `|| 1`, which
-      // only guarded the floor, not the ceiling).
+      // Clamp the emitted position to the valid [1, Range].
       const roundedScaledValue = thumbValueInRange(Math.round(finalScaledValue), maxValue);
       setThumbPosition(newThumbPosition);
 
-      // handleData(
-      //   { ID: data?.ID, Properties: { Thumb: roundedScaledValue } },
-      //   'WS'
-      // );
-
       const eventId = crypto.randomUUID();
-      localStorage.setItem("current-event", "ArrowClick")
-      localStorage.setItem("keyPressEventId", eventId)
+      localStorage.setItem('current-event', 'ArrowClick');
+      localStorage.setItem('keyPressEventId', eventId);
       const scrollEvent = JSON.stringify({
         Event: {
           EventName: 'Scroll',
@@ -340,11 +180,6 @@ const ScrollBar = ({ data }) => {
         ? event.clientX - trackRect.left
         : event.clientY - trackRect.top;
 
-      // const maxThumbPosition = isHorizontal
-      //   ? trackWidth - 50
-      //   : trackHeight - 100;
-//       console.log("temp scled value si as",tempScaledValue)
-
       const prevValue = tempScaledValue;
 
       const newThumbPosition = Math.max(
@@ -353,25 +188,16 @@ const ScrollBar = ({ data }) => {
       );
 
       // Map the click pixel position back to a value (inverse of
-      // calculateThumbPosition) and clamp to the valid [1, Range]. Previously
-      // this was `lastValue + 10`, which ignored where you clicked and never
-      // clamped — so a far-track click could emit 0 (below the min of 1).
+      // calculateThumbPosition) and clamp to the valid [1, Range].
       const newScaledValue = thumbValueInRange(
         Math.round((newThumbPosition / maxThumbPosition) * maxValue),
         maxValue
       );
-      setTempScaledValue(newScaledValue)
-      // if (thumbRef.current) {
-      //   thumbRef.current.style[
-      //     isHorizontal ? "left" : "top"
-      //   ] = `${newThumbPosition}px`;
-      // }
+      setTempScaledValue(newScaledValue);
 
       const eventId = crypto.randomUUID();
-
-
-      localStorage.setItem("current-event", "ArrowClick")
-      localStorage.setItem("keyPressEventId", eventId)
+      localStorage.setItem('current-event', 'ArrowClick');
+      localStorage.setItem('keyPressEventId', eventId);
 
       if (data?.Properties?.Step) {
         const scrollEvent = JSON.stringify({
@@ -386,15 +212,11 @@ const ScrollBar = ({ data }) => {
           },
         });
 
-        const exists = Event && Event.some((item) => item[0] === "Scroll");
+        const exists = Event && Event.some((item) => item[0] === 'Scroll');
         if (exists) {
           socket.send(scrollEvent);
         }
-
-
-      }
-      else {
-//         console.log("Soxket send value is as2", newScaledValue)
+      } else {
         const scrollEvent = JSON.stringify({
           Event: {
             EventName: emitEvent && emitEvent[0],
@@ -407,60 +229,19 @@ const ScrollBar = ({ data }) => {
           },
         });
 
-        const exists = Event && Event.some((item) => item[0] === "Scroll");
+        const exists = Event && Event.some((item) => item[0] === 'Scroll');
         if (exists) {
-//           console.log("Soxket send value is as1", scrollEvent)
           socket.send(scrollEvent);
         }
       }
-
-//       console.log("Event", scrollEvent);
-      // localStorage.setItem(data.ID, scrollEvent);
-
-      // handleData(
-      //   {
-      //     ID: data?.ID,
-      //     Properties: { Thumb: Math.round(newScaledValue) || 1 },
-      //   },
-      //   "WS"
-      // );
-
-
-      // }
     }
   };
 
   const incrementScale = () => {
     const newScaledValue = scaledValue + 1;
     if (newScaledValue <= maxValue) {
-      setTempScaledValue(newScaledValue)
-      // setScaledValue(newScaledValue);
+      setTempScaledValue(newScaledValue);
       const eventId = crypto.randomUUID();
-//       console.log(
-//         'Event',
-//         JSON.stringify({
-//           Event: {
-//             EventName: emitEvent && emitEvent[0],
-//             ID: data?.ID,
-//             Info: [1, Math.round(newScaledValue)],
-//           },
-//         })
-//       );
-
-      // console.log("horizontal increment")
-      // handleData({ ID: data?.ID, Properties: { Thumb: Math.round(newScaledValue) } }, 'WS')
-
-      // localStorage.setItem(
-      //   data.ID,
-      //   JSON.stringify({
-      //     Event: {
-      //       EventName: emitEvent && emitEvent[0],
-      //       ID: data?.ID,
-      //       Info: [1, Math.round(newScaledValue)],
-      //     },
-      //   })
-      // );
-
 
       if (isHorizontal) {
         localStorage.setItem(
@@ -479,8 +260,8 @@ const ScrollBar = ({ data }) => {
           })
         );
       }
-      localStorage.setItem("current-event", "ArrowClick")
-      localStorage.setItem("keyPressEventId", eventId)
+      localStorage.setItem('current-event', 'ArrowClick');
+      localStorage.setItem('keyPressEventId', eventId);
 
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
@@ -501,17 +282,7 @@ const ScrollBar = ({ data }) => {
   const decrementScale = () => {
     const newScaledValue = scaledValue - 1;
     if (newScaledValue >= 1) {
-      // setScaledValue(newScaledValue);
-      setTempScaledValue(newScaledValue)
-//       console.log(
-//         JSON.stringify({
-//           Event: {
-//             EventName: emitEvent && emitEvent[0],
-//             ID: data?.ID,
-//             Info: [-1, Math.round(newScaledValue)],
-//           },
-//         })
-//       );
+      setTempScaledValue(newScaledValue);
 
       localStorage.setItem(
         data.ID,
@@ -542,8 +313,8 @@ const ScrollBar = ({ data }) => {
         );
       }
       const eventId = crypto.randomUUID();
-      localStorage.setItem("current-event", "ArrowClick")
-      localStorage.setItem("keyPressEventId", eventId)
+      localStorage.setItem('current-event', 'ArrowClick');
+      localStorage.setItem('keyPressEventId', eventId);
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
       socket.send(
@@ -559,40 +330,23 @@ const ScrollBar = ({ data }) => {
     }
   };
 
+  // One-time init of the scroll bookkeeping in localStorage.
   useEffect(() => {
-    if (isHorizontal) {
-      localStorage.setItem(
-        'horizontalScroll',
-        JSON.stringify({ oldValue: rangedThumb, newValue: rangedThumb })
-      );
-    } else {
-      localStorage.setItem(
-        'verticalScroll',
-        JSON.stringify({ oldValue: rangedThumb, newValue: rangedThumb })
-      );
-    }
+    const scroll = JSON.stringify({ oldValue: rangedThumb, newValue: rangedThumb });
+    localStorage.setItem(isHorizontal ? 'horizontalScroll' : 'verticalScroll', scroll);
   }, []);
 
-  // useEffect(() => {
-  //   setScaledValue((prevValue) => Math.min(Thumb, maxValue));
-  //   handleData(
-  //     { ID: data?.ID, Properties: { Thumb: rangedThumb } },
-  //     'WS'
-  //   );
-
-  // }, [Thumb]);
+  // The server pushes a new Thumb whenever the grid's current cell moves
+  // (CBUpdateScroll's UPDATETHUMBS). Reposition the thumb so it tracks the
+  // cell — without this the thumb stays frozen at its mount position. Sync both
+  // value states so the +/- buttons (scaledValue) and drag/track-click
+  // (tempScaledValue) start from the same server-confirmed position.
   useEffect(() => {
-    // The server pushes a new Thumb whenever the grid's current cell moves
-    // (CBUpdateScroll's UPDATETHUMBS). Reposition the thumb so it tracks the
-    // cell — without this the thumb stays frozen at its mount position.
     const newPosition = calculateThumbPosition(rangedThumb);
     setThumbPosition(newPosition);
     updateThumbPosition(newPosition + arrowButtonSize);
     setScaledValue(rangedThumb);
-    handleData(
-      { ID: data?.ID, Properties: { Thumb: rangedThumb } },
-      'WS'
-    );
+    setTempScaledValue(rangedThumb);
   }, [Thumb]);
 
   const calculateAttachStyle = () => {
@@ -620,7 +374,6 @@ const ScrollBar = ({ data }) => {
 
     return attachStyle;
   };
-
 
   const attachStyle = calculateAttachStyle();
 
@@ -681,13 +434,10 @@ const ScrollBar = ({ data }) => {
       onDoubleClick={(e) => {
         handleMouseDoubleClick(e, socket, Event, data?.ID);
       }}
-
       onKeyDown={(e) => {
         handleKeyPressUtils(e, socket, Event, data?.ID);
       }}
-
       style={isHorizontal ? horizontalPosition : verticalPosition}
-
     >
       <div>
         {isHorizontal && showButtons ? (
@@ -736,7 +486,7 @@ const ScrollBar = ({ data }) => {
             style={thumbStyle}
             ref={thumbRef}
             onMouseDown={handleThumbDrag}
-            onKeyDown={() => handleKeyPressUtils(e, socket, Event, data?.ID)}
+            onKeyDown={(e) => handleKeyPressUtils(e, socket, Event, data?.ID)}
           ></div>
         </div>
       </div>
