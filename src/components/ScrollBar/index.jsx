@@ -275,7 +275,11 @@ const ScrollBar = ({ data }) => {
       newThumbPosition = initialThumbPosition + delta;
       newThumbPosition = Math.max(0, Math.min(maxThumbPosition, newThumbPosition));
 
-      updateThumbPosition(newThumbPosition);
+      // The rendered thumb sits at `thumbPosition + arrowButtonSize` (see
+      // thumbStyle and the [Thumb]/arrow effects), so the live drag must add
+      // the same offset — otherwise the thumb lags the cursor by 20px and
+      // snaps into place only on release when the server pushes Thumb back.
+      updateThumbPosition(newThumbPosition + arrowButtonSize);
       const newScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
       // setScaledValue(newScaledValue);
       setTempScaledValue(newScaledValue)
@@ -578,10 +582,13 @@ const ScrollBar = ({ data }) => {
 
   // }, [Thumb]);
   useEffect(() => {
+    // The server pushes a new Thumb whenever the grid's current cell moves
+    // (CBUpdateScroll's UPDATETHUMBS). Reposition the thumb so it tracks the
+    // cell — without this the thumb stays frozen at its mount position.
     const newPosition = calculateThumbPosition(rangedThumb);
-    // setThumbPosition(newPosition); // Update thumb position state
-    // updateThumbPosition(newPosition + arrowButtonSize); // Update thumb position in UI
-    setScaledValue(Math.min(Thumb, maxValue));
+    setThumbPosition(newPosition);
+    updateThumbPosition(newPosition + arrowButtonSize);
+    setScaledValue(rangedThumb);
     handleData(
       { ID: data?.ID, Properties: { Thumb: rangedThumb } },
       'WS'
