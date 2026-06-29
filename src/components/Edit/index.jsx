@@ -13,6 +13,7 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
   getFontStyles,
+  keyShiftState,
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -407,15 +408,12 @@ const Edit = ({
         });
       },
     };
-    const isAltPressed = e.altKey ? 4 : 0;
-    const isCtrlPressed = e.ctrlKey ? 2 : 0;
-    const isShiftPressed = e.shiftKey ? 1 : 0;
     // Character code [4] of the Dyalog KeyPress event: the Unicode code point of
     // the character entered, or 0 when the key resolves to no character (e.g.
     // Cursor Up => 0, per the object-reference KeyPress doc). Named keys => 0;
     // the server (processEvent.aplf) refines Enter/Tab/Backspace to 13/9/8.
     const charCode = e.key.length === 1 ? e.key.charCodeAt(0) : 0;
-    let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+    const shiftState = keyShiftState(e);
 
 //     console.log(
 //       JSON.stringify({

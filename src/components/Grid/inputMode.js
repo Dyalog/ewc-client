@@ -1,3 +1,5 @@
+import { keyShiftState } from "../../utils/keyShiftState";
+
 // Pure helpers for the Grid's InputMode (a Grid property — not Edit/Combo). Kept
 // in their own module so the mode state-machine can be unit-tested without pulling
 // in the Grid component (and its CSS / React tree). Mirrors ScrollBar/clamp.js.
@@ -32,9 +34,7 @@ export const toggleMode = (effective) =>
 export const matchesInputModeKey = (event, key) => {
   if (Array.isArray(key)) {
     const wantShift = key[1] || 0;
-    const haveShift =
-      (event.shiftKey ? 1 : 0) + (event.ctrlKey ? 2 : 0) + (event.altKey ? 4 : 0);
-    return event.keyCode === key[0] && haveShift === wantShift;
+    return event.keyCode === key[0] && keyShiftState(event) === wantShift;
   }
   if (typeof key === "string" && key.length) return event.key === key;
   // No key configured → plain F2 (the default), with no modifiers held.

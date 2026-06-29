@@ -1,3 +1,4 @@
+import { keyShiftState } from "./keyShiftState";
 export * from "./imageStyles";
 export * from "./deleteForm";
 export * from "./flexStyles";
@@ -5,6 +6,7 @@ export * from "./getType";
 export * from "./getLastTabButton";
 export * from "./locateInDataRef";
 export * from "./getFontStyles"
+export * from "./keyShiftState";
 
 // 1,4,2 is what quad-WC uses and annoyingly what e.buttons uses in JS, but
 // 0,1,2 is what e.button (NB no s) uses in JS
@@ -160,11 +162,8 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
 
 export const handleKeyPressUtils = (e, socket, Event, ID) => {
    const eventId = crypto.randomUUID();
-  const isAltPressed = e?.altKey ? 4 : 0;
-  const isCtrlPressed = e?.ctrlKey ? 2 : 0;
-  const isShiftPressed = e?.shiftKey ? 1 : 0;
   const charCode = e?.key?.charCodeAt(0);
-  let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+  const shiftState = keyShiftState(e);
 
 
   const exists = Event && Event.some((item) => item[0] === "KeyPress");
