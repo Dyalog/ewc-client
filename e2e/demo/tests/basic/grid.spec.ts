@@ -585,10 +585,12 @@ test.describe('DemoGrid - Phase 8 Interaction Tests', () => {
     await grid.press('ArrowRight');
     await new Promise(r => setTimeout(r, 200));
 
-    // With ShowInput=0, the input in cell 0 is now unmounted (cell is no longer selected).
-    // Verify grid has focus (not any input)
-    const gridHasFocus = await grid.evaluate(el => el === document.activeElement);
-    expect(gridHasFocus).toBe(true);
+    // InputMode (active-on-select): navigating unmounts the old cell's input and
+    // auto-focuses the new cell's editor. The invariant still holds — only the
+    // selected cell is editable — but focus now lives in that cell's input rather
+    // than on the grid container (which is what used to require a second click).
+    await expect(cells.nth(0).locator('input')).toHaveCount(0);
+    await expect(cells.nth(1).locator('input')).toBeFocused();
   });
 
   test('clicking different cell fires CellMove with mouseFlag=1', async () => {

@@ -13,6 +13,9 @@ export const getGrid = ({
   const supportedProperties = [
     "CurCell", "Values", "Posn", "Size",
     "ColTitles", "RowTitles", "VScroll", "HScroll", "Input",
+    // The grid writes the live effective mode back into the data tree (the
+    // CurCell pattern), so eWG 'InputMode' returns the user's F2-toggled mode.
+    "InputMode", "InputModeKey",
   ];
 
   const result = checkSupportedProperties(

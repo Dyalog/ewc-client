@@ -266,7 +266,9 @@ test.describe('DemoGridFormat - FormatString support', () => {
   // from commit a5b2adf which made the input editable (readOnly={!isEditing})
   // without updating keydown propagation — arrow keys bubbled to the grid's
   // container handleKeyDown and triggered cell navigation.
-  test('arrow keys move text cursor inside Edit, not the grid cell', async () => {
+  test('InCell mode (F2): arrow keys move the text cursor inside Edit, not the grid cell', async () => {
+    // Default InputMode is Scroll, where cursor keys navigate cells. Entering
+    // InCell mode (via the InputModeKey, F2) makes them move within the text instead.
     // Use the Company column (plain text Edit, no ⎕FMT noise to interfere).
     const cell = page.locator('.grid-cell[data-row="2"][data-col="1"]');
 
@@ -287,6 +289,10 @@ test.describe('DemoGridFormat - FormatString support', () => {
       return el.selectionStart ?? -1;
     });
     expect(cursorAtEnd).toBe('Boltzmann'.length);
+
+    // Switch to InCell mode (InputModeKey) so the cursor keys stay in the editor.
+    await input.press('F2');
+    await new Promise(r => setTimeout(r, 100));
 
     // Press ArrowLeft — the cursor should move back by one; the grid's
     // active cell must NOT change.

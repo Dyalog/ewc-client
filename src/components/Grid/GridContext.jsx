@@ -13,6 +13,20 @@ export const useGridContext = () => {
   return useContext(GridContext);
 };
 
+// Grid-wide InputMode context. Kept separate from the per-cell GridContext so a
+// mode change (e.g. F2 toggling Scroll<->InCell) re-renders only the live embedded
+// widget that consumes it — not every memoized GridDataCell. Carries the live
+// effective mode ('Scroll' | 'InCell' | ...). InputModeKey is handled at the grid
+// level (the F2 intercept) and isn't needed by the widgets.
+const GridModeContext = createContext({ inputMode: 'Scroll' });
+
+export const GridModeProvider = GridModeContext.Provider;
+
+// Returns the grid's effective InputMode, or 'Scroll' outside a grid.
+export const useGridMode = () => {
+  return useContext(GridModeContext);
+};
+
 // Context shape (for reference):
 // {
 //   isInGrid: true,              // Always true when in context

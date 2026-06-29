@@ -21,6 +21,8 @@ import useGridNavigation from './useGridNavigation';
 import useGridEvents from './useGridEvents';
 import useGridTitleSize from './useGridTitleSize';
 import GridDataCell from './GridDataCell';
+import { GridModeProvider } from './GridContext';
+import { restMode, initialEffectiveMode, matchesInputModeKey, isLockedMode, toggleMode } from './inputMode';
 import './Grid.css';
 
 // Pre-mount / unknown-column fallback before useLayoutEffect measures.
@@ -91,6 +93,10 @@ const Grid = ({ data }) => {
     RowTitleFCol,
     CSS,
     Event,
+    // Grid-level editing behaviour. InputMode default 'Scroll'; InputModeKey
+    // default 'F2' (the server sends the [keyCode,shift] pair 113 0).
+    InputMode = 'Scroll',
+    InputModeKey = 'F2',
     Border,
     EdgeStyle,
   } = data?.Properties || {};
@@ -231,6 +237,34 @@ const Grid = ({ data }) => {
   const cellTypesRef = useRef(CellTypes);
   cellTypesRef.current = CellTypes;
 
+  // --- InputMode (Scroll / InCell) ------------------------------------------
+  // The grid owns the live "effective" mode and pushes it to embedded inputs via
+  // GridModeContext. baseMode is the server's setting; effectiveMode is what's
+  // active right now (toggled by the InputModeKey / double-click).
+  const baseMode = InputMode;
+  const baseModeRef = useRef(baseMode);
+  baseModeRef.current = baseMode;
+  const [effectiveMode, setEffectiveMode] = useState(() => initialEffectiveMode(InputMode));
+
+  // Re-sync when the SERVER changes InputMode. lastWrittenModeRef filters out our
+  // own WG write-back (below), which reuses the InputMode slot — without it,
+  // reverting InCell->Scroll on a cell move would feed back and rewrite baseMode.
+  const lastWrittenModeRef = useRef(null);
+  useEffect(() => {
+    if (InputMode === lastWrittenModeRef.current) return;
+    setEffectiveMode(initialEffectiveMode(InputMode));
+  }, [InputMode]);
+
+  // Report the live effective mode to the data tree so the server reads it via
+  // eWG 'InputMode' (mirrors the CurCell write-back). render:false = no re-render.
+  useEffect(() => {
+    lastWrittenModeRef.current = effectiveMode;
+    handleDataRef.current({
+      ID: data?.ID,
+      Properties: { InputMode: effectiveMode },
+    }, 'WS', { render: false });
+  }, [effectiveMode, data?.ID]);
+
   // Per-cell Input-template resolution and the ShowInput rule (which only
   // applies to Combo/Button cells) are computed inline in the render loop now,
   // indexing the pre-resolved `resolvedInputs` array by CellTypes — so neither
@@ -331,6 +365,29 @@ const Grid = ({ data }) => {
       }
     }
   }, [curCell]);
+
+  // "Active on select": focus the current cell's editable widget as soon as the
+  // cell is selected, so the user can type immediately (no double-click needed).
+  // Gated on focus already being inside the grid, so we never steal focus from
+  // elsewhere on the page (e.g. on initial mount). The widget's own focus handler
+  // sets the caret/selection per InputMode (Scroll selects all; InCell caret-end).
+  useEffect(() => {
+    if (selection) return; // a multi-cell range has no single editor to focus
+    const container = containerRef.current;
+    const grid = gridRef.current;
+    if (!container || !grid || !curCell) return;
+    const active = document.activeElement;
+    if (active !== grid && !container.contains(active)) return;
+    const [row, col] = curCell;
+    const cellEl = container.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    if (!cellEl) return;
+    const focusable = cellEl.querySelector(
+      'input:not([type="checkbox"]), textarea, select, button[role="combobox"]'
+    );
+    if (focusable && document.activeElement !== focusable) {
+      focusable.focus({ preventScroll: true });
+    }
+  }, [curCell, selection]);
 
   // Activate the current cell's component (for Space key)
   const activateCurrentCell = () => {
@@ -449,7 +506,10 @@ const Grid = ({ data }) => {
             break;
           }
         }
-        fireKeyPress(event, sourceId);
+        // The focused editor already fired its own KeyPress on the way up; only
+        // delegate here when the event didn't originate inside an editor — else the
+        // virtual-scroll demo pages twice per key (once from the Edit, once here).
+        if (!inEditor) fireKeyPress(event, sourceId);
         return;
       }
 
@@ -461,12 +521,33 @@ const Grid = ({ data }) => {
       }, 'WS', { render: false });
       // Fire CellMove event if registered (mouseFlag=0 for keyboard)
       fireCellMove(newCell[0], newCell[1], 0);
+      // Moving cells (incl. Enter/Tab out of InCell) reverts to the base rest mode.
+      setEffectiveMode(restMode(baseMode));
     } else {
       // Not a navigation key. Inside an embedded editor the key belongs to the
       // input (and Edit fires its own KeyPress if registered), so suppress the
       // grid-level KeyPress to avoid sending the server a duplicate event.
       if (!inEditor) fireKeyPress(event);
     }
+  };
+
+  // InputModeKey (default F2) toggles Scroll<->InCell. Handled at capture phase so
+  // the grid sees it before the focused <input> — the key never reaches the editor
+  // (so it isn't typed or sent to the server as a KeyPress).
+  const handleModeKeyCapture = (event) => {
+    if (!matchesInputModeKey(event, InputModeKey)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (isLockedMode(baseModeRef.current)) return; // AlwaysScroll/AlwaysInCell
+    setEffectiveMode(toggleMode);
+  };
+
+  // Double-click enters InCell mode (in addition to the server MouseDblClick),
+  // matching ⎕WC. The cell's input is already focused via the single click; the
+  // browser positions the caret/selection from the double-click itself.
+  const handleGridDoubleClick = (event) => {
+    handleMouseDoubleClick(event, socket, Event, data?.ID);
+    if (baseModeRef.current !== 'AlwaysScroll') setEffectiveMode('InCell');
   };
 
   // Handle cell click - update selection and notify server. Stable identity
@@ -485,6 +566,9 @@ const Grid = ({ data }) => {
 
     // Update local state
     moveTo(row, col);
+    // Selecting a new cell reverts to the base rest mode (InCell -> Scroll),
+    // matching ⎕WC: "the mode reverts to Scroll when the user selects a new cell".
+    setEffectiveMode(restMode(baseModeRef.current));
 
     // Update data tree (silently — no app re-render) so server can read CurCell
     // via eWG; Grid re-renders from its own curCell state.
@@ -766,20 +850,26 @@ const Grid = ({ data }) => {
     else if (top < bandH) container.scrollTop -= bandH - top;
   }, [curCell, effectiveTitleWidth, effectiveTitleHeight, showRowTitles, showColTitles]);
 
+  // Grid-wide InputMode context for embedded widgets. Memoized so only the live
+  // widget re-renders when the mode changes — not every memoized GridDataCell.
+  const modeContextValue = useMemo(() => ({ inputMode: effectiveMode }), [effectiveMode]);
+
   return (
+    <GridModeProvider value={modeContextValue}>
     <div
       ref={gridRef}
       id={data?.ID}
       className="grid"
       style={styles}
       tabIndex={0}
+      onKeyDownCapture={handleModeKeyCapture}
       onKeyDown={handleKeyDown}
       onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
       onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
       onMouseEnter={(e) => handleMouseEnter(e, socket, Event, data?.ID)}
       onMouseLeave={(e) => handleMouseLeave(e, socket, Event, data?.ID)}
       onMouseMove={(e) => handleMouseMove(e, socket, Event, data?.ID)}
-      onDoubleClick={(e) => handleMouseDoubleClick(e, socket, Event, data?.ID)}
+      onDoubleClick={handleGridDoubleClick}
       onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}
     >
       <div
@@ -988,6 +1078,7 @@ const Grid = ({ data }) => {
         )}
       </div>
     </div>
+    </GridModeProvider>
   );
 };
 
