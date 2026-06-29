@@ -39,19 +39,30 @@ test('isLockedMode: only the Always* variants are locked', () => {
   expect(isLockedMode('AutoEdit')).toBe(false);
 });
 
-test('matchesInputModeKey: APL [keyCode,shift] pair (server default 113 0 = F2)', () => {
-  expect(matchesInputModeKey({ keyCode: 113 }, [113, 0])).toBe(true);   // the server default
-  expect(matchesInputModeKey({ keyCode: 114 }, [113, 0])).toBe(false);  // F3 != F2
+test('matchesInputModeKey: [keyNumber, shiftState] default (113 0) = plain F2', () => {
+  expect(matchesInputModeKey({ keyCode: 113 }, [113, 0])).toBe(true);              // F2, no modifiers
+  expect(matchesInputModeKey({ keyCode: 113, shiftKey: true }, [113, 0])).toBe(false); // shiftState mismatch
+  expect(matchesInputModeKey({ keyCode: 114 }, [113, 0])).toBe(false);             // F3 != F2
 });
 
-test('matchesInputModeKey: key-name string form', () => {
+test('matchesInputModeKey: custom combo Ctrl+Shift+a = (65 3)', () => {
+  // shiftState 3 = Shift(1) + Ctrl(2) (the example from the InputModeKey docs).
+  expect(matchesInputModeKey({ keyCode: 65, shiftKey: true, ctrlKey: true }, [65, 3])).toBe(true);
+  expect(matchesInputModeKey({ keyCode: 65 }, [65, 3])).toBe(false);                 // no modifiers
+  expect(matchesInputModeKey({ keyCode: 65, ctrlKey: true }, [65, 3])).toBe(false);  // missing Shift
+  // extra Alt(4) makes the state 7, not 3:
+  expect(matchesInputModeKey({ keyCode: 65, shiftKey: true, ctrlKey: true, altKey: true }, [65, 3])).toBe(false);
+});
+
+test('matchesInputModeKey: key-name string form (modifier-agnostic fallback)', () => {
   expect(matchesInputModeKey({ key: 'F2' }, 'F2')).toBe(true);
   expect(matchesInputModeKey({ key: 'F3' }, 'F2')).toBe(false);
 });
 
-test('matchesInputModeKey: defaults to F2 when unset', () => {
+test('matchesInputModeKey: defaults to plain F2 when unset', () => {
   expect(matchesInputModeKey({ key: 'F2', keyCode: 113 }, undefined)).toBe(true);
   expect(matchesInputModeKey({ key: 'F2' }, '')).toBe(true);            // empty string -> default
   expect(matchesInputModeKey({ keyCode: 113 }, null)).toBe(true);
+  expect(matchesInputModeKey({ keyCode: 113, ctrlKey: true }, undefined)).toBe(false); // modifier != default
   expect(matchesInputModeKey({ key: 'a', keyCode: 65 }, undefined)).toBe(false);
 });

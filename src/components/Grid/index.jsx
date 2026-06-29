@@ -94,9 +94,9 @@ const Grid = ({ data }) => {
     CSS,
     Event,
     // Grid-level editing behaviour. InputMode default 'Scroll'; InputModeKey
-    // default 'F2' (the server sends the [keyCode,shift] pair 113 0).
+    // default [113, 0] = F2, specified like Accelerator ([keyNumber, shiftState]).
     InputMode = 'Scroll',
-    InputModeKey = 'F2',
+    InputModeKey = [113, 0],
     Border,
     EdgeStyle,
   } = data?.Properties || {};

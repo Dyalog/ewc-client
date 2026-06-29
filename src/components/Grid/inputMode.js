@@ -23,10 +23,23 @@ export const initialEffectiveMode = (base) =>
 export const toggleMode = (effective) =>
   effective === "InCell" ? "Scroll" : "InCell";
 
-// Does a keydown match the grid's InputModeKey? Accepts APL's [keyCode, shift]
-// pair (F2 = 113 0), a key-name string ('F2'), and defaults to F2.
+// Does a keydown match the grid's InputModeKey? InputModeKey is specified like
+// Accelerator: a [keyNumber, shiftState] pair. keyNumber is a virtual-key code
+// (= the browser's event.keyCode for the common keys: F2 = 113, "a" = 65) and
+// shiftState is a bitmask Shift(1) + Ctrl(2) + Alt(4) — the same encoding EWC
+// uses for a KeyPress event. Default (113 0) = plain F2; e.g. Ctrl+Shift+a = (65 3).
+// Also accepts a key-name string ('F2') as a lenient, modifier-agnostic fallback.
 export const matchesInputModeKey = (event, key) => {
-  if (Array.isArray(key)) return event.keyCode === key[0];
+  if (Array.isArray(key)) {
+    const wantShift = key[1] || 0;
+    const haveShift =
+      (event.shiftKey ? 1 : 0) + (event.ctrlKey ? 2 : 0) + (event.altKey ? 4 : 0);
+    return event.keyCode === key[0] && haveShift === wantShift;
+  }
   if (typeof key === "string" && key.length) return event.key === key;
-  return event.key === "F2" || event.keyCode === 113;
+  // No key configured → plain F2 (the default), with no modifiers held.
+  return (
+    (event.key === "F2" || event.keyCode === 113) &&
+    !event.shiftKey && !event.ctrlKey && !event.altKey
+  );
 };

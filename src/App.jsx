@@ -570,7 +570,7 @@ const App = () => {
           const defaultProperties = {
             // InputMode/InputModeKey: client safety net in case a grid arrives
             // without the server defaults. The server normally sends these at ⎕WC.
-            Grid: { CurCell: [1, 1], InputMode: "Scroll", InputModeKey: "F2" },
+            Grid: { CurCell: [1, 1], InputMode: "Scroll", InputModeKey: [113, 0] },
           };
           const dflts = defaultProperties[evData.WC?.Properties?.Type];
           if (dflts) {
