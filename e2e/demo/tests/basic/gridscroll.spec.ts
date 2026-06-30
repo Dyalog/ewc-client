@@ -328,6 +328,39 @@ test.describe('DemoGridScroll - Scroll thumb tracks current cell', () => {
     // moved only drag-20. Allow a few px of rounding/clamping slack.
     expect(Math.abs((during.y - before.y) - drag)).toBeLessThan(8);
   });
+
+  // Coverage for the ScrollBar's own +/- arrow buttons (revealed on hover) —
+  // a path the rest of the suite never exercised. The down arrow calls
+  // incrementScale, which emits a Scroll event; the server (CBUpdateScroll)
+  // moves the current cell down (keying off the +1 direction) and pushes a new
+  // Thumb back, which the thumb must track.
+  test('clicking the down-arrow button scrolls the grid and advances the thumb', async () => {
+    const updown = page.locator('#F1\\.UPDOWN');
+
+    // Reset to the top so there is room to scroll down.
+    await page.locator('.grid-cell').first().click();
+    await page.keyboard.press('Control+Home');
+    await new Promise(r => setTimeout(r, 300));
+    const beforeY = await updownThumbY();
+    const startRow = Number(await page.locator('.grid-cell.selected').getAttribute('data-row'));
+
+    // Hover to reveal the buttons; the down (increment) arrow is the 2nd icon.
+    await updown.hover();
+    const downArrow = updown.locator('.scroll-bar-icon').nth(1);
+    await expect(downArrow).toBeVisible();
+
+    for (let i = 0; i < 8; i++) {
+      await downArrow.click();
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    // The current cell advanced down the virtual window...
+    await expect
+      .poll(async () => Number(await page.locator('.grid-cell.selected').getAttribute('data-row')), { timeout: 4000 })
+      .toBeGreaterThan(startRow);
+    // ...and the thumb tracked the move downward.
+    await expect.poll(updownThumbY, { timeout: 4000 }).toBeGreaterThan(beforeY);
+  });
 });
 
 // Regression guard for PageUp/PageDown paging (review finding #37 had zero

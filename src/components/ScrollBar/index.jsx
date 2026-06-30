@@ -29,8 +29,12 @@ const ScrollBar = ({ data }) => {
   const { socket, handleData, setProceed, proceedEventArray, setProceedEventArray, nqEvents } = useAppData();
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
+  // Id of the most recent event this scrollbar emitted, used to correlate the
+  // server's proceed signal. Per-instance: the two scrollbars (UPDOWN/LEFTRIGHT)
+  // would otherwise clobber a single shared global value.
+  const eventIdRef = useRef(null);
   const maxValue = Range;
-  const keyPressEventId = localStorage.getItem('keyPressEventId');
+  const keyPressEventId = eventIdRef.current;
 
   const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
   const trackWidth = !Size ? parentSize && parentSize[1] - arrowButtonSize : Size && Size[1];
@@ -57,8 +61,7 @@ const ScrollBar = ({ data }) => {
       const eventId = crypto.randomUUID();
       if (nqEvents.length) {
         const { Info, ID } = nqEvents.shift();
-        localStorage.setItem('current-event', 'CellMove');
-        localStorage.setItem('keyPressEventId', eventId);
+        eventIdRef.current = eventId;
         socket.send(
           JSON.stringify({
             Event: {
@@ -141,8 +144,7 @@ const ScrollBar = ({ data }) => {
       setThumbPosition(newThumbPosition);
 
       const eventId = crypto.randomUUID();
-      localStorage.setItem('current-event', 'ArrowClick');
-      localStorage.setItem('keyPressEventId', eventId);
+      eventIdRef.current = eventId;
       const scrollEvent = JSON.stringify({
         Event: {
           EventName: 'Scroll',
@@ -196,8 +198,7 @@ const ScrollBar = ({ data }) => {
       setTempScaledValue(newScaledValue);
 
       const eventId = crypto.randomUUID();
-      localStorage.setItem('current-event', 'ArrowClick');
-      localStorage.setItem('keyPressEventId', eventId);
+      eventIdRef.current = eventId;
 
       if (data?.Properties?.Step) {
         const scrollEvent = JSON.stringify({
@@ -242,26 +243,7 @@ const ScrollBar = ({ data }) => {
     if (newScaledValue <= maxValue) {
       setTempScaledValue(newScaledValue);
       const eventId = crypto.randomUUID();
-
-      if (isHorizontal) {
-        localStorage.setItem(
-          'horizontalScroll',
-          JSON.stringify({
-            oldValue: Math.round(scaledValue),
-            newValue: Math.round(newScaledValue),
-          })
-        );
-      } else {
-        localStorage.setItem(
-          'verticalScroll',
-          JSON.stringify({
-            oldValue: Math.round(scaledValue),
-            newValue: Math.round(newScaledValue),
-          })
-        );
-      }
-      localStorage.setItem('current-event', 'ArrowClick');
-      localStorage.setItem('keyPressEventId', eventId);
+      eventIdRef.current = eventId;
 
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
@@ -295,26 +277,8 @@ const ScrollBar = ({ data }) => {
         })
       );
 
-      if (isHorizontal) {
-        localStorage.setItem(
-          'horizontalScroll',
-          JSON.stringify({
-            oldValue: Math.round(scaledValue),
-            newValue: Math.round(newScaledValue),
-          })
-        );
-      } else {
-        localStorage.setItem(
-          'verticalScroll',
-          JSON.stringify({
-            oldValue: Math.round(scaledValue),
-            newValue: Math.round(newScaledValue),
-          })
-        );
-      }
       const eventId = crypto.randomUUID();
-      localStorage.setItem('current-event', 'ArrowClick');
-      localStorage.setItem('keyPressEventId', eventId);
+      eventIdRef.current = eventId;
       const exists = Event && Event.some((item) => item[0] === 'Scroll');
       if (!exists) return;
       socket.send(
@@ -329,12 +293,6 @@ const ScrollBar = ({ data }) => {
       );
     }
   };
-
-  // One-time init of the scroll bookkeeping in localStorage.
-  useEffect(() => {
-    const scroll = JSON.stringify({ oldValue: rangedThumb, newValue: rangedThumb });
-    localStorage.setItem(isHorizontal ? 'horizontalScroll' : 'verticalScroll', scroll);
-  }, []);
 
   // The server pushes a new Thumb whenever the grid's current cell moves
   // (CBUpdateScroll's UPDATETHUMBS). Reposition the thumb so it tracks the
