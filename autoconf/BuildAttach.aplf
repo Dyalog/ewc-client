@@ -1,0 +1,44 @@
+ BuildAttach
+⍝ Attach comparison demo — a resizable Form holding five boxes that differ ONLY
+⍝ in their Attach property (AutoConf is the default 3 on all of them). It mirrors
+⍝ the four canonical cases from issue #97 — List / TreeView / Grid / control-panel
+⍝ — plus the proportional default, so native ⎕WC and EWC can be compared edge for
+⍝ edge from ONE source (the xWC/xWS dispatchers pick the renderer via AC_RENDER).
+⍝
+⍝ Drive the PARENT resize two ways — they should agree:
+⍝   • native ⎕WC : drag the Form edge (the canonical user-resize that Attach
+⍝                  responds to) OR click "Resize" (WS-on-Size). Compare the two —
+⍝                  the docs say Attach responds to a USER resize, so this demo is
+⍝                  also how we confirm whether ⎕WS-on-Size reconfigures the Attach
+⍝                  children identically to a drag on native ⎕WC.
+⍝   • EWC        : click "Resize" (WS-on-Size); dragging the Form isn't wired yet.
+⍝ Design size is 520×840; "Resize" toggles to 720×1160 (Δ = 200 high, 320 wide;
+⍝ so sx≈1.381, sy≈1.385).
+⍝
+⍝ Expected geometry at the GROWN size (parent 720×1160):
+⍝   Proportional  None None None None   → Posn AND Size both ×s (drifts + grows;
+⍝                                         deliberately wanders — may overlap a
+⍝                                         neighbour, identically in both renderers)
+⍝   Pinned-TL     Top Left Top Left     → unchanged (fixed px position, fixed size)
+⍝   Toolbar       Top Left Top Right    → same top/left/height; right edge tracks
+⍝                                         parent right edge → width += Δw
+⍝   Fills         Top Left Bottom Right → top-left fixed; bottom & right track the
+⍝                                         parent → height += Δh, width += Δw
+⍝   Pinned-TR     Top Right Top Right   → fixed size; whole box tracks the parent
+⍝                                         top-right corner → left += Δw
+ 'F1'xWC 'Form'('Caption' 'Attach demo — drag my edge (⎕WC) or click Resize (both renderers)')('Posn'(30 30))('Size'(520 840))('Coord' 'Pixel')('Sizeable' 1)('AutoConf' 3)
+
+ 'F1.hint'xWC 'Label'('Boxes differ ONLY in Attach. Resize toggles 520×840 ⟷ 720×1160; each box''s edges should move identically under ⎕WC and EWC.')(8 20)('Size'(16 800))
+
+ ⍝ Top band (three fixed-ish boxes, well separated so they do not collide):
+ MkAttachBox 'B0' 'Proportional: None None None None'(70 20)(140 170)('None' 'None' 'None' 'None')(210 226 250)
+ MkAttachBox 'B1' 'Pinned-TL: Top Left Top Left'(70 340)(140 180)('Top' 'Left' 'Top' 'Left')(214 246 214)
+ MkAttachBox 'B4' 'Pinned-TR: Top Right Top Right'(70 650)(140 170)('Top' 'Right' 'Top' 'Right')(246 214 214)
+
+ ⍝ A full-width toolbar bar (fixed height, right edge tracks the parent):
+ MkAttachBox 'B2' 'Toolbar: Top Left Top Right'(240 20)(56 800)('Top' 'Left' 'Top' 'Right')(250 236 200)
+
+ ⍝ A grid-like area that fills toward the bottom-right as the parent grows:
+ MkAttachBox 'B3' 'Fills: Top Left Bottom Right'(320 20)(150 470)('Top' 'Left' 'Bottom' 'Right')(228 214 244)
+
+ 'F1.resize'xWC 'Button' 'Resize (WS-on-Size)'(486 20)('Size'(26 240))('Event' 'Select' 'CBResize')

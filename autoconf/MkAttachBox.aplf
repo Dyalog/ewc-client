@@ -1,0 +1,11 @@
+ MkAttachBox args;id;label;posn;size;attach;bcol
+⍝ Build ONE labelled box (SubForm) that demonstrates a single Attach vector.
+⍝ Every box uses the DEFAULT AutoConf (3 = accept+propagate), so the only thing
+⍝ that differs between boxes is Attach — any divergence you see (⎕WC vs EWC, or
+⍝ box vs box) is therefore due to Attach alone.
+⍝ args:  (shortname  label  (top left)  (height width)  attachVector  bcol)
+ (id label posn size attach bcol)←args
+ id←'F1.',id
+ id xWC 'SubForm'('Posn' posn)('Size' size)('AutoConf' 3)('Attach' attach)('EdgeStyle' 'Groove')('BCol' bcol)
+ ⍝ A caption pinned inside the box names the case so it is readable on screen.
+ (id,'.cap')xWC 'Label' label(4 6)('Size'(16(¯12+2⊃size)))
