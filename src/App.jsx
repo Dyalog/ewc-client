@@ -1068,35 +1068,15 @@ const App = () => {
                   serverEvent?.Properties
                 );
 
-                if (!localStorage.getItem(serverEvent.ID)) {
-                  return webSocket.send(
-                    updateAndStringify({
-                      WG: {
-                        ID: serverEvent.ID,
-                        Properties: {
-                          Thumb,
-                        },
-                        WGID: serverEvent.WGID,
-                        ...(result &&
-                          result.NotSupported &&
-                          result.NotSupported.length > 0
-                          ? { NotSupported: result.NotSupported }
-                          : null),
-                      },
-                    })
-                  );
-                }
-
-                const storedData = JSON.parse(localStorage.getItem(serverEvent?.ID)) || {};
-                const Event = storedData.Event || {};
-                const Info = Event.Info;
-
+                // A WG read of a Scroll returns its current Thumb. (The two
+                // former branches — stored-event vs none — sent the identical
+                // value, so they're unified.)
                 return webSocket.send(
                   updateAndStringify({
                     WG: {
                       ID: serverEvent.ID,
                       Properties: {
-                        Thumb: Thumb,
+                        Thumb,
                       },
                       WGID: serverEvent.WGID,
                       ...(result &&

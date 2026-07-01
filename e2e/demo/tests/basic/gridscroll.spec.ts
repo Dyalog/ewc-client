@@ -228,6 +228,141 @@ test.describe('DemoGridScroll - Virtual Scrolling', () => {
   });
 });
 
+// Regression guard: the external Scroll thumb must track the current cell.
+// The server (CBUpdateScroll's UPDATETHUMBS) pushes a new Thumb to F1.UPDOWN /
+// F1.LEFTRIGHT on every CellMove and on scroll. A bug where the ScrollBar's
+// [Thumb] effect computed the new position but never applied it left the thumb
+// frozen at the top-left (0,0) no matter how far you navigated. These tests
+// drive a large move and assert the thumb visibly repositions.
+test.describe('DemoGridScroll - Scroll thumb tracks current cell', () => {
+  let browser: Browser;
+  let page: Page;
+
+  test.beforeAll(async () => {
+    const result = await connectAndFindEWCPage(CDP_PORT);
+    browser = result.browser;
+    page = await navigateToDemo(result.page, 'GridScroll', '.grid-table', 10000);
+  });
+
+  test.beforeEach(async () => {
+    await new Promise(r => setTimeout(r, 100));
+  });
+
+  // Top of the vertical (UPDOWN) thumb in viewport pixels.
+  const updownThumbY = async () => {
+    const box = await page.locator('#F1\\.UPDOWN .thumb').boundingBox();
+    if (!box) throw new Error('UPDOWN thumb not found');
+    return box.y;
+  };
+
+  // Left of the horizontal (LEFTRIGHT) thumb in viewport pixels.
+  const leftrightThumbX = async () => {
+    const box = await page.locator('#F1\\.LEFTRIGHT .thumb').boundingBox();
+    if (!box) throw new Error('LEFTRIGHT thumb not found');
+    return box.x;
+  };
+
+  test('vertical thumb jumps down when "Goto Row 500" scrolls the window deep', async () => {
+    const before = await updownThumbY();
+
+    // Goto Row 500 -> server sets F1.UPDOWN Thumb ~500 (mid-range of 1000).
+    await page.locator('#F1\\.GO500').click();
+    // Web-first wait for the websocket round-trip to reposition the thumb.
+    await expect.poll(updownThumbY, { timeout: 4000 }).toBeGreaterThan(before + 100);
+  });
+
+  test('vertical thumb advances as PageDown moves the window down', async () => {
+    // Reset to the top of the data, then capture the thumb baseline.
+    await page.locator('.grid-cell').first().click();
+    await page.keyboard.press('Control+Home');
+    await new Promise(r => setTimeout(r, 300));
+    const before = await updownThumbY();
+
+    // Page deep into the 1000-row virtual space.
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('PageDown');
+    }
+    await expect.poll(updownThumbY, { timeout: 4000 }).toBeGreaterThan(before + 10);
+  });
+
+  test('horizontal thumb advances when the window scrolls right', async () => {
+    const grid = page.locator('.grid');
+    await grid.click({ position: { x: 50, y: 50 } });
+    await page.keyboard.press('Control+Home');
+    await new Promise(r => setTimeout(r, 300));
+    const before = await leftrightThumbX();
+
+    // Sit on the rightmost visible column, then push past it repeatedly so the
+    // window scrolls right and the server advances the LEFTRIGHT thumb.
+    await page.keyboard.press('End');
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('ArrowRight');
+    }
+    await expect.poll(leftrightThumbX, { timeout: 4000 }).toBeGreaterThan(before + 10);
+  });
+
+  // While the thumb is held, it must track the cursor 1:1. A prior bug omitted
+  // the arrowButtonSize (20px) offset during the drag, so the thumb lagged the
+  // cursor by 20px and only snapped into place on release (server round-trip).
+  test('thumb tracks the cursor 1:1 while being dragged', async () => {
+    const thumb = page.locator('#F1\\.UPDOWN .thumb');
+    const before = await thumb.boundingBox();
+    if (!before) throw new Error('UPDOWN thumb not found');
+
+    const cx = before.x + before.width / 2;
+    const cy = before.y + before.height / 2;
+    const drag = 100;
+
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx, cy + drag / 2, { steps: 5 });
+    await page.mouse.move(cx, cy + drag, { steps: 5 });
+
+    // Sample while still held — before mouseup triggers the server round-trip
+    // that would correct the position regardless of the drag math.
+    const during = await thumb.boundingBox();
+    await page.mouse.up();
+
+    if (!during) throw new Error('thumb vanished mid-drag');
+    // 1:1 tracking means the thumb top moved by ~drag px. The buggy version
+    // moved only drag-20. Allow a few px of rounding/clamping slack.
+    expect(Math.abs((during.y - before.y) - drag)).toBeLessThan(8);
+  });
+
+  // Coverage for the ScrollBar's own +/- arrow buttons (revealed on hover) —
+  // a path the rest of the suite never exercised. The down arrow calls
+  // incrementScale, which emits a Scroll event; the server (CBUpdateScroll)
+  // moves the current cell down (keying off the +1 direction) and pushes a new
+  // Thumb back, which the thumb must track.
+  test('clicking the down-arrow button scrolls the grid and advances the thumb', async () => {
+    const updown = page.locator('#F1\\.UPDOWN');
+
+    // Reset to the top so there is room to scroll down.
+    await page.locator('.grid-cell').first().click();
+    await page.keyboard.press('Control+Home');
+    await new Promise(r => setTimeout(r, 300));
+    const beforeY = await updownThumbY();
+    const startRow = Number(await page.locator('.grid-cell.selected').getAttribute('data-row'));
+
+    // Hover to reveal the buttons; the down (increment) arrow is the 2nd icon.
+    await updown.hover();
+    const downArrow = updown.locator('.scroll-bar-icon').nth(1);
+    await expect(downArrow).toBeVisible();
+
+    for (let i = 0; i < 8; i++) {
+      await downArrow.click();
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    // The current cell advanced down the virtual window...
+    await expect
+      .poll(async () => Number(await page.locator('.grid-cell.selected').getAttribute('data-row')), { timeout: 4000 })
+      .toBeGreaterThan(startRow);
+    // ...and the thumb tracked the move downward.
+    await expect.poll(updownThumbY, { timeout: 4000 }).toBeGreaterThan(beforeY);
+  });
+});
+
 // Regression guard for PageUp/PageDown paging (review finding #37 had zero
 // coverage). The grid is a 10-row virtual window over 1000 rows; each PageDown
 // must advance the data window by exactly one page (n=10 rows) per press, and
