@@ -13,6 +13,7 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
   handleKeyPressUtils,
+  keyShiftState,
 } from "../../utils";
 import { useAppData } from "../../hooks";
 
@@ -81,11 +82,8 @@ const ListView = ({ data }) => {
     if (eventName === "ItemDblClick") {
       handleMouseDoubleClick(e, socket, Event, data?.ID);
     }
-    const isAltPressed = nativeEvent?.altKey ? 4 : 0;
-    const isCtrlPressed = nativeEvent?.ctrlKey ? 2 : 0;
-    const isShiftPressed = nativeEvent?.shiftKey ? 1 : 0;
     const mouseButton = nativeEvent?.button;
-    let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+    const shiftState = keyShiftState(nativeEvent);
 
     handleListViewEvent(index, shiftState, eventName);
   };

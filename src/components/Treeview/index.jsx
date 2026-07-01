@@ -16,6 +16,7 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
   handleKeyPressUtils,
+  keyShiftState,
 } from "../../utils";
 import { useAppData } from "../../hooks";
 import { useEffect, useState, useRef } from "react";
@@ -182,11 +183,8 @@ const Treeview = ({ data }) => {
   const handleSelect = (_, info) => {
     const { selectedNodes, nativeEvent } = info;
 
-    const isAltPressed = nativeEvent.altKey ? 4 : 0;
-    const isCtrlPressed = nativeEvent.ctrlKey ? 2 : 0;
-    const isShiftPressed = nativeEvent.shiftKey ? 1 : 0;
     const mouseButton = nativeEvent.button;
-    let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+    const shiftState = keyShiftState(nativeEvent);
     if (selectedNodes.length == 0) return;
     handleItemDownEvent(selectedNodes[0]?.id, shiftState);
   };
@@ -221,11 +219,8 @@ const Treeview = ({ data }) => {
   const handleDoubleClick = (_, info) => {
     const { nativeEvent } = info;
 
-    const isAltPressed = nativeEvent?.altKey ? 4 : 0;
-    const isCtrlPressed = nativeEvent?.ctrlKey ? 2 : 0;
-    const isShiftPressed = nativeEvent?.shiftKey ? 1 : 0;
     const mouseButton = nativeEvent?.button;
-    let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+    const shiftState = keyShiftState(nativeEvent);
     handleDoubleClickEvent(info.id, shiftState);
   };
 

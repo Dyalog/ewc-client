@@ -288,15 +288,20 @@ test.describe('DemoGridScroll - Scroll thumb tracks current cell', () => {
   test('horizontal thumb advances when the window scrolls right', async () => {
     const grid = page.locator('.grid');
     await grid.click({ position: { x: 50, y: 50 } });
-    await page.keyboard.press('Control+Home');
+    await grid.press('Control+Home');
     await new Promise(r => setTimeout(r, 300));
     const before = await leftrightThumbX();
 
     // Sit on the rightmost visible column, then push past it repeatedly so the
     // window scrolls right and the server advances the LEFTRIGHT thumb.
-    await page.keyboard.press('End');
-    for (let i = 0; i < 5; i++) {
-      await page.keyboard.press('ArrowRight');
+    // Press on the grid element, NOT page.keyboard: a selected Edit cell's
+    // <input> swallows Left/Right arrows as caret movement, so page.keyboard
+    // never reaches grid navigation (it moved the thumb 0px). The horizontal
+    // track is wide (~0.74px/unit), so step enough for a clear margin over +10.
+    await grid.press('End');
+    for (let i = 0; i < 10; i++) {
+      await grid.press('ArrowRight');
+      await new Promise(r => setTimeout(r, 60));
     }
     await expect.poll(leftrightThumbX, { timeout: 4000 }).toBeGreaterThan(before + 10);
   });

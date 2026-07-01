@@ -13,11 +13,12 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
   getFontStyles,
+  keyShiftState,
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "../../hooks";
-import { useGridContext } from "../Grid/GridContext";
+import { useGridContext, useGridMode } from "../Grid/GridContext";
 import { normalizeAplFormatted } from "../Grid/useNumericFormatter";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
@@ -41,6 +42,9 @@ const Edit = ({
   // Check if we're inside a Grid cell
   const gridContext = useGridContext();
   const isInGrid = !!gridContext;
+  // Grid-wide editing mode ('Scroll' default | 'InCell'). Drives cursor-key
+  // handling and the on-focus caret/selection below. 'Scroll' outside a grid.
+  const inputMode = useGridMode()?.inputMode || "Scroll";
 
   // findCurrentData is an O(depth) path walk; the old getObjectById did a
   // full-tree DFS + JSON round-trip every render. Locale is static after startup.
@@ -350,16 +354,14 @@ const Edit = ({
     // Cursor-movement keys stay in the input; Up/Down/Tab/Enter still bubble
     // to Grid for Excel-style commit + cell move.
     if (isInGrid && isEditing) {
-      const inp = e.currentTarget;
-      const len = inp.value?.length ?? 0;
-      const atStart = inp.selectionStart === 0 && inp.selectionEnd === 0;
-      const atEnd = inp.selectionStart === len && inp.selectionEnd === len;
-      // Keep Home/End and mid-text Left/Right inside the editor (move the text
-      // cursor). At the text boundary, let Left/Right bubble to Grid so the
-      // arrow advances to the previous/next cell (Excel-style edge navigation).
-      if (e.key === "Home" || e.key === "End"
-          || (e.key === "ArrowLeft" && !atStart)
-          || (e.key === "ArrowRight" && !atEnd)) {
+      // InputMode decides who owns the cursor keys. InCell: arrows + Home/End move
+      // within the text, so keep them in the input (stopPropagation). Scroll: every
+      // cursor key ends editing and moves the cell, so stop nothing — let them all
+      // bubble to the Grid. Enter/Tab always bubble (commit + move) in both modes.
+      if (inputMode === "InCell"
+          && (e.key === "ArrowLeft" || e.key === "ArrowRight"
+              || e.key === "ArrowUp" || e.key === "ArrowDown"
+              || e.key === "Home" || e.key === "End")) {
         e.stopPropagation();
       }
     }
@@ -406,15 +408,12 @@ const Edit = ({
         });
       },
     };
-    const isAltPressed = e.altKey ? 4 : 0;
-    const isCtrlPressed = e.ctrlKey ? 2 : 0;
-    const isShiftPressed = e.shiftKey ? 1 : 0;
     // Character code [4] of the Dyalog KeyPress event: the Unicode code point of
     // the character entered, or 0 when the key resolves to no character (e.g.
     // Cursor Up => 0, per the object-reference KeyPress doc). Named keys => 0;
     // the server (processEvent.aplf) refines Enter/Tab/Backspace to 13/9/8.
     const charCode = e.key.length === 1 ? e.key.charCodeAt(0) : 0;
-    let shiftState = isAltPressed + isCtrlPressed + isShiftPressed;
+    const shiftState = keyShiftState(e);
 
 //     console.log(
 //       JSON.stringify({
@@ -584,15 +583,32 @@ const Edit = ({
     // Mark editing so decideInputValue stops overwriting user input.
     if (isInGrid) {
       setIsEditing(true);
-      // Swap formatted display (e.g. "8,500") for the raw cellValue so
-      // Number() can parse after edits — the useEffect guard skips this.
-      if ((FieldType === "LongNumeric" || FieldType === "Numeric")
+      // Seed the editor from the authoritative cell value as editing begins.
+      // decideInputValue is guarded off once isEditing is true, and editing now
+      // starts immediately on cell select (InputMode), so without this the field
+      // can start blank. Numeric uses the raw value (so Number() can parse after
+      // edits, not the formatted "8,500"); text/other use the displayed value.
+      if (FieldType !== "Date"
           && gridContext?.cellValue !== undefined
           && gridContext?.cellValue !== "") {
-        const raw = String(gridContext.cellValue);
-        setInputValue(raw);
-        setEmitValue(raw);
+        const isNumericField = FieldType === "LongNumeric" || FieldType === "Numeric";
+        const seed = isNumericField
+          ? String(gridContext.cellValue)
+          : String(gridContext.formattedValue ?? gridContext.cellValue);
+        setInputValue(seed);
+        setEmitValue(seed);
       }
+      // Position the caret per InputMode, after React applies any value swap above.
+      // Scroll selects all (so the first keystroke replaces, and SelText reports the
+      // whole field); InCell places the caret at the end, ready to edit in place.
+      requestAnimationFrame(() => {
+        const el = inputRef.current;
+        if (!el || el.type === "date") return;
+        const len = el.value?.length ?? 0;
+        if (inputMode === "InCell") el.setSelectionRange(len, len);
+        else el.select();
+        updateSelText();
+      });
     }
 
     const previousFocusedId = localStorage.getItem("current-focus");

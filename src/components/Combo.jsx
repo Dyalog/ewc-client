@@ -2,13 +2,16 @@ import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleMouseDown,
 
 import { createPortal } from 'react-dom';
 import { useAppData, useResizeObserver } from '../hooks';
-import { useGridContext } from './Grid/GridContext';
+import { useGridContext, useGridMode } from './Grid/GridContext';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
 const Combo = ({ data, value }) => {
   // Check if we're inside a Grid cell
   const gridContext = useGridContext();
   const isInGrid = !!gridContext;
+  // Grid-wide editing mode: in 'Scroll' a closed combo lets cursor keys navigate
+  // the grid; in 'InCell' they drive the dropdown. 'Scroll' outside a grid.
+  const inputMode = useGridMode()?.inputMode || 'Scroll';
   const parentSize = JSON.parse(localStorage.getItem(extractStringUntilLastPeriod(data?.ID)));
 
   // Custom dropdown state and refs
@@ -323,14 +326,17 @@ const Combo = ({ data, value }) => {
   }, [Rows, Items]);
 
   const handleKeyPress = (e) => {
-    // In a Grid, a CLOSED combo must not trap horizontal cell navigation:
-    // Left/Right have no meaning for the combo itself, so let them bubble to the
-    // Grid's keydown handler, which moves CurCell and refocuses the grid (its
-    // curCell effect blurs this trigger). Mirrors Edit, which lets boundary
-    // Left/Right bubble for the same Excel-style cell movement. Returning before
-    // stopPropagation is what frees the event to reach the grid.
-    if (isInGrid && !isOpen && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-      return;
+    // In a Grid, a CLOSED combo must not trap cell navigation. Left/Right have no
+    // meaning for the combo, so they always bubble to the Grid's keydown handler
+    // (which moves CurCell and refocuses the grid). Up/Down bubble only in Scroll
+    // mode — in InCell mode they open/drive the dropdown. (Alt+Down still opens in
+    // either mode.) Returning before stopPropagation is what frees the event.
+    if (isInGrid && !isOpen) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') return;
+      if (inputMode === 'Scroll' && !e.altKey
+          && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        return;
+      }
     }
     e.stopPropagation();
     handleKeyPressUtils(e, socket, Event, data?.ID);
