@@ -18,7 +18,7 @@ import {
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import SelectComponent from "../SelectComponent";
-import { useAppData, useAttachStyle } from "../../hooks";
+import { useAppData, useAttachStyle, useResizeObserver, useConfigureReport } from "../../hooks";
 
 const SubForm = ({ data }) => {
   const { findCurrentData, socket, inheritedProperty } = useAppData();
@@ -38,6 +38,9 @@ const SubForm = ({ data }) => {
   const observedDiv = useRef(null);
   const styles = setStyle(data?.Properties, "absolute", Flex);
   const attachStyle = useAttachStyle(data);
+  // Report Configure(31) back to APL once this SubForm's own size settles.
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
 
   const flexStyles = parseFlexStyles(CSS);
 

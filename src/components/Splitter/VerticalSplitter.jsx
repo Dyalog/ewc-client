@@ -22,16 +22,22 @@ const VerticalSplitter = ({ data }) => {
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
   const [oldFormValues, setoldFormValues] = useState(SubformSize && SubformSize);
+  // Becomes true a beat after mount, so we skip the load-time form-size ramp
+  // (the menu->demo transition) and only reproportion on genuine later resizes.
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
-    // On the first observation, capture the baseline form size and bail — there
-    // is nothing to reproportion yet. Seeded here (not only from localStorage at
-    // mount) because the Form writes its localStorage entry in its own effect,
-    // which runs AFTER this child mounts. Without this, oldFormValues stayed
-    // undefined and this handler bailed forever, so the panes only reflowed on a
-    // splitter drag, never on a window/form resize.
-    if (!oldFormValues) {
+    // Until ready (or before a baseline exists), just track the current form
+    // size as the baseline and bail — do NOT reproportion. This skips the
+    // menu->demo load ramp that would otherwise mis-size the panes, while
+    // keeping oldFormValues seeded (the Form writes its localStorage entry in
+    // its own, later-running effect, so we can't rely on that at mount).
+    if (!readyRef.current || !oldFormValues) {
       if (dimensions?.width) setoldFormValues([dimensions.height, dimensions.width]);
       return;
     }
@@ -109,6 +115,9 @@ const VerticalSplitter = ({ data }) => {
     backgroundColor: '#F0F0F0',
     cursor: 'col-resize',
     position: 'absolute',
+    // Sit above the panes so the divider is always grabbable, even when a pane
+    // is authored to start at the same x as the splitter (and would cover it).
+    zIndex: 10,
     top: Posn && Posn[0],
     left: left,
     ...style,

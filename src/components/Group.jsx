@@ -18,7 +18,7 @@ import {
 } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import SelectComponent from "./SelectComponent";
-import { useAppData, useResizeObserver, useAttachStyle } from "../hooks";
+import { useAppData, useResizeObserver, useAttachStyle, useConfigureReport } from "../hooks";
 
 const Group = ({ data }) => {
   const {
@@ -67,6 +67,9 @@ const Group = ({ data }) => {
 
   const styles = setStyle(data?.Properties, "absolute", Flex);
   const attachStyle = useAttachStyle(data);
+  // Report Configure(31) back to APL once this Group's own size settles.
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
 
   //   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   //   const x = e.clientX;

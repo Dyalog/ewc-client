@@ -28,13 +28,19 @@ const HorizontalSplitter = ({ data }) => {
 
   const [oldFormValues, setoldFormValues] = useState(SubformSize && SubformSize);
   const [oldHeight, setOldHeight] = useState(Size && Size[0]);
+  // See VerticalSplitter: skip the load-time ramp, reflow only on genuine resizes.
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
-    // See VerticalSplitter: seed the baseline on the first observation so later
-    // resizes reproportion. oldFormValues (from localStorage) isn't ready at
-    // mount because the Form writes it in its own, later-running effect.
-    if (!oldFormValues) {
+    // Until ready (or before a baseline exists), just track the current form
+    // size as the baseline and bail — do NOT reproportion (skips the menu->demo
+    // load ramp that would mis-size the panes).
+    if (!readyRef.current || !oldFormValues) {
       if (dimensions?.height) setoldFormValues([dimensions.height, dimensions.width]);
       return;
     }
@@ -210,6 +216,8 @@ const HorizontalSplitter = ({ data }) => {
     backgroundColor: '#F0F0F0',
     cursor: 'row-resize',
     position: 'absolute',
+    // Sit above the panes so the divider is always grabbable (see VerticalSplitter).
+    zIndex: 10,
     top: position?.top,
     left: 0,
     ...style,

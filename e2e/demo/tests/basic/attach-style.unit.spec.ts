@@ -38,6 +38,30 @@ test.describe('getAttachStyle (unit)', () => {
     });
   });
 
+  test('Pinned top-right "Top Right Top Right": fixed size, hugs top-right', () => {
+    // Posn [10,380] Size [50,100] in a [400,500] parent. dRight = 500-(380+100)=20.
+    expect(getAttachStyle([10, 380], [50, 100], [400, 500], ['Top', 'Right', 'Top', 'Right']))
+      .toEqual({ position: 'absolute', top: 10, bottom: 'auto', height: 50, left: 'auto', right: 20, width: 100 });
+  });
+
+  test('Pinned bottom-right "Bottom Right Bottom Right": fixed size, hugs bottom-right', () => {
+    // dBottom = 400-(300+50)=50; dRight = 500-(380+100)=20.
+    expect(getAttachStyle([300, 380], [50, 100], [400, 500], ['Bottom', 'Right', 'Bottom', 'Right']))
+      .toEqual({ position: 'absolute', top: 'auto', bottom: 50, height: 50, left: 'auto', right: 20, width: 100 });
+  });
+
+  test('Left sidebar "Top Left Bottom Left": fixed width, full height, hugs left', () => {
+    // Posn [60,10] Size [680,110] in [800,497]. dBottom = 800-(60+680)=60.
+    expect(getAttachStyle([60, 10], [680, 110], [800, 497], ['Top', 'Left', 'Bottom', 'Left']))
+      .toEqual({ position: 'absolute', top: 60, bottom: 60, height: 'auto', left: 10, right: 'auto', width: 110 });
+  });
+
+  test('Status bar "Bottom Left Bottom Right": fixed height, full width, hugs bottom', () => {
+    // Posn [750,10] Size [40,477] in [800,497]. dBottom=800-(750+40)=10; dRight=497-(10+477)=10.
+    expect(getAttachStyle([750, 10], [40, 477], [800, 497], ['Bottom', 'Left', 'Bottom', 'Right']))
+      .toEqual({ position: 'absolute', top: 'auto', bottom: 10, height: 40, left: 10, right: 10, width: 'auto' });
+  });
+
   test('returns {} for missing/invalid geometry', () => {
     expect(getAttachStyle(undefined, [1, 1], [1, 1], ['Top', 'Left', 'Top', 'Left'])).toEqual({});
     expect(getAttachStyle([0, 0], [1, 1], [1, 1], ['Top', 'Left'])).toEqual({}); // Attach not length-4

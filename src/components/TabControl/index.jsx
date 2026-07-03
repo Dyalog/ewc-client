@@ -1,7 +1,7 @@
 import { setStyle,getFontStyles, excludeKeys, getLastTabButton, rgbColor, parseFlexStyles } from '../../utils';
 import SubForm from '../SubForm';
 import TabButton from '../TabButton';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle } from '../../hooks';
 import { useEffect, useState } from 'react';
 
 const TabControl = ({ data }) => {
@@ -13,6 +13,7 @@ const TabControl = ({ data }) => {
   const fontStyles = font && getFontStyles(font, 12);
 
   let styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const customStyles = parseFlexStyles(CSS)
   const updatedData = excludeKeys(data);
   const Id = getLastTabButton(updatedData);
@@ -39,7 +40,8 @@ const TabControl = ({ data }) => {
         overflow: 'clip',
         ...updatedStyles,
         ...customStyles,
-        ...fontStyles
+        ...fontStyles,
+        ...attachStyle,
       }}
     >
       {/* Render the Buttons */}

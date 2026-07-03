@@ -17,7 +17,7 @@ import {
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useAppData } from "../../hooks";
+import { useAppData, useAttachStyle } from "../../hooks";
 import { useGridContext, useGridMode } from "../Grid/GridContext";
 import { normalizeAplFormatted } from "../Grid/useNumericFormatter";
 import dayjs from "dayjs";
@@ -57,6 +57,7 @@ const Edit = ({
   } = dateFormat?.Properties;
 
   let styles = { ...setStyle(data?.Properties) };
+  const attachStyle = useAttachStyle(data);
   const [inputType, setInputType] = useState("text");
   const [inputValue, setInputValue] = useState("");
   const [emitValue, setEmitValue] = useState("");
@@ -678,6 +679,7 @@ const Edit = ({
             paddingLeft: "5px",
             ...customStyles,
             ...fontStyles,
+            ...attachStyle,
           }}
           value={inputValue}
           type="text"
@@ -762,6 +764,7 @@ const Edit = ({
                 }),
             ...customStyles,
             ...fontStyles,
+            ...attachStyle,
           }}
           onFocus={handleGotFocus}
           onBlur={handleBlur}
@@ -806,6 +809,7 @@ const Edit = ({
           textAlign: "right",
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
         onValueChange={(value) => {
           const { formattedValue } = value;
@@ -886,6 +890,7 @@ const Edit = ({
         } : {}),
         ...customStyles,
         ...fontStyles,
+        ...attachStyle,
       }}
       maxLength={MaxLength}
       onFocus={handleGotFocus}

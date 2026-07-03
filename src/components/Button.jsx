@@ -12,7 +12,7 @@ import {
   handleMouseDoubleClick,
   handleKeyPressUtils,
 } from "../utils";
-import { useAppData } from "../hooks";
+import { useAppData, useAttachStyle } from "../hooks";
 import { useGridContext } from "./Grid/GridContext";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
@@ -23,6 +23,7 @@ const Button = ({
 }) => {
 
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const { socket, findCurrentData, dataRef, handleData, inheritedProperties } = useAppData();
 
   // Check if we're inside a Grid cell
@@ -262,6 +263,7 @@ const Button = ({
           justifyContent: Align == "Left" ? "flex-end" : "flex-start",
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
       >
         <input
@@ -367,6 +369,7 @@ const Button = ({
           justifyContent: Align == "Left" ? "flex-end" : "flex-start",
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
       >
         <input
@@ -441,7 +444,8 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
-        ...fontStyles
+        ...fontStyles,
+        ...attachStyle,
       }}
     >
       {ImageData ? (
