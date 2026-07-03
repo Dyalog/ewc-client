@@ -70,3 +70,77 @@ export const scaleGeometry = (Properties, scaleX = 1, scaleY = 1) => {
   }
   return out;
 };
+
+// --- Attach ----------------------------------------------------------------
+// Attach refines AutoConf reflow per edge. It is a 4-vector of char vectors
+// (top left bottom right); each element attaches that edge of the object to an
+// edge of its parent — so its pixel distance from that parent edge stays FIXED —
+// or is 'None', in which case that edge moves in proportion to the parent's size
+// change (the default). Attach is only meaningful under the same reflow gate as
+// scaleGeometry (parent propagates AND child accepts); callers apply that gate.
+//
+//   element [1] top    : 'Top'->parent top · 'Bottom'->parent bottom · 'None'
+//   element [2] left   : 'Left'->parent left · 'Right'->parent right · 'None'
+//   element [3] bottom : 'Top' · 'Bottom' · 'None'
+//   element [4] right  : 'Left' · 'Right' · 'None'
+//
+// The default ('None' 'None' 'None' 'None') is pure proportional scaling, i.e.
+// exactly scaleGeometry — so attachGeometry is a strict generalisation of it and
+// reduces to it when Attach is absent, malformed, or all-'None'.
+
+const isAttachVec = (a) => Array.isArray(a) && a.length === 4;
+const allNone = (a) => a.every((e) => e !== "Top" && e !== "Bottom" && e !== "Left" && e !== "Right");
+
+// One edge's new coordinate. c0 is its design coordinate (px from the parent's
+// near origin), P0/P the parent's baseline/current extent on that axis.
+//   'near' — attached to the near parent edge (top/left): fixed → c0
+//   'far'  — attached to the far parent edge (bottom/right): fixed distance from
+//            that edge → c0 shifted by the size change (P - P0)
+//   'none' — not attached: proportional → c0 · P/P0
+const edgeCoord = (c0, P0, P, kind) =>
+  kind === "near" ? c0 : kind === "far" ? c0 + (P - P0) : (c0 * P) / P0;
+
+const vKind = (a) => (a === "Top" ? "near" : a === "Bottom" ? "far" : "none");
+const hKind = (a) => (a === "Left" ? "near" : a === "Right" ? "far" : "none");
+
+// Attach-aware reflow. Like scaleGeometry, returns a NEW Properties (never
+// mutates), rounds to whole px, keeps Size non-negative, and leaves non-numeric
+// or omitted axis slots untouched. ctx carries the PARENT's published scale and
+// baseline content box: { scaleX, scaleY, baseline:{width,height} }.
+export const attachGeometry = (Properties, ctx = {}, attach) => {
+  const { scaleX = 1, scaleY = 1, baseline } = ctx;
+  // No usable Attach, no baseline, or nothing to scale → identical to the
+  // proportional path (which itself no-ops when scaleX===scaleY===1).
+  if (!isAttachVec(attach) || allNone(attach) || !baseline || (scaleX === 1 && scaleY === 1)) {
+    return scaleGeometry(Properties, scaleX, scaleY);
+  }
+  if (!Properties) return Properties;
+
+  const P0x = baseline.width;
+  const P0y = baseline.height;
+  const Px = P0x * scaleX;
+  const Py = P0y * scaleY;
+
+  const out = { ...Properties };
+  const { Posn, Size } = Properties;
+  if (Array.isArray(Posn)) out.Posn = [...Posn];
+  if (Array.isArray(Size)) out.Size = [...Size];
+
+  // vertical axis: Posn[0]=top, Size[0]=height, edges = attach[0]/attach[2]
+  if (Array.isArray(Posn) && Array.isArray(Size) &&
+      typeof Posn[0] === "number" && typeof Size[0] === "number") {
+    const topN = edgeCoord(Posn[0], P0y, Py, vKind(attach[0]));
+    const botN = edgeCoord(Posn[0] + Size[0], P0y, Py, vKind(attach[2]));
+    out.Posn[0] = Math.round(topN);
+    out.Size[0] = Math.max(0, Math.round(botN - topN));
+  }
+  // horizontal axis: Posn[1]=left, Size[1]=width, edges = attach[1]/attach[3]
+  if (Array.isArray(Posn) && Array.isArray(Size) &&
+      typeof Posn[1] === "number" && typeof Size[1] === "number") {
+    const leftN = edgeCoord(Posn[1], P0x, Px, hKind(attach[1]));
+    const rightN = edgeCoord(Posn[1] + Size[1], P0x, Px, hKind(attach[3]));
+    out.Posn[1] = Math.round(leftN);
+    out.Size[1] = Math.max(0, Math.round(rightN - leftN));
+  }
+  return out;
+};

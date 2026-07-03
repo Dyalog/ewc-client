@@ -89,31 +89,69 @@ it is a strict, non-breaking extension. The vertical axis is identical with
 `Align` is a shorthand that expands to `Attach` (e.g. `Align 'Top'` ≡ `Attach
 ('Top' 'Left' 'Top' 'Right')`), so the same helper should expand `Align`.
 
-## Current state in the client
+## State in the client
 
 - **Backend forwards `Attach`.** `~/dev/ewc/EWC/classes/*/{PropList,Supported,Defaults}.apla`
   list `Attach` for ~all classes, so it arrives in `data.Properties.Attach`.
-- **Client ignores it.** The AutoConf engine (`src/utils/autoconf.js`,
-  `useAutoConfStyle`, `AutoConfContext`, `useAutoConfProvider`) only does uniform
-  proportional scaling — i.e. the `Attach` default — and never reads the
-  `Attach` vector.
-- **One ad-hoc precursor.** `src/components/ScrollBar/index.jsx` (~`calculateAttachStyle`)
-  is the only component that reads `Attach`; it re-pins to `defaultPosn` via CSS
-  and is not tied to the AutoConf scale. It should be folded into / replaced by
-  the centralised mechanism so there is one `Attach` path, not two.
+- **`attachGeometry` is now implemented and wired** (source; a client build is
+  Neil's). See below.
+- **One ad-hoc precursor remains.** `src/components/ScrollBar/index.jsx`
+  (~`calculateAttachStyle`) re-pins to `defaultPosn` via CSS and is not tied to
+  the AutoConf scale. It should be folded into / replaced by the centralised
+  mechanism so there is one `Attach` path, not two. *(Not yet done.)*
 
-## Implementation path
+## Implementation — done / remaining
 
-1. **Generalise** `scaleGeometry` → `attachGeometry(Properties, ctx, attach)` in
-   `autoconf.js` (pure, unit-testable). The enabling data (`baseline` +
-   `scaleX/scaleY`) is **already** on `AutoConfContext` — no context change
-   needed. Default/absent `Attach` must reduce to the current behaviour.
-2. **`useAutoConfStyle`** reads the child's own `Attach` (and expands `Align` →
-   `Attach`) and calls the new function.
-3. Because `Attach` lives in the **shared hook**, it applies to all ~35 classes
-   automatically once they are migrated to `useAutoConfStyle` — which is already
-   **Phase 5** of the AutoConf plan. So #97/#495 largely *fold into* Phase 5.
-4. **Cleanup** the ScrollBar ad-hoc path.
+**Done:**
+1. **`attachGeometry(Properties, ctx, attach)`** in `src/utils/autoconf.js` —
+   pure, generalises `scaleGeometry`, reduces to it exactly for absent / malformed
+   / all-`None` `Attach`. Uses the `baseline` + `scaleX/scaleY` already on
+   `AutoConfContext` (no context change). 8 unit tests in `autoconf.test.js`
+   (exact px for all five canonical cases + the reduction/no-mutation properties).
+2. **Wired** into `SubForm/index.jsx` (its bespoke reflow) and the shared
+   `useAutoConfStyle` hook (reads the component's own `Properties.Attach`). Both
+   are behaviour-preserving when `Attach` is absent/`None`.
+
+**Remaining:**
+- `Align` → `Attach` expansion (docs: `Align 'Top'` ≡ `Top Left Top Right`) —
+  the helper should expand `Align`; not yet added.
+- Migrate the rest of the positioned components to `useAutoConfStyle` (Phase 5)
+  so every class honours `Attach`. The ones already on the hook (Button, Label,
+  List, Combo, Treeview, ListView, Edit, TabControl, Splitters, …) get it now.
+- Fold in / remove the ScrollBar ad-hoc path.
+- Non-`Pixel` `Coord` (see Scope).
+
+## Tests
+
+- **Unit** (`src/utils/autoconf.test.js`, `yarn test` = `node --test`): the
+  Windows-correct px for each canonical case. **Pass.**
+- **Visual e2e** (`~/dev/ewcdemotest/tests/basic/attach.spec.ts`): drives
+  `DemoAttach`, measures each box relative to the form before/after Resize, and
+  asserts the per-edge invariants below. Numeric geometry, **not** a pixel
+  snapshot (a snapshot would freeze whatever renders today). These assert
+  *expected* behaviour, so they fail on a proportional-only client and pass with
+  `attachGeometry`. **Verified green** against live vite source
+  (`BROWSER_URL=http://localhost:5273`, backend `demo.Run 'Browser'` on 22322);
+  all five cases match native ⎕WC exactly (Pinned-TL pixel-exact, Toolbar width
+  800→1120, Fills 470×150→790×350, Pinned-TR x680→1000 fixed-size, Proportional
+  ×scale). A deployed-dist run still needs a client build.
+
+  The spec loads the demo via **`?Demo=Attach`**, NOT the picker combo — see the
+  baseline bug below.
+
+## ⚠ Separate pre-existing bug: stale AutoConf baseline across the demo picker
+
+Selecting a demo through the picker combo leaves the previous form's AutoConf
+**baseline** on the reused `F1`: the menu form is ~400×300, so a subsequently
+selected 840×520 demo form reports scale ≈ 2.1×1.73 **at rest** and every
+reflowing child is wrong before any resize (Toolbar width 800→1240, Pinned-TR
+flung to x1121, etc.). Loading the same demo directly with `?Demo=Attach` mounts
+`F1` fresh and everything is pixel-exact. This is **not** an Attach bug
+(`attachGeometry` is correct; Pinned-TL is exact either way) — it is the Form
+provider's `baselineRef` not resetting when the form's Size/identity changes.
+`attachGeometry` just makes it glaring because attached edges diverge visibly
+where uniform proportional scaling hid it. Worth fixing in the AutoConf provider
+(reset the captured baseline when the authored Size changes).
 
 ## The comparison demo
 
@@ -127,6 +165,21 @@ Two renderings of the *same* layout, so `Attach` can be compared edge for edge:
 - **`demo.Run` twin** (`~/dev/ewc/demo/DemoAttach.aplf` + `AtMkBox`,
   `CBResizeDemo`): EWC-only, reachable via the demo picker or `?Demo=Attach`, so
   it can go through the existing Playwright/verify path.
+- **Native `⎕WC` self-checking test** (Windows), `autoconf/AttachWC*.aplf`:
+  `]LINK.Create #.autoconf <dir>` then `#.autoconf.AttachWCRun`. Builds the same
+  five boxes under real `⎕WC`; drag the form edge (or click **Grow** = `⎕WS`
+  Size), then **Check** prints a PASS/FAIL table comparing each box's live `⎕WG`
+  Posn/Size to the Attach-correct geometry for the *current* form size (so it
+  validates any resize). `AttachWCExpect` is the same edge math as
+  `attachGeometry`; verified to emit the same numbers as the browser test
+  (B2 800→1120, B4 x650→970 fixed-size, …). Comparing a drag vs Grow also settles
+  whether `⎕WS`-on-Size reconfigures Attach children like a user drag.
+
+  **Coord 'Pixel' caveat:** the docs say an *attached* edge's Posn/Size "remains
+  unaffected" by a resize, while a *None* edge's changes. So `⎕WG` on a fully
+  pinned box may return its *design* numbers after a resize — that is Attach
+  *working* (the box stayed put), not a no-op. The Check prints `exp` vs `act`
+  side by side so whatever native reports is visible rather than assumed.
 
 Five boxes that differ **only** in `Attach` (AutoConf is the default 3 on all),
 covering #97's canonical cases plus the default:

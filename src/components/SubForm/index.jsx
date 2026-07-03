@@ -3,7 +3,7 @@ import { useContext, useEffect, useRef } from "react";
 import {
   excludeKeys,
   setStyle,
-  scaleGeometry,
+  attachGeometry,
   acShouldReflow,
   getFontStyles,
   getImageStyles,
@@ -37,6 +37,7 @@ const SubForm = ({ data }) => {
     EdgeStyle,
     Border = 0,
     AutoConf = 3,
+    Attach,
   } = data?.Properties;
 
   const observedDiv = useRef(null);
@@ -55,21 +56,29 @@ const SubForm = ({ data }) => {
     parentAutoConf.baseline
   );
   const geomProps = { ...data?.Properties, ...(effSize ? { Size: effSize } : {}) };
+  // attachGeometry refines the reflow per edge from the child's own Attach; with
+  // no/None Attach it is exactly the old proportional scaleGeometry.
   const scaledProps = reflow
-    ? scaleGeometry(geomProps, parentAutoConf.scaleX, parentAutoConf.scaleY)
+    ? attachGeometry(geomProps, parentAutoConf, Attach)
     : geomProps;
   const scaledSize = scaledProps.Size;
   const scaledPosn = scaledProps.Posn;
   const styles = setStyle(scaledProps, "absolute", Flex);
 
+  const updatedData = excludeKeys(data);
+
   // AutoConf provider: a SubForm is also a container — it publishes its own
   // scale (current box vs its authored/effective size) and propagate bit so its
   // children reflow when it is resized (e.g. an app ⎕WS grow, or a parent reflow).
-  const autoConfValue = useAutoConfProvider(effSize, AutoConf);
+  // identity = the child-key signature, so the baseline recaptures when the
+  // picker reuses this id for a different layout (matches Form.jsx / Group.jsx).
+  const autoConfValue = useAutoConfProvider(
+    effSize,
+    AutoConf,
+    Object.keys(updatedData).join("|")
+  );
 
   const flexStyles = parseFlexStyles(CSS);
-
-  const updatedData = excludeKeys(data);
 
   const ImageData = findCurrentData(Picture && Picture[0]);
 

@@ -1,0 +1,19 @@
+ r←pars AttachWCExpect spec;⎕IO;par0;par;bpos;bsize;attach;h0;w0;h;w;t;l;bh;bw;ec;topN;botN;leftN;rightN;posn;size
+⍝ Attach-correct geometry for one box. Left: (par0 par) = parent baseline and
+⍝ current size. Right: spec = (posn size attach). Returns (posn size).
+⍝ Each edge: attached to the NEAR parent edge → fixed (c0); to the FAR edge →
+⍝ fixed distance from it (shifts by the size change); 'None' → proportional.
+⍝ Whole px; Size never negative. Same math as the client's attachGeometry.
+ ⎕IO←1
+ (par0 par)←pars
+ (bpos bsize attach)←spec
+ (h0 w0)←par0 ⋄ (h w)←par
+ (t l)←bpos ⋄ (bh bw)←bsize
+ ec←{(c0 pp0 pp k)←⍵ ⋄ k⊃(c0)(c0+pp-pp0)(c0×pp÷pp0)}  ⍝ k 1 2 3 = near far prop
+ topN←ec(t)(h0)(h)('Top' 'Bottom'⍳⊂1⊃attach)
+ botN←ec(t+bh)(h0)(h)('Top' 'Bottom'⍳⊂3⊃attach)
+ leftN←ec(l)(w0)(w)('Left' 'Right'⍳⊂2⊃attach)
+ rightN←ec(l+bw)(w0)(w)('Left' 'Right'⍳⊂4⊃attach)
+ posn←⌊0.5+topN leftN
+ size←⌊0.5+(0⌈botN-topN)(0⌈rightN-leftN)
+ r←posn size

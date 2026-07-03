@@ -68,7 +68,8 @@ const Form = ({ data }) => {
     Size && Size.length ? Size : [window.innerHeight, window.innerWidth];
   const autoConfValue = useAutoConfProvider(
     [designSize[0] - menuBarOffset, designSize[1]],
-    AutoConf
+    AutoConf,
+    Object.keys(updatedData).join("|")
   );
 
   let imageStyles = getImageStyles(Picture && Picture[1], ImageData);

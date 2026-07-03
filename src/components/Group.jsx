@@ -85,7 +85,11 @@ const Group = ({ data }) => {
 
   // AutoConf provider: a Group is a container — publish its scale + propagate bit
   // so its children reflow when it is resized.
-  const autoConfValue = useAutoConfProvider(Size, AutoConf);
+  const autoConfValue = useAutoConfProvider(
+    Size,
+    AutoConf,
+    Object.keys(updatedData).join("|")
+  );
 
   //   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   //   const x = e.clientX;

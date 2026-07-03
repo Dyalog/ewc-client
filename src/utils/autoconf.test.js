@@ -8,6 +8,7 @@ import {
   acBaseline,
   acScale,
   scaleGeometry,
+  attachGeometry,
 } from "./autoconf.js";
 
 // --- the 0/1/2/3 bit matrix ------------------------------------------------
@@ -290,4 +291,66 @@ test("0/2 (ignore) keep EXACT pixels under a parent resize — no rounding drift
   const fixed = child(ctx, 0, [140, 278], [22, 56]); // AutoConf 0 → never reflow
   assert.deepEqual(fixed.Posn, [140, 278]);
   assert.deepEqual(fixed.Size, [22, 56]);
+});
+
+// --- attachGeometry: per-edge Attach reflow --------------------------------
+// Expected values below are the Windows-⎕WC-correct geometry for the demo's
+// resize: parent content 520×840 → 720×1160 (Δ = 200 high, 320 wide). These are
+// the same numbers the attach.spec.ts e2e asserts on screen.
+const AT_CTX = { scaleX: 1160 / 840, scaleY: 720 / 520, baseline: { width: 840, height: 520 } };
+
+test("Attach default ('None'×4) is identical to scaleGeometry", () => {
+  const props = { Posn: [70, 20], Size: [140, 170] };
+  const none = ["None", "None", "None", "None"];
+  assert.deepEqual(
+    attachGeometry(props, AT_CTX, none),
+    scaleGeometry(props, AT_CTX.scaleX, AT_CTX.scaleY)
+  );
+});
+
+test("Attach falls back to proportional when malformed / absent / baseline-less", () => {
+  const props = { Posn: [70, 20], Size: [140, 170] };
+  const prop = scaleGeometry(props, 2, 2);
+  assert.deepEqual(attachGeometry(props, { scaleX: 2, scaleY: 2, baseline: { width: 840, height: 520 } }, undefined), scaleGeometry(props, 2, 2));
+  assert.deepEqual(attachGeometry(props, { scaleX: 2, scaleY: 2, baseline: { width: 840, height: 520 } }, ["Top", "Left"]), scaleGeometry(props, 2, 2));
+  // no baseline → can't do attach math → proportional
+  assert.deepEqual(attachGeometry(props, { scaleX: 2, scaleY: 2 }, ["Top", "Left", "Top", "Left"]), prop);
+});
+
+test("Pinned-TL 'Top Left Top Left' — fixed position AND fixed size", () => {
+  const r = attachGeometry({ Posn: [70, 340], Size: [140, 180] }, AT_CTX, ["Top", "Left", "Top", "Left"]);
+  assert.deepEqual(r.Posn, [70, 340]);
+  assert.deepEqual(r.Size, [140, 180]);
+});
+
+test("Toolbar 'Top Left Top Right' — fixed top/left/height, right edge tracks parent (widens by Δw)", () => {
+  const r = attachGeometry({ Posn: [240, 20], Size: [56, 800] }, AT_CTX, ["Top", "Left", "Top", "Right"]);
+  assert.deepEqual(r.Posn, [240, 20]);
+  assert.deepEqual(r.Size, [56, 1120]); // 800 + 320
+});
+
+test("Fills 'Top Left Bottom Right' — top-left fixed, bottom+right track parent (grows Δh×Δw)", () => {
+  const r = attachGeometry({ Posn: [320, 20], Size: [150, 470] }, AT_CTX, ["Top", "Left", "Bottom", "Right"]);
+  assert.deepEqual(r.Posn, [320, 20]);
+  assert.deepEqual(r.Size, [350, 790]); // 150+200 , 470+320
+});
+
+test("Pinned-TR 'Top Right Top Right' — fixed size, glued to parent top-right (moves right by Δw)", () => {
+  const r = attachGeometry({ Posn: [70, 650], Size: [140, 170] }, AT_CTX, ["Top", "Right", "Top", "Right"]);
+  assert.deepEqual(r.Posn, [70, 970]); // left 650 + 320
+  assert.deepEqual(r.Size, [140, 170]); // unchanged
+});
+
+test("attachGeometry never mutates the input Properties", () => {
+  const props = { Posn: [320, 20], Size: [150, 470] };
+  attachGeometry(props, AT_CTX, ["Top", "Left", "Bottom", "Right"]);
+  assert.deepEqual(props.Posn, [320, 20]);
+  assert.deepEqual(props.Size, [150, 470]);
+});
+
+test("a 'Bottom Right Bottom Right' box stays glued to the parent bottom-right, fixed size", () => {
+  // top 850? place a box near BR of the 520×840 parent: Posn (360,620) Size (120,180)
+  const r = attachGeometry({ Posn: [360, 620], Size: [120, 180] }, AT_CTX, ["Bottom", "Right", "Bottom", "Right"]);
+  assert.deepEqual(r.Size, [120, 180]); // fixed size
+  assert.deepEqual(r.Posn, [560, 940]); // 360+200 , 620+320 (moves with BR corner)
 });

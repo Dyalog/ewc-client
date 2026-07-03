@@ -1,0 +1,33 @@
+ AttachWCCheck msg;⎕IO;DESIGN;TOL;par;box;id;fid;bpos;bsize;attach;eg;eposn;esize;aposn;asize;ok;pass;n;allfixed;atxt
+⍝ Read every box's LIVE Posn/Size (⎕WG) and compare to the Attach-correct
+⍝ geometry for the CURRENT form size — so it validates ANY resize (drag or the
+⍝ ⎕WS "Grow" button). Prints a PASS/FAIL table to the session. Works as the
+⍝ Check-button callback AND is directly callable: AttachWCCheck 0
+⍝ NOTE (Coord 'Pixel'): the docs say an ATTACHED edge's Posn/Size "remains
+⍝ unaffected" by a resize. So the 'act' column shows exactly what ⎕WG reports —
+⍝ compare it to 'exp' (the on-screen-correct geometry) to see what native does.
+ ⎕IO←1
+ DESIGN←520 840 ⋄ TOL←2
+ par←'F1'⎕WG'Size'
+ ⎕←''
+ ⎕←'Form size ',(⍕par),'   (baseline ',(⍕DESIGN),')   tol=',⍕TOL
+ pass←0 ⋄ n←0 ⋄ allfixed←1
+ :For box :In AttachWCBoxes
+     (id bpos bsize attach)←box
+     fid←'F1.',id
+     eg←(DESIGN par)AttachWCExpect(bpos bsize attach)
+     (eposn esize)←eg
+     aposn←fid ⎕WG'Posn'
+     asize←fid ⎕WG'Size'
+     ok←(TOL≥⌈/|eposn-aposn)∧TOL≥⌈/|esize-asize
+     allfixed←allfixed∧(aposn≡bpos)∧asize≡bsize
+     pass+←ok ⋄ n+←1
+     atxt←¯1↓∊attach,¨⊂' '
+     ⎕←((1+ok)⊃'FAIL' 'pass'),' ',(3↑id),'  ',(26↑atxt),'  exp ',(19↑⍕eposn,esize),'  act ',(19↑⍕aposn,asize)
+ :EndFor
+ ⎕←(⍕pass),'/',(⍕n),' boxes match the Attach-correct geometry'
+ :If allfixed∧~DESIGN≡par
+     ⎕←'>> Children unchanged though the form grew: this resize did NOT reconfigure'
+     ⎕←'>> them. If you clicked Grow (⎕WS Size), DRAG the form edge instead — Attach'
+     ⎕←'>> may respond only to a USER resize, not to altering the Size property.'
+ :EndIf

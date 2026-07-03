@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { AutoConfContext } from "../context";
-import { setStyle, scaleGeometry, acShouldReflow } from "../utils";
+import { setStyle, attachGeometry, acShouldReflow } from "../utils";
 
 // Drop-in replacement for setStyle that applies AutoConf reflow.
 //
@@ -20,7 +20,9 @@ const useAutoConfStyle = (
   if (!acShouldReflow(ctx.propagate, ownAutoConf, ctx.baseline)) {
     return setStyle(Properties, position, Flex);
   }
-  return setStyle(scaleGeometry(Properties, ctx.scaleX, ctx.scaleY), position, Flex);
+  // Per-edge Attach (from the component's own Properties); with no/None Attach
+  // this is exactly the old proportional scaleGeometry.
+  return setStyle(attachGeometry(Properties, ctx, Properties?.Attach), position, Flex);
 };
 
 export default useAutoConfStyle;
