@@ -12,7 +12,7 @@ import {
   handleMouseDoubleClick,
   handleMouseWheel,
 } from '../../utils';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle } from '../../hooks';
 import { getBorderStyles } from '../../styles/edgeStyles';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
 import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
@@ -781,6 +781,7 @@ const Grid = ({ data }) => {
 
   const customStyles = parseFlexStyles(CSS);
   const baseStyles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
 
   const styles = {
     ...baseStyles,
@@ -790,6 +791,7 @@ const Grid = ({ data }) => {
     // Honor APL Border/EdgeStyle; default keeps the historical #b4b4b4 line.
     ...getBorderStyles(EdgeStyle, Border, '#b4b4b4'),
     ...customStyles,
+    ...attachStyle,
   };
 
   // Normalize titles to arrays. Missing/empty → Excel-style auto-labels

@@ -3,3 +3,4 @@ export { default as useActiveElement } from './useActiveElement';
 export { default as useResizeObserver } from './useResizeObserver';
 export { default as useWindowDimensions } from './useWindowDimensions';
 export { default as useLocalStorage } from './useLocalStorage';
+export { default as useAttachStyle } from './useAttachStyle';

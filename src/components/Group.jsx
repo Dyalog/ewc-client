@@ -18,7 +18,7 @@ import {
 } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import SelectComponent from "./SelectComponent";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useResizeObserver, useAttachStyle } from "../hooks";
 
 const Group = ({ data }) => {
   const {
@@ -66,6 +66,7 @@ const Group = ({ data }) => {
   const updatedData = excludeKeys(data);
 
   const styles = setStyle(data?.Properties, "absolute", Flex);
+  const attachStyle = useAttachStyle(data);
 
   //   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   //   const x = e.clientX;
@@ -119,7 +120,8 @@ const Group = ({ data }) => {
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,
-        ...fontStyles
+        ...fontStyles,
+        ...attachStyle,
       }}
       id={data?.ID}
       // !!! TODO !!!

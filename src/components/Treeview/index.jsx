@@ -18,7 +18,7 @@ import {
   handleKeyPressUtils,
   keyShiftState,
 } from "../../utils";
-import { useAppData } from "../../hooks";
+import { useAppData, useAttachStyle } from "../../hooks";
 import { useEffect, useState, useRef } from "react";
 
 import Tree from "rc-tree";
@@ -41,6 +41,7 @@ const Treeview = ({ data }) => {
 
 
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const treeData = [];
   let parentIndex = -1;
 
@@ -251,6 +252,7 @@ const Treeview = ({ data }) => {
         overflowY: "scroll",
         ...fontStyles,
         ...customStyles,
+        ...attachStyle,
       }}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);

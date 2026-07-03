@@ -5,9 +5,13 @@ import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../u
 const HorizontalSplitter = ({ data }) => {
   const elementRef = useRef(null);
 
-  const { Size: SubformSize, Posn: SubFormPosn } = JSON.parse(
+  // Guard the transient null: the parent's localStorage entry may not be
+  // written yet on an early render (it lands in the parent SubForm's effect).
+  // JSON.parse(null) is null, and destructuring null throws — with no error
+  // boundary that blanks the whole form. Fall back to {} and read on re-render.
+  const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
+  ) || {};
 
 
   const { Posn, SplitObj1, SplitObj2, Event, Size, CSS } = data?.Properties;
@@ -27,7 +31,16 @@ const HorizontalSplitter = ({ data }) => {
 
   useEffect(() => {
     if (!position) return;
-    if (!oldFormValues) return;
+    // See VerticalSplitter: seed the baseline on the first observation so later
+    // resizes reproportion. oldFormValues (from localStorage) isn't ready at
+    // mount because the Form writes it in its own, later-running effect.
+    if (!oldFormValues) {
+      if (dimensions?.height) setoldFormValues([dimensions.height, dimensions.width]);
+      return;
+    }
+    // No-op if the form size hasn't actually changed — guards against a
+    // reRender()-triggered re-run loop.
+    if (oldFormValues[0] === dimensions.height && oldFormValues[1] === dimensions.width) return;
 
     if (oldHeight == dimensions.height) {
       const obj1 = JSON.parse(localStorage.getItem(SplitObj1));

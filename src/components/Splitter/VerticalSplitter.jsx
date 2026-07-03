@@ -5,9 +5,12 @@ import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../u
 const VerticalSplitter = ({ data }) => {
   const elementRef = useRef(null); 
 
+  // Guard the transient null (see HorizontalSplitter): the parent's
+  // localStorage entry may not be written yet on an early render. Destructuring
+  // JSON.parse(null) throws and, with no error boundary, blanks the form.
   const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
+  ) || {};
 
   const { Posn, SplitObj1, SplitObj2, Event, CSS } = data?.Properties;
   const style = setStyle(data.Properties)
@@ -22,7 +25,19 @@ const VerticalSplitter = ({ data }) => {
 
   useEffect(() => {
     if (!position) return;
-    if (!oldFormValues) return;
+    // On the first observation, capture the baseline form size and bail — there
+    // is nothing to reproportion yet. Seeded here (not only from localStorage at
+    // mount) because the Form writes its localStorage entry in its own effect,
+    // which runs AFTER this child mounts. Without this, oldFormValues stayed
+    // undefined and this handler bailed forever, so the panes only reflowed on a
+    // splitter drag, never on a window/form resize.
+    if (!oldFormValues) {
+      if (dimensions?.width) setoldFormValues([dimensions.height, dimensions.width]);
+      return;
+    }
+    // No-op if the form size hasn't actually changed — guards against a
+    // reRender()-triggered re-run loop.
+    if (oldFormValues[0] === dimensions.height && oldFormValues[1] === dimensions.width) return;
 
     let calculateLeft =
       position && position.left && oldFormValues && oldFormValues[1]
