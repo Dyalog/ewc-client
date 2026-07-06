@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-07-06
+## [v0.4.0] - 2026-07-06
 
 ### New
 - `Grid`: Rewrite of our old grid implementation with lots of new features and better parity with `⎕WC`
