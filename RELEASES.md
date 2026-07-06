@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-06
+
+### New
+- `Grid`: Rewrite of our old grid implementation with lots of new features and better parity with `⎕WC`
+- `e2e/`: UI testing using Playwright is now a part of ewc-client
+   - Adds automated visual regressions tests to github
+- `EWC.LOGFILE` option: Logs can now be written to a text file rather than the session
+
+### Improved
+- `Label`, `Text`, `Subform`, `Combo`, `Grid` layout fixes 
+- `Edgestyle` and `Border` are improved
+- `Scroll Bar` was refactored
+- Lots of internal stability fixes
+
 ## [v0.3.0] - 2026-04-29
 
 ### New
