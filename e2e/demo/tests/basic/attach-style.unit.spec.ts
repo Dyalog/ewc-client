@@ -66,4 +66,21 @@ test.describe('getAttachStyle (unit)', () => {
     expect(getAttachStyle(undefined, [1, 1], [1, 1], ['Top', 'Left', 'Top', 'Left'])).toEqual({});
     expect(getAttachStyle([0, 0], [1, 1], [1, 1], ['Top', 'Left'])).toEqual({}); // Attach not length-4
   });
+
+  // The server sends edge names in mixed case (APL enums are case-insensitive):
+  // e.g. ['top','left','bottom','right'] and even ['top','Left','Bottom','Left'].
+  // A case-insensitive lookup must treat these identically to their canonical
+  // form — otherwise a mis-cased edge silently falls through to 'None'
+  // (proportional), so a fill object wrongly scales instead of filling.
+  test('lowercase "top left bottom right" fills identically to capitalized', () => {
+    const lower = getAttachStyle([0, 200], [800, 600], [800, 800], ['top', 'left', 'bottom', 'right']);
+    const upper = getAttachStyle([0, 200], [800, 600], [800, 800], ['Top', 'Left', 'Bottom', 'Right']);
+    expect(lower).toEqual(upper);
+    expect(lower).toEqual({ position: 'absolute', top: 0, bottom: 0, height: 'auto', left: 200, right: 0, width: 'auto' });
+  });
+
+  test('mixed case "top Left Bottom Left" matches canonical left-dock', () => {
+    expect(getAttachStyle([60, 10], [680, 110], [800, 497], ['top', 'Left', 'Bottom', 'Left']))
+      .toEqual(getAttachStyle([60, 10], [680, 110], [800, 497], ['Top', 'Left', 'Bottom', 'Left']));
+  });
 });

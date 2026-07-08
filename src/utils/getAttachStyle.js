@@ -18,9 +18,16 @@ const isPair = (a) =>
 // Percentage string, trimmed of float noise.
 const pct = (frac) => `${Math.round(frac * 1e4) / 1e2}%`;
 
+// Capitalize an edge name to the canonical form ('top'/'TOP' -> 'Top'). APL GUI
+// enum values are case-insensitive, and the server sends mixed case (e.g.
+// ['top','Left','Bottom','Left']), so we normalize before matching.
+const canon = (s) =>
+  typeof s === 'string' && s.length ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
+
 // Resolve one child edge to a single CSS declaration { prop, value } where prop
-// is a CSS side and value is px (number) or a percentage (string).
-const resolveEdge = (value, decls) => decls[value] || decls.None;
+// is a CSS side and value is px (number) or a percentage (string). A value that
+// isn't one of the four edge names falls back to None (proportional).
+const resolveEdge = (value, decls) => decls[canon(value)] || decls.None;
 
 // Merge the two edges of one axis into CSS. start is the top/left edge, end is
 // the bottom/right edge; startProp/endProp name the CSS sides they naturally
