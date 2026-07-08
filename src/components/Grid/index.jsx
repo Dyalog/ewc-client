@@ -12,7 +12,7 @@ import {
   handleMouseDoubleClick,
   handleMouseWheel,
 } from '../../utils';
-import { useAppData, useAttachStyle } from '../../hooks';
+import { useAppData, useAttachStyle, useResizeObserver, useConfigureReport } from '../../hooks';
 import { getBorderStyles } from '../../styles/edgeStyles';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
 import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
@@ -782,6 +782,13 @@ const Grid = ({ data }) => {
   const customStyles = parseFlexStyles(CSS);
   const baseStyles = setStyle(data?.Properties);
   const attachStyle = useAttachStyle(data);
+  // Report Configure(31) once the grid's own size settles. A "virtual" grid
+  // (VScroll/HScroll 0 + sibling Scroll bars) is deployed server-side to fit its
+  // size, so when Attach reflows the grid on a window resize the app needs its
+  // new size to re-deploy more/fewer cells. No-op unless a Configure event is
+  // registered; never writes the data model.
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
 
   const styles = {
     ...baseStyles,

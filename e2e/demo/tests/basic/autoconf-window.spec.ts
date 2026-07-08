@@ -70,4 +70,29 @@ test.describe('DemoAutoConfWin — window-resize reflow', () => {
 
     await resize(); // restore
   });
+
+  // The APP holds a "virtual" grid (VScroll/HScroll 0) with a Configure event.
+  // When it reflows on resize it must report its new size so the app can
+  // re-deploy more/fewer cells to fit — the space-based deployment a real
+  // desktop grid uses. Before the Grid emitted Configure(31) this only happened
+  // on a fresh open, never on a live resize.
+  test('virtual grid re-deploys more cells when the window grows', async () => {
+    const rows = () => page.locator('#F1\\.APP\\.GRID .grid-row').count();
+    const cols = () => page.locator('#F1\\.APP\\.GRID .grid-col-header').count();
+
+    const rows0 = await rows();
+    const cols0 = await cols();
+
+    await resize(); // grow the window -> grid reflows -> Configure -> re-deploy
+
+    const rows1 = await rows();
+    const cols1 = await cols();
+
+    // The grid deployed strictly more rows and columns to fill the larger area.
+    expect(rows1).toBeGreaterThan(rows0 + 3);
+    expect(cols1).toBeGreaterThan(cols0);
+
+    await resize(); // shrink back -> fewer cells again
+    expect(await rows()).toBeLessThan(rows1);
+  });
 });
