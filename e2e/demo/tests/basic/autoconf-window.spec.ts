@@ -95,4 +95,42 @@ test.describe('DemoAutoConfWin — window-resize reflow', () => {
     await resize(); // shrink back -> fewer cells again
     expect(await rows()).toBeLessThan(rows1);
   });
+
+  // The grid uses VScroll ¯2 = "scrollable but no native scrollbar" (the
+  // external Scroll object F1.APP.VS is the bar). If the client rendered its own
+  // bar too you'd get the "double scrollbars" bug — so the grid's scroll
+  // container must be overflow:hidden vertically, not auto.
+  test('VScroll -2 grid shows NO native scrollbar (no double bars)', async () => {
+    const overflowY = await page.locator('#F1\\.APP\\.GRID .grid-container')
+      .evaluate((el: HTMLElement) => getComputedStyle(el).overflowY);
+    expect(overflowY).toBe('hidden');
+    // The external Scroll widget is present as the single vertical bar.
+    await expect(page.locator('#F1\\.APP\\.VS')).toBeVisible();
+  });
+
+  // The external Scroll bar must actually page the virtual grid (Scroll event ->
+  // CBAutoConfWin re-slices the visible window). Dragging its thumb to the bottom
+  // should move the first visible row deep into the 200-row dataset.
+  test('external Scroll bar pages the virtual grid', async () => {
+    const firstRow = async () =>
+      Number((await page.locator('#F1\\.APP\\.GRID .grid-row-header').first().textContent())?.trim());
+    const dragThumbTo = async (frac: number) => {
+      const track = await page.locator('#F1\\.APP\\.VS .scroll-bar').boundingBox();
+      const thumb = await page.locator('#F1\\.APP\\.VS .thumb').boundingBox();
+      if (!track || !thumb) throw new Error('scrollbar track/thumb not found');
+      await page.mouse.move(thumb.x + thumb.width / 2, thumb.y + thumb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(thumb.x + thumb.width / 2, track.y + track.height * frac, { steps: 15 });
+      await page.mouse.up();
+      await page.waitForTimeout(600);
+    };
+
+    const start = await firstRow();
+    await dragThumbTo(0.95);            // drag thumb near the bottom
+    const down = await firstRow();
+    expect(down).toBeGreaterThan(start + 50); // scrolled deep into the 200-row dataset
+
+    await dragThumbTo(0);               // drag thumb back toward the top
+    expect(await firstRow()).toBeLessThan(down); // scrolled back up
+  });
 });
