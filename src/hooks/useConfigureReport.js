@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash/debounce';
 import { posn, size } from '../utils/sizeposn';
 
@@ -57,6 +57,14 @@ const useConfigureReport = (id, Event, socket, dimensions) => {
   const hasConfigure =
     Array.isArray(Event) && Event.some((e) => e && e[0] === 'Configure');
 
+  // Skip the object's initial (mount-time) sizing. ⎕WC lays an object out itself
+  // when it is first created; native never fires a Configure back for that server
+  // layout, so neither must we. Reporting it re-enters the app's Configure handler
+  // out of the layout function's dynamic scope (witnessed: a grid Configure at
+  // open re-entering the reflow path with its working state unset -> error dialog).
+  // Only genuine post-mount resizes are reported.
+  const seededRef = useRef(false);
+
   const report = useMemo(
     () =>
       debounce((oid) => {
@@ -94,6 +102,11 @@ const useConfigureReport = (id, Event, socket, dimensions) => {
 
   useEffect(() => {
     if (!hasConfigure) return;
+    // First run is the initial mount/layout — record and skip (see seededRef).
+    if (!seededRef.current) {
+      seededRef.current = true;
+      return;
+    }
     report(id);
     return () => report.cancel();
   }, [dimensions, hasConfigure, id, report]);

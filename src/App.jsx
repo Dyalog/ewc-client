@@ -700,11 +700,20 @@ const App = () => {
           const doWG = () => {
             const serverEvent = evData.WG;
             const updateAndStringify = (resp) => {
-              if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-                resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+              // Prefer the live measured DOM geometry over the model value. An
+              // object that fills its parent (Attach) reflows on window resize, so
+              // the model Size/Posn — what the server last set via ⎕WS — goes stale;
+              // returning the real geometry is what ⎕WG 'Size' means and lets the
+              // app's Configure handlers (e.g. a grid's GridConfigure) see the new
+              // size. Falls back to the model when the element isn't measurable
+              // (e.g. not yet mounted in the DOM).
+              if (serverEvent.Properties.includes('Posn')) {
+                const measured = posn(serverEvent.ID);
+                resp.WG.Properties['Posn'] = measured ? measured.map(Math.round) : resp.WG.Properties['Posn'];
               }
-              if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-                resp.WG.Properties['Size'] = size(serverEvent.ID);
+              if (serverEvent.Properties.includes('Size')) {
+                const measured = size(serverEvent.ID);
+                resp.WG.Properties['Size'] = measured ? measured.map(Math.round) : resp.WG.Properties['Size'];
               }
               return JSON.stringify(resp);
             };
