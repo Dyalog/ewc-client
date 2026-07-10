@@ -1,0 +1,8 @@
+ name xWS props
+⍝ Set a property after creation — ⎕WS or eWS per AC_RENDER. Used to demo the
+⍝ "WS-on-Size" path:   'id' xWS ('Size')(height width)
+ :If AC_RENDER≡'EWC'
+     name eWS props
+ :Else
+     name ⎕WS props
+ :EndIf

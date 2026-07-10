@@ -1,0 +1,10 @@
+ r←AttachWCBoxes
+⍝ Box table for the Attach ⎕WC test: one row (id (top left) (height width) attach)
+⍝ per case — #97's four canonical cases plus the proportional default. ONLY
+⍝ Attach differs between boxes; every box uses the default AutoConf 3.
+ r←⍬
+ r,←⊂('B0')(70 20)(140 170)('None' 'None' 'None' 'None')     ⍝ proportional (default)
+ r,←⊂('B1')(70 340)(140 180)('Top' 'Left' 'Top' 'Left')      ⍝ pinned top-left, fixed size (TreeView)
+ r,←⊂('B2')(240 20)(56 800)('Top' 'Left' 'Top' 'Right')       ⍝ toolbar: right edge tracks parent (List / Align 'Top')
+ r,←⊂('B3')(320 20)(150 470)('Top' 'Left' 'Bottom' 'Right')   ⍝ fills to corners (Grid)
+ r,←⊂('B4')(70 650)(140 170)('Top' 'Right' 'Top' 'Right')     ⍝ pinned top-right, fixed size (combo/button panel)

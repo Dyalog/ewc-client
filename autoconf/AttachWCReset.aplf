@@ -1,0 +1,3 @@
+ AttachWCReset msg
+⍝ "Reset" button: ⎕WS the form back to its 520×840 design size.
+ 'F1'⎕WS'Size'(520 840)

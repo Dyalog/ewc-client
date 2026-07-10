@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   setStyle,
+  parentId,
   parseFlexStyles,
   rgbColor,
   getFontStyles,
@@ -12,7 +13,7 @@ import {
   handleMouseDoubleClick,
   handleMouseWheel,
 } from '../../utils';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle, useResizeObserver, useConfigureReport } from '../../hooks';
 import { getBorderStyles } from '../../styles/edgeStyles';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
 import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
@@ -49,8 +50,9 @@ const columnLetter = (i) => {
   return s;
 };
 
-// Map EWC scroll values to CSS overflow values
-// 0 = hidden, -1/-2 = auto (default), -3 = always visible
+// Map ⎕WC Grid scroll values to CSS overflow (per the Dyalog VScroll/HScroll
+// docs, Grid section): 0 = no scrollbar (hidden), ¯1 = shown when required
+// (auto), ¯2 = same as ¯1 (auto), ¯3 = always shown.
 const getOverflowStyle = (scrollValue) => {
   const val = Number(scrollValue);
   if (val === 0) return 'hidden';
@@ -781,6 +783,35 @@ const Grid = ({ data }) => {
 
   const customStyles = parseFlexStyles(CSS);
   const baseStyles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
+  // Report Configure(31) once the grid's own size settles. A "virtual" grid
+  // (VScroll/HScroll 0 + sibling Scroll bars) is deployed server-side to fit its
+  // size, so when Attach reflows the grid on a window resize the app needs its
+  // new size to re-deploy more/fewer cells. No-op unless a Configure event is
+  // registered; never writes the data model.
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
+
+  // External-scrollbar composite: when the app places sibling Scroll objects to
+  // drive this grid (the DemoGridScroll / GAMA "⍙3S" pattern — grid + Y1/Y2
+  // scroll bars in one SubForm), the grid must NOT also draw its own native
+  // scrollbar on that axis, or you get "double scrollbars". A Scroll object is
+  // vertical when VScroll=¯1, horizontal when HScroll=¯1.
+  const externalBars = useMemo(() => {
+    const parent = findCurrentData(parentId(data?.ID));
+    let v = false;
+    let h = false;
+    if (parent && typeof parent === 'object') {
+      for (const key in parent) {
+        const p = parent[key]?.Properties;
+        if (p?.Type !== 'Scroll') continue;
+        if (Number(p.VScroll) === -1) v = true;
+        if (Number(p.HScroll) === -1) h = true;
+      }
+    }
+    return { v, h };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.ID, findCurrentData]);
 
   const styles = {
     ...baseStyles,
@@ -790,6 +821,7 @@ const Grid = ({ data }) => {
     // Honor APL Border/EdgeStyle; default keeps the historical #b4b4b4 line.
     ...getBorderStyles(EdgeStyle, Border, '#b4b4b4'),
     ...customStyles,
+    ...attachStyle,
   };
 
   // Normalize titles to arrays. Missing/empty → Excel-style auto-labels
@@ -876,8 +908,8 @@ const Grid = ({ data }) => {
         ref={containerRef}
         className={`grid-container${Number(VScroll) === -3 ? ' force-vscroll' : ''}${Number(HScroll) === -3 ? ' force-hscroll' : ''}`}
         style={{
-          overflowX: getOverflowStyle(HScroll),
-          overflowY: getOverflowStyle(VScroll),
+          overflowX: externalBars.h ? 'hidden' : getOverflowStyle(HScroll),
+          overflowY: externalBars.v ? 'hidden' : getOverflowStyle(VScroll),
         }}
       >
         {Values && Values.length > 0 ? (

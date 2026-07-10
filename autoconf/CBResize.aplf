@@ -1,0 +1,10 @@
+ CBResize msg;sz
+⍝ "Resize" button: toggle the Form between its design size (520×840) and the
+⍝ grown size (720×1160) via WS-on-Size, so EWC can drive the parent resize (it
+⍝ cannot drag the Form yet). On native ⎕WC this exercises the "parent resized by
+⍝ ⎕WS" path — compare it against DRAGGING the Form edge to the same size: the
+⍝ docs say Attach responds to a USER resize, so this is exactly where we find out
+⍝ whether ⎕WS reconfigures the Attach children identically to a drag.
+ AC_GROWN←~{6::0 ⋄ AC_GROWN}0        ⍝ flip a persistent 0/1 flag (default 0)
+ sz←(1+AC_GROWN)⊃(520 840)(720 1160)
+ 'F1'xWS('Size')sz

@@ -12,7 +12,7 @@ import {
 } from "../../utils";
 import "./textArea.css";
 import "../../styles/font.css";
-import { useAppData } from "../../hooks";
+import { useAppData, useAttachStyle } from "../../hooks";
 
 const TextArea = ({ data }) => {
   const { handleData, socket,dataRef } = useAppData();
@@ -34,6 +34,7 @@ const TextArea = ({ data }) => {
   const [localText, setLocalText] = useState(initialText);
 
   let styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const { Font, CSS, Event } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
@@ -70,6 +71,7 @@ const TextArea = ({ data }) => {
     fontFamily: Font && Font[0],
     fontSize: Font && `${Font[1]}px`,
     ...customStyles,
+    ...attachStyle,
   };
 
   const handleChange = (e) => {

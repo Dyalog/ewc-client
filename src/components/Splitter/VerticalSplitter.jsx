@@ -5,9 +5,12 @@ import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../u
 const VerticalSplitter = ({ data }) => {
   const elementRef = useRef(null); 
 
+  // Guard the transient null (see HorizontalSplitter): the parent's
+  // localStorage entry may not be written yet on an early render. Destructuring
+  // JSON.parse(null) throws and, with no error boundary, blanks the form.
   const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
+  ) || {};
 
   const { Posn, SplitObj1, SplitObj2, Event, CSS } = data?.Properties;
   const style = setStyle(data.Properties)
@@ -19,10 +22,28 @@ const VerticalSplitter = ({ data }) => {
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
   const [oldFormValues, setoldFormValues] = useState(SubformSize && SubformSize);
+  // Becomes true a beat after mount, so we skip the load-time form-size ramp
+  // (the menu->demo transition) and only reproportion on genuine later resizes.
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
-    if (!oldFormValues) return;
+    // Until ready (or before a baseline exists), just track the current form
+    // size as the baseline and bail — do NOT reproportion. This skips the
+    // menu->demo load ramp that would otherwise mis-size the panes, while
+    // keeping oldFormValues seeded (the Form writes its localStorage entry in
+    // its own, later-running effect, so we can't rely on that at mount).
+    if (!readyRef.current || !oldFormValues) {
+      if (dimensions?.width) setoldFormValues([dimensions.height, dimensions.width]);
+      return;
+    }
+    // No-op if the form size hasn't actually changed — guards against a
+    // reRender()-triggered re-run loop.
+    if (oldFormValues[0] === dimensions.height && oldFormValues[1] === dimensions.width) return;
 
     let calculateLeft =
       position && position.left && oldFormValues && oldFormValues[1]
@@ -94,6 +115,9 @@ const VerticalSplitter = ({ data }) => {
     backgroundColor: '#F0F0F0',
     cursor: 'col-resize',
     position: 'absolute',
+    // Sit above the panes so the divider is always grabbable, even when a pane
+    // is authored to start at the same x as the splitter (and would cover it).
+    zIndex: 10,
     top: Posn && Posn[0],
     left: left,
     ...style,

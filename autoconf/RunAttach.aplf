@@ -1,0 +1,19 @@
+ {r}←RunAttach mode
+⍝ Build the ATTACH demo layout (via the xWC/xWS dispatchers) and DQ it, natively
+⍝ or through EWC, so the Attach property can be compared edge for edge:
+⍝   #.autoconf.RunAttach 'WC'    ⍝ native ⎕WC (Windows) — the ground truth
+⍝   #.autoconf.RunAttach 'EWC'   ⍝ web client (connect a browser to the EWC port)
+⍝ Set #.AC_PORT before calling to override the EWC port (default 22322).
+⍝ (Sibling of Run, which does the AutoConf-values demo — same infra, same switch.)
+ AC_RENDER←mode
+ :If mode≡'EWC'
+     EWC←##.EWC
+     EWC.PORT←{6::⍵ ⋄ #.AC_PORT}22322
+     EWC.SHOWDEVTOOLS←0
+     EWC.RESOURCES←0 2⍴⊂''
+     'e'EWC.Init 'Desktop'
+     BuildAttach
+ :Else
+     BuildAttach
+     r←⎕DQ'F1'
+ :EndIf

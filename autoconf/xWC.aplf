@@ -1,0 +1,9 @@
+ name xWC props
+⍝ Create an object either natively (⎕WC) or via EWC (eWC), per AC_RENDER.
+⍝ eWC mirrors ⎕WC's calling convention, so the SAME right argument works for
+⍝ both:   'id' xWC ('Type')(positional…)('Prop' value)…
+ :If AC_RENDER≡'EWC'
+     name eWC props
+ :Else
+     name ⎕WC props
+ :EndIf

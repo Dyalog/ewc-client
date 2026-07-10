@@ -1,0 +1,21 @@
+ BuildAutoConf
+⍝ A resizable Form with four SubForms, one per AutoConf value (0–3). To see the
+⍝ FULL behaviour matrix you exercise TWO interactions — neither alone is enough:
+⍝   • Drag the FORM edge → tests accept-vs-ignore of the PARENT resize:
+⍝       0/2 ignore (stay fixed px, drift top-left) · 1/3 accept (reflow self)
+⍝   • Click "Grow boxes" → WS-grows every box, testing propagate-vs-not to CHILDREN:
+⍝       0/1 don't propagate (TL/BR stay pinned px) · 2/3 propagate (TL/BR reflow)
+⍝ Form-resize alone CAN'T separate 0 from 2 (both ignore the parent and never
+⍝ resize, so 2 never propagates) — the Grow-boxes step is what exposes that half.
+ 'F1'xWC 'Form'('Caption' 'AutoConf demo — drag my edge, then click Grow boxes')('Posn'(40 40))('Size'(600 920))('Coord' 'Pixel')('Sizeable' 1)('AutoConf' 3)
+
+ 'F1.hint'xWC 'Label'('Drag the form: 0/2 fixed, 1/3 reflow.    Grow boxes: 0/1 pin children, 2/3 reflow children.')(12 20)('Size'(18 880))
+
+ ⍝ 2×2 grid with headroom: each box (170×340) can grow to 230×410 (see CBGrow)
+ ⍝ without overlapping its neighbour — so the propagate read stays clean.
+ MkArea 'S0' 0 (44 20)(170 340)
+ MkArea 'S1' 1 (44 470)(170 340)
+ MkArea 'S2' 2 (290 20)(170 340)
+ MkArea 'S3' 3 (290 470)(170 340)
+
+ 'F1.grow'xWC 'Button' 'Grow boxes (WS-on-Size)'(548 20)('Size'(26 300))('Event' 'Select' 'CBGrow')
