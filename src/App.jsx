@@ -22,6 +22,7 @@ import * as Globals from "./Globals";
 import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
+import { noteServerSize } from "./hooks/useConfigureReport";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -226,6 +227,11 @@ const App = () => {
           ...data,
         };
       } else if (mode === "WS") {
+        // A server-driven ⎕WS that reflows an object (Size/layout) must NOT
+        // bounce a Configure back to the app (see useConfigureReport.
+        // noteServerSize): note the time so the resize it triggers is recognised
+        // as the server's own decision, not a user action, and suppressed.
+        if (data.Properties) noteServerSize(data.ID, data.Properties);
         // TODO move to a new home and organise it better!
         // Catch if we're moving outside of bounds and bring us back in
         if(currentLevel[finalKey]?.Properties?.Type === 'StatusField'){
