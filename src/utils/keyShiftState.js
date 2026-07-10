@@ -5,3 +5,14 @@
 // can use it without pulling in React/CSS.
 export const keyShiftState = (e) =>
   (e?.shiftKey ? 1 : 0) + (e?.ctrlKey ? 2 : 0) + (e?.altKey ? 4 : 0);
+
+const MODIFIER_KEY_NAMES = new Set([
+  "Shift", "Control", "Alt", "Meta", "AltGraph",
+  "CapsLock", "NumLock", "ScrollLock",
+  "Fn", "FnLock", "Hyper", "Super", "Symbol", "SymbolLock",
+]);
+
+export const isModifierKey = (keyOrEvent) => {
+  const key = typeof keyOrEvent === "string" ? keyOrEvent : keyOrEvent?.key;
+  return MODIFIER_KEY_NAMES.has(key);
+};
