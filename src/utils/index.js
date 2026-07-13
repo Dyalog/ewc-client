@@ -1,4 +1,4 @@
-import { keyShiftState } from "./keyShiftState";
+import { keyShiftState, isModifierKey } from "./keyShiftState";
 export * from "./imageStyles";
 export * from "./deleteForm";
 export * from "./flexStyles";
@@ -161,6 +161,9 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
 };
 
 export const handleKeyPressUtils = (e, socket, Event, ID) => {
+  // Modifiers alone are not a keypress in ⎕WC
+  if (isModifierKey(e)) return;
+
    const eventId = crypto.randomUUID();
   const charCode = e?.key?.charCodeAt(0);
   const shiftState = keyShiftState(e);
