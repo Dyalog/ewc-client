@@ -1,21 +1,23 @@
 # Edit
 
-The EWC implementation of [`⎕WC` class Edit](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Edit.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Edit](https://docs.dyalog.com/20.0/object-reference/objects/edit/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Active](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Active.htm)      |  [Event](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Event.htm)          |  [MaxLength](https://help.dyalog.com/19.0/index.htm#GUI/Properties/MaxLength.htm)  |  [Style](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Style.htm)     |
- |  [Attach](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Attach.htm)      |  [FCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FCol.htm)            |  [Password](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Password.htm)    |  [Text](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Text.htm)       |
- |  [Border](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Border.htm)      |  [FieldType](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FieldType.htm)  |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)            |  [Value](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Value.htm)     |
- |  [CSS](https://help.dyalog.com/19.0/index.htm#GUI/Properties/CSS.htm)            |  [Font](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Font.htm)            |  [SelText](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SelText.htm)      |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
- |  [Decimals](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Decimals.htm)  |  [FontObj](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FontObj.htm)      |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)            |                                                                               |
+ |   [Active](https://docs.dyalog.com/20.0/object-reference/properties/active/)      |   [EdgeStyle](https://docs.dyalog.com/20.0/object-reference/properties/edgestyle/)  |   [FontObj](https://docs.dyalog.com/20.0/object-reference/properties/fontobj/)      |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)       |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)      |   [Event](https://docs.dyalog.com/20.0/object-reference/properties/event/)          |   [MaxLength](https://docs.dyalog.com/20.0/object-reference/properties/maxlength/)  |   [Style](https://docs.dyalog.com/20.0/object-reference/properties/style/)     |
+ |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)      |   [FCol](https://docs.dyalog.com/20.0/object-reference/properties/fcol/)            |   [Password](https://docs.dyalog.com/20.0/object-reference/properties/password/)    |  *[Text](https://docs.dyalog.com/20.0/object-reference/properties/text/)       |
+ |   CSS                                                                             |   [FieldType](https://docs.dyalog.com/20.0/object-reference/properties/fieldtype/)  |   [Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)            |  *[Value](https://docs.dyalog.com/20.0/object-reference/properties/value/)     |
+ |   [Decimals](https://docs.dyalog.com/20.0/object-reference/properties/decimals/)  |   [Font](https://docs.dyalog.com/20.0/object-reference/objects/font/)               |  *[SelText](https://docs.dyalog.com/20.0/object-reference/properties/seltext/)      |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+
+\* indicates that the property can change after it has been set.
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [Change](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/Change.htm)      |  [LostFocus](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/LostFocus.htm)    |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |                                                                                 |
- |  [GotFocus](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/GotFocus.htm)  |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)    |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm)    |                                                                                 |
- |  [KeyPress](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/KeyPress.htm)  |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)        |                                                                                 |
+ |  [Change](https://docs.dyalog.com/20.0/object-reference/methodorevents/change/)      |  [LostFocus](https://docs.dyalog.com/20.0/object-reference/methodorevents/lostfocus/)    |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |                                                                                 |
+ |  [GotFocus](https://docs.dyalog.com/20.0/object-reference/methodorevents/gotfocus/)  |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)    |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/)    |                                                                                 |
+ |  [KeyPress](https://docs.dyalog.com/20.0/object-reference/methodorevents/keypress/)  |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)        |                                                                                 |
 
 NB: Links above are to the complete `⎕WC` documentation
 

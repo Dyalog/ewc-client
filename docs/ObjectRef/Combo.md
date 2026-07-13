@@ -1,16 +1,18 @@
 # Combo
 
-The EWC implementation of [`⎕WC` class Combo](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Combo.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Combo](https://docs.dyalog.com/20.0/object-reference/objects/combo/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Attach](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Attach.htm)  |  [Items](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Items.htm)  |  [SelItems](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SelItems.htm)  |  [Text](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Text.htm)       |
- |  [Event](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Event.htm)    |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)    |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)          |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)  |   [Items](https://docs.dyalog.com/20.0/object-reference/properties/items/)  |  *[SelItems](https://docs.dyalog.com/20.0/object-reference/properties/selitems/)  |  *[Text](https://docs.dyalog.com/20.0/object-reference/properties/text/)       |
+ |   [Event](https://docs.dyalog.com/20.0/object-reference/properties/event/)    |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)    |  *[Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)          |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+
+\* indicates that the property can change after it has been set.
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)    |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)  |                                                                                       |
- |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm)    |  [Select](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/Select.htm)    |                                                                                       |
+ |  [KeyPress](https://docs.dyalog.com/20.0/object-reference/methodorevents/keypress/)    |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/)  |  [Select](https://docs.dyalog.com/20.0/object-reference/methodorevents/select/)     |
+ |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)  |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)      |                                                                                     |
 
 NB: Links above are to the complete `⎕WC` documentation

@@ -1,10 +1,10 @@
 # TabControl
 
-The EWC implementation of [`⎕WC` class TabControl](https://help.dyalog.com/19.0/index.htm#GUI/Objects/TabControl.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class TabControl](https://docs.dyalog.com/20.0/object-reference/objects/tabcontrol/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [ActiveBCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ActiveBCol.htm)  |  [BCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/BCol.htm)  |  [MultiLine](https://help.dyalog.com/19.0/index.htm#GUI/Properties/MultiLine.htm)  |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)       |
- |  [Attach](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Attach.htm)          |  [FCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FCol.htm)  |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)            |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
+ |   ActiveBCol                                                                  |   [BCol](https://docs.dyalog.com/20.0/object-reference/properties/bcol/)  |   [MultiLine](https://docs.dyalog.com/20.0/object-reference/properties/multiline/)  |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)       |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)  |   [FCol](https://docs.dyalog.com/20.0/object-reference/properties/fcol/)  |   [Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)            |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
 
 NB: Links above are to the complete `⎕WC` documentation

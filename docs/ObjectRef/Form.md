@@ -1,18 +1,20 @@
 # Form
 
-The EWC implementation of [`⎕WC` class Form](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Form.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Form](https://docs.dyalog.com/20.0/object-reference/objects/form/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [BCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/BCol.htm)        |  [Coord](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Coord.htm)      |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)        |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
- |  [CSS](https://help.dyalog.com/19.0/index.htm#GUI/Properties/CSS.htm)          |  [Flex](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Flex.htm)        |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)        |                                                                               |
- |  [Caption](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Caption.htm)  |  [Picture](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Picture.htm)  |  [SysMenu](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SysMenu.htm)  |                                                                               |
+ |   [BCol](https://docs.dyalog.com/20.0/object-reference/properties/bcol/)        |   [Coord](https://docs.dyalog.com/20.0/object-reference/properties/coord/)      |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)        |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   CSS                                                                           |   Flex                                                                          |  *[Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)        |                                                                                |
+ |   [Caption](https://docs.dyalog.com/20.0/object-reference/properties/caption/)  |   [Picture](https://docs.dyalog.com/20.0/object-reference/properties/picture/)  |   [SysMenu](https://docs.dyalog.com/20.0/object-reference/properties/sysmenu/)  |                                                                                |
+
+\* indicates that the property can change after it has been set.
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [Configure](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/Configure.htm)  |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm)  |                                                                                       |
- |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)  |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)      |                                                                                       |
+ |  [Configure](https://docs.dyalog.com/20.0/object-reference/methodorevents/configure/)  |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/)  |                                                                                       |
+ |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)  |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)      |                                                                                       |
 
 NB: Links above are to the complete `⎕WC` documentation
 

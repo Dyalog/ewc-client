@@ -1,10 +1,10 @@
 # ImageList
 
-The EWC implementation of [`⎕WC` class ImageList](https://help.dyalog.com/19.0/index.htm#GUI/Objects/ImageList.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class ImageList](https://docs.dyalog.com/20.0/object-reference/objects/imagelist/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Files](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Files.htm)  |  [ImageCount](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ImageCount.htm)  |  [Masked](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Masked.htm)  |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm) |
+ |   Files  |   [ImageCount](https://docs.dyalog.com/20.0/object-reference/properties/imagecount/)  |   [Masked](https://docs.dyalog.com/20.0/object-reference/properties/masked/)  |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/) |
 
 NB: Links above are to the complete `⎕WC` documentation
 

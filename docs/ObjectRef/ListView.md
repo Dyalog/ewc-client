@@ -1,18 +1,20 @@
 # ListView
 
-The EWC implementation of [`⎕WC` class ListView](https://help.dyalog.com/19.0/index.htm#GUI/Objects/ListView.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class ListView](https://docs.dyalog.com/20.0/object-reference/objects/listview/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [BCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/BCol.htm)            |  [ImageIndex](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ImageIndex.htm)      |  [ReportInfo](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ReportInfo.htm)  |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
- |  [Border](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Border.htm)        |  [ImageListObj](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ImageListObj.htm)  |  [SelItems](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SelItems.htm)      |                                                                               |
- |  [ColTitles](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ColTitles.htm)  |  [Items](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Items.htm)                |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)              |                                                                               |
- |  [FCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FCol.htm)            |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)                  |  [View](https://help.dyalog.com/19.0/index.htm#GUI/Properties/View.htm)              |                                                                               |
+ |   [BCol](https://docs.dyalog.com/20.0/object-reference/properties/bcol/)            |   [ImageIndex](https://docs.dyalog.com/20.0/object-reference/properties/imageindex/)      |   [ReportInfo](https://docs.dyalog.com/20.0/object-reference/properties/reportinfo/)  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)        |   [ImageListObj](https://docs.dyalog.com/20.0/object-reference/properties/imagelistobj/)  |  *[SelItems](https://docs.dyalog.com/20.0/object-reference/properties/selitems/)      |                                                                                |
+ |   [ColTitles](https://docs.dyalog.com/20.0/object-reference/properties/coltitles/)  |   [Items](https://docs.dyalog.com/20.0/object-reference/properties/items/)                |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)              |                                                                                |
+ |   [FCol](https://docs.dyalog.com/20.0/object-reference/properties/fcol/)            |   [Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)                  |   [View](https://docs.dyalog.com/20.0/object-reference/properties/view/)              |                                                                                |
+
+\* indicates that the property can change after it has been set.
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [GotFocus](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/GotFocus.htm)          |  [ItemDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/ItemDown.htm)    |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm) |
- |  [ItemDblClick](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/ItemDblClick.htm)  |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)  |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)     |
+ |  [GotFocus](https://docs.dyalog.com/20.0/object-reference/methodorevents/gotfocus/)          |  [ItemDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/itemdown/)    |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/) |
+ |  [ItemDblClick](https://docs.dyalog.com/20.0/object-reference/methodorevents/itemdblclick/)  |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)  |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)     |
 
 NB: Links above are to the complete `⎕WC` documentation

@@ -1,15 +1,17 @@
 # Splitter
 
-The EWC implementation of [`⎕WC` class Splitter](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Splitter.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Splitter](https://docs.dyalog.com/20.0/object-reference/objects/splitter/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Event](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Event.htm)  |  [SplitObj1](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SplitObj1.htm)  |  [Style](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Style.htm)      |                                                                           |
- |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)    |  [SplitObj2](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SplitObj2.htm)  |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm)  |                                                                           |
+ |   [Event](https://docs.dyalog.com/20.0/object-reference/properties/event/)  |   [SplitObj1](https://docs.dyalog.com/20.0/object-reference/properties/splitobj1/)  |   [Style](https://docs.dyalog.com/20.0/object-reference/properties/style/)      |                                                                            |
+ |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)    |   [SplitObj2](https://docs.dyalog.com/20.0/object-reference/properties/splitobj2/)  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/)  |                                                                            |
+
+\* indicates that the property can change after it has been set.
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [EndSplit](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/EndSplit.htm)  |                                                                                      |                                                                                      |                                                                                     |
+ |  [EndSplit](https://docs.dyalog.com/20.0/object-reference/methodorevents/endsplit/)  |                                                                                      |                                                                                      |                                                                                     |
 
 NB: Links above are to the complete `⎕WC` documentation

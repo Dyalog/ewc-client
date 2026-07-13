@@ -1,17 +1,18 @@
 # Label
 
-The EWC implementation of [`⎕WC` class Label](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Label.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Label](https://docs.dyalog.com/20.0/object-reference/objects/label/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Attach](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Attach.htm)  |  [Caption](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Caption.htm)  |  [FontObj](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FontObj.htm)  |  [Style](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Style.htm)     |
- |  [BCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/BCol.htm)      |  [FCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FCol.htm)        |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)        |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
- |  [CSS](https://help.dyalog.com/19.0/index.htm#GUI/Properties/CSS.htm)        |  [Font](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Font.htm)        |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)        |                                                                               |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)  |   [Caption](https://docs.dyalog.com/20.0/object-reference/properties/caption/)      |   [FontObj](https://docs.dyalog.com/20.0/object-reference/properties/fontobj/)  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   [BCol](https://docs.dyalog.com/20.0/object-reference/properties/bcol/)      |   [EdgeStyle](https://docs.dyalog.com/20.0/object-reference/properties/edgestyle/)  |   [Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)        |                                                                                |
+ |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)  |   [FCol](https://docs.dyalog.com/20.0/object-reference/properties/fcol/)            |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)        |                                                                                |
+ |   CSS                                                                         |   [Font](https://docs.dyalog.com/20.0/object-reference/objects/font/)               |   [Style](https://docs.dyalog.com/20.0/object-reference/properties/style/)      |                                                                                |
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [KeyPress](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/KeyPress.htm)    |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm)  |                                                                                     |
- |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)  |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)      |                                                                                     |
+ |  [KeyPress](https://docs.dyalog.com/20.0/object-reference/methodorevents/keypress/)    |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/)  |                                                                                     |
+ |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)  |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)      |                                                                                     |
 
 NB: Links above are to the complete `⎕WC` documentation
