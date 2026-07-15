@@ -1708,7 +1708,17 @@ const App = () => {
         } else if (keys[0] == "EX") {
           const serverEvent = evData.EX;
 
-          deleteObjectsById(dataRef.current, serverEvent?.ID);
+          // deleteObjectsById iterates ids.forEach, so it needs an array. The
+          // server sends EX.ID as a bare string for a single-object delete
+          // (e.g. `eEX 'F1.Ribbon.Item2'`) and as an array for a multi delete
+          // (`eEX 'MB1' 'MB2'`). Without this normalization a single delete —
+          // which is exactly how a ribbon child is removed — threw
+          // "forEach is not a function", so the node (and its DOM) was never
+          // removed: the deleted ribbon group/button stayed on screen.
+          const exIds = Array.isArray(serverEvent?.ID)
+            ? serverEvent.ID
+            : [serverEvent?.ID];
+          deleteObjectsById(dataRef.current, exIds);
         } else if (keys[0] == "Options") {
           handleData(evData.Options, "WC");
 //           console.log("label", evData.Options);

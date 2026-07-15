@@ -1,267 +1,194 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import * as AppIcons from "./RibbonIcons";
+import { MdOutlineQuestionMark } from "react-icons/md";
+import { GoChevronDown } from "react-icons/go";
 import { useAppData } from "../../hooks";
-import { excludeKeys, parseFlexStyles, rgbColor } from "../../utils";
+import { excludeKeys, parseFlexStyles, getCurrentUrl, getImageFromData } from "../../utils";
 import SelectComponent from "../SelectComponent";
-import "bootstrap/dist/css/bootstrap.min.css";
+import RibbonDropDownGallery from "./RibbonDropDownGallery";
+import RibbonReducedButton from "./RibbonReducedButton";
+import { RIBBON_STATE, collectLeaves, chunk } from "./ribbonLayout";
 
+// A ribbon group. Renders in one of four reduction states chosen by the band
+// (spec §7): Large (full layout), Medium (leaves demote to small-text rows
+// repacked into 3-row columns), Small (icon-only rows), or Collapsed (the whole
+// group becomes one button opening a flyout with the full Large layout). The
+// vertical separator to the next group and all heights are CSS-owned; there is
+// no imperative measurement here.
 const CustomRibbonGroup = ({ data }) => {
-  const { findCurrentData, fontScale, handleData,dataRef } = useAppData();
-//   console.log("Dattatatatatatta",dataRef.current.F1);
-  
+  const { findCurrentData, fontScale } = useAppData();
 
   const updatedData = excludeKeys(data);
-  const { Size, Title, BorderCol, CSS } = data?.Properties;
+  const { Title, CSS } = data?.Properties || {};
   const customStyle = parseFlexStyles(CSS);
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
-  // const webSocketRef = useRef(null);
-  // const dataRef = useRef({});
-  // console.log("Appp data is as",dataRef.current)
+  const caption = Array.isArray(Title) ? Title[0] : Title;
+  const state = data.groupState ?? RIBBON_STATE.LARGE;
 
-  // const appDataMaxHeight =
-  //   findCurrentData("app-data")?.Properties?.maxHeight || 40;
-  // const maxHeight = useRef(appDataMaxHeight);
+  const captionRow = (
+    <div className="ewc-ribbon-group-caption">
+      <span
+        id={data.ID + "-title"}
+        className="ewc-ribbon-group-caption-text"
+        style={{
+          fontFamily: fontProperties?.PName,
+          fontSize: fontProperties?.Size
+            ? `${fontProperties.Size * fontScale}px`
+            : undefined,
+        }}
+      >
+        {caption}
+      </span>
+    </div>
+  );
 
-  const [tempDivWidth, setTempDivWidth] = useState("auto");
-  const [divHeight, setDivHeight] = useState("auto");
-  const [maxHeight, setMaxHeight] = useState(100);
- 
+  // ---- Large: the full item tree (also reused inside the collapsed flyout) --
+  const renderFullItems = () => (
+    <div className="ewc-ribbon-group-items">
+      {Object.keys(updatedData).map((key) => (
+        <SelectComponent
+          key={updatedData[key]?.ID || key}
+          data={{
+            ...updatedData[key],
+            FontObj: data.FontObj,
+            ImageList: data.ImageList,
+          }}
+        />
+      ))}
+    </div>
+  );
+
+  if (state === RIBBON_STATE.COLLAPSED) {
+    return (
+      <CollapsedGroup
+        data={data}
+        caption={caption}
+        captionRow={captionRow}
+        customStyle={customStyle}
+        fontProperties={fontProperties}
+        fontScale={fontScale}
+        renderFullItems={renderFullItems}
+      />
+    );
+  }
+
+  if (state === RIBBON_STATE.MEDIUM || state === RIBBON_STATE.SMALL) {
+    const iconOnly = state === RIBBON_STATE.SMALL;
+    const leaves = collectLeaves(data);
+    const galleries = leaves.filter((l) => l.kind === "gallery");
+    const rows = leaves.filter((l) => l.kind !== "gallery");
+    const columns = chunk(rows, 3);
+
+    return (
+      <div id={data?.ID} className="ewc-ribbon-group" style={customStyle}>
+        <div className="ewc-ribbon-group-items">
+          {columns.map((col, ci) => (
+            <div className="ewc-ribbon-small-stack" key={col[0]?.id || ci}>
+              {col.map((leaf) => (
+                <RibbonReducedButton
+                  key={leaf.id}
+                  leaf={leaf}
+                  iconOnly={iconOnly}
+                  fontProps={fontProperties}
+                  ImageList={data.ImageList}
+                />
+              ))}
+            </div>
+          ))}
+          {galleries.map((g) => (
+            <RibbonDropDownGallery
+              key={g.id}
+              data={{ ...g.data, FontObj: data.FontObj, ImageList: data.ImageList }}
+            />
+          ))}
+        </div>
+        {captionRow}
+      </div>
+    );
+  }
+
+  // Large (default)
+  return (
+    <div id={data?.ID} className="ewc-ribbon-group" style={customStyle}>
+      {renderFullItems()}
+      {captionRow}
+    </div>
+  );
+};
+
+// Resolve a 32px icon for the collapsed group from its first leaf.
+const useGroupIcon = (data) => {
+  const { findCurrentData } = useAppData();
+  const leaf = collectLeaves(data)[0];
+  if (!leaf) return <MdOutlineQuestionMark size={32} />;
+  const p = leaf.data.Properties || {};
+  if (leaf.kind === "bg") {
+    const IconComp = AppIcons[p.Icons?.[leaf.index]] || MdOutlineQuestionMark;
+    return <IconComp size={32} />;
+  }
+  const ImageData = getImageFromData(findCurrentData(p.ImageListObj), p.ImageIndex);
+  if (ImageData) return <img src={`${getCurrentUrl()}${ImageData.imageUrl}`} alt="" />;
+  const IconComp = AppIcons[p.Icon] || MdOutlineQuestionMark;
+  return <IconComp size={32} />;
+};
+
+const CollapsedGroup = ({ data, caption, captionRow, customStyle, fontProperties, fontScale, renderFullItems }) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const icon = useGroupIcon(data);
 
   useEffect(() => {
-//     console.log("Coming hereeeeeeeeee in ss");
-    const updateDimensions = () => {
-      setTimeout(() => {
-        const titleElement = document.getElementById(data.ID + "-title");
-        const ribbonElement = document.getElementById(`ribbon-item-height-${data.id}`);
-        const ribbonElements = document.querySelectorAll(`[id^="ribbon-item-height-${data.id}"]`);
-        const ribbonElementsWithoutId = document.querySelectorAll(`[id^="ribbon-height"]`);
-  
-        let maxRibbonHeight = 0;
-        let sumRibbonDivWidth = 0;
-        let sumRibbonDivHeight = 0;
-        ribbonElements.forEach((element) => {
-          const ribbonText = element.textContent.trim();
-          if (ribbonText === "") {
-//             console.log("Ribbon element has empty text. Excluding from DOM or calculations.", element);
-        
-            element.remove();
-          } else {
-//             console.log("Ribbon Element Text:", ribbonText);
-        
-          }
-        });
-  
-        ribbonElements.forEach((element) => {
-          const elementHeight = element.getBoundingClientRect().height || 0;
-          maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
-        });
-  
-        ribbonElements.forEach((element) => {
-          const elementWidth = element.getBoundingClientRect().width || 0;
-          sumRibbonDivWidth += elementWidth;
-        });
-  
-        ribbonElements.forEach((element) => {
-          const elementHeight = element.getBoundingClientRect().height || 0;
-          sumRibbonDivHeight += elementHeight;
-        });
-  
-        const tempWidth = Math.max(sumRibbonDivWidth, sumRibbonDivHeight);
-        const titleDivWidth = titleElement?.getBoundingClientRect().width || 0;
-        const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
-  
-        if (ribbonElements.length > 1) {
-          setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)-25}px`);
-        } else {
-
-          setTempDivWidth(`${Math.max(tempWidth, titleDivWidth)}px`);
-        }
-  
-        if (dataRef.current.F1?.Properties?.Caption === "Big Ribbon Test"||Title==="DropDown") {
-
-          setMaxHeight(50);
-        } else {
-          setMaxHeight((prev) => Math.max(prev, maxRibbonHeight));
-        }
-  
-        setTimeout(() => {
-          ribbonElementsWithoutId.forEach((element) => {
-            const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
-            // element.style.height = `${maxHeight + titleDivHeight + 20}px`;
-//             console.log("Maxxxx value seeeeettt", maxHeight, titleDivHeight, element.style.height, data.ID, data.id);
-          });
-        }, 100); // Add a delay to ensure state update
-      }, 300);
+    const onDown = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
     };
-  
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-  
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, [data.ID, data.id]); 
-
-  // useEffect(() => {
-
-  //   console.log("Coming hereeeeeeeeee in ss")
-  //   const updateDimensions = () => {
-  //     setTimeout(() => {
-  //       const titleElement = document.getElementById(data.ID + "-title");
-  //       const ribbonElement = document.getElementById(`ribbon-item-height-${data.id}`);
-  //       const ribbonElements = document.querySelectorAll(`[id^="ribbon-item-height-${data.id}"]`);
-  //       console.log("ccccccccccccccc1",ribbonElements)
-
-  //       const ribbonElementsWithoutId = document.querySelectorAll(`[id^="ribbon-height"]`);
-  //       console.log("ccccccccccccccc2",ribbonElementsWithoutId)
-
-  //       let maxRibbonHeight = 0;
-  //       let sumRibbonDivWidth = 0;
-  //       let sumRibbonDivHeight = 0;
-
-  //       ribbonElements.forEach((element) => {
-  //         const elementHeight = element.getBoundingClientRect().height || 0;
-  //         console.log("ccccccccccccccc3",elementHeight)
-
-  //         maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
-  //         console.log("ccccccccccccccc4",maxRibbonHeight)
-
-  //       });
-  //       console.log("============>",dataRef.current.F1?.Properties?.Caption)
-
-  //       setMaxHeight((prev)=>{Math.max(prev,maxRibbonHeight)})
-
-  //       ribbonElements.forEach((element) => {
-  //         const elementWidth = element.getBoundingClientRect().width || 0;
-  //         sumRibbonDivWidth += elementWidth
-  //       });
-
-  //       ribbonElements.forEach((element) => {
-  //         const elementHeight = element.getBoundingClientRect().height || 0;
-  //         console.log("ccccccccccccccc5",elementHeight)
-
-  //         sumRibbonDivHeight += elementHeight
-  //         console.log("ccccccccccccccc6",sumRibbonDivHeight)
-
-  //       });
-
-  //       const tempWidth = Math.max(sumRibbonDivWidth, sumRibbonDivHeight)
-  //       const titleDivWidth = titleElement?.getBoundingClientRect().width || 0;
-  //       const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
-  //       const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
-  //       // const ribbonDivHeight = ribbonElement?.getBoundingClientRect().height || 0;
-
-  //       console.log("314",{maxRibbonHeight, titleDivHeight, })
-
-  //       if (ribbonElements.length > 1) {
-  //         setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)}px`);
-  //       } else {
-  //         setTempDivWidth(`${Math.max(tempWidth, titleDivWidth)}px`);
-
-  //       }
-
-  //       ribbonElementsWithoutId.forEach((element) => {
-  //         element.style.height = `${maxHeight+titleDivHeight+20}px`;
-  //         console.log("Maxxxx value seeeeettt",maxHeight,titleDivHeight,element.style.height,data.ID, data.id)
-
-  //       });
-
-  //       // setDivHeight(`${maxRibbonHeight}px`);
-  //     }, 300);
-  //   };
-
-  //   updateDimensions();
-  //   window.addEventListener('resize', updateDimensions);
-
-  //   return () => window.removeEventListener('resize', updateDimensions);
-  // }, [data.ID, data.id]);
-
-  const size = Size || 2;
-
-  // useEffect(() => {
-  //   const updateDimensions = () => {
-  //     setTimeout(() => {
-  //       const ribbonElements = document.querySelectorAll(
-  //         '[id^="ribbon-height"]'
-  //       );
-  //       let maxRibbonHeight = 0;
-
-  //       ribbonElements.forEach((element) => {
-  //         const elementHeight = element.getBoundingClientRect().height || 0;
-  //         maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
-  //       });
-
-  //       ribbonElements.forEach((element) => {
-  //         element.style.height = `${maxRibbonHeight + 5}px`;
-  //       });
-  //     }, 600);
-  //   };
-
-  //   updateDimensions();
-  //   window.addEventListener("resize", updateDimensions);
-
-  //   return () => window.removeEventListener("resize", updateDimensions);
-  // }, [data.ID, data.id]);
-
-// console.log("Updated Data is as",updatedData);
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
 
   return (
-    <div id={data?.ID} style={{
-       width: tempDivWidth
-       }}>
-      <div
-        style={{
-          border: `1px solid ${rgbColor(BorderCol)}`,
-          borderTop: 0,
-          position: "relative",
-          height:"100%",
-
-          // height: divHeight + 18,
-          // border:"2px solid pink",
-          justifyContent: "space-around",
-          paddingTop: "3px",
-          ...customStyle,
-        }}
-        id={`ribbon-height`}
-        className="row"
-      >
-        {Object.keys(updatedData).map((key, index) => {
-//           console.log("Updated key is aszzzzzzzzzzzzzzzzzzzzzzzzzzzz",updatedData[key])
-          return (
-            <SelectComponent
-              key={index}
-              data={{
-                ...updatedData[key],
-                FontObj: data.FontObj,
-                id: data.id,
-                ImageList: data.ImageList,
-              }}
-            />
-          );
-        })}
-
-        <div>
-          <p
-            id={data.ID + "-title"}
+    <div id={data?.ID} className="ewc-ribbon-group" style={customStyle} ref={wrapRef}>
+      <div className="ewc-ribbon-group-items">
+        <div
+          className="ewc-ribbon-large ewc-ribbon-collapsed"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((o) => !o);
+          }}
+        >
+          <span className="ewc-ribbon-large-icon">{icon}</span>
+          <span
+            className="ewc-ribbon-large-caption"
             style={{
-              position: "absolute",
-              bottom: 0,
-              backgroundColor: "rgb(204, 204, 204)",
-              margin: 0,
-              fontWeight: "bolder",
               fontFamily: fontProperties?.PName,
               fontSize: fontProperties?.Size
                 ? `${fontProperties.Size * fontScale}px`
-                : `${12 * fontScale}px`,
-              minWidth: "max-content",
-              width: "100%",
-              paddingLeft: "10px",
-              paddingRight: "10px",
+                : undefined,
             }}
-            className="text-center"
           >
-            {Title}
-          </p>
+            {caption}
+          </span>
+          <span className="ewc-ribbon-large-arrow">
+            <GoChevronDown size={12} />
+          </span>
         </div>
       </div>
+      {captionRow}
+
+      {open && (
+        <div
+          className="ewc-ribbon ewc-ribbon-popup ewc-ribbon-flyout"
+          ref={(el) => {
+            if (el && wrapRef.current) {
+              const rect = wrapRef.current.getBoundingClientRect();
+              el.style.top = `${rect.bottom}px`;
+              el.style.left = `${rect.left}px`;
+            }
+          }}
+        >
+          <div className="ewc-ribbon-group">{renderFullItems()}</div>
+        </div>
+      )}
     </div>
   );
 };

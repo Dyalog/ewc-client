@@ -1,176 +1,409 @@
-/* Title styles override */
-.ribbon-group-title {
-  font-size: 10px;
-}
+/* ============================================================================
+   EWC Ribbon — Office Fluent visual layer (milestone 1: full-width look).
 
-.btn {
-  padding: 0px !important;
-}
+   Layout is CSS-owned. No measurement-driven inline sizing, no setTimeout.
+   All values follow ci/ribbon-harness/ribbon-visual-spec.md
+   (Office White/Colorful 2019 @ 100%). Tokens live on `.ewc-ribbon` so the
+   whole subtree inherits them; nothing here leaks to the rest of the app.
+   ========================================================================== */
 
-.row>* {
-  padding: 0 !important;
-  margin: 0 !important;
-}
+.ewc-ribbon {
+  /* ---- colour tokens ---- */
+  --ribbon-band-bg: #ffffff;
+  --ribbon-edge: #d4d4d4;
+  --group-separator: #e1e1e1;
+  --caption-text: #666666;
+  --item-text: #262626;
+  --item-text-disabled: #a6a6a6;
+  --arrow: #595959;
+  --hover-bg: #c9e2f7;
+  --hover-border: #7da2ce;
+  --press-bg: #b5d2ee;
+  --press-border: #5b8ac1;
+  --checked-bg: #d6e8fa;
+  --checked-border: #9cc0e6;
+  --popup-bg: #ffffff;
+  --popup-border: #c6c6c6;
+  --menu-gutter: #f1f1f1;
+  --menu-sep: #e1e1e1;
 
-.row {
-  margin: 0;
-}
+  /* ---- spacing tokens ---- */
+  --group-caption-h: 16px;
+  --group-item-h: 76px;
+  --large-icon: 32px;
+  --small-icon: 16px;
+  --small-row-h: 24px;
 
-.d-md-flex {
-  justify-content: center;
-}
-
-
-.custom-dropdown-menu {
-  position: absolute;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-top: 5px;
-  z-index: 1000;
-  min-width: 160px;
-  padding: 0;
-  border: 1px solid #ddd;
-}
-
-.custom-dropdown-item {
-  padding: 10px 20px;
-  cursor: pointer;
-  background-color: #fff;
-  color: #333;
-  font-size: 14px;
-  text-align: left;
+  box-sizing: border-box;
   display: flex;
-  align-items: center;
-}
-
-.custom-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.custom-dropdown-item:hover {
-  background-color: #f0f0f0;
-}
-
-
-/* Container */
-.ribbon-gallery {
-  position: relative;
-  display: flex;
-  /* border: 1px solid #dcdcdc; */
-  background-color: #dcdcdc;
-  font-family: 'Calibri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Content area */
-.gallery-content,
-.dropdown-content {
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  gap: 3px;
-  margin: 5px 2px;
-
-}
-
-.gallery-content::-webkit-scrollbar,
-.dropdown-content::-webkit-scrollbar {
-  display: none;
-}
-
-/* Individual item */
-.gallery-item{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  width: 'fit-content';
-  height: auto;
-
-}
-
-.item-preview {
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  background-color: #eee;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.item-label {
-  font-size: 11px;
-  color: #000;
-  text-align: center;
+  flex-flow: row nowrap;
+  align-items: stretch;
   width: 100%;
+  /* milestone 2 owns collapse; for now never clip — overflow content stays
+     measurable rather than being chopped. */
+  min-width: max-content;
+  background: var(--ribbon-band-bg);
+  border-bottom: 1px solid var(--ribbon-edge);
+  padding-left: 2px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--item-text);
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* Buttons area */
-.gallery-buttons {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-left: 1px solid black;
-}
-
-.gallery-button {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: none;
-  background: #CCC;
-  cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ewc-ribbon *,
+.ewc-ribbon *::before,
+.ewc-ribbon *::after {
   box-sizing: border-box;
 }
 
-.gallery-button:not(:last-child) {
-  border-bottom: 1px solid #000;
+/* ---------------------------------------------------------------- group --- */
+.ewc-ribbon-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 100%;
+  padding: 0 2px;
+  border-right: 1px solid var(--group-separator);
+}
+.ewc-ribbon-group:last-child {
+  border-right: none;
 }
 
-.gallery-button:hover:not(:disabled) {
-  background-color: #C0C0C0;
+/* the item region: a row of columns, fills all height above the caption */
+.ewc-ribbon-group-items {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  gap: 0;
+  padding: 3px 2px 0;
 }
 
-.gallery-button:disabled {
-  opacity: 0.4;
-  cursor: default;
+/* bottom caption strip */
+.ewc-ribbon-group-caption {
+  flex: 0 0 var(--group-caption-h);
+  height: var(--group-caption-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--caption-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ewc-ribbon-group-caption-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.gallery-button:disabled:hover {
-  background-color: #D8D8D8;
-}
-
-
-.dropdown-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 50px);
-  gap: 10px;
-  padding: 10px;
-  width: auto;
-  background-color: #dcdcdc;
+/* dialog-box launcher (caption row, right edge) */
+.ewc-ribbon-launcher {
   position: absolute;
-  z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-height: 300px;
-  overflow-y: auto;
-  top: 0px
+  right: 2px;
+  bottom: 1px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--caption-text);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.ewc-ribbon-launcher:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
 }
 
-/* Individual Dropdown Items */
-.ribbon-dropdown-item {
+/* ------------------------------------------------------ column (item) --- */
+.ewc-ribbon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start; /* Office top-aligns partial stacks */
+  height: 100%;
+}
+
+/* -------------------------------------------------------- large tile --- */
+.ewc-ribbon-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 38px;
+  max-width: 90px;
+  height: 100%;
+  padding: 4px 4px 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: center;
+  color: var(--item-text);
+}
+.ewc-ribbon-large:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
+}
+.ewc-ribbon-large:active {
+  background: var(--press-bg);
+  border-color: var(--press-border);
+}
+.ewc-ribbon-large-icon {
+  width: var(--large-icon);
+  height: var(--large-icon);
+  flex: 0 0 var(--large-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.ewc-ribbon-large-icon img {
+  max-width: var(--large-icon);
+  max-height: var(--large-icon);
+}
+.ewc-ribbon-large-caption {
+  font-size: 12px;
+  line-height: 14px;
+  max-width: 82px;
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ewc-ribbon-large-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--arrow);
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* ----------------------------------------------- small button + stack --- */
+.ewc-ribbon-small-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100%;
+}
+.ewc-ribbon-small {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  height: var(--small-row-h);
+  min-height: 22px;
+  padding: 0 6px 0 2px;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--item-text);
+}
+.ewc-ribbon-small:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
+}
+.ewc-ribbon-small:active {
+  background: var(--press-bg);
+  border-color: var(--press-border);
+}
+.ewc-ribbon-small-icon {
+  width: var(--small-icon);
+  height: var(--small-icon);
+  flex: 0 0 var(--small-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ewc-ribbon-small-icon img {
+  max-width: var(--small-icon);
+  max-height: var(--small-icon);
+}
+.ewc-ribbon-small-caption {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ewc-ribbon-small-arrow {
+  margin-left: auto;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  color: var(--arrow);
+}
+
+/* ------------------------------------------------------------- popup --- */
+.ewc-ribbon-popup {
+  position: fixed;
+  z-index: 9999;
+  min-width: 168px;
+  padding: 2px 0;
+  background: var(--popup-bg);
+  border: 1px solid var(--popup-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  color: var(--item-text);
+}
+.ewc-ribbon-menu-item {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  height: 24px;
+  padding-right: 12px;
+  cursor: pointer;
+}
+.ewc-ribbon-menu-item:hover {
+  background: var(--hover-bg);
+}
+.ewc-ribbon-menu-gutter {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 100%;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--menu-gutter);
+}
+.ewc-ribbon-menu-gutter img {
+  max-width: var(--small-icon);
+  max-height: var(--small-icon);
+}
+.ewc-ribbon-menu-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ewc-ribbon-menu-sep {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--menu-sep);
+}
+
+/* ----------------------------------------------------------- gallery --- */
+.ewc-ribbon-gallery {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid var(--ribbon-edge);
+}
+.ewc-ribbon-gallery-strip {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  overflow: hidden;
+}
+.ewc-ribbon-gallery-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 3px;
+  gap: 2px;
+  width: 64px;
+  height: 48px;
+  padding: 2px;
+  border: 1px solid transparent;
+  background: #ffffff;
+  font-size: 11px;
+  color: var(--item-text);
   cursor: pointer;
+  overflow: hidden;
+}
+.ewc-ribbon-gallery-tile:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
+}
+.ewc-ribbon-gallery-tile.selected {
+  background: var(--checked-bg);
+  border: 1px solid var(--press-border);
+}
+.ewc-ribbon-gallery-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.ewc-ribbon-gallery-scroller {
+  flex: 0 0 16px;
+  width: 16px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--ribbon-edge);
+}
+.ewc-ribbon-gallery-btn {
+  flex: 1 1 0;
+  width: 16px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: #ffffff;
+  color: var(--arrow);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ewc-ribbon-gallery-btn:not(:last-child) {
+  border-bottom: 1px solid var(--ribbon-edge);
+}
+.ewc-ribbon-gallery-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+}
+.ewc-ribbon-gallery-btn:active:not(:disabled) {
+  background: var(--press-bg);
+}
+.ewc-ribbon-gallery-btn:disabled {
+  color: #bfbfbf;
+  cursor: default;
 }
 
-.dropdown-item:hover {
-  background-color: #E1E1E1;
+/* expanded gallery dropdown grid (reuses popup chrome) */
+.ewc-ribbon-gallery-grid {
+  display: grid;
+  gap: 3px;
+  padding: 6px;
+}
+
+/* --------------------------------------------- collapsed group + flyout --- */
+.ewc-ribbon-collapsed {
+  min-width: 48px;
+  max-width: 96px;
+}
+
+/* The flyout reuses `.ewc-ribbon` for the tokens/font but must shed the band's
+   full-width / fixed-height / bottom-hairline chrome and behave like a popup. */
+.ewc-ribbon-flyout.ewc-ribbon {
+  width: auto;
+  min-width: auto;
+  height: auto;
+  display: block;
+  border: 1px solid var(--popup-border);
+  border-bottom: 1px solid var(--popup-border);
+  padding: 2px;
+  overflow: visible;
+}
+.ewc-ribbon-flyout > .ewc-ribbon-group {
+  height: 90px;
+  border-right: none;
+  padding: 0 4px;
 }
