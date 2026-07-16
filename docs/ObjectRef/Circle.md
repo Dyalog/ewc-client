@@ -1,17 +1,17 @@
 # Circle
 
-The EWC implementation of [`⎕WC` class Circle](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Circle.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Circle](https://docs.dyalog.com/20.0/object-reference/objects/circle/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [ArcMode](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ArcMode.htm)  |  [FStyle](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FStyle.htm)    |  [Radius](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Radius.htm)    |                                                                               |
- |  [End](https://help.dyalog.com/19.0/index.htm#GUI/Properties/End.htm)          |  [FillCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FillCol.htm)  |  [Start](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Start.htm)      |                                                                               |
- |  [FCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FCol.htm)        |  [Points](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Points.htm)    |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm)  |                                                                               |
+ |   [ArcMode](https://docs.dyalog.com/20.0/object-reference/properties/arcmode/)  |   [FStyle](https://docs.dyalog.com/20.0/object-reference/properties/fstyle/)    |   [Radius](https://docs.dyalog.com/20.0/object-reference/properties/radius/)    |                                                                                |
+ |   [End](https://docs.dyalog.com/20.0/object-reference/properties/end/)          |   [FillCol](https://docs.dyalog.com/20.0/object-reference/properties/fillcol/)  |   [Start](https://docs.dyalog.com/20.0/object-reference/properties/start/)      |                                                                                |
+ |   [FCol](https://docs.dyalog.com/20.0/object-reference/properties/fcol/)        |   [Points](https://docs.dyalog.com/20.0/object-reference/properties/points/)    |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/)  |                                                                                |
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [KeyPress](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/KeyPress.htm)    |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm)  |                                                                                     |
- |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)  |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)      |                                                                                     |
+ |  [KeyPress](https://docs.dyalog.com/20.0/object-reference/methodorevents/keypress/)    |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/)  |                                                                                     |
+ |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)  |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)      |                                                                                     |
 
 NB: Links above are to the complete `⎕WC` documentation

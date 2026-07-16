@@ -4,4 +4,4 @@ The EWC implementation of RibbonGroup supports:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  BorderCol  |  Data  |  Size  |  Title |
+ |   BorderCol  |   Data  |   Size  |   Title |

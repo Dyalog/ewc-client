@@ -13,6 +13,8 @@ jobs:
   release:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.parse.outputs.skip }}
     steps:
       - name: Checkout EWC
         uses: actions/checkout@v4
@@ -107,3 +109,12 @@ jobs:
             --title "$version" \
             --notes-file /tmp/notes.md \
             /tmp/client-dist.zip
+
+  # A release opens a docs-regeneration PR for review; merging it publishes the site
+  update-docs:
+    needs: release
+    if: needs.release.outputs.skip != 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/update-docs.yml

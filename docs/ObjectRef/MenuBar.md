@@ -1,9 +1,9 @@
 # MenuBar
 
-The EWC implementation of [`⎕WC` class MenuBar](https://help.dyalog.com/19.0/index.htm#GUI/Objects/MenuBar.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class MenuBar](https://docs.dyalog.com/20.0/object-reference/objects/menubar/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [CSS](https://help.dyalog.com/19.0/index.htm#GUI/Properties/CSS.htm)  |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm)  |                                                                        |                                                                       |
+ |   CSS  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/)  |        |       |
 
 NB: Links above are to the complete `⎕WC` documentation

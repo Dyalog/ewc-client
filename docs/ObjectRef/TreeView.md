@@ -1,17 +1,19 @@
 # TreeView
 
-The EWC implementation of [`⎕WC` class TreeView](https://help.dyalog.com/19.0/index.htm#GUI/Objects/TreeView.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class TreeView](https://docs.dyalog.com/20.0/object-reference/objects/treeview/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Attach](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Attach.htm)  |  [ImageIndex](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ImageIndex.htm)      |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)          |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
- |  [Depth](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Depth.htm)    |  [ImageListObj](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ImageListObj.htm)  |  [SelItems](https://help.dyalog.com/19.0/index.htm#GUI/Properties/SelItems.htm)  |                                                                               |
- |  [Event](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Event.htm)    |  [Items](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Items.htm)                |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)          |                                                                               |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)  |   [ImageIndex](https://docs.dyalog.com/20.0/object-reference/properties/imageindex/)      |   [Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)          |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   [Depth](https://docs.dyalog.com/20.0/object-reference/properties/depth/)    |   [ImageListObj](https://docs.dyalog.com/20.0/object-reference/properties/imagelistobj/)  |  *[SelItems](https://docs.dyalog.com/20.0/object-reference/properties/selitems/)  |                                                                                |
+ |   [Event](https://docs.dyalog.com/20.0/object-reference/properties/event/)    |   [Items](https://docs.dyalog.com/20.0/object-reference/properties/items/)                |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)          |                                                                                |
+
+\* indicates that the property can change after it has been set.
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [Expanding](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/Expanding.htm)        |  [ItemDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/ItemDown.htm)  |  [Retracting](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/Retracting.htm)  |                                                                                       |
- |  [ItemDblClick](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/ItemDblClick.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)    |                                                                                          |                                                                                       |
+ |  [Expanding](https://docs.dyalog.com/20.0/object-reference/methodorevents/expanding/)        |  [ItemDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/itemdown/)  |  [Retracting](https://docs.dyalog.com/20.0/object-reference/methodorevents/retracting/)  |                                                                                       |
+ |  [ItemDblClick](https://docs.dyalog.com/20.0/object-reference/methodorevents/itemdblclick/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)    |                                                                                          |                                                                                       |
 
 NB: Links above are to the complete `⎕WC` documentation

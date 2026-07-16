@@ -1,10 +1,10 @@
 # BitMap
 
-The EWC implementation of [`⎕WC` class BitMap](https://help.dyalog.com/19.0/index.htm#GUI/Objects/BitMap.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class BitMap](https://docs.dyalog.com/20.0/object-reference/objects/bitmap/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [File](https://help.dyalog.com/19.0/index.htm#GUI/Properties/File.htm)  |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)  |                                                                          |                                                                         |
+ |   [File](https://docs.dyalog.com/20.0/object-reference/properties/file/)  |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)  |                                                                           |                                                                          |
 
 NB: Links above are to the complete `⎕WC` documentation
 

@@ -1,16 +1,16 @@
 # Poly
 
-The EWC implementation of [`⎕WC` class Poly](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Poly.htm) has some degree of support for:
+The EWC implementation of [`⎕WC` class Poly](https://docs.dyalog.com/20.0/object-reference/objects/poly/) has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [FCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FCol.htm)      |  [FillCol](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FillCol.htm)  |  [LWidth](https://help.dyalog.com/19.0/index.htm#GUI/Properties/LWidth.htm)  |  [Visible](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Visible.htm) |
- |  [FStyle](https://help.dyalog.com/19.0/index.htm#GUI/Properties/FStyle.htm)  |  [LStyle](https://help.dyalog.com/19.0/index.htm#GUI/Properties/LStyle.htm)    |  [Points](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Points.htm)  |                                                                               |
+ |   [FCol](https://docs.dyalog.com/20.0/object-reference/properties/fcol/)      |   [FillCol](https://docs.dyalog.com/20.0/object-reference/properties/fillcol/)  |   [LWidth](https://docs.dyalog.com/20.0/object-reference/properties/lwidth/)  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   [FStyle](https://docs.dyalog.com/20.0/object-reference/properties/fstyle/)  |   [LStyle](https://docs.dyalog.com/20.0/object-reference/properties/lstyle/)    |   [Points](https://docs.dyalog.com/20.0/object-reference/properties/points/)  |                                                                                |
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [MouseDown](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseDown.htm)    |  [MouseLeave](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseLeave.htm)  |  [MouseUp](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseUp.htm)      |                                                                                       |
- |  [MouseEnter](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseEnter.htm)  |  [MouseMove](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/MouseMove.htm)    |                                                                                        |                                                                                       |
+ |  [MouseDown](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousedown/)    |  [MouseLeave](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseleave/)  |  [MouseUp](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseup/)      |                                                                                       |
+ |  [MouseEnter](https://docs.dyalog.com/20.0/object-reference/methodorevents/mouseenter/)  |  [MouseMove](https://docs.dyalog.com/20.0/object-reference/methodorevents/mousemove/)    |                                                                                        |                                                                                       |
 
 NB: Links above are to the complete `⎕WC` documentation

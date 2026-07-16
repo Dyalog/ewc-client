@@ -1,15 +1,15 @@
 # Link
 
-The EWC implementation of [`⎕WC` class Link](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Link.htm) has some degree of support for:
+The EWC implementation of Link has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [Download](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Download.htm)  |  [Href](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Href.htm)    |  [Target](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Target.htm)      |                                                                                 |
- |  [Event](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Event.htm)        |  [Label](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Label.htm)  |                                                                                  |                                                                                 |
+ |   Download                                                                  |   Href                                                                   |   [Target](https://docs.dyalog.com/20.0/object-reference/properties/target/)  |            |
+ |   [Event](https://docs.dyalog.com/20.0/object-reference/properties/event/)  |   [Label](https://docs.dyalog.com/20.0/object-reference/objects/label/)  |                                                                               |            |
 
 
 | Events|  |  |  |
 |--|--|--|--|
- |  [Select](https://help.dyalog.com/19.0/index.htm#GUI/MethodOrEvents/Select.htm)  |                                                                                  |                                                                                  |                                                                                 |
+ |  [Select](https://docs.dyalog.com/20.0/object-reference/methodorevents/select/)  |                                                                                  |                                                                                  |                                                                                 |
 
 NB: Links above are to the complete `⎕WC` documentation

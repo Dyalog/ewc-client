@@ -1,10 +1,11 @@
 # Div
 
-The EWC implementation of [`⎕WC` class Div](https://help.dyalog.com/19.0/index.htm#GUI/Objects/Div.htm) has some degree of support for:
+The EWC implementation of Div has some degree of support for:
 
 | Properties|  |  |  |
 |--|--|--|--|
- |  [CSS](https://help.dyalog.com/19.0/index.htm#GUI/Properties/CSS.htm)              |  [EventList](https://help.dyalog.com/19.0/index.htm#GUI/Properties/EventList.htm)  |  [MethodList](https://help.dyalog.com/19.0/index.htm#GUI/Properties/MethodList.htm)  |  [PropList](https://help.dyalog.com/19.0/index.htm#GUI/Properties/PropList.htm) |
- |  [ChildList](https://help.dyalog.com/19.0/index.htm#GUI/Properties/ChildList.htm)  |  [HTML](https://help.dyalog.com/19.0/index.htm#GUI/Properties/HTML.htm)            |  [Posn](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Posn.htm)              |  [Size](https://help.dyalog.com/19.0/index.htm#GUI/Properties/Size.htm)         |
+ |   CSS                                                                               |   Flex                                                                                |   [Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)          |       |
+ |   [ChildList](https://docs.dyalog.com/20.0/object-reference/properties/childlist/)  |   [HTML](https://docs.dyalog.com/20.0/object-reference/properties/html/)              |   [PropList](https://docs.dyalog.com/20.0/object-reference/properties/proplist/)  |       |
+ |   [EventList](https://docs.dyalog.com/20.0/object-reference/properties/eventlist/)  |   [MethodList](https://docs.dyalog.com/20.0/object-reference/properties/methodlist/)  |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)          |       |
 
 NB: Links above are to the complete `⎕WC` documentation
