@@ -38,6 +38,19 @@ const TabControl = ({ data }) => {
       )
   );
 
+  // Some forms use a TabControl purely as a container: a single tab with no
+  // caption and no image (e.g. F0000.App.T wrapping the Prices grid). Native
+  // draws no tab strip for it — it's invisible. Only render the tab strip when at
+  // least one tab actually has a caption to show, otherwise it's a stray band.
+  const tabHasCaption = (p) => {
+    const cap = Array.isArray(p?.Caption) ? p.Caption[0] : p?.Caption;
+    return cap != null && String(cap).trim() !== '';
+  };
+  const hasVisibleTab = Object.values(updatedData).some(
+    (child) =>
+      child?.Properties?.Type === 'TabButton' && tabHasCaption(child.Properties)
+  );
+
   const updatedStyles = {
     ...styles,
     display: Visible == 0 ? 'none' : 'block',
@@ -62,21 +75,23 @@ const TabControl = ({ data }) => {
         ...(isRibbonTC ? { bottom: 'auto', height: 'max-content' } : {}),
       }}
     >
-      {/* Render the Buttons */}
-      <div className="ewc-tabstrip">
-        {Object.keys(updatedData).map((key) => {
-          return updatedData[key]?.Properties.Type == 'TabButton' ? (
-            <TabButton
-              bgColor={BCol}
-              fontColor={FCol}
-              activebgColor={ActiveBCol}
-              activeTab={activeTab ? activeTab : Id}
-              data={updatedData[key]}
-              handleTabClick={handleTabClick}
-            />
-          ) : null;
-        })}
-      </div>
+      {/* Render the Buttons — only when a real tab strip exists (see above). */}
+      {hasVisibleTab && (
+        <div className="ewc-tabstrip">
+          {Object.keys(updatedData).map((key) => {
+            return updatedData[key]?.Properties.Type == 'TabButton' ? (
+              <TabButton
+                bgColor={BCol}
+                fontColor={FCol}
+                activebgColor={ActiveBCol}
+                activeTab={activeTab ? activeTab : Id}
+                data={updatedData[key]}
+                handleTabClick={handleTabClick}
+              />
+            ) : null;
+          })}
+        </div>
+      )}
 
       {/* Render the SubForm */}
 
