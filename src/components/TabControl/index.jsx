@@ -3,6 +3,7 @@ import SubForm from '../SubForm';
 import TabButton from '../TabButton';
 import { useAppData, useAttachStyle } from '../../hooks';
 import { useEffect, useState } from 'react';
+import './TabControl.css';
 
 const TabControl = ({ data }) => {
   const { BCol, FCol, ActiveBCol, CSS,FontObj } = data?.Properties;
@@ -21,6 +22,21 @@ const TabControl = ({ data }) => {
   const [activeTab, setActiveTab] = useState(Id);
 
   const { Visible } = data?.Properties;
+
+  // A ribbon TabControl (any tab page hosts a Ribbon) must size Windows-like: a
+  // fixed-height strip docked at the top (tab row + ribbon band), spanning the
+  // width. The app authors it with a bottom-anchored Attach, so useAttachStyle
+  // stretches it vertically with the form — opening a dead zone below the ribbon
+  // (and clipping the ribbon when the form is short). Overriding to top-docked +
+  // hug-content keeps it exactly ribbon-tall at every size; the horizontal attach
+  // is kept so it still spans. Non-ribbon (full-page) TabControls are untouched.
+  const isRibbonTC = Object.values(updatedData).some(
+    (child) =>
+      child?.Properties?.Type === 'SubForm' &&
+      Object.values(excludeKeys(child)).some(
+        (gc) => gc?.Properties?.Type === 'Ribbon'
+      )
+  );
 
   const updatedStyles = {
     ...styles,
@@ -42,10 +58,12 @@ const TabControl = ({ data }) => {
         ...customStyles,
         ...fontStyles,
         ...attachStyle,
+        // Windows-like ribbon strip: top-docked, hug the tab row + ribbon band.
+        ...(isRibbonTC ? { bottom: 'auto', height: 'max-content' } : {}),
       }}
     >
       {/* Render the Buttons */}
-      <div style={{ display: 'flex', alignItems: 'end', marginLeft: '3px' }}>
+      <div className="ewc-tabstrip">
         {Object.keys(updatedData).map((key) => {
           return updatedData[key]?.Properties.Type == 'TabButton' ? (
             <TabButton

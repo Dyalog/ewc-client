@@ -72,7 +72,12 @@ const CustomRibbon = ({ data }) => {
       ref={setNode}
       style={{
         height: height ? `${height}px` : '94px',
-        width: isFinite(available) ? `${available}px` : '100%',
+        // Fill the tab-control width so the band's own background covers the tab
+        // page — otherwise the page's themed (blue) colour shows as a sliver to
+        // the right of the last group. `available` (window room, minus a margin)
+        // still drives the priority-reduction ladder below, so groups stay within
+        // the viewport; the band itself just spans its parent.
+        width: '100%',
         // Final safety net: if even all-collapsed overflows, scroll instead of
         // clipping. While the ladder keeps content within `available`, no
         // scrollbar appears.
