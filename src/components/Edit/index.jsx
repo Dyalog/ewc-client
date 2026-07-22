@@ -14,6 +14,7 @@ import {
   handleMouseDoubleClick,
   getFontStyles,
   keyShiftState,
+  isModifierKey,
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -352,6 +353,8 @@ const Edit = ({
 
   const handleKeyPress = (e) => {
     updateSelText(); // Update global tree with current selection
+    // Ignore shift etc
+    if (isModifierKey(e)) return;
     // Cursor-movement keys stay in the input; Up/Down/Tab/Enter still bubble
     // to Grid for Excel-style commit + cell move.
     if (isInGrid && isEditing) {

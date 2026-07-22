@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { keyShiftState } from '../../utils';
+import { keyShiftState, isModifierKey } from '../../utils';
 
 // Event handling hook for Grid
 // Fires CellMove, KeyPress, and manages event registration checks
@@ -45,6 +45,8 @@ const useGridEvents = (socket, Event, gridId) => {
   // registered on a child Input rather than the grid itself)
   const fireKeyPress = useCallback((event, sourceId) => {
     if (!sourceId && !hasEvent('KeyPress')) return false;
+    // Ignore keys like shift with no other key pressed
+    if (isModifierKey(event)) return false;
 
     const eventId = crypto.randomUUID();
     const shiftState = keyShiftState(event);
