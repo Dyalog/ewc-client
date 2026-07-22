@@ -40,6 +40,7 @@ import Link from './Link';
 import Upload from './Upload';
 import Div from './Div';
 import Static from './Static';
+import Locator from './Locator';
 import MenuBarItem from './MenuBarItem';
 import StatusBar from './StatusBar';
 
@@ -186,6 +187,7 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
   if (data?.Properties?.Type == 'Div') return <Div data={data} />;
   if (data?.Properties?.Type == 'Static') return <Static data={data} />;
+  if (data?.Properties?.Type == 'Locator') return <Locator data={data} />;
   if (data?.Properties?.Type == 'StatusBar') return <StatusBar data={data} />;
 //   console.log("UNKNOWN: " + data?.Properties?.Type);
 };
