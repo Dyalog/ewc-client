@@ -102,6 +102,10 @@
   display: flex;
   flex-flow: row nowrap;
   align-items: stretch;
+  /* A group is as wide as the wider of its items and its caption. When the
+     caption is the wider one ("Configuration" over a single "Profile" tile), the
+     items centre in the slack rather than hugging the left edge, as native does. */
+  justify-content: center;
   gap: 0 2px;
   padding: 3px 2px 0;
 }
