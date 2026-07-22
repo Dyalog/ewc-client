@@ -5,9 +5,13 @@ import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../u
 const HorizontalSplitter = ({ data }) => {
   const elementRef = useRef(null);
 
-  const { Size: SubformSize, Posn: SubFormPosn } = JSON.parse(
+  // Guard the transient null: the parent's localStorage entry may not be
+  // written yet on an early render (it lands in the parent SubForm's effect).
+  // JSON.parse(null) is null, and destructuring null throws — with no error
+  // boundary that blanks the whole form. Fall back to {} and read on re-render.
+  const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
+  ) || {};
 
 
   const { Posn, SplitObj1, SplitObj2, Event, Size, CSS } = data?.Properties;
@@ -24,10 +28,25 @@ const HorizontalSplitter = ({ data }) => {
 
   const [oldFormValues, setoldFormValues] = useState(SubformSize && SubformSize);
   const [oldHeight, setOldHeight] = useState(Size && Size[0]);
+  // See VerticalSplitter: skip the load-time ramp, reflow only on genuine resizes.
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
-    if (!oldFormValues) return;
+    // Until ready (or before a baseline exists), just track the current form
+    // size as the baseline and bail — do NOT reproportion (skips the menu->demo
+    // load ramp that would mis-size the panes).
+    if (!readyRef.current || !oldFormValues) {
+      if (dimensions?.height) setoldFormValues([dimensions.height, dimensions.width]);
+      return;
+    }
+    // No-op if the form size hasn't actually changed — guards against a
+    // reRender()-triggered re-run loop.
+    if (oldFormValues[0] === dimensions.height && oldFormValues[1] === dimensions.width) return;
 
     if (oldHeight == dimensions.height) {
       const obj1 = JSON.parse(localStorage.getItem(SplitObj1));
@@ -197,6 +216,8 @@ const HorizontalSplitter = ({ data }) => {
     backgroundColor: '#F0F0F0',
     cursor: 'row-resize',
     position: 'absolute',
+    // Sit above the panes so the divider is always grabbable (see VerticalSplitter).
+    zIndex: 10,
     top: position?.top,
     left: 0,
     ...style,

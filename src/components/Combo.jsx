@@ -1,7 +1,7 @@
 import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { createPortal } from 'react-dom';
-import { useAppData, useResizeObserver } from '../hooks';
+import { useAppData, useResizeObserver, useAttachStyle } from '../hooks';
 import { useGridContext, useGridMode } from './Grid/GridContext';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -32,6 +32,7 @@ const Combo = ({ data, value }) => {
 
   const customStyles = parseFlexStyles(CSS)
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
 
   const { Items, SelItems, Event, Visible, Posn, Size, Rows, TabIndex } = data?.Properties;
 
@@ -468,6 +469,7 @@ const Combo = ({ data, value }) => {
           top: Posn?.[0],
           left: Posn?.[1],
         }),
+        ...attachStyle,
       }}
       onMouseDown={(e) => {
         // In Grid, let the mousedown bubble to the grid cell so it can move

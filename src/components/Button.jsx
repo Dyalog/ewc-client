@@ -12,7 +12,7 @@ import {
   handleMouseDoubleClick,
   handleKeyPressUtils,
 } from "../utils";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useAttachStyle } from "../hooks";
 import { useGridContext } from "./Grid/GridContext";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
@@ -22,12 +22,9 @@ const Button = ({
   data,
 }) => {
 
-  const parentSize = JSON.parse(
-    localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
-
   const styles = setStyle(data?.Properties);
-  const { socket, findCurrentData, dataRef, handleData, reRender, inheritedProperties } = useAppData();
+  const attachStyle = useAttachStyle(data);
+  const { socket, findCurrentData, dataRef, handleData, inheritedProperties } = useAppData();
 
   // Check if we're inside a Grid cell
   const gridContext = useGridContext();
@@ -44,10 +41,6 @@ const Button = ({
 
   const inputRef = useRef();
   const buttonRef = useRef();
-
-  const dimensions = useResizeObserver(
-    document.getElementById(extractStringUntilLastPeriod(data?.ID))
-  );
 
   const [checkInput, setCheckInput] = useState(false);
 
@@ -69,9 +62,6 @@ const Button = ({
     top: Posn && Posn[0],
     left: Posn && Posn[1],
   });
-  const [parentOldDimensions, setParentOldDimensions] = useState(
-    parentSize?.Size
-  );
 
   const decideInput = () => {
     // When in Grid, use cellValue from context (0 or 1)
@@ -167,81 +157,6 @@ const Button = ({
       handleGotFocus();
     }
   };
-
-  useEffect(() => {
-    // TODO B1: Fix up resize logic!
-    return;
-    // console.log('RESIZESTART', {parentSize, position, parentOldDimensions});
-    if (!position) return;
-    if (!parentOldDimensions) return;
-    // console.log('RESIZE', position, parentOldDimensions, dimensions);
-
-    let calculateLeft =
-      position && position.left && parentOldDimensions && parentOldDimensions[1]
-        ? (position.left / parentOldDimensions[1]) * dimensions.width
-        : 0;
-
-    calculateLeft = Math.max(0, Math.min(calculateLeft, dimensions.width));
-
-    let calculateTop =
-      position && position.top && parentOldDimensions && parentOldDimensions[0]
-        ? (position.top / parentOldDimensions[0]) * dimensions.height
-        : 0;
-
-    calculateTop = Math.max(0, Math.min(calculateTop, dimensions.height));
-
-    // console.log('RESIZED', {
-    //   top: Math.round(calculateTop),
-    //   left: Math.round(calculateLeft),
-    // })
-    setPosition({
-      top: Math.round(calculateTop),
-      left: Math.round(calculateLeft),
-    });
-
-    setParentOldDimensions([dimensions?.height, dimensions?.width]);
-    handleData(
-      {
-        ID: data?.ID,
-        Properties: {
-          ...(data?.Properties?.hasOwnProperty("Posn")
-            ? { Posn: [Math.round(calculateTop), Math.round(calculateLeft)] }
-            : {}),
-        },
-      },
-      "WS"
-    );
-
-    if (!localStorage.getItem(data?.ID)) {
-      const event = JSON.stringify({
-        Event: {
-          EventName: "Select",
-          ID: data?.ID,
-          Value: 0,
-          Posn: [Math.round(calculateTop), Math.round(calculateLeft)],
-          Size: [Size && Size[0], Size && Size[1]],
-        },
-      });
-
-      localStorage.setItem(data?.ID, event);
-    } else {
-      const { Event } = JSON.parse(localStorage.getItem(data?.ID));
-      const { Value } = Event;
-      const event = JSON.stringify({
-        Event: {
-          EventName: "Select",
-          ID: data?.ID,
-          Value,
-          Posn: [Math.round(calculateTop), Math.round(calculateLeft)],
-          Size: [Size && Size[0], Size && Size[1]],
-        },
-      });
-
-      localStorage.setItem(data?.ID, event);
-    }
-    setParentOldDimensions([dimensions?.height, dimensions?.width]);
-    reRender();
-  }, [dimensions]);
 
   const handleSelectEvent = (value) => {
     const newState = value ? 1 : 0;
@@ -348,6 +263,7 @@ const Button = ({
           justifyContent: Align == "Left" ? "flex-end" : "flex-start",
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
       >
         <input
@@ -453,6 +369,7 @@ const Button = ({
           justifyContent: Align == "Left" ? "flex-end" : "flex-start",
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
       >
         <input
@@ -527,7 +444,8 @@ const Button = ({
           ? { left: position?.left }
           : {}),
         ...customStyles,
-        ...fontStyles
+        ...fontStyles,
+        ...attachStyle,
       }}
     >
       {ImageData ? (

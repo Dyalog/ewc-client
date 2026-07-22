@@ -1,0 +1,30 @@
+ AttachWCRun;⎕IO;box;id;fid;bpos;bsize;attach;bry;cols;i;bcol
+⍝ Native ⎕WC test for the Attach property (issues #97 / #495) — the WINDOWS
+⍝ ground truth for the browser visual test (ewcdemotest/tests/basic/attach.spec.ts).
+⍝ Builds a resizable Form with five SubForms that differ ONLY in Attach, plus
+⍝ Grow/Reset/Check buttons, then ⎕DQs it.
+⍝
+⍝ Load + run (Windows Dyalog) — the SAME way as the RunAttach harness:
+⍝   ]LINK.Create #.autoconf C:\path\to\ewc-client-autoconf\autoconf
+⍝   #.autoconf.AttachWCRun
+⍝ Then DRAG the form's edge (or click "Grow"), then click "Check": a PASS/FAIL
+⍝ table prints to the session comparing each box's live ⎕WG Posn/Size to the
+⍝ Attach-correct geometry for the current form size.
+ ⎕IO←1
+ :If 0≠⎕NC'F1' ⋄ ⎕EX'F1' ⋄ :EndIf
+ 'F1'⎕WC'Form'('Caption' 'Attach ⎕WC test — drag my edge (or Grow), then Check')('Posn'(30 30))('Size'(520 840))('Coord' 'Pixel')('Sizeable' 1)('AutoConf' 3)
+ 'F1.hint'⎕WC'Label'('Caption' 'Boxes differ ONLY in Attach. Resize (drag or Grow), then Check → session.')('Posn'(8 20))('Size'(18 780))('Attach' 'Top' 'Left' 'Top' 'Right')
+ cols←(210 226 250)(214 246 214)(250 236 200)(228 214 244)(246 214 214)
+ i←0
+ :For box :In AttachWCBoxes
+     (id bpos bsize attach)←box
+     fid←'F1.',id
+     i+←1 ⋄ bcol←i⊃cols
+     fid ⎕WC'SubForm'('Posn'bpos)('Size'bsize)('AutoConf' 3)('Attach'attach)('EdgeStyle' 'Groove')('BCol'bcol)
+     (fid,'.cap')⎕WC'Label'('Caption'(id,': ',¯1↓∊attach,¨⊂' '))('Posn'(4 6))('Size'(16(¯12+2⊃bsize)))('Attach' 'Top' 'Left' 'Top' 'Right')
+ :EndFor
+ bry←482
+ 'F1.grow'⎕WC'Button'('Caption' 'Grow (⎕WS Size)')('Posn'(bry 20))('Size'(26 150))('Attach' 'Bottom' 'Left' 'Bottom' 'Left')('Event' 'Select' 'AttachWCGrow')
+ 'F1.reset'⎕WC'Button'('Caption' 'Reset')('Posn'(bry 180))('Size'(26 90))('Attach' 'Bottom' 'Left' 'Bottom' 'Left')('Event' 'Select' 'AttachWCReset')
+ 'F1.check'⎕WC'Button'('Caption' 'Check → session')('Posn'(bry 280))('Size'(26 150))('Attach' 'Bottom' 'Left' 'Bottom' 'Left')('Event' 'Select' 'AttachWCCheck')
+ ⎕DQ'F1'

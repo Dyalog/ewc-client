@@ -1,0 +1,15 @@
+ MkArea args;id;ac;posn;size;h;w
+⍝ Build one labelled SubForm with corner children, so resize behaviour is
+⍝ visible. args:  (shortname  AutoConf  (top left)  (height width))
+ (id ac posn size)←args
+ id←'F1.',id
+ (h w)←size
+ ⍝ Sizeable so that on native ⎕WC you can drag THIS box's edge directly (the
+ ⍝ clearest way to see propagate-vs-not per box); the Grow-boxes button is the
+ ⍝ equivalent WS-on-Size path that EWC can drive.
+ id xWC 'SubForm'('Posn' posn)('Size' size)('AutoConf' ac)('EdgeStyle' 'Groove')('BCol'(248 248 252))('Sizeable' 1)
+ ⍝ caption (top-left) + a child at each corner so you can see whether the
+ ⍝ children reflow (AutoConf 2/3) or stay pinned in pixels (AutoConf 0/1).
+ (id,'.cap')xWC 'Label'('AutoConf=',⍕ac)(4 6)('Size'(18 180))
+ (id,'.tl') xWC 'Button' 'TL'(28 6)('Size'(22 56))
+ (id,'.br') xWC 'Button' 'BR'((h-30)(w-62))('Size'(22 56))

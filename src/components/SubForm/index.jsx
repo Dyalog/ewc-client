@@ -18,7 +18,7 @@ import {
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import SelectComponent from "../SelectComponent";
-import { useAppData } from "../../hooks";
+import { useAppData, useAttachStyle, useResizeObserver, useConfigureReport } from "../../hooks";
 
 const SubForm = ({ data }) => {
   const { findCurrentData, socket, inheritedProperty } = useAppData();
@@ -37,10 +37,25 @@ const SubForm = ({ data }) => {
 
   const observedDiv = useRef(null);
   const styles = setStyle(data?.Properties, "absolute", Flex);
+  const attachStyle = useAttachStyle(data);
+  // Report Configure(31) back to APL once this SubForm's own size settles.
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
 
   const flexStyles = parseFlexStyles(CSS);
 
   const updatedData = excludeKeys(data);
+
+  // A tab-page SubForm that hosts a Ribbon must hug the ribbon's own height, not
+  // the Size it carries. Its Size is the TabControl/Form size (from the legacy
+  // localStorage sizing chain, App.jsx + the "TabControlInSubForm" hook below),
+  // so a bottom-anchored (stretching) TabControl opens a dead zone beneath the
+  // ribbon that this SubForm's tab-colour background then floods — the "blue box"
+  // that appears over the tree once the form is tall enough. Hugging the content
+  // keeps the blue confined to the ribbon, exactly as on first render.
+  const hostsRibbon = Object.values(updatedData).some(
+    (c) => c?.Properties?.Type === "Ribbon"
+  );
 
   const ImageData = findCurrentData(Picture && Picture[0]);
 
@@ -134,10 +149,13 @@ const SubForm = ({ data }) => {
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
-        height: Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined,
+        height: hostsRibbon
+          ? "max-content"
+          : Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined,
         width:  Size ? Size[1] : inheritedSize ? inheritedSize[1] : undefined,
         top: Posn && Posn[0],
         left: Posn && Posn[1],
+        ...attachStyle,
       }}
       ref={observedDiv}
       onMouseDown={(e) => {

@@ -1,176 +1,518 @@
-/* Title styles override */
-.ribbon-group-title {
-  font-size: 10px;
+/* ============================================================================
+   EWC Ribbon — Office Fluent visual layer (milestone 1: full-width look).
+
+   Layout is CSS-owned. No measurement-driven inline sizing, no setTimeout.
+   All values follow ci/ribbon-harness/ribbon-visual-spec.md
+   (Office White/Colorful 2019 @ 100%).
+
+   Tokens are declared on BOTH `.ewc-ribbon` and `.ewc-ribbon-popup`, and on
+   nothing else, so they never leak into the rest of the app. The popup needs its
+   own copy because RibbonPopup portals it to `document.body` — outside the band
+   — where it would otherwise inherit no tokens at all and paint transparent.
+   ========================================================================== */
+
+.ewc-ribbon,
+.ewc-ribbon-popup {
+  /* ---- colour tokens ---- */
+  --ribbon-band-bg: #ffffff;
+  --ribbon-edge: #d4d4d4;
+  --group-separator: #e1e1e1;
+  --caption-text: #666666;
+  --item-text: #262626;
+  --item-text-disabled: #a6a6a6;
+  --arrow: #595959;
+  --hover-bg: #c9e2f7;
+  --hover-border: #7da2ce;
+  --press-bg: #b5d2ee;
+  --press-border: #5b8ac1;
+  --checked-bg: #d6e8fa;
+  --checked-border: #9cc0e6;
+  --popup-bg: #ffffff;
+  --popup-border: #c6c6c6;
+  --menu-gutter: #f1f1f1;
+  --menu-sep: #e1e1e1;
+
+  /* ---- spacing tokens ----
+     These are *rhythm* tokens, not fixed sizes: every rule below uses them as a
+     minimum or a cap and lets content (font, line-height, image size) decide the
+     rest. Override any of them on a `.ewc-ribbon` ancestor to rescale the band. */
+  --ribbon-band-h: 94px; /* default band height; the app's BodyHeight wins */
+  --group-caption-h: 16px; /* min height of the bottom caption strip */
+  --large-icon: 32px; /* cap for large-tile artwork */
+  --small-icon: 16px; /* cap for small-row artwork */
+  --small-row-h: 24px; /* min height of a small row -> 3 per column */
 }
 
-.btn {
-  padding: 0px !important;
-}
-
-.row>* {
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.row {
-  margin: 0;
-}
-
-.d-md-flex {
-  justify-content: center;
-}
-
-
-.custom-dropdown-menu {
-  position: absolute;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-top: 5px;
-  z-index: 1000;
-  min-width: 160px;
-  padding: 0;
-  border: 1px solid #ddd;
-}
-
-.custom-dropdown-item {
-  padding: 10px 20px;
-  cursor: pointer;
-  background-color: #fff;
-  color: #333;
-  font-size: 14px;
-  text-align: left;
+/* ------------------------------------------------------------- the band --- */
+.ewc-ribbon {
+  box-sizing: border-box;
+  /* A definite height, so the item region knows where its columns end and the
+     gallery knows how many rows fit. Content is sized to fit within it. */
+  height: var(--ribbon-band-h);
   display: flex;
-  align-items: center;
-}
-
-.custom-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.custom-dropdown-item:hover {
-  background-color: #f0f0f0;
-}
-
-
-/* Container */
-.ribbon-gallery {
-  position: relative;
-  display: flex;
-  /* border: 1px solid #dcdcdc; */
-  background-color: #dcdcdc;
-  font-family: 'Calibri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Content area */
-.gallery-content,
-.dropdown-content {
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  gap: 3px;
-  margin: 5px 2px;
-
-}
-
-.gallery-content::-webkit-scrollbar,
-.dropdown-content::-webkit-scrollbar {
-  display: none;
-}
-
-/* Individual item */
-.gallery-item{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  width: 'fit-content';
-  height: auto;
-
-}
-
-.item-preview {
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  background-color: #eee;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.item-label {
-  font-size: 11px;
-  color: #000;
-  text-align: center;
+  flex-flow: row nowrap;
+  align-items: stretch;
   width: 100%;
+  /* milestone 2 owns collapse; for now never clip — overflow content stays
+     measurable rather than being chopped. */
+  min-width: max-content;
+  background: var(--ribbon-band-bg);
+  border-bottom: 1px solid var(--ribbon-edge);
+  padding-left: 2px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--item-text);
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* Buttons area */
-.gallery-buttons {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-left: 1px solid black;
-}
-
-.gallery-button {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: none;
-  background: #CCC;
-  cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ewc-ribbon *,
+.ewc-ribbon *::before,
+.ewc-ribbon *::after,
+.ewc-ribbon-popup,
+.ewc-ribbon-popup *,
+.ewc-ribbon-popup *::before,
+.ewc-ribbon-popup *::after {
   box-sizing: border-box;
 }
 
-.gallery-button:not(:last-child) {
-  border-bottom: 1px solid #000;
+/* ---------------------------------------------------------------- group --- */
+.ewc-ribbon-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 100%;
+  padding: 0 2px;
+  border-right: 1px solid var(--group-separator);
+}
+.ewc-ribbon-group:last-child {
+  border-right: none;
 }
 
-.gallery-button:hover:not(:disabled) {
-  background-color: #C0C0C0;
+/* The item region: a row of columns, fills all height above the caption.
+   (CSS `column wrap` would express the stacking declaratively but Chrome mis-
+   computes the intrinsic width of a column-wrap container, which collapses the
+   whole band — so RibbonGroup packs the columns explicitly instead.) */
+.ewc-ribbon-group-items {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  /* A group is as wide as the wider of its items and its caption. When the
+     caption is the wider one ("Configuration" over a single "Profile" tile), the
+     items centre in the slack rather than hugging the left edge, as native does. */
+  justify-content: center;
+  gap: 0 2px;
+  padding: 3px 2px 0;
 }
 
-.gallery-button:disabled {
-  opacity: 0.4;
-  cursor: default;
+/* bottom caption strip — as tall as its own line box, never shorter than the
+   rhythm token, so changing the caption font reflows it instead of clipping. */
+.ewc-ribbon-group-caption {
+  flex: 0 0 auto;
+  min-height: var(--group-caption-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--caption-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ewc-ribbon-group-caption-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.gallery-button:disabled:hover {
-  background-color: #D8D8D8;
-}
-
-
-.dropdown-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 50px);
-  gap: 10px;
-  padding: 10px;
-  width: auto;
-  background-color: #dcdcdc;
+/* dialog-box launcher (caption row, right edge) */
+.ewc-ribbon-launcher {
   position: absolute;
-  z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-height: 300px;
-  overflow-y: auto;
-  top: 0px
+  right: 2px;
+  bottom: 1px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--caption-text);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.ewc-ribbon-launcher:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
 }
 
-/* Individual Dropdown Items */
-.ribbon-dropdown-item {
+/* ------------------------------------------------------ column (item) --- */
+.ewc-ribbon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start; /* Office top-aligns partial stacks */
+  height: 100%;
+}
+
+/* -------------------------------------------------------- large tile --- */
+.ewc-ribbon-large {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin: 3px;
+  justify-content: flex-start;
+  min-width: 38px;
+  max-width: 90px;
+  height: 100%;
+  /* Vertical padding follows the font so a larger font gets proportionally more
+     breathing room rather than overflowing a fixed inset. */
+  padding: 0.35em 4px 0.2em;
+  border: 1px solid transparent;
+  border-radius: 2px;
   cursor: pointer;
+  text-align: center;
+  color: var(--item-text);
+}
+.ewc-ribbon-large:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
+}
+.ewc-ribbon-large:active {
+  background: var(--press-bg);
+  border-color: var(--press-border);
 }
 
-.dropdown-item:hover {
-  background-color: #E1E1E1;
+/* ------------------------------------------------------- split button --- */
+/* Office/native split button: the icon half runs the default action, the
+   caption+caret half opens the menu, and each highlights on its own. The tile
+   keeps the shared hover so the two halves still read as one control. */
+.ewc-ribbon-split {
+  padding: 0; /* the halves own the padding */
+}
+.ewc-ribbon-split:active {
+  background: var(--hover-bg); /* the pressed half supplies the darker fill */
+  border-color: var(--hover-border);
+}
+/* The halves take NO border: their hover ring is an inset shadow, which costs no
+   layout. That keeps a split tile's internal metrics identical to a plain
+   tile's, so icons and captions sit on the same lines across the whole band —
+   the `Print`/`Report` tiles line up with `Export...`/`Exit` beside them. */
+.ewc-ribbon-split-main,
+.ewc-ribbon-split-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  border-radius: 2px;
+  cursor: pointer;
+}
+/* Icon half: natural height, same top padding and icon gap as a plain tile. */
+.ewc-ribbon-split-main {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  padding: 0.35em 4px 0;
+}
+/* Caption half: takes the rest, so up to two caption lines fit below the icon. */
+.ewc-ribbon-split-drop {
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: flex-start;
+  padding: 0 4px 0.2em;
+}
+.ewc-ribbon-split-main:hover,
+.ewc-ribbon-split-drop:hover {
+  background: var(--hover-bg);
+  box-shadow: inset 0 0 0 1px var(--hover-border);
+}
+.ewc-ribbon-split-main:active,
+.ewc-ribbon-split-drop:active {
+  background: var(--press-bg);
+  box-shadow: inset 0 0 0 1px var(--press-border);
+}
+/* Artwork sizes itself; the token is only a cap, so a 24px or 48px image list
+   renders at its own size instead of being letterboxed into a 32px slot. */
+.ewc-ribbon-large-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: var(--large-icon);
+  margin-bottom: 0.2em;
+}
+.ewc-ribbon-large-icon img,
+.ewc-ribbon-large-icon svg {
+  max-width: var(--large-icon);
+  max-height: var(--large-icon);
+}
+/* Caption box = up to two line boxes of whatever font is in force. The dropdown
+   arrow lives *inside* this flow (see RibbonDropDownButton), so it wraps onto
+   the caption's last line — "Overal Data / Quality v" — instead of claiming a
+   third row that the band has no room for. */
+.ewc-ribbon-large-caption {
+  line-height: 1.25;
+  max-width: 100%;
+  white-space: normal;
+  /* Break at spaces only. `break-word` would let a caption split mid-word
+     ("Dashboar / d") to make room for the caret, and it also collapses
+     min-content to a single character, which defeats the min-width floor that
+     keeps the box at least as wide as its longest word. A single word wider
+     than the tile is clipped, as it is natively. */
+  word-break: normal;
+  overflow-wrap: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Slightly smaller than the caption and with a flat line-height, so the caret
+   rides inside the caption's existing line box instead of growing it past what
+   the 2-line clamp reserves. */
+.ewc-ribbon-large-arrow {
+  color: var(--arrow);
+  font-size: 0.85em;
+  line-height: 1;
+}
+.ewc-ribbon-large-arrow svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.1em;
+}
+
+/* ----------------------------------------------- small button + stack --- */
+.ewc-ribbon-small-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100%;
+}
+/* Adjacent single-small-button groups are packed into one stack (RibbonGroup);
+   their per-item columns must then be content-tall, not full-height, so they sit
+   on top of each other the way native draws them. */
+.ewc-ribbon-small-stack > .ewc-ribbon-col {
+  flex: 0 0 auto;
+  height: auto;
+}
+/* A small row is as tall as its content (icon or line box, whichever is taller)
+   but never below the rhythm token, so three of them keep lining up with one
+   large tile however the font is scaled. */
+.ewc-ribbon-small {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  min-height: var(--small-row-h);
+  padding: 0.15em 6px 0.15em 2px;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--item-text);
+}
+.ewc-ribbon-small:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
+}
+.ewc-ribbon-small:active {
+  background: var(--press-bg);
+  border-color: var(--press-border);
+}
+.ewc-ribbon-small-icon {
+  flex: 0 0 var(--small-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ewc-ribbon-small-icon img,
+.ewc-ribbon-small-icon svg {
+  max-width: var(--small-icon);
+  max-height: var(--small-icon);
+}
+.ewc-ribbon-small-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ewc-ribbon-small-arrow {
+  margin-left: auto;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  color: var(--arrow);
+}
+
+/* ------------------------------------------------------------- popup --- */
+.ewc-ribbon-popup {
+  position: fixed;
+  z-index: 9999;
+  min-width: 168px;
+  padding: 2px 0;
+  background: var(--popup-bg);
+  border: 1px solid var(--popup-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  color: var(--item-text);
+}
+.ewc-ribbon-menu-item {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  height: 24px;
+  padding-right: 12px;
+  cursor: pointer;
+}
+.ewc-ribbon-menu-item:hover {
+  background: var(--hover-bg);
+}
+.ewc-ribbon-menu-gutter {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 100%;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--menu-gutter);
+}
+.ewc-ribbon-menu-gutter img {
+  max-width: var(--small-icon);
+  max-height: var(--small-icon);
+}
+.ewc-ribbon-menu-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ewc-ribbon-menu-sep {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--menu-sep);
+}
+
+/* ----------------------------------------------------------- gallery --- */
+.ewc-ribbon-gallery {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid var(--ribbon-edge);
+}
+/* The grid template (column count / row height) is set inline from the authored
+   Cols + ItemWidth/ItemHeight — see RibbonDropDownGallery. */
+.ewc-ribbon-gallery-strip {
+  align-items: stretch;
+  /* Column gap only, and no block padding: rows butt up against each other like
+     the small-row stacks do, so `rows x row-height` is exactly the strip's
+     client height and the last row can never be part-clipped. */
+  gap: 0 2px;
+  padding: 0 2px;
+  overflow: hidden;
+}
+/* A tile is an icon-left / caption-right row, as native draws it — not a stacked
+   thumbnail. Columns are max-content, so the caption is never truncated. */
+.ewc-ribbon-gallery-tile {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 0 6px 0 2px;
+  border: 1px solid transparent;
+  background: #ffffff;
+  color: var(--item-text);
+  cursor: pointer;
+  overflow: hidden;
+}
+.ewc-ribbon-gallery-tile img,
+.ewc-ribbon-gallery-tile svg {
+  flex: 0 0 auto;
+  max-width: var(--small-icon);
+  max-height: var(--small-icon);
+}
+.ewc-ribbon-gallery-tile:hover {
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
+}
+.ewc-ribbon-gallery-tile.selected {
+  background: var(--checked-bg);
+  border: 1px solid var(--press-border);
+}
+.ewc-ribbon-gallery-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.ewc-ribbon-gallery-scroller {
+  flex: 0 0 16px;
+  width: 16px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--ribbon-edge);
+}
+.ewc-ribbon-gallery-btn {
+  flex: 1 1 0;
+  width: 16px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: #ffffff;
+  color: var(--arrow);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ewc-ribbon-gallery-btn:not(:last-child) {
+  border-bottom: 1px solid var(--ribbon-edge);
+}
+.ewc-ribbon-gallery-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+}
+.ewc-ribbon-gallery-btn:active:not(:disabled) {
+  background: var(--press-bg);
+}
+.ewc-ribbon-gallery-btn:disabled {
+  color: #bfbfbf;
+  cursor: default;
+}
+
+/* expanded gallery dropdown grid (reuses popup chrome) */
+.ewc-ribbon-gallery-grid {
+  display: grid;
+  gap: 3px;
+  padding: 6px;
+}
+
+/* --------------------------------------------- collapsed group + flyout --- */
+.ewc-ribbon-collapsed {
+  min-width: 48px;
+  max-width: 96px;
+}
+
+/* The flyout reuses `.ewc-ribbon` for the tokens/font but must shed the band's
+   full-width / fixed-height / bottom-hairline chrome and behave like a popup. */
+.ewc-ribbon-flyout.ewc-ribbon {
+  width: auto;
+  min-width: auto;
+  height: auto;
+  display: block;
+  border: 1px solid var(--popup-border);
+  border-bottom: 1px solid var(--popup-border);
+  padding: 2px;
+  overflow: visible;
+}
+.ewc-ribbon-flyout > .ewc-ribbon-group {
+  /* Same definite height as the band it was collapsed out of, so the restored
+     Large layout wraps into columns identically. */
+  height: var(--ribbon-band-h);
+  border-right: none;
+  padding: 0 4px;
 }

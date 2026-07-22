@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Icons } from '../../common';
 import './ScrollBar.css';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle } from '../../hooks';
 import {
   handleKeyPressUtils,
   handleMouseDoubleClick,
@@ -18,7 +18,7 @@ const arrowButtonSize = 20;
 
 const ScrollBar = ({ data }) => {
   const { FA } = Icons;
-  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Attach, Thumb, TabIndex } = data?.Properties || {};
+  const { Align, Type, Range, Event, Visible, Size, Posn, VScroll, HScroll, Thumb, TabIndex } = data?.Properties || {};
   const rangedThumb = thumbValueInRange(Thumb, Range);
   const isHorizontal = Type === 'Scroll' && (Align === 'Bottom' || HScroll === -1);
   const [scaledValue, setScaledValue] = useState(rangedThumb);
@@ -27,6 +27,9 @@ const ScrollBar = ({ data }) => {
   const emitEvent = Event && Event[0];
   const parentSize = JSON.parse(localStorage.getItem('formDimension'));
   const { socket, handleData, setProceed, proceedEventArray, setProceedEventArray, nqEvents } = useAppData();
+  // Edge-anchoring for Attach is handled by the shared hook (single source of
+  // truth across all components), replacing ScrollBar's earlier bespoke logic.
+  const attachStyle = useAttachStyle(data);
   const trackRef = useRef(null);
   const thumbRef = useRef(null);
   // Id of the most recent event this scrollbar emitted, used to correlate the
@@ -306,34 +309,6 @@ const ScrollBar = ({ data }) => {
     setScaledValue(rangedThumb);
     setTempScaledValue(rangedThumb);
   }, [Thumb]);
-
-  const calculateAttachStyle = () => {
-    let attachStyle = {};
-
-    if (Attach) {
-      const [topAttach, leftAttach, bottomAttach, rightAttach] = Attach;
-
-      if (topAttach === 'Top' || topAttach === 'Bottom') {
-        attachStyle.top = `${defaultPosn[0]}px`;
-      }
-
-      if (leftAttach === 'Left' || leftAttach === 'Right') {
-        attachStyle.left = `${defaultPosn[1]}px`;
-      }
-
-      if (bottomAttach === 'Bottom' || bottomAttach === 'Top') {
-        attachStyle.bottom = `${defaultPosn[0]}px`;
-      }
-
-      if (rightAttach === 'Right' || rightAttach === 'Left') {
-        attachStyle.right = `${defaultPosn[1]}px`;
-      }
-    }
-
-    return attachStyle;
-  };
-
-  const attachStyle = calculateAttachStyle();
 
   const trackStyle = {
     width: isHorizontal ? `${trackWidth}px` : `${defaultSize[1]}px`,

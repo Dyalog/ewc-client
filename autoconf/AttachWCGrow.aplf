@@ -1,0 +1,5 @@
+ AttachWCGrow msg
+⍝ "Grow" button: ⎕WS the form to 720×1160 (Δ 200×320). Compare the resulting
+⍝ Check against dragging the form edge to the same size — that answers whether
+⍝ ⎕WS-on-Size reconfigures Attach children like a user drag does.
+ 'F1'⎕WS'Size'(720 1160)

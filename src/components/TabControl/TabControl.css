@@ -1,0 +1,64 @@
+/* ============================================================================
+   EWC TabControl — Windows/Office-style ribbon tab strip.
+
+   The app authors tabs with fill colours (BCol/ActiveBCol/FCol) that native
+   Dyalog largely ignores in favour of the OS ribbon theme. We converge on that
+   Windows feel: a light strip, plain inactive tabs, and an active tab that is
+   light with a coloured TOP ACCENT and merges into the ribbon band below. The
+   app's ActiveBCol is kept as that accent (--tab-accent) so the brand colour
+   still reads — converged, not cloned.
+   ========================================================================== */
+
+.ewc-tabstrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding-left: 4px;
+  /* No fixed height: the strip is exactly as tall as its tabs, which size from
+     their font + padding. Change the tab font or --tab-pad-y and both the tabs
+     and the strip reflow — nothing here assumes a pixel height. It stays slim
+     enough that strip + ribbon band fits the app's reserved ribbon area. */
+  --tab-pad-y: 0.35em;
+  /* Soft blue-gray chrome band above the white ribbon, as on native — the white
+     active tab reads as raised out of it into the band. */
+  background: #e6ebf2;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.ewc-tab {
+  --tab-accent: #2b579a;
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* Height follows the font: line-box + vertical padding, no magic px. */
+  padding: var(--tab-pad-y, 0.35em) 15px;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #3b3b3b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+
+.ewc-tab:hover {
+  background: #d7e5f6;
+  border-color: #c3d7ef;
+}
+
+.ewc-tab--active,
+.ewc-tab--active:hover {
+  color: #1a1a1a;
+  font-weight: 600;
+  background: #ffffff;
+  border-color: #d4d4d4;
+  /* The 2px accent replaces the 1px transparent top border, so the active tab is
+     ~1px taller than its neighbours and, with the -1px bottom margin, reads as
+     raised out of the strip and merged into the white band. */
+  border-top: 2px solid var(--tab-accent);
+  margin-bottom: -1px;
+  z-index: 1;
+}

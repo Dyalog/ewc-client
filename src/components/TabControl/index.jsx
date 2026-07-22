@@ -1,8 +1,9 @@
 import { setStyle,getFontStyles, excludeKeys, getLastTabButton, rgbColor, parseFlexStyles } from '../../utils';
 import SubForm from '../SubForm';
 import TabButton from '../TabButton';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle } from '../../hooks';
 import { useEffect, useState } from 'react';
+import './TabControl.css';
 
 const TabControl = ({ data }) => {
   const { BCol, FCol, ActiveBCol, CSS,FontObj } = data?.Properties;
@@ -13,6 +14,7 @@ const TabControl = ({ data }) => {
   const fontStyles = font && getFontStyles(font, 12);
 
   let styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const customStyles = parseFlexStyles(CSS)
   const updatedData = excludeKeys(data);
   const Id = getLastTabButton(updatedData);
@@ -20,6 +22,34 @@ const TabControl = ({ data }) => {
   const [activeTab, setActiveTab] = useState(Id);
 
   const { Visible } = data?.Properties;
+
+  // A ribbon TabControl (any tab page hosts a Ribbon) must size Windows-like: a
+  // fixed-height strip docked at the top (tab row + ribbon band), spanning the
+  // width. The app authors it with a bottom-anchored Attach, so useAttachStyle
+  // stretches it vertically with the form — opening a dead zone below the ribbon
+  // (and clipping the ribbon when the form is short). Overriding to top-docked +
+  // hug-content keeps it exactly ribbon-tall at every size; the horizontal attach
+  // is kept so it still spans. Non-ribbon (full-page) TabControls are untouched.
+  const isRibbonTC = Object.values(updatedData).some(
+    (child) =>
+      child?.Properties?.Type === 'SubForm' &&
+      Object.values(excludeKeys(child)).some(
+        (gc) => gc?.Properties?.Type === 'Ribbon'
+      )
+  );
+
+  // Some forms use a TabControl purely as a container: a single tab with no
+  // caption and no image (e.g. F0000.App.T wrapping the Prices grid). Native
+  // draws no tab strip for it — it's invisible. Only render the tab strip when at
+  // least one tab actually has a caption to show, otherwise it's a stray band.
+  const tabHasCaption = (p) => {
+    const cap = Array.isArray(p?.Caption) ? p.Caption[0] : p?.Caption;
+    return cap != null && String(cap).trim() !== '';
+  };
+  const hasVisibleTab = Object.values(updatedData).some(
+    (child) =>
+      child?.Properties?.Type === 'TabButton' && tabHasCaption(child.Properties)
+  );
 
   const updatedStyles = {
     ...styles,
@@ -39,24 +69,29 @@ const TabControl = ({ data }) => {
         overflow: 'clip',
         ...updatedStyles,
         ...customStyles,
-        ...fontStyles
+        ...fontStyles,
+        ...attachStyle,
+        // Windows-like ribbon strip: top-docked, hug the tab row + ribbon band.
+        ...(isRibbonTC ? { bottom: 'auto', height: 'max-content' } : {}),
       }}
     >
-      {/* Render the Buttons */}
-      <div style={{ display: 'flex', alignItems: 'end', marginLeft: '3px' }}>
-        {Object.keys(updatedData).map((key) => {
-          return updatedData[key]?.Properties.Type == 'TabButton' ? (
-            <TabButton
-              bgColor={BCol}
-              fontColor={FCol}
-              activebgColor={ActiveBCol}
-              activeTab={activeTab ? activeTab : Id}
-              data={updatedData[key]}
-              handleTabClick={handleTabClick}
-            />
-          ) : null;
-        })}
-      </div>
+      {/* Render the Buttons — only when a real tab strip exists (see above). */}
+      {hasVisibleTab && (
+        <div className="ewc-tabstrip">
+          {Object.keys(updatedData).map((key) => {
+            return updatedData[key]?.Properties.Type == 'TabButton' ? (
+              <TabButton
+                bgColor={BCol}
+                fontColor={FCol}
+                activebgColor={ActiveBCol}
+                activeTab={activeTab ? activeTab : Id}
+                data={updatedData[key]}
+                handleTabClick={handleTabClick}
+              />
+            ) : null;
+          })}
+        </div>
+      )}
 
       {/* Render the SubForm */}
 

@@ -1,5 +1,5 @@
 import { useAppData } from '../../hooks';
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor, setStyle } from '../../utils';
+import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
 
 const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, activebgColor }) => {
   const { socket } = useAppData();
@@ -7,12 +7,16 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
 
   const emitEvent = Event && Event[0];
   const customStyles = parseFlexStyles(CSS)
-  const style = setStyle(data.Properties)
 
-  
+  const isActive = activeTab == data?.ID;
+  // Keep the app's ActiveBCol as the tab's top accent (brand colour), otherwise
+  // fall back to a Windows ribbon blue. Everything else is theme-neutral CSS.
+  const accent = rgbColor(activebgColor) || '#2b579a';
+
   return (
     <div
       id={data.ID}
+      className={isActive ? 'ewc-tab ewc-tab--active' : 'ewc-tab'}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}
@@ -35,25 +39,8 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
         handleMouseDoubleClick(e, socket, Event,data?.ID);
       }}
       style={{
-        border: '1px solid #DFDFDF',
-        fontSize: '12px',
-        // fontSize: '11px',
-        paddingTop: '2px',
-        paddingBottom: '2px',
-        paddingLeft: '4px',
-        paddingRight: '4px',
-        cursor: 'pointer',
-        borderRadius: '2px',
-        background:
-          activeTab == data?.ID
-            ? rgbColor(!activebgColor ? [255, 255, 255] : activebgColor)
-            : rgbColor(bgColor),
-        height: '20px',
-        borderBottom: activeTab == data?.ID ? '0px' : '1px solid  #DFDFDF',
-        color: !fontColor ? 'black' : rgbColor(fontColor),
-        fontWeight: 600,
-        ...style,
-        ...customStyles
+        '--tab-accent': accent,
+        ...customStyles,
       }}
       onClick={() => {
 //         console.log(

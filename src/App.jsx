@@ -22,6 +22,7 @@ import * as Globals from "./Globals";
 import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
+import { noteServerSize } from "./hooks/useConfigureReport";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -226,6 +227,11 @@ const App = () => {
           ...data,
         };
       } else if (mode === "WS") {
+        // A server-driven ⎕WS that reflows an object (Size/layout) must NOT
+        // bounce a Configure back to the app (see useConfigureReport.
+        // noteServerSize): note the time so the resize it triggers is recognised
+        // as the server's own decision, not a user action, and suppressed.
+        if (data.Properties) noteServerSize(data.ID, data.Properties);
         // TODO move to a new home and organise it better!
         // Catch if we're moving outside of bounds and bring us back in
         if(currentLevel[finalKey]?.Properties?.Type === 'StatusField'){
@@ -694,11 +700,20 @@ const App = () => {
           const doWG = () => {
             const serverEvent = evData.WG;
             const updateAndStringify = (resp) => {
-              if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-                resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+              // Prefer the live measured DOM geometry over the model value. An
+              // object that fills its parent (Attach) reflows on window resize, so
+              // the model Size/Posn — what the server last set via ⎕WS — goes stale;
+              // returning the real geometry is what ⎕WG 'Size' means and lets the
+              // app's Configure handlers (e.g. a grid's GridConfigure) see the new
+              // size. Falls back to the model when the element isn't measurable
+              // (e.g. not yet mounted in the DOM).
+              if (serverEvent.Properties.includes('Posn')) {
+                const measured = posn(serverEvent.ID);
+                resp.WG.Properties['Posn'] = measured ? measured.map(Math.round) : resp.WG.Properties['Posn'];
               }
-              if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-                resp.WG.Properties['Size'] = size(serverEvent.ID);
+              if (serverEvent.Properties.includes('Size')) {
+                const measured = size(serverEvent.ID);
+                resp.WG.Properties['Size'] = measured ? measured.map(Math.round) : resp.WG.Properties['Size'];
               }
               return JSON.stringify(resp);
             };
@@ -1693,7 +1708,17 @@ const App = () => {
         } else if (keys[0] == "EX") {
           const serverEvent = evData.EX;
 
-          deleteObjectsById(dataRef.current, serverEvent?.ID);
+          // deleteObjectsById iterates ids.forEach, so it needs an array. The
+          // server sends EX.ID as a bare string for a single-object delete
+          // (e.g. `eEX 'F1.Ribbon.Item2'`) and as an array for a multi delete
+          // (`eEX 'MB1' 'MB2'`). Without this normalization a single delete —
+          // which is exactly how a ribbon child is removed — threw
+          // "forEach is not a function", so the node (and its DOM) was never
+          // removed: the deleted ribbon group/button stayed on screen.
+          const exIds = Array.isArray(serverEvent?.ID)
+            ? serverEvent.ID
+            : [serverEvent?.ID];
+          deleteObjectsById(dataRef.current, exIds);
         } else if (keys[0] == "Options") {
           handleData(evData.Options, "WC");
 //           console.log("label", evData.Options);

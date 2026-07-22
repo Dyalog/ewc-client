@@ -1,0 +1,8 @@
+ GoAttach x
+⍝ EWC test driver for the Attach demo: (re)build the form and pump events from
+⍝ WITHIN #.autoconf so EWC's findCaller resolves the caller namespace (a bare eDQ
+⍝ from a REPL cannot). Build is error-trapped, so it is a no-op if the objects
+⍝ already exist. After RunAttach 'EWC' and connecting a browser, call: GoAttach '.'
+ AC_RENDER←'EWC'
+ {0::0 ⋄ BuildAttach}0
+ eDQ x
