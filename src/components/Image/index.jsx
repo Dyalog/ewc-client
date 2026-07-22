@@ -7,7 +7,20 @@ const Image = ({ data }) => {
   const { Points, Picture, Visible, Event, CSS } = data?.Properties;
   const customStyles = parseFlexStyles(CSS);
 
-  const pointsArray = Points && Points[0].map((y, i) => [Points[1][i], y]);
+  // ⎕WC Points is (Y X), and either axis may be a SCALAR standing for every
+  // point: `('Points'(0 (x1 x2 x3)))` means three points sharing y=0. Mapping
+  // over Y alone drew only the first, so an Image asked to show a row of
+  // bitmaps rendered exactly one of them.
+  const asList = (v) => (Array.isArray(v) ? v : [v]);
+  const ys = asList(Points?.[0]);
+  const xs = asList(Points?.[1]);
+  const nPoints = Math.max(ys.length, xs.length);
+  const pointsArray = Points
+    ? Array.from({ length: nPoints }, (_, i) => [
+        xs[Math.min(i, xs.length - 1)],
+        ys[Math.min(i, ys.length - 1)],
+      ])
+    : undefined;
   const style = setStyle(data.Properties);
 
   return (
@@ -19,7 +32,13 @@ const Image = ({ data }) => {
       }}
     >
       {pointsArray?.map((imagePoints, index) => {
-        const imageObject = findDesiredData(Picture && Picture[index]);
+        // Picture is one name per point, or a single name shared by all of
+        // them (or a (name style) pair, where element 1 is the style).
+        const picNames = Array.isArray(Picture) ? Picture : [Picture];
+        const picName = typeof picNames[index] === 'string'
+          ? picNames[index]
+          : picNames[0];
+        const imageObject = findDesiredData(picName);
         const cbits = imageObject?.Properties?.CBits;
 
         const positionStyle = {
