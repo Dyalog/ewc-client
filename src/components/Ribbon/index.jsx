@@ -13,7 +13,7 @@ import { measureGroup, computeStates } from './ribbonLayout';
 // deterministic shrink pass assigns each group a state. Layout is CSS-owned.
 const CustomRibbon = ({ data }) => {
   const updatedData = excludeKeys(data);
-  const { dataRef, fontScale } = useAppData();
+  const { dataRef, fontScale, findCurrentData } = useAppData();
   const { Visible, ImageListObj, CSS, FontObj } = data?.Properties || {};
   const customStyles = parseFlexStyles(CSS);
   const ID = getStringafterPeriod(ImageListObj);
@@ -35,7 +35,9 @@ const CustomRibbon = ({ data }) => {
     const g = updatedData[k];
     const t = g?.Properties?.Title;
     const title = Array.isArray(t) ? t[0] : t;
-    return measureGroup(g, title, fontPx);
+    // findCurrentData lets the estimator tell small (16x16) buttons from large
+    // ones, so its Large-state width matches the band's stacked layout.
+    return measureGroup(g, title, fontPx, findCurrentData);
   });
 
   // Available width = how much horizontal room there is before the viewport
@@ -71,7 +73,10 @@ const CustomRibbon = ({ data }) => {
       className="ewc-ribbon"
       ref={setNode}
       style={{
-        height: height ? `${height}px` : '94px',
+        // The app's authored body height wins; otherwise the band takes its
+        // height from the `--ribbon-band-h` token in RibbonStyles.css, so the
+        // default lives with the rest of the layout instead of as a literal here.
+        height: height ? `${height}px` : undefined,
         // Fill the tab-control width so the band's own background covers the tab
         // page — otherwise the page's themed (blue) colour shows as a sliver to
         // the right of the last group. `available` (window room, minus a margin)

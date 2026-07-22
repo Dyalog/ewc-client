@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import * as AppIcons from "./RibbonIcons";
 import { MdOutlineQuestionMark } from "react-icons/md";
 import { GoChevronDown } from "react-icons/go";
@@ -7,7 +7,15 @@ import { excludeKeys, parseFlexStyles, getCurrentUrl, getImageFromData } from ".
 import SelectComponent from "../SelectComponent";
 import RibbonDropDownGallery from "./RibbonDropDownGallery";
 import RibbonReducedButton from "./RibbonReducedButton";
-import { RIBBON_STATE, collectLeaves, chunk } from "./ribbonLayout";
+import RibbonPopup from "./RibbonPopup";
+import {
+  RIBBON_STATE,
+  collectLeaves,
+  chunk,
+  isSmallItem,
+  ribbonChildKeys,
+  SMALL_ROWS_PER_COL,
+} from "./ribbonLayout";
 
 // A ribbon group. Renders in one of four reduction states chosen by the band
 // (spec §7): Large (full layout), Medium (leaves demote to small-text rows
@@ -43,19 +51,53 @@ const CustomRibbonGroup = ({ data }) => {
     </div>
   );
 
+  const renderGroupItem = (key) => (
+    <SelectComponent
+      key={updatedData[key]?.ID || key}
+      data={{
+        ...updatedData[key],
+        FontObj: data.FontObj,
+        ImageList: data.ImageList,
+      }}
+    />
+  );
+
+  // A group item counts as "small" when everything it holds is a 16x16 button —
+  // those render as text rows, and native stacks consecutive ones into a shared
+  // column instead of giving each its own. (Office's SmallWithText 3-stack.)
+  const isSmallGroupItem = (key) => {
+    const gi = updatedData[key];
+    const kids = ribbonChildKeys(gi).map((k) => gi[k]).filter((c) => c?.Properties);
+    return kids.length > 0 && kids.every((c) => isSmallItem(c, findCurrentData));
+  };
+
+  // Pack the group's items into columns: each non-small item keeps its own, and
+  // runs of small ones fill a column SMALL_ROWS_PER_COL rows deep before
+  // starting the next — the stacking the band would get from CSS `column wrap`
+  // if Chrome sized such containers correctly.
+  const packColumns = () => {
+    const cols = [];
+    for (const key of Object.keys(updatedData)) {
+      const small = isSmallGroupItem(key);
+      const last = cols[cols.length - 1];
+      if (small && last?.small && last.keys.length < SMALL_ROWS_PER_COL) last.keys.push(key);
+      else cols.push({ small, keys: [key] });
+    }
+    return cols;
+  };
+
   // ---- Large: the full item tree (also reused inside the collapsed flyout) --
   const renderFullItems = () => (
     <div className="ewc-ribbon-group-items">
-      {Object.keys(updatedData).map((key) => (
-        <SelectComponent
-          key={updatedData[key]?.ID || key}
-          data={{
-            ...updatedData[key],
-            FontObj: data.FontObj,
-            ImageList: data.ImageList,
-          }}
-        />
-      ))}
+      {packColumns().map((col) =>
+        col.small && col.keys.length > 1 ? (
+          <div className="ewc-ribbon-small-stack" key={updatedData[col.keys[0]]?.ID || col.keys[0]}>
+            {col.keys.map(renderGroupItem)}
+          </div>
+        ) : (
+          renderGroupItem(col.keys[0])
+        )
+      )}
     </div>
   );
 
@@ -138,14 +180,6 @@ const CollapsedGroup = ({ data, caption, captionRow, customStyle, fontProperties
   const wrapRef = useRef(null);
   const icon = useGroupIcon(data);
 
-  useEffect(() => {
-    const onDown = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
-
   return (
     <div id={data?.ID} className="ewc-ribbon-group" style={customStyle} ref={wrapRef}>
       <div className="ewc-ribbon-group-items">
@@ -166,29 +200,25 @@ const CollapsedGroup = ({ data, caption, captionRow, customStyle, fontProperties
                 : undefined,
             }}
           >
-            {caption}
-          </span>
-          <span className="ewc-ribbon-large-arrow">
-            <GoChevronDown size={12} />
+            {caption}{" "}
+            <span className="ewc-ribbon-large-arrow">
+              <GoChevronDown size={12} />
+            </span>
           </span>
         </div>
       </div>
       {captionRow}
 
-      {open && (
-        <div
-          className="ewc-ribbon ewc-ribbon-popup ewc-ribbon-flyout"
-          ref={(el) => {
-            if (el && wrapRef.current) {
-              const rect = wrapRef.current.getBoundingClientRect();
-              el.style.top = `${rect.bottom}px`;
-              el.style.left = `${rect.left}px`;
-            }
-          }}
-        >
-          <div className="ewc-ribbon-group">{renderFullItems()}</div>
-        </div>
-      )}
+      {/* Flyout portalled to body (via RibbonPopup) so the full Large layout floats
+          above the clipped band rather than being trapped inside it. */}
+      <RibbonPopup
+        anchorRef={wrapRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="ewc-ribbon ewc-ribbon-flyout"
+      >
+        <div className="ewc-ribbon-group">{renderFullItems()}</div>
+      </RibbonPopup>
     </div>
   );
 };

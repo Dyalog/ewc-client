@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import * as AppIcons from "./RibbonIcons";
 import { MdOutlineQuestionMark } from "react-icons/md";
 import { GoChevronDown } from "react-icons/go";
 import { useAppData } from "../../hooks";
 import { getCurrentUrl, getImageFromData, getObjectById } from "../../utils";
 import RibbonDropDownItem from "./RibbonDropDownItem";
+import RibbonPopup from "./RibbonPopup";
 
 // Renders one flattened leaf (a button, a button-group row, or a dropdown) as a
 // small-text row, or icon-only when `iconOnly`. Used by RibbonGroup's Medium /
@@ -15,15 +16,6 @@ const RibbonReducedButton = ({ leaf, iconOnly, fontProps, ImageList }) => {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const { kind, data, index, caption } = leaf;
-
-  useEffect(() => {
-    if (kind !== "dropdown") return;
-    const onDown = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [kind]);
 
   const send = (id, info) =>
     socket.send(
@@ -112,16 +104,11 @@ const RibbonReducedButton = ({ leaf, iconOnly, fontProps, ImageList }) => {
         )}
       </div>
 
-      {open && kind === "dropdown" && (
-        <div
-          className="ewc-ribbon-popup"
-          ref={(el) => {
-            if (el && wrapRef.current) {
-              const rect = wrapRef.current.getBoundingClientRect();
-              el.style.top = `${rect.bottom}px`;
-              el.style.left = `${rect.left}px`;
-            }
-          }}
+      {kind === "dropdown" && (
+        <RibbonPopup
+          anchorRef={wrapRef}
+          open={open}
+          onClose={() => setOpen(false)}
         >
           {menuItems.map(({ key, item }) => (
             <RibbonDropDownItem
@@ -135,7 +122,7 @@ const RibbonReducedButton = ({ leaf, iconOnly, fontProps, ImageList }) => {
               fontProperties={fontProps}
             />
           ))}
-        </div>
+        </RibbonPopup>
       )}
     </div>
   );

@@ -17,10 +17,13 @@ const RibbonGalleyItem = ({ data, handleSelectEvent, ItemWidth, ItemHeight, font
     }
 
     return (
+        // The grid track owns the tile's box: `ItemWidth` is a floor (the column
+        // grows to the caption) and the row height comes from `gridAutoRows`, so
+        // a long caption is never cut off to honour an authored pixel width.
         <div
             className={`ewc-ribbon-gallery-tile${selected ? " selected" : ""}`}
             onClick={() => handleSelectEvent(data.ID, Event)}
-            style={{ width: ItemWidth + "px", height: ItemHeight + "px" }}
+            style={{ minWidth: ItemWidth + "px", height: "100%" }}
             title={Caption}
         >
             {imageUrl && (
