@@ -36,8 +36,20 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
-    FontObj
+    FontObj,
+    Caption,
   } = data?.Properties;
+
+  // A ⎕WC Form's Caption is its window title. In Desktop mode the
+  // HTMLRenderer window shows it; in a browser there is no window chrome, so
+  // it belongs in the tab. Applications keep state there — Arachnid's TITLE
+  // rewrites it on every deal ("APL Arachnid : Deal 2 of 5") — and without
+  // this the user never sees any of it.
+  useEffect(() => {
+    if (typeof Caption === 'string' && Caption.length) {
+      document.title = Caption;
+    }
+  }, [Caption]);
 
 //   console.log("Dtaa is as",data,Posn);
   
