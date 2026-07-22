@@ -32,7 +32,8 @@ const DropDown = ({ title, data, style, customStyles, parentData }) => {
         ID: id,
       },
     });
-    const exists = Event && Event.some((item) => item[0] === 'Select');
+    const exists = Event &&
+      Event.some((item) => item[0]?.toLowerCase() === 'select');
     if (!exists) return;
     socket.send(selectEvent);
   };
@@ -70,13 +71,35 @@ const DropDown = ({ title, data, style, customStyles, parentData }) => {
           const itemFont = findCurrentData(itemProps?.FontObj);
           const itemFontStyles = itemFont ? getFontStyles(itemFont, 12) : {};
           const itemCustomStyles = itemProps?.CSS ? parseFlexStyles(itemProps.CSS) : {};
+
+          // A ⎕WC Separator is a child of the Menu, not a MenuItem with a
+          // magic caption — it draws as a divider and cannot be selected.
+          if (itemProps?.Type === 'Separator') {
+            return (
+              <div
+                key={data[key]?.ID}
+                id={data[key]?.ID}
+                className='dropdown-separator'
+                style={itemCustomStyles}
+              />
+            );
+          }
+
+          // Active 0 is how applications grey out a command (Arachnid disables
+          // Undo/Redo/Deal Row this way), so it must both look and behave
+          // disabled.
+          const active = itemProps?.Active !== 0;
           return (
             <div
               key={data[key]?.ID}
               id={data[key]?.ID}
               className='dropdown-item'
-              style={{ ...itemFontStyles, ...itemCustomStyles }}
-              onClick={() => handleSelectEvent(data[key]?.ID, itemProps)}
+              style={{
+                ...itemFontStyles,
+                ...itemCustomStyles,
+                ...(active ? {} : { opacity: 0.4, cursor: 'default' }),
+              }}
+              onClick={() => active && handleSelectEvent(data[key]?.ID, itemProps)}
             >
               {itemProps?.Caption?.replace('&', '')}
             </div>

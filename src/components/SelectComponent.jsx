@@ -40,6 +40,7 @@ import Link from './Link';
 import Upload from './Upload';
 import Div from './Div';
 import Static from './Static';
+import MenuBarItem from './MenuBarItem';
 import StatusBar from './StatusBar';
 
 import RibbonDropDownButton from './Ribbon/RibbonDropDownButton';
@@ -83,6 +84,7 @@ const SelectComponent = ({
       </div>
     );
   if (data?.Properties?.Type == 'Menu') return <Menu data={data} />;
+  if (data?.Properties?.Type == 'MenuItem') return <MenuBarItem data={data} />;
   if (data?.Properties?.Type == 'Grid') return <Grid data={data} />;
   if (data?.Properties?.Type == 'Edit' && data?.Properties?.Style !== 'Multi')
     return (
