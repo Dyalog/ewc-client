@@ -560,13 +560,29 @@ const App = () => {
         if (keys[0] == "WC") {
           let windowCreationEvent = evData.WC;
           if (windowCreationEvent?.Properties?.Type == "Form") {
-            localStorage.clear();
-            const updatedData = deleteFormAndSiblings(dataRef.current);
-            dataRef.current = {};
-            dataRef.current = updatedData;
-
+            // Creating a form used to DELETE every form already present. ⎕WC
+            // does no such thing: a second window opens over the first and the
+            // first is still there — applications open a subsidiary window,
+            // ⎕DQ it, ⎕EX it, and carry on with the original. Destroying the
+            // first meant that when the second closed there was no window left
+            // at all and the application became unreachable.
+            //
+            // Forms now accumulate; findFormParentID renders the most recent,
+            // and the EX handler below removes one when the application
+            // expunges it, which brings the previous form back by itself.
             handleData(evData.WC, "WC");
             return;
+          }
+
+          // A Locator is only live while the application is ⎕DQ-ing it, but the
+          // object persists afterwards (SELECT_STACK never expunges it), and a
+          // remount would otherwise arm a locator that nothing is waiting on —
+          // it then swallows the user's next click and, with handler 1, returns
+          // it out of the application's main ⎕DQ. Stamp each ⎕WC so the
+          // component can arm exactly once per creation.
+          if (windowCreationEvent?.Properties?.Type == "Locator") {
+            window.__ewcLocatorSeq = (window.__ewcLocatorSeq || 0) + 1;
+            windowCreationEvent.Properties.WCSeq = window.__ewcLocatorSeq;
           }
 
           // Handle Message Box separately

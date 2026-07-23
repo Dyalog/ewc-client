@@ -611,13 +611,19 @@ export const getElementPosition = (
 };
 
 export const findFormParentID = (data) => {
-  // Replace the condition inside the find function with your specific criteria⌈
-  const formParentID = Object.keys(data).find((key) => {
+  // The MOST RECENT form, not the first. ⎕WC applications open a subsidiary
+  // window over the main one and expect it on top; when it is expunged the
+  // previous form should reappear, which falls out of this for free because the
+  // expunged form is gone from the data by then.
+  //
+  // Object key order is insertion order for string keys, so the last matching
+  // key is the most recently created form.
+  const formIDs = Object.keys(data).filter((key) => {
     const item = data[key];
     return item && item.Properties && item.Properties.Type === "Form";
   });
 
-  return formParentID;
+  return formIDs[formIDs.length - 1];
 };
 
 export const createListViewObjects = (

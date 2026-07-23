@@ -17,9 +17,15 @@ import { useAppData } from '../hooks';
 // The reply must match what ⎕DQ returns natively: (name 80 y x h w) — the
 // event, then Posn and Size — because callers do arithmetic on it, e.g.
 //     POSN←1 0.5+.×2 2⍴2↓POSN     ⍝ centre = posn + size÷2
+// Which locator creations have already been placed. Module level, because the
+// component remounts whenever the rendered form changes — closing a subsidiary
+// window does exactly that — and a fresh instance would otherwise re-arm a
+// locator the application finished with long ago.
+const resolvedSeqs = new Set();
+
 const Locator = ({ data }) => {
   const { socket } = useAppData();
-  const { Posn = [0, 0], Size = [0, 0], Event } = data?.Properties || {};
+  const { Posn = [0, 0], Size = [0, 0], Event, WCSeq = 0 } = data?.Properties || {};
 
   // Posn is [y, x] and Size is [h, w], as everywhere else in ⎕WC.
   const [pos, setPos] = useState([Posn[0], Posn[1]]);
@@ -31,19 +37,27 @@ const Locator = ({ data }) => {
   const doneRef = useRef(false);
 
   // ⎕WC on an existing name RECREATES the object, and applications reuse one
-  // locator name for every pick — SELECT_STACK does exactly that. React keeps
-  // the same component instance (same id), so without this the second pick
-  // renders nothing at all: the instance is still in its "placed" state from
-  // the first. Guarded on doneRef so an ordinary re-render cannot loop.
+  // locator name for every pick — SELECT_STACK does exactly that — so a placed
+  // locator must re-arm for the next creation but NOT for a re-render or a
+  // remount. App.jsx stamps WCSeq on each ⎕WC, which is the only signal that
+  // distinguishes them.
   useEffect(() => {
-    if (!doneRef.current) return;
+    // No stamp means this render did not come from a ⎕WC — arming would revive
+    // a locator nothing is waiting on.
+    if (!WCSeq || resolvedSeqs.has(WCSeq)) return;
     doneRef.current = false;
     setDone(false);
     setPos([Posn[0], Posn[1]]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [WCSeq]);
 
   useEffect(() => {
+    // Returning null from render does NOT stop this effect running — hooks are
+    // declared above the early return — so the guard has to be here too, or an
+    // inert locator still attaches global mousedown/mousemove listeners and
+    // swallows the user's next click anywhere on the form.
+    if (!WCSeq || resolvedSeqs.has(WCSeq)) return undefined;
+
     // Coordinates are relative to the offset parent — the form — which is what
     // the APL side compares against each object's Posn.
     const parent = document.getElementById(data?.ID)?.offsetParent
@@ -63,6 +77,7 @@ const Locator = ({ data }) => {
       if (doneRef.current) return;
       doneRef.current = true;
       setDone(true);
+      resolvedSeqs.add(WCSeq);
       const [y, x] = toLocal(e);
       const exists = Event &&
         Event.some((it) => it[0]?.toLowerCase() === 'locator');
@@ -94,9 +109,15 @@ const Locator = ({ data }) => {
       window.removeEventListener('mousedown', resolve, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.ID, Size[0], Size[1], Event]);
+  }, [data?.ID, Size[0], Size[1], Event, WCSeq, done]);
 
-  if (done) return null;
+  // Nothing to draw once placed — and nothing to draw for a locator this client
+  // has already resolved, which is what a remount would otherwise revive.
+  // Inert unless this is a locator we saw created and have not yet placed.
+  // Defaulting to inert matters: an armed stray captures the user's next click
+  // anywhere on the form, and with handler 1 that returns straight out of the
+  // application's main ⎕DQ, stopping it dead.
+  if (done || !WCSeq || resolvedSeqs.has(WCSeq)) return null;
 
   return (
     <div
