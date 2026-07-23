@@ -18,6 +18,23 @@ const buttonCode = {
   2: 2, // Right click
 };
 
+// The browser raises its own context menu on right-button RELEASE. Native ⎕WC
+// has no such thing: button 2 arrives as MouseDown/MouseUp with the button in
+// the message and nothing else happens. So on an object whose application has
+// REGISTERED those events, the menu lands on top of whatever the right button
+// was doing — a right-drag ends with the browser menu over the result.
+//
+// Gated on registration, exactly like handleMouseDown itself. An object the
+// application has not claimed the button on keeps the browser's menu, because
+// that is the platform's behaviour and EWC has no business overriding it
+// globally. Wire it up beside onMouseDown; leaving it off simply means the
+// menu still appears there.
+export const handleContextMenu = (e, Event) => {
+  const claimed = Event && Event.some((item) =>
+    ["mousedown", "mouseup", "mousedbl"].includes(item[0]?.toLowerCase()));
+  if (claimed) e.preventDefault();
+};
+
 export const handleMouseDown = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   const rect = e.currentTarget.getBoundingClientRect();

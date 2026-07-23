@@ -13,6 +13,7 @@ import {
   handleMouseMove,
   handleMouseDoubleClick,
   handleKeyPressUtils,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
 } from "../utils";
@@ -89,6 +90,7 @@ const Group = ({ data }) => {
       id={data?.ID}
       // !!! TODO !!!
       // Temporarily disabled due to errors around socket not available
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

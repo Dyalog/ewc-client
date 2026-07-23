@@ -1,4 +1,5 @@
-import { parseFlexStyles, getFontStyles, rgbColor, handleMouseDown, handleMouseUp, handleMouseMove } from "../../utils";
+import { parseFlexStyles, getFontStyles, rgbColor, handleContextMenu,
+  handleMouseDown, handleMouseUp, handleMouseMove } from "../../utils";
 import { useAppData } from "../../hooks";
 import { useState } from "react";
 
@@ -35,7 +36,8 @@ const StatusField = ({ data }) => {
             onMouseUp={(e) => {
                 handleMouseUp(e, socket, Event, data?.ID);
             }}
-            onMouseDown={(e) => {
+            onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                 handleMouseDown(e, socket, Event, data?.ID);
             }}
             onMouseMove={(e) => {

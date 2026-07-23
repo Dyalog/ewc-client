@@ -1,5 +1,6 @@
 import { useAppData } from '../../hooks';
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, renderImage, setStyle } from '../../utils';
+import { handleMouseDoubleClick, handleContextMenu,
+  handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, renderImage, setStyle } from '../../utils';
 import BitmapCanvas from './BitmapCanvas';
 
 const Image = ({ data }) => {
@@ -51,6 +52,7 @@ const Image = ({ data }) => {
         };
 
         const mouseHandlers = {
+          onContextMenu: (e) => handleContextMenu(e, Event),
           onMouseDown: (e) => handleMouseDown(e, socket, Event, data?.ID),
           onMouseUp: (e) => handleMouseUp(e, socket, Event, data?.ID),
           onMouseEnter: (e) => handleMouseEnter(e, socket, Event, data?.ID),

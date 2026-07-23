@@ -5,6 +5,7 @@ import {
   rgbColor,
   getImageStyles,
   parseFlexStyles,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -170,6 +171,7 @@ const Form = ({ data }) => {
 
   return (
     <div
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

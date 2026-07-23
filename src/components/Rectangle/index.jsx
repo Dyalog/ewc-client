@@ -1,5 +1,6 @@
 import { useAppData } from '../../hooks';
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
+import { handleMouseDoubleClick, handleContextMenu,
+  handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
 
 const Rectangle = ({
   data,
@@ -45,7 +46,8 @@ const Rectangle = ({
             }}
             width={rectWidth}
             height={rectHeight}
-            onMouseDown={(e) => {
+            onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
               handleMouseDown(e, socket, Event, data?.ID);
             }}
             onMouseUp={(e) => {

@@ -5,6 +5,7 @@ import { useAppData, useAttachStyle } from '../../hooks';
 import {
   handleKeyPressUtils,
   handleMouseDoubleClick,
+  handleContextMenu,
   handleMouseDown,
   handleMouseEnter,
   handleMouseLeave,
@@ -371,6 +372,7 @@ const ScrollBar = ({ data }) => {
       onMouseEnter={handleTrackMouseEnter}
       onMouseLeave={handleTrackMouseLeave}
       onWheel={(e) => handleMouseWheel(e, socket, Event, data?.ID)}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}
@@ -428,14 +430,16 @@ const ScrollBar = ({ data }) => {
         <div
           className={`scroll-bar ${isHorizontal ? "horizontal" : "vertical"}`}
           style={trackStyle}
-          onMouseDown={handleTrackClick}
+          onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={handleTrackClick}
           ref={trackRef}
         >
           <div
             className="thumb"
             style={thumbStyle}
             ref={thumbRef}
-            onMouseDown={handleThumbDrag}
+            onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={handleThumbDrag}
             onKeyDown={(e) => handleKeyPressUtils(e, socket, Event, data?.ID)}
           ></div>
         </div>

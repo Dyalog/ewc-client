@@ -1,5 +1,6 @@
 import {
   excludeKeys,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseMove,
@@ -57,6 +58,7 @@ const Static = ({ data }) => {
         ...getBorderStyles(EdgeStyle, Border),
         ...flexStyles,
       }}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
       onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
       onMouseMove={(e) => handleMouseMove(e, socket, Event, data?.ID)}
