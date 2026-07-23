@@ -643,6 +643,30 @@ export const findFormParentID = (data) => {
   return formIDs[formIDs.length - 1];
 };
 
+// Every top-level Form, in creation (insertion) order.
+export const findFormIDs = (data) =>
+  Object.keys(data || {}).filter(
+    (key) => data[key] && data[key].Properties && data[key].Properties.Type === "Form"
+  );
+
+// The form the others float over, or null if there is nothing to float.
+//
+// `Primary` is an EWC-only property an application puts on ONE form. It is a
+// pure opt-in and never demanded: a lone form is its own primary, which is the
+// common case — most applications have exactly one form and should render with
+// no change. It exists only to say WHICH of several forms is the base, because
+// that cannot be inferred: creation order breaks the moment an app replaces its
+// main window (a perfectly ordinary thing to do). So with several untagged
+// forms we return null and the caller keeps the previous single-form render —
+// no new behaviour until an application asks for it by tagging a form.
+export const findPrimaryFormID = (data) => {
+  const ids = findFormIDs(data);
+  const isPrimary = (p) => p === 1 || p === "1" || p === true;
+  const tagged = ids.find((key) => isPrimary(data[key]?.Properties?.Primary));
+  if (tagged) return tagged;
+  return ids.length === 1 ? ids[0] : null;
+};
+
 export const createListViewObjects = (
   images,
   codes,

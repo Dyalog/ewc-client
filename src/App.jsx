@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppDataContext } from "./context";
 import { SelectComponent } from "./components";
+import FloatingForm from "./components/FloatingForm";
 import {
   getObjectById,
   checkSupportedProperties,
   findFormParentID,
+  findFormIDs,
+  findPrimaryFormID,
   deleteFormAndSiblings,
   getCurrentUrl,
   locateParentByPath,
@@ -1719,6 +1722,17 @@ const App = () => {
 
   const formParentID = findFormParentID(dataRef.current);
 
+  // Multi-form rendering is Browser/Multi mode ONLY. In Desktop mode every form
+  // is a real OS window, as before, so the in-page floating path stays off and
+  // `Primary` is simply inert. Gate on it, and fall back to the previous
+  // single-form render whenever there is no primary to float things over — a
+  // lone form, or several untagged forms (see findPrimaryFormID: no inference).
+  const isDesktopMode = dataRef?.current?.Mode?.Properties?.Desktop === 1;
+  const primaryFormID = isDesktopMode ? null : findPrimaryFormID(dataRef.current);
+  const floaterFormIDs = primaryFormID
+    ? findFormIDs(dataRef.current).filter((id) => id !== primaryFormID)
+    : [];
+
   const handleMsgBoxClose = (button, ID) => {
     // console.log(`Button pressed: ${button}`);
     setMessageBoxData(null);
@@ -1750,9 +1764,29 @@ const App = () => {
           isDesktop: dataRef?.current?.Mode?.Properties?.Desktop
         }}
       >
-        {dataRef && formParentID && (
+        {dataRef && primaryFormID && (
+          <SelectComponent data={dataRef.current[primaryFormID]} />
+        )}
+        {dataRef && !primaryFormID && formParentID && (
           <SelectComponent data={dataRef.current[formParentID]} />
         )}
+        {/* Non-primary forms float over the primary, newest on top. A
+            transparent shield under each keeps the forms beneath inert while a
+            window is up — visible but not clickable, as native ⎕DQ scoping
+            makes them. z stays under the MsgBox overlay (1000) so a dialog
+            raised from a floating window still lands on top. */}
+        {floaterFormIDs.flatMap((id, i) => [
+          <div
+            key={`shield-${id}`}
+            className="floatform-shield"
+            style={{ zIndex: 500 + 2 * i }}
+          />,
+          <FloatingForm
+            key={id}
+            data={dataRef.current[id]}
+            zIndex={500 + 2 * i + 1}
+          />,
+        ])}
       </AppDataContext.Provider>
       {messageBoxData && (
         <MsgBox
