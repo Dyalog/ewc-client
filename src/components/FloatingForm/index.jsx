@@ -12,7 +12,7 @@ import "./FloatingForm.css";
 // expunges the form. That is the ONLY way out of a window with no in-app close
 // of its own: Arachnid's Help form, for one, has no Quit item and relies
 // entirely on the OS titlebar box natively.
-const FloatingForm = ({ data, zIndex }) => {
+const FloatingForm = ({ data, zIndex, isTop }) => {
   const { socket } = useAppData();
   const { Caption, Posn, Size } = data?.Properties || {};
 
@@ -54,7 +54,14 @@ const FloatingForm = ({ data, zIndex }) => {
   };
 
   return (
-    <div className="floatform" style={{ top: pos[0], left: pos[1], zIndex }}>
+    <div
+      className="floatform"
+      style={{ top: pos[0], left: pos[1], zIndex }}
+      // Marks the ACTIVE window — the top of the ⎕DQ stack. App.jsx lets
+      // keyboard events through only inside this, so the frozen forms beneath
+      // are inert to keys as well as clicks.
+      data-floattop={isTop ? '' : undefined}
+    >
       <div className="floatform-title" onMouseDown={onTitleDown}>
         <span className="floatform-caption">{Caption || ""}</span>
         <button

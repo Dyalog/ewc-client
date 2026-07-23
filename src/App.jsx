@@ -1733,6 +1733,33 @@ const App = () => {
     ? findFormIDs(dataRef.current).filter((id) => id !== primaryFormID)
     : [];
 
+  // Keyboard half of pseudo-modality. The shield blocks POINTER events to the
+  // forms beneath a floating window, but keyboard events go to the focused
+  // element, not through the shield — so a focused input in a frozen form would
+  // still take keystrokes. While a floater is up, swallow key events whose
+  // target is not the topmost floater (or a MsgBox raised over it), so only the
+  // active window — the top of the ⎕DQ stack — is live. This is the browser
+  // reimposing "only the top pump is live", which native gets for free.
+  //
+  // The listener attaches ONCE and reads a live ref, rather than attaching and
+  // detaching as the floater count changes: a transient re-render that briefly
+  // reports zero floaters would otherwise remove the listener for a tick, and a
+  // keystroke in that window would slip through.
+  const hasFloatersRef = useRef(false);
+  hasFloatersRef.current = floaterFormIDs.length > 0;
+  useEffect(() => {
+    const block = (e) => {
+      if (!hasFloatersRef.current) return;
+      if (!e.target.closest || !e.target.closest('[data-floattop], .msgbox-overlay')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    const types = ['keydown', 'keypress', 'keyup'];
+    types.forEach((t) => window.addEventListener(t, block, true));
+    return () => types.forEach((t) => window.removeEventListener(t, block, true));
+  }, []);
+
   const handleMsgBoxClose = (button, ID) => {
     // console.log(`Button pressed: ${button}`);
     setMessageBoxData(null);
@@ -1785,6 +1812,7 @@ const App = () => {
             key={id}
             data={dataRef.current[id]}
             zIndex={500 + 2 * i + 1}
+            isTop={i === floaterFormIDs.length - 1}
           />,
         ])}
       </AppDataContext.Provider>
