@@ -42,12 +42,27 @@ const Image = ({ data }) => {
         const imageObject = findDesiredData(picName);
         const cbits = imageObject?.Properties?.CBits;
 
+        // Points are ABSOLUTE positions within the parent, so they have to win
+        // over whatever setStyle produced — which was spread last and set
+        // `position: relative`, since a multi-point Image has no Posn of its
+        // own. left/top then became offsets from the FLOW position instead of
+        // from the parent, so each image was displaced by the accumulated
+        // width of the ones before it: point 58px apart plus a 54px card
+        // rendered 112px apart.
+        //
+        // Visible in Arachnid's Show Stack, where DISPCARDS lays a row out at
+        // `PTS×CardWidth` and sizes the window to fit exactly four of them —
+        // so at double spacing the window showed two cards and clipped the
+        // rest.
+        // Order is the point of this. setStyle's output is EWC's own DERIVED
+        // default and must not beat the Points; customStyles is the CSS the
+        // application asked for explicitly and must beat everything.
         const positionStyle = {
+          pointerEvents: 'auto',
+          ...style,
           position: 'absolute',
           top: `${imagePoints[1]}px`,
           left: `${imagePoints[0]}px`,
-          pointerEvents: 'auto',
-          ...style,
           ...customStyles,
         };
 

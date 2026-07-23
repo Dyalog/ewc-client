@@ -23,6 +23,25 @@ import { useAppData } from '../hooks';
 // locator the application finished with long ago.
 const resolvedSeqs = new Set();
 
+// Is the user holding a mouse button right now? A Locator needs to know at the
+// moment it ARMS, and there may be no further event until the release, so it
+// cannot be read off an event — it has to be tracked.
+//
+// It decides which gesture ends the drag. A locator created from a press the
+// user is STILL HOLDING — right-click a card, DRAGCARDS makes one — must
+// resolve when they let go, because that is what native ⎕DQ does. One created
+// from a gesture already finished — a menu item, as Show Stack does — has no
+// release coming, so it waits for a fresh click.
+let buttonsDown = 0;
+if (typeof window !== 'undefined') {
+  window.addEventListener('mousedown', () => { buttonsDown += 1; }, true);
+  window.addEventListener('mouseup', () => {
+    buttonsDown = Math.max(0, buttonsDown - 1);
+  }, true);
+  // A drag that ends outside the window never delivers its mouseup.
+  window.addEventListener('blur', () => { buttonsDown = 0; });
+}
+
 const Locator = ({ data }) => {
   const { socket } = useAppData();
   const { Posn = [0, 0], Size = [0, 0], Event, WCSeq = 0 } = data?.Properties || {};
@@ -35,6 +54,8 @@ const Locator = ({ data }) => {
   // remain on screen, and a live listener would steal the next click.
   const [done, setDone] = useState(false);
   const doneRef = useRef(false);
+  // Was a button already held when this locator armed? See buttonsDown above.
+  const heldAtArmRef = useRef(false);
 
   // ⎕WC on an existing name RECREATES the object, and applications reuse one
   // locator name for every pick — SELECT_STACK does exactly that — so a placed
@@ -45,6 +66,7 @@ const Locator = ({ data }) => {
     // No stamp means this render did not come from a ⎕WC — arming would revive
     // a locator nothing is waiting on.
     if (!WCSeq || resolvedSeqs.has(WCSeq)) return;
+    heldAtArmRef.current = buttonsDown > 0;
     doneRef.current = false;
     setDone(false);
     setPos([Posn[0], Posn[1]]);
@@ -93,20 +115,31 @@ const Locator = ({ data }) => {
       e.preventDefault();
     };
 
-    // Resolve on mouseDOWN, not mouseup. The gesture that creates a Locator is
-    // itself a mouse press (a right-click on a card, say), and its trailing
-    // mouseup would arrive first and place the locator instantly at the point
-    // it started from. Requiring a fresh press means the user positions the
-    // outline and clicks, which is the browser equivalent of the native
-    // drag-and-release.
+    // Which gesture ends it depends on how it began.
+    //
+    // Held at arm — the user right-clicked a card and is still holding — so
+    // the RELEASE places it, exactly as native ⎕DQ returns when the button
+    // comes up. Without this the release did nothing and the drag could only
+    // be completed by a further, separate click; that extra click used to be
+    // supplied by accident, dismissing the browser's context menu, so
+    // suppressing the menu made the omission visible.
+    //
+    // Not held — created from a gesture already over, such as a menu item —
+    // so there is no release coming and a fresh press places it.
+    //
+    // mousedown is registered either way as a backstop: resolve is idempotent,
+    // so whichever arrives first wins, and a release lost to a drag that ended
+    // outside the window does not strand the locator.
     //
     // Capture phase so the placing click is not also handled by whatever is
     // underneath — natively the locator has the mouse.
     window.addEventListener('mousemove', onMove, true);
     window.addEventListener('mousedown', resolve, true);
+    if (heldAtArmRef.current) window.addEventListener('mouseup', resolve, true);
     return () => {
       window.removeEventListener('mousemove', onMove, true);
       window.removeEventListener('mousedown', resolve, true);
+      window.removeEventListener('mouseup', resolve, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.ID, Size[0], Size[1], Event, WCSeq, done]);
