@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useAppData } from '../hooks';
 
 // ⎕WC Locator — an outline the user positions, resolving a Locator event (80)
@@ -62,7 +62,16 @@ const Locator = ({ data }) => {
   // locator must re-arm for the next creation but NOT for a re-render or a
   // remount. App.jsx stamps WCSeq on each ⎕WC, which is the only signal that
   // distinguishes them.
-  useEffect(() => {
+  // useLayoutEffect, not useEffect, for BOTH the reset and the listener below.
+  // A passive effect runs AFTER paint, so between the locator being painted and
+  // its listener attaching there is a window in which a click is silently
+  // missed — the outline is on screen, armed-looking, but not yet listening.
+  // A fast human placing the locator (or a subsidiary window's extra render
+  // work lengthening that window) lands in the gap and the placement is lost,
+  // leaving the locator stuck. A layout effect runs synchronously before paint,
+  // so by the time the outline is visible it is already listening. The two must
+  // stay in this order: reset (heldAtArm, done) first, attach second.
+  useLayoutEffect(() => {
     // No stamp means this render did not come from a ⎕WC — arming would revive
     // a locator nothing is waiting on.
     if (!WCSeq || resolvedSeqs.has(WCSeq)) return;
@@ -73,7 +82,7 @@ const Locator = ({ data }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [WCSeq]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Returning null from render does NOT stop this effect running — hooks are
     // declared above the early return — so the guard has to be here too, or an
     // inert locator still attaches global mousedown/mousemove listeners and
