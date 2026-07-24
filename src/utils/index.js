@@ -649,22 +649,22 @@ export const findFormIDs = (data) =>
     (key) => data[key] && data[key].Properties && data[key].Properties.Type === "Form"
   );
 
-// The form the others float over, or null if there is nothing to float.
+// The form the others float over, or null if there is none.
 //
-// `Primary` is an EWC-only property an application puts on ONE form. It is a
-// pure opt-in and never demanded: a lone form is its own primary, which is the
-// common case — most applications have exactly one form and should render with
-// no change. It exists only to say WHICH of several forms is the base, because
-// that cannot be inferred: creation order breaks the moment an app replaces its
-// main window (a perfectly ordinary thing to do). So with several untagged
-// forms we return null and the caller keeps the previous single-form render —
-// no new behaviour until an application asks for it by tagging a form.
+// The whole rule: a form tagged ('Primary' 1) is the base; otherwise there is
+// no primary and the caller renders the single most-recent form exactly as it
+// always did. `Primary` is an EWC-only, opt-in property and is NEVER demanded —
+// a lone-form application sets nothing and renders unchanged, which is the
+// common case and the point. There is deliberately no inference for several
+// untagged forms: creation order breaks the moment an app replaces its main
+// window or opens a login first, so nothing new happens until an application
+// says which form is the base by tagging it. Light and breezy on purpose.
 export const findPrimaryFormID = (data) => {
-  const ids = findFormIDs(data);
   const isPrimary = (p) => p === 1 || p === "1" || p === true;
-  const tagged = ids.find((key) => isPrimary(data[key]?.Properties?.Primary));
-  if (tagged) return tagged;
-  return ids.length === 1 ? ids[0] : null;
+  return (
+    findFormIDs(data).find((key) => isPrimary(data[key]?.Properties?.Primary)) ??
+    null
+  );
 };
 
 export const createListViewObjects = (

@@ -1791,11 +1791,11 @@ const App = () => {
           isDesktop: dataRef?.current?.Mode?.Properties?.Desktop
         }}
       >
-        {dataRef && primaryFormID && (
-          <SelectComponent data={dataRef.current[primaryFormID]} />
-        )}
-        {dataRef && !primaryFormID && formParentID && (
-          <SelectComponent data={dataRef.current[formParentID]} />
+        {/* Render the primary form (a tagged one) if there is a floater to
+            float over it; otherwise the most-recent form, exactly as before —
+            a single-form app sets no Primary and is untouched. */}
+        {dataRef && (primaryFormID || formParentID) && (
+          <SelectComponent data={dataRef.current[primaryFormID || formParentID]} />
         )}
         {/* Non-primary forms float over the primary, newest on top. A
             transparent shield under each keeps the forms beneath inert while a
