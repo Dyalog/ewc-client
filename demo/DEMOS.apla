@@ -29,6 +29,7 @@
  'StdColors'
  'Tabs'
  'TextSize'
+ 'TicTacToe'
  'TimerLines'
  'TreeView'
  '--- SubForm'
