@@ -849,10 +849,25 @@ const Grid = ({ data }) => {
   // ⎕WC behavior: undefined/empty/negative TitleWidth/Height/CellWidths
   // auto-size to fit content; 0 hides titles; positive is fixed.
   const {
-    effectiveTitleWidth, effectiveTitleHeight, autoColWidths, wantsAutoCols,
+    effectiveTitleWidth, effectiveTitleHeight, titleLines, autoColWidths, wantsAutoCols,
   } = useGridTitleSize(
     TitleWidth, TitleHeight, CellWidths, rowTitlesArray, colTitlesArray, gridRef,
   );
+
+  // The band and its line count are published to CSS so the title line box can
+  // be sized from the server's own numbers rather than a constant — a different
+  // font, fontScale or CellHeight still lands on the height the app asked for.
+  // Without the pin the lines take the inherited line-height (Bootstrap's 1.5 →
+  // 18px at 12px font) and overrun the band, because a <tr>/<th> height is a
+  // *minimum*: a 48px 3-line band renders at 55 and a 16px 1-line band at 19.
+  // That lost height is a fraction of a data row, which is enough to make the
+  // app's GridConfigure row count disagree with what actually fits.
+  // The border allowance is applied in Grid.css, next to the border it accounts
+  // for. See .grid-col-header.
+  const titleBandVars = {
+    '--grid-title-band': `${effectiveTitleHeight}px`,
+    '--grid-title-lines': titleLines || 1,
+  };
 
   // ⎕WC: TitleWidth/Height = 0 fully hides the row/col title band (no DOM at all).
   const showRowTitles = hasRowTitles && effectiveTitleWidth !== 0;
@@ -926,7 +941,10 @@ const Grid = ({ data }) => {
             </colgroup>
             {showColTitles && (
               <thead>
-                <tr className="grid-header-row" style={{ height: effectiveTitleHeight }}>
+                <tr
+                  className="grid-header-row"
+                  style={{ height: effectiveTitleHeight, ...titleBandVars }}
+                >
                   {showRowTitles && (
                     <th
                       className="grid-corner-cell"

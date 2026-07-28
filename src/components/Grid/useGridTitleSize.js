@@ -143,9 +143,17 @@ const useGridTitleSize = (
   const effectiveTitleWidth = wantsAutoW ? autoWidth : TitleWidth;
   const effectiveTitleHeight = wantsAutoH ? autoHeight : TitleHeight;
 
+  // How many lines deep the title band is. Auto-sizing already assumes one
+  // data-row per line (above); the renderer needs the same count to give each
+  // line exactly its share of the band, so an explicit TitleHeight (which
+  // bypasses auto-sizing entirely) is honoured as rendered height rather than
+  // being overrun by an inherited line-height.
+  const titleLines = useMemo(() => maxLines(colTitles), [colTitles]);
+
   return {
     effectiveTitleWidth,
     effectiveTitleHeight,
+    titleLines,
     autoColWidths,
     wantsAutoCols,
   };

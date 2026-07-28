@@ -61,6 +61,14 @@
 
 /* Cell styles */
 .grid-cell {
+  /* border-box so the server's CellHeights value (16) — which is the full row
+     PITCH, gridline included — lands as the rendered pitch. Without this the
+     cell is content-box: the inline height:16 sizes the CONTENT and the 1px
+     collapsed gridline adds on top -> 17px pitch, so every row is 1px taller
+     than GridConfigure budgeted (CellHeight=16) and the surplus eventually
+     pushes the last row past the pane. border-box folds the 1px gridline into
+     the 16, matching the native Win32 grid's exact 16px pitch. */
+  box-sizing: border-box;
   border: 1px solid #c0c0c0;
   padding: 0 4px;
   min-width: 60px;
@@ -90,6 +98,31 @@
 /* Simple flat header styles */
 .grid-header-row {
   background-color: #f0f0f0;
+}
+
+.grid-col-header,
+.grid-row-header,
+.grid-corner-cell {
+  /* Same reasoning as .grid-cell: the inline height is the band the app asked
+     for (⎕WC TitleHeight), gridline included, so the border must fold into it
+     rather than add on top. */
+  box-sizing: border-box;
+}
+
+.grid-col-header,
+.grid-corner-cell {
+  /* Pin the title line box to its share of the band, derived from the band
+     height and line count the component publishes (see index.jsx). The -2px is
+     this rule-set's own border-top + border-bottom: the cell is border-box, so
+     the band height has to cover the borders and only what's left is available
+     to the text. Get this wrong and the line box overflows a cell that the app
+     sized exactly, growing it by 1px.
+     Single-line ColTitles put their text straight in the cell (no
+     .grid-col-header-line wrapper), so the pin is needed here as well as on the
+     line divs — one derivation drives both shapes. */
+  line-height: calc(
+    (var(--grid-title-band, 16px) - 2px) / var(--grid-title-lines, 1)
+  );
 }
 
 .grid-col-header,
@@ -135,6 +168,17 @@
   align-items: center;
   justify-content: center;
   flex: 1;
+  /* Inherited from .grid-col-header (same derivation, see there). A <tr> height
+     is a MINIMUM, so unpinned the inherited Bootstrap line-height:1.5 makes 3
+     title lines demand ~54px and inflate a 48px band to 55 — stealing ~0.4 of a
+     data row. */
+  line-height: inherit;
+  /* A flex item's automatic minimum size is its content — i.e. the line box —
+     so line-height alone still can't shrink it, and the cell's 1px top+bottom
+     borders leave only (TitleHeight - 2) to share. min-height:0 lets the lines
+     settle into exactly their flex share, so the band renders at the height the
+     app asked for rather than 1px over. */
+  min-height: 0;
 }
 
 /* Sticky column headers - stay fixed at top during vertical scroll */
