@@ -13,6 +13,8 @@ import List from './List';
 import Splitter from './Splitter';
 import Group from './Group';
 import ScrollBar from './ScrollBar';
+import TrackBar from './TrackBar';
+import ColorButton from './ColorButton';
 import TabControl from './TabControl';
 import TabButton from './TabButton';
 
@@ -133,6 +135,8 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Splitter') return <Splitter data={data} />;
   if (data?.Properties?.Type == 'Group') return <Group data={data} />;
   if (data?.Properties?.Type == 'Scroll') return <ScrollBar data={data} />;
+  if (data?.Properties?.Type == 'Trackbar') return <TrackBar data={data} />;
+  if (data?.Properties?.Type == 'ColorButton') return <ColorButton data={data} />;
   if (data?.Properties?.Type == 'TabControl') return <TabControl data={data} />;
   if (data?.Properties?.Type == 'TabButton')
     return (

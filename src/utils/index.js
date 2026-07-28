@@ -31,7 +31,7 @@ export const handleMouseDown = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseDown");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousedown");
   if (!exists) return;
 //   console.log(mousedownEvent);
   socket.send(mousedownEvent);
@@ -52,7 +52,7 @@ export const handleMouseUp = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseUp");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mouseup");
   if (!exists) return;
 //   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
@@ -73,7 +73,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseDblClick");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousedblclick");
   if (!exists) return;
 //   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
@@ -90,7 +90,7 @@ export const handleMouseEnter = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseEnter");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mouseenter");
   if (!exists) return;
 //   console.log("mouseEnter", mouseEnterEvent);
   socket.send(mouseEnterEvent);
@@ -107,7 +107,7 @@ export const handleMouseLeave = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseLeave");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mouseleave");
   if (!exists) return;
 //   console.log(mouseLeaveEvent);
   socket.send(mouseLeaveEvent);
@@ -129,7 +129,7 @@ export const handleMouseMove = (e, socket, Event, ID) => {
   });
 
   // console.log("mouseMove1", mouseMoveEvent);
-  const exists = Event && Event.some((item) => item[0] === "MouseMove");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousemove");
   if (!exists) return;
   // console.log(mouseMoveEvent);
   // console.log("mouseMove2", mouseMoveEvent);
@@ -154,7 +154,7 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseWheel");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousewheel");
   if (!exists) return;
 //   console.log(mouseWheelEvent);
   socket.send(mouseWheelEvent);

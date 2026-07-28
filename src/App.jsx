@@ -1059,7 +1059,7 @@ const App = () => {
                     },
                   })
                 );
-              } else if (Type == "Scroll") {
+              } else if (Type == "Scroll" || Type == "Trackbar") {
                 const { Thumb = 1 } = Properties;
                 const supportedProperties = ["Thumb"];
 
@@ -1242,17 +1242,22 @@ const App = () => {
                   serverEvent?.Properties
                 );
 
-                if (!localStorage.getItem(serverEvent.ID)) {
-                  const serverPropertiesObj = {};
-                  serverEvent.Properties.map((key) => {
-                    return (serverPropertiesObj[key] =
-                      key == "State" ? (State ? State : 0) : Properties[key]);
-                  });
+                // A WG read of a Button returns its current State straight from
+                // the central tree (refData/dataRef above). handleData keeps
+                // Properties.State live on create (State 1) and on radio toggle,
+                // so the former localStorage "stored-event" branch sent the same
+                // value and is removed. Posn/Size are filled by updateAndStringify.
+                const serverPropertiesObj = {};
+                serverEvent.Properties.map((key) => {
+                  return (serverPropertiesObj[key] =
+                    key == "State" ? (State ? State : 0) : Properties[key]);
+                });
 
-                  delete serverPropertiesObj['Size'];
-                  delete serverPropertiesObj['Posn'];
+                delete serverPropertiesObj['Size'];
+                delete serverPropertiesObj['Posn'];
 
-                  const event = updateAndStringify({
+                return webSocket.send(
+                  updateAndStringify({
                     WG: {
                       ID: serverEvent.ID,
                       Properties: serverPropertiesObj,
@@ -1263,40 +1268,8 @@ const App = () => {
                         ? { NotSupported: result.NotSupported }
                         : null),
                     },
-                  });
-
-                  //                 console.log(event);
-                  return webSocket.send(event);
-                }
-
-                const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-                const { Value } = Event;
-
-                const serverPropertiesObj = {};
-
-                serverEvent.Properties.map((key) => {
-                  return (serverPropertiesObj[key] =
-                    key == "State" ? Value : Event[key]);
-                });
-
-                delete serverPropertiesObj['Size'];
-                delete serverPropertiesObj['Posn'];
-                const event = updateAndStringify({
-                  WG: {
-                    ID: serverEvent.ID,
-                    Properties: serverPropertiesObj,
-                    WGID: serverEvent.WGID,
-                    ...(result &&
-                      result.NotSupported &&
-                      result.NotSupported.length > 0
-                      ? { NotSupported: result.NotSupported }
-                      : null),
-                  },
-                });
-
-                //               console.log(event);
-
-                return webSocket.send(event);
+                  })
+                );
               } else if (Type == "TreeView") {
                 const supportedProperties = ["SelItems"];
                 const result = checkSupportedProperties(

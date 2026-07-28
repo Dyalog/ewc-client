@@ -35,7 +35,11 @@ const Rectangle = ({
               position: 'absolute',
               top: `${rectanglePoints[1]}px`,
               left: `${rectanglePoints[0]}px`,
-              pointerEvents: 'auto',
+              // Only capture the pointer if this rect actually handles mouse
+              // events — otherwise the selection rect (f.rect2, no handlers)
+              // sits on top of the capture rect (f.rect) and swallows the
+              // mousemove stream that drives selectrect→updaterect→drawrect.
+              pointerEvents: Event && Event.length ? 'auto' : 'none',
               overflow: 'visible',
               ...customStyles,
             }}
