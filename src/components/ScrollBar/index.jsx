@@ -329,7 +329,13 @@ const ScrollBar = ({ data }) => {
     updateThumbPosition(newPosition + arrowButtonSize);
     setScaledValue(rangedThumb);
     setTempScaledValue(rangedThumb);
-  }, [Thumb]);
+    // maxThumbPosition/maxValue matter as much as Thumb: the position is a
+    // FRACTION of the track, and updateThumbPosition writes the pixel value
+    // straight to the DOM. Keyed on Thumb alone, a window resize changed the
+    // track under a thumb that never recomputed, leaving it stranded at a pixel
+    // offset derived from the old length — measured at 936px inside a 686px
+    // track, a quarter of the way outside its own bar.
+  }, [Thumb, rangedThumb, maxThumbPosition, maxValue]);
 
   // 100% along the scrolling axis: the container is anchored by attach, and a
   // fixed px length from the model Size overflowed it by 2.5x after a resize
