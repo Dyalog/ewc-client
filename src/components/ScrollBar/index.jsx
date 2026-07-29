@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Icons } from '../../common';
 import './ScrollBar.css';
 import { useAppData, useAttachStyle } from '../../hooks';
@@ -12,7 +12,7 @@ import {
   handleMouseUp,
   handleMouseWheel,
 } from '../../utils';
-import { thumbValueInRange } from './clamp';
+import { thumbValueInRange, thumbPosFromValue, thumbValueFromPos } from './clamp';
 
 const arrowButtonSize = 20;
 
@@ -42,14 +42,35 @@ const ScrollBar = ({ data }) => {
   const trackHeight = !Size ? parentSize && parentSize[0] - arrowButtonSize : Size && Size[0];
   const trackWidth = !Size ? parentSize && parentSize[1] - arrowButtonSize : Size && Size[1];
 
+  // Prefer the track's RENDERED length over the model Size above. Attach sizes
+  // this object from its parent, so after a window resize the model Size is the
+  // authored value and no longer what is on screen — measured: the bar rendered
+  // 504px while Size still said 1236. Scaling the thumb's travel to 1236 sends it
+  // off the end of a 504px track as soon as the value moves off 1.
+  const [measuredTrack, setMeasuredTrack] = useState(null);
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      const len = isHorizontal ? r.width : r.height;
+      if (len > 0) setMeasuredTrack(len);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isHorizontal]);
+
   // The thumb travels between 0 and maxThumbPosition. Guard against tracks
   // smaller than the arrow buttons + slack (or an unsized track that resolves
   // to null/NaN): a non-positive maxThumbPosition would divide-by-zero in the
   // drag/track-click value math and push the thumb off the track.
-  const rawMaxThumbPosition = (isHorizontal ? trackWidth : trackHeight) - arrowButtonSize * 2 - 40;
+  const trackLength = measuredTrack ?? (isHorizontal ? trackWidth : trackHeight);
+  const rawMaxThumbPosition = trackLength - arrowButtonSize * 2 - 40;
   const maxThumbPosition = Math.max(1, Number.isFinite(rawMaxThumbPosition) ? rawMaxThumbPosition : 1);
 
-  const calculateThumbPosition = (value) => (value / maxValue) * maxThumbPosition;
+  const calculateThumbPosition = (value) => thumbPosFromValue(value, maxValue, maxThumbPosition);
   const [thumbPosition, setThumbPosition] = useState(calculateThumbPosition(scaledValue));
 
   const updateThumbPosition = (newPosition) => {
@@ -133,7 +154,7 @@ const ScrollBar = ({ data }) => {
       // the same offset — otherwise the thumb lags the cursor by 20px and
       // snaps into place only on release when the server pushes Thumb back.
       updateThumbPosition(newThumbPosition + arrowButtonSize);
-      const newScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
+      const newScaledValue = thumbValueFromPos(newThumbPosition, maxValue, maxThumbPosition);
       setTempScaledValue(newScaledValue);
     };
 
@@ -141,7 +162,7 @@ const ScrollBar = ({ data }) => {
       window.removeEventListener('mousemove', handleMouseMoveEvent);
       window.removeEventListener('mouseup', handleMouseUpEvent);
 
-      const finalScaledValue = (newThumbPosition / maxThumbPosition) * maxValue;
+      const finalScaledValue = thumbValueFromPos(newThumbPosition, maxValue, maxThumbPosition);
       // Clamp the emitted position to the valid [1, Range].
       const roundedScaledValue = thumbValueInRange(Math.round(finalScaledValue), maxValue);
       setThumbPosition(newThumbPosition);
@@ -195,7 +216,7 @@ const ScrollBar = ({ data }) => {
       // Map the click pixel position back to a value (inverse of
       // calculateThumbPosition) and clamp to the valid [1, Range].
       const newScaledValue = thumbValueInRange(
-        Math.round((newThumbPosition / maxThumbPosition) * maxValue),
+        Math.round(thumbValueFromPos(newThumbPosition, maxValue, maxThumbPosition)),
         maxValue
       );
       setTempScaledValue(newScaledValue);
@@ -310,9 +331,12 @@ const ScrollBar = ({ data }) => {
     setTempScaledValue(rangedThumb);
   }, [Thumb]);
 
+  // 100% along the scrolling axis: the container is anchored by attach, and a
+  // fixed px length from the model Size overflowed it by 2.5x after a resize
+  // (measured: 1278px track inside a 504px bar).
   const trackStyle = {
-    width: isHorizontal ? `${trackWidth}px` : `${defaultSize[1]}px`,
-    height: isHorizontal ? `${defaultSize[0]}px` : `${trackHeight}px`,
+    width: isHorizontal ? '100%' : `${defaultSize[1]}px`,
+    height: isHorizontal ? `${defaultSize[0]}px` : '100%',
     paddingLeft: isHorizontal ? `${arrowButtonSize}px` : 0,
     paddingRight: isHorizontal ? `${arrowButtonSize}px` : 0,
     paddingTop: !isHorizontal ? `${arrowButtonSize}px` : 0,
@@ -372,7 +396,10 @@ const ScrollBar = ({ data }) => {
       }}
       style={isHorizontal ? horizontalPosition : verticalPosition}
     >
-      <div>
+      {/* Full-size wrapper: the track below is 100% along its scrolling axis,
+          and a percentage against an auto-height parent collapses to content
+          (measured: a 686px vertical bar rendering a 42px track). */}
+      <div style={{ height: '100%', width: '100%' }}>
         {isHorizontal && showButtons ? (
           <>
             <div

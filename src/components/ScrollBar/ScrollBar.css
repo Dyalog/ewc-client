@@ -25,6 +25,11 @@
   justify-content: center;
   position: relative;
   cursor: pointer;
+  /* The track is sized to 100% of the bar along its scrolling axis, and it
+     carries the arrow-button padding plus a border. Without border-box those
+     add on top and the track overhangs its own bar by 42px, which then
+     mis-scales the thumb's travel. */
+  box-sizing: border-box;
 }
 
 
