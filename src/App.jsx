@@ -1612,8 +1612,16 @@ const App = () => {
               });
             } else if (Event == "Scroll") {
               const thumbValue = Info[1];
-//               console.log("300", { thumbValue });
-              handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+              // Scroll Info is (Type, Position) and the position is only
+              // meaningful when the thumb itself was moved; a line or page
+              // scroll sends 0 (measured: 162 events of [2,0] from GAMA paging
+              // the grid). Thumb is 1-origin and valid in [1, Range], so 0 means
+              // "not supplied" — writing it clobbered the real Thumb the server
+              // had just set, and thumbValueInRange maps 0 to 1, throwing the
+              // thumb to the START of its track while the grid sat at the END.
+              if (thumbValue >= 1) {
+                handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+              }
               const element = document.getElementById(nqEvent.ID);
               element && element.focus();
               nqCallback({
