@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { parentId, getAttachStyle, acEffective } from '../utils';
 import useAppData from './useAppData';
 
@@ -36,6 +36,21 @@ const isSplitterPane = (parentNode, id) => {
   return false;
 };
 
+// Snapshots survive remounts, keyed by object ID.
+//
+// This has to outlive the component. The Grid — and the Scroll bars beside it —
+// unmount and remount on every reflow, and a per-instance ref would re-derive the
+// snapshot from whatever the model happens to say at that moment. The model is
+// only authoritative at authoring time: the server updates the GRID's Size as it
+// reflows but never the scroll bars', so after a resize one is current and the
+// other is authored. Re-deriving picks the wrong parent for one of them whichever
+// source it prefers. Keeping the snapshot avoids having to guess.
+//
+// Entries are keyed by ID and not evicted on unmount (that is the point). An
+// object destroyed with ⎕EX and re-created under the same ID would inherit the
+// old snapshot; its first genuine Posn/Size write re-captures and corrects it.
+const SNAPSHOTS = new Map();
+
 // A top-level child of a Form that has a MenuBar lives in the content area
 // BELOW the menu bar (Form.jsx offsets the content div by ~25px), so its base
 // parent box is the form height minus the menu bar. Mirror Form.jsx's fixed
@@ -57,24 +72,19 @@ const menuBarInset = (parentNode) => {
 // reflows proportionally, per ⎕WC.
 const useAttachStyle = (data) => {
   const { findCurrentData } = useAppData();
-  // One SNAPSHOT of { parent, posn, size } — the three values getAttachStyle
-  // needs, all taken at the same instant.
-  //
-  // They have to move together. getAttachStyle derives the fixed edge gaps from
-  // all three (dBottom = Ph - (y + h)), so pairing a frozen parent size with a
-  // live Posn/Size double-counts every resize: the CSS bottom-anchor already
-  // shrinks the object with its parent, and then the app's own ⎕WS of the new
-  // Size recomputes dBottom against the OLD parent and shrinks it again.
-  // Measured 2026-07-29 on GAMA's Prices grid: an 87px window shrink cost the
-  // grid 174px, and at small sizes it collapsed to 0px tall with rows still
-  // deployed (the blank pane). Re-capturing against the LIVE parent makes the
-  // arithmetic self-cancelling:
-  //   dBottom = (Ph-87) - (y + h-87) = Ph - y - h   ← unchanged, no second shrink
-  const baseRef = useRef(null);
+  // getAttachStyle derives the fixed edge gaps from { parent, posn, size }
+  // together (dBottom = Ph - (y + h)), so the three must come from one instant.
+  // Mixing a frozen parent with a live Posn/Size double-counts every resize:
+  // the CSS bottom-anchor already shrinks the object with its parent, then the
+  // server's ⎕WS of the new Size recomputes dBottom against the OLD parent and
+  // shrinks it again. Measured 2026-07-29 on GAMA's Prices grid: an 87px window
+  // shrink cost the grid 174px, and at small sizes it collapsed to 0px tall with
+  // rows still deployed. See SNAPSHOTS for why this is kept across remounts.
   const [, forceTick] = useState(0);
 
   const Attach = normalizeAttach(data?.Properties?.Attach);
   const { Posn, Size } = data?.Properties || {};
+  const id = data?.ID;
   const pid = parentId(data?.ID);
   const parentNode = pid ? findCurrentData(pid) : null;
 
@@ -106,25 +116,12 @@ const useAttachStyle = (data) => {
   // first paint. Only fires when a usable parent size is available, so a
   // size-less splitter pane (whose Size isn't in the model yet, and which isn't
   // measurable either) correctly falls through to the settle observer below.
-  if (active && baseRef.current === null && pid) {
-    // Prefer the parent's LIVE box. A component that remounts after its parent
-    // has resized (the Grid does, on every reflow) would otherwise re-freeze
-    // against the parent's MODEL Size — which the server does not update on a
-    // window resize, so it is stale, and the resulting gap is wrong by exactly
-    // the amount the parent has changed since. That is the double-shrink: it
-    // survives a correct snapshot on the previous mount because the new mount
-    // throws it away. The live box is authoritative and already reflowed.
-    let base = null;
-    const el = document.getElementById(pid);
-    if (el) {
-      const live = [el.clientHeight, el.clientWidth];
-      if (isValidSize(live)) {
-        base = live;
-      }
-    }
-    if (!isValidSize(base)) {
-      base = parentNode?.Properties?.Size;
-    }
+  if (active && !SNAPSHOTS.has(id) && pid) {
+    // The model parent Size is the one this object's Posn/Size were authored
+    // against, so it is the correct partner for them. (Only correct on a FIRST
+    // capture — once the server starts moving this object the pairing has to be
+    // re-taken against the live parent; see the layout effect below.)
+    let base = parentNode?.Properties?.Size;
     if (!isValidSize(base)) {
       try {
         base = JSON.parse(localStorage.getItem(pid))?.Size;
@@ -133,7 +130,7 @@ const useAttachStyle = (data) => {
       }
     }
     if (isValidSize(base)) {
-      baseRef.current = { key: geomKey, parent: withMenuInset(base), posn: Posn, size: Size };
+      SNAPSHOTS.set(id, { key: geomKey, parent: withMenuInset(base), posn: Posn, size: Size });
     }
   }
 
@@ -144,20 +141,20 @@ const useAttachStyle = (data) => {
   // to the previous parent value when the element isn't measurable.
   useLayoutEffect(() => {
     if (!active || !geomKey) return;
-    const snap = baseRef.current;
+    const snap = SNAPSHOTS.get(id);
     if (!snap || snap.key === geomKey) return; // nothing captured yet, or unchanged
     const el = pid ? document.getElementById(pid) : null;
     const live = el ? [el.clientHeight, el.clientWidth] : null;
-    baseRef.current = {
+    SNAPSHOTS.set(id, {
       key: geomKey,
       parent: isValidSize(live) ? withMenuInset(live) : snap.parent,
       posn: Posn,
       size: Size,
-    };
+    });
     forceTick((n) => n + 1);
     // Posn/Size are covered by geomKey, which is what decides a real change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, geomKey, menuInset, pid]);
+  }, [active, geomKey, menuInset, pid, id]);
 
   // Fallback for a parent with NO authored Size — e.g. a splitter-divided pane
   // (F1.RIGHT.TOP/BOT), which has no Size in the model and, being size-less,
@@ -167,22 +164,22 @@ const useAttachStyle = (data) => {
   // child. Instead observe the parent and freeze its SETTLED content-box size:
   // debounce so we capture the value only after it stops changing.
   useEffect(() => {
-    if (!active || baseRef.current !== null || !pid) return;
+    if (!active || SNAPSHOTS.has(id) || !pid) return;
     const el = document.getElementById(pid);
     if (!el) return;
     let timer = null;
     const capture = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        if (baseRef.current !== null) return;
+        if (SNAPSHOTS.has(id)) return;
         const live = [el.clientHeight, el.clientWidth];
         if (!isValidSize(live)) return;
-        baseRef.current = {
+        SNAPSHOTS.set(id, {
           key: geomKey,
           parent: withMenuInset(live),
           posn: Posn,
           size: Size,
-        };
+        });
         forceTick((n) => n + 1);
       }, 120);
     };
@@ -197,10 +194,10 @@ const useAttachStyle = (data) => {
     // up rather than captured stale; withMenuInset is rebuilt every render, so
     // depending on it would re-subscribe the observer constantly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, pid, menuInset, geomKey]);
+  }, [active, pid, menuInset, geomKey, id]);
 
-  if (!active || baseRef.current === null) return {};
-  const { posn, size, parent } = baseRef.current;
+  if (!active || !SNAPSHOTS.has(id)) return {};
+  const { posn, size, parent } = SNAPSHOTS.get(id);
   return getAttachStyle(posn, size, parent, Attach);
 };
 
