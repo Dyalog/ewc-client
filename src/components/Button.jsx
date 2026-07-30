@@ -434,6 +434,13 @@ const Button = ({
         // fontSize: '11px',
         cursor: "pointer",
         zIndex: 1,
+        // The server authors Size as the OUTER box, so the 3px paddings and
+        // the 1px border below have to fit inside the given width, not add
+        // 8px to it. Bootstrap's Reboot used to make this true globally via
+        // `* { box-sizing: border-box }`; its last import went with the
+        // ribbon rewrite, after which every Button rendered 8px too wide —
+        // and right-anchored ones grew leftwards over their neighbour.
+        boxSizing: "border-box",
         paddingLeft: '3px',
         paddingRight: '3px',
         display: Visible == 0 ? "none" : "flex",
