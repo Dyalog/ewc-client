@@ -7,6 +7,23 @@
   font-family: 'Noto Sans', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Form controls don't inherit font metrics from their parent by default —
+   they fall back to the UA's own (Chrome: 13.3333px). Bootstrap's Reboot
+   used to supply this rule, but its last import went with the ribbon
+   rewrite (721134f), which silently un-styled every control carrying no
+   explicit FontObj. The Combo demo's Event Log (an Edit/Multi textarea) is
+   the visible case: 12px -> 13.3333px, exactly the 10/9 the visual
+   baseline caught. The `*` rule above restores family but never size. */
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 input[type='number'] {
   text-align: right;
 }
