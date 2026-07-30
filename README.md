@@ -1,29 +1,29 @@
-# EWC Client
+# ewc-client
 
-![EWC-Client Cover](./assets/ewc_client_cover.png)
+![ewc-client Cover](./assets/ewc_client_cover.png)
 
-The JavaScript/React client for [EWC](https://github.com/dyalog/ewc) — it renders
-APL `⎕WC` GUI objects as React components in the browser.
+The frontend for **EWC** — it renders APL `⎕WC` GUI objects as React components in the
+browser, driven by the [**ewc**](https://github.com/dyalog/ewc) APL server.
 
 ## Using EWC
 
-You don't need this repository to *use* EWC. Each EWC release bundles the built
-client, so grab one from the main project:
+You don't need this repository to *use* EWC. Each release bundles the built frontend,
+so grab one from the server repo:
 
 - **Releases:** <https://github.com/dyalog/ewc/releases>
 - **Documentation:** [EWC User Guide](https://dyalog.github.io/ewc/latest/)
 
-## Developing the client
+## Developing the ewc-client
 
-To work on the client itself:
+To work on this repository itself:
 
 1. Clone [`ewc`](https://github.com/dyalog/ewc) and `ewc-client` next to each
-   other, so EWC picks up your local build automatically:
+   other, so the server picks up your local build automatically:
 
         /my/dev/directory/ewc
         /my/dev/directory/ewc-client
 
-2. Install dependencies and point the client at a running EWC (default WebSocket
+2. Install dependencies and point the frontend at a running server (default WebSocket
    port `22322`):
 
         yarn install
@@ -37,10 +37,10 @@ To work on the client itself:
 
         demo.Run 'Browser'
 
-   then open <http://localhost:5173> — it connects back to EWC over `:22322`.
+   then open <http://localhost:5173> — it connects back to the server over `:22322`.
 
 ## Contributing
 
 Development happens on `main`; open pull requests against `main`. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for conventions, testing, and how this repo relates
-to the main `ewc` project.
+[CONTRIBUTING.md](CONTRIBUTING.md) for conventions, testing, and how this repository
+relates to the `ewc` server.

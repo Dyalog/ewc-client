@@ -1,33 +1,43 @@
-# Contributing to EWC Client
+# Contributing to ewc-client
 
 Thanks for helping out. This guide covers how the project is put together and the
-conventions we follow in this repository (the JavaScript/React side of EWC).
+conventions we follow in this repository — **ewc-client**, the frontend.
 
-## How ewc-client and EWC fit together
+## Naming
+
+Four similar-looking names, used consistently throughout the docs:
+
+| Name | Meaning |
+|---|---|
+| **EWC** | The project as a whole. |
+| **ewc** | The other repository — the APL server. |
+| **ewc-client** | This repository — the frontend. |
+| **`eWC`** | The APL cover function for `⎕WC` that `EWC.Init` creates (alongside `eWS`, `eWG`, …). |
+
+## How ewc-client and ewc fit together
 
 EWC is **two repositories, one product**:
 
 | Repo | Language | Responsibility |
 |---|---|---|
-| [`Dyalog/ewc-client`](https://github.com/dyalog/ewc-client) (this repo) | JavaScript / React | Renders the GUI objects the APL side describes, and reports user events back. |
-| [`Dyalog/ewc`](https://github.com/dyalog/ewc) | Dyalog APL | Implements the `⎕WC ⎕WS ⎕WG ⎕WN ⎕NQ ⎕DQ` covers, owns each class's property/event contract, runs the WebSocket server, ships the demos and the User Guide. |
+| [`Dyalog/ewc-client`](https://github.com/dyalog/ewc-client) (this repo) | JavaScript / React | The frontend. Renders the GUI objects the server describes, and reports user events back. |
+| [`Dyalog/ewc`](https://github.com/dyalog/ewc) | Dyalog APL | The server. Implements the `⎕WC ⎕WS ⎕WG ⎕WN ⎕NQ ⎕DQ` covers, owns each class's property/event contract, serves this frontend, ships the demos and the User Guide. |
 
-The two halves talk over a **WebSocket, port `22322`** by default. This client never
-invents GUI behaviour on its own — the APL side sends objects and properties, and we
-render them faithfully to `⎕WC` semantics.
+The two halves talk over a **WebSocket, port `22322`** by default. The frontend never
+invents GUI behaviour on its own — the server sends objects and properties, and we render
+them faithfully to `⎕WC` semantics.
 
-**You need a running EWC to develop against.** There is no standalone mode.
+**You need a running ewc server to develop against.** There is no standalone mode.
 
 ### How your change reaches users
 
 1. You merge to `main` here.
 2. The **Build and Commit Dist** workflow builds and commits `dist/`.
-3. When EWC cuts a release, its Release workflow pulls that `dist` into the ewc repo's
+3. When ewc cuts a release, its Release workflow pulls that `dist` into ewc's
    `client/dist/` and tags the release.
 
-So an EWC release bundles a built client and users only ever need the ewc repo. Because
-`dist/` is committed and bot-maintained, don't fight it in your PRs — let the workflow
-rebuild it.
+So an EWC release bundles a built frontend and users only ever need ewc. Because `dist/`
+is committed and bot-maintained, don't fight it in your PRs — let the workflow rebuild it.
 
 ### Which repo does your change belong in?
 
@@ -39,7 +49,7 @@ rebuild it.
 
 ## Getting set up
 
-Clone `ewc` and `ewc-client` next to each other so EWC picks up your local build:
+Clone `ewc` and `ewc-client` next to each other so the server picks up your local build:
 
 ```
 /my/dev/directory/ewc
@@ -55,10 +65,10 @@ yarn dev                             # Vite, hot reload on :5173
 ```
 
 In your APL session run the demo in browser mode (`demo.Run 'Browser'`), then open
-<http://localhost:5173>. The page connects back to EWC over `:22322`.
+<http://localhost:5173>. The page connects back to the server over `:22322`.
 
-Prefer a containerised server? `yarn ewc-demo:start` runs EWC in Docker on `:22322`
-(`yarn ewc-demo:stop`, `:logs`, `:restart` round it out).
+Prefer a containerised server? `yarn ewc-demo:start` runs the ewc server in Docker on
+`:22322` (`yarn ewc-demo:stop`, `:logs`, `:restart` round it out).
 
 **Use `yarn`, not `npm`**, for every script in this repo.
 
@@ -74,11 +84,11 @@ Prefer a containerised server? `yarn ewc-demo:start` runs EWC in Docker on `:223
 ## Adding or extending a component
 
 1. Create `src/components/<Class>/index.jsx` (plus CSS and hooks as needed).
-2. Register it in `src/components/SelectComponent.jsx` so the EWC type routes to it.
+2. Register it in `src/components/SelectComponent.jsx` so that object type routes to it.
 3. Read properties from `data.Properties` — `Posn`, `Size`, `Values` and friends arrive
-   exactly as APL set them.
-4. If APL needs to **read** a live value back (`⎕WG`), add a `get<Class>.js` handler and
-   list the property in its `supportedProperties`.
+   exactly as the server set them.
+4. If the server needs to **read** a live value back (`⎕WG`), add a `get<Class>.js`
+   handler and list the property in its `supportedProperties`.
 
 ### Properties that change at runtime
 
@@ -130,7 +140,7 @@ yarn demotests:browser:headed               # visible browser
 yarn demotests:report                       # HTML report from the last run
 ```
 
-Tests need **both** a Vite server (`yarn dev`) and a running EWC (`:22322`).
+Tests need **both** a Vite server (`yarn dev`) and a running ewc server (`:22322`).
 
 If your change alters a demo's behaviour, update the matching spec — and if it needs a
 demo change, pair it with a PR in the ewc repo.
@@ -153,7 +163,7 @@ Specs whose names contain `visual` compare screenshots against baselines in
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `build-and-commit.yml` | push | Builds and commits `dist/` |
-| `tests.yml` | push, PR, manual | Runs Playwright against EWC-served `:22322` |
+| `tests.yml` | push, PR, manual | Runs Playwright against the frontend served by ewc on `:22322` |
 | `update-baselines.yml` | manual | Regenerates visual baselines on the runner, opens a PR |
 
 Skip markers, when a run would add nothing:
