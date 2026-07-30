@@ -178,13 +178,12 @@ const Form = ({ data }) => {
         ...fontStyles,
         background: BCol ? rgbColor(BCol) : "#F0F0F0",
         position: "relative",
-        // Size is the OUTER box, so the 1px border below must fit inside it
-        // rather than add 2px to each axis. This matters beyond appearance:
-        // ⎕WG 'Size' answers with getBoundingClientRect (see utils/sizeposn),
-        // so under content-box a form the server set to 460x700 reported back
-        // as 462x702 — and a demo that toggles between two sizes never
-        // recognised the size it had just set.
-        boxSizing: "border-box",
+        // Deliberately NOT border-box: Size is the parent's usable (content)
+        // area, which is the space children's Posn/Size are authored against —
+        // DemoPictures puts a child at Posn 400 with Size 500 inside a 900-wide
+        // form, summing to exactly 900. The border sits outside that. See
+        // utils/sizeposn, which reports the content box so ⎕WG round-trips the
+        // value the server set.
         border: "1px solid #F0F0F0",
         display:
           Visible == 0

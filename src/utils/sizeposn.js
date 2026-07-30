@@ -19,10 +19,18 @@ function posn(id) {
   return [bb.y - pbb.y - 1, bb.x - pbb.x - 1];
 }
 
+// Report the CONTENT box, not the border box. Size is the object's usable area
+// — the space its children's Posn/Size are authored against — and the border
+// sits outside it, so this is the value ⎕WS was given and the value ⎕WG must
+// give back. Measuring getBoundingClientRect instead added the border: a form
+// the server set to 460x700 answered 462x702, so DemoAutoConfWin (which reads
+// Size to decide which way to toggle) never recognised the size it had just
+// set and the window never grew.
 function size(id) {
-  const bb = boundingBox(id);
-  if (bb === null) return null;
-  return [bb.height, bb.width];
+  const el =
+    document.getElementById(id + ".$CONTAINER") || document.getElementById(id);
+  if (el === null) return null;
+  return [el.clientHeight, el.clientWidth];
 }
 
 export {size, posn};
