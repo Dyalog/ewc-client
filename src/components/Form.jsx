@@ -47,7 +47,20 @@ const Form = ({ data }) => {
   const updatedData = excludeKeys(data);
   const ImageData = findCurrentData(Picture && Picture[0]);
 
-  let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
+  // A Picture PAINTS the form's background; it must not lay the form out.
+  // getImageStyles is written for an inner image div (see Button.jsx), so for
+  // mode 0 it returns position/top/left plus width/height defaulting to '100%'
+  // — and this object is spread AFTER formStyles below, so those defaults
+  // silently replaced the authored Size. DemoPictures' form, created
+  // ('Size'(500 900))('Picture'('LOGO' 0)), filled the whole viewport instead,
+  // and every Attach-positioned child then reflowed proportionally against the
+  // wrong parent box. Keep only the paint properties.
+  const rawImageStyles = getImageStyles(Picture && Picture[1], ImageData);
+  const imageStyles = rawImageStyles
+    ? Object.fromEntries(
+        Object.entries(rawImageStyles).filter(([k]) => k.startsWith('background'))
+      )
+    : rawImageStyles;
 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
