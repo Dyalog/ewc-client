@@ -16,7 +16,15 @@ const isPair = (a) =>
   Array.isArray(a) && a.length === 2 && Number.isFinite(a[0]) && Number.isFinite(a[1]);
 
 // Percentage string, trimmed of float noise.
-const pct = (frac) => `${Math.round(frac * 1e4) / 1e2}%`;
+//
+// Six decimal places, not two: the browser resolves the '%' against the live
+// parent, so any rounding here is multiplied by the parent's width. At 2dp a
+// 253px-wide object in a 350px parent came out 253.015625px (72.285714% rounded
+// to 72.29%) — a visible 1/64px error that grows with the parent, and enough to
+// fail an exact-pixel assertion. 6dp keeps the error far below the 1/64px
+// sub-pixel grid for any realistic parent size, while still trimming the float
+// noise that motivated rounding in the first place.
+const pct = (frac) => `${Math.round(frac * 1e8) / 1e6}%`;
 
 // Capitalize an edge name to the canonical form ('top'/'TOP' -> 'Top'). APL GUI
 // enum values are case-insensitive, and the server sends mixed case (e.g.
