@@ -47,7 +47,12 @@ const Form = ({ data }) => {
   const updatedData = excludeKeys(data);
   const ImageData = findCurrentData(Picture && Picture[0]);
 
-  let imageStyles = getImageStyles(Picture && Picture[1], ImageData);
+  const rawImageStyles = getImageStyles(Picture && Picture[1], ImageData);
+  const imageStyles = rawImageStyles
+    ? Object.fromEntries(
+        Object.entries(rawImageStyles).filter(([k]) => k.startsWith('background'))
+      )
+    : rawImageStyles;
 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
