@@ -29,9 +29,55 @@ test.describe('DemoAutoConfWin — window-resize reflow', () => {
     return b;
   };
   const near = (a: number, b: number, tol = 6) => Math.abs(a - b) <= tol;
+  // The button round-trips to the server (⎕WS the form Size), which then
+  // reflows every Attach child and, for the grid, provokes a Configure ->
+  // re-deploy exchange. A fixed delay races that: at 700ms the *restore* at the
+  // end of the first test had not landed before the next test sampled its
+  // baseline, so the grid comparison started from the grown size and could
+  // never see "more rows". Wait for the form to actually change instead, then
+  // give the downstream reflow a moment to settle.
+  const formBox = () =>
+    page.evaluate(() => {
+      const f = document.getElementById('F1');
+      return f ? `${f.clientWidth}x${f.clientHeight}` : '';
+    });
+  // The button toggles the form between two sizes by first READING its current
+  // Size, so clicking again while the previous reflow is still in flight can
+  // have it read a size that is already stale and re-apply the one it is on.
+  // Quiesce before clicking: wait until the grid's deployed row count has
+  // stopped moving, which is the last thing to settle after a resize.
+  const gridRows = () =>
+    page.evaluate(() => {
+      const g = document.getElementById('F1.APP.GRID');
+      return g ? g.querySelectorAll('.grid-row').length : -1;
+    });
+  // Require SUSTAINED stability, not two equal ticks: the re-deploy takes a
+  // few hundred ms to land, so a two-sample check taken right after a resize
+  // sees the old count twice and declares victory before anything has moved.
+  const STABLE_SAMPLES = 5; // 5 x 250ms = ~1s of no change
+  const quiesce = async () => {
+    let prev = await gridRows();
+    let stable = 0;
+    for (let i = 0; i < 40; i++) {
+      await page.waitForTimeout(250);
+      const current = await gridRows();
+      stable = current === prev ? stable + 1 : 0;
+      prev = current;
+      if (stable >= STABLE_SAMPLES) return;
+    }
+  };
   const resize = async () => {
+    await quiesce();
+    const before = await formBox();
     await page.locator('#F1\\.BAR\\.BTN').click();
-    await page.waitForTimeout(700);
+    await page.waitForFunction(
+      (prev) => {
+        const f = document.getElementById('F1');
+        return !!f && `${f.clientWidth}x${f.clientHeight}` !== prev;
+      },
+      before,
+      { timeout: 10000 },
+    );
   };
 
   test('grow window: BAR keeps height, SIDE keeps width, APP fills the rest', async () => {
@@ -80,20 +126,26 @@ test.describe('DemoAutoConfWin — window-resize reflow', () => {
     const rows = () => page.locator('#F1\\.APP\\.GRID .grid-row').count();
     const cols = () => page.locator('#F1\\.APP\\.GRID .grid-col-header').count();
 
+    // The previous test ends with a restore whose re-deploy may still be in
+    // flight, so settle before sampling the baseline — otherwise rows0 is the
+    // PREVIOUS deployment and every comparison below is against the wrong number.
+    await quiesce();
     const rows0 = await rows();
     const cols0 = await cols();
 
     await resize(); // grow the window -> grid reflows -> Configure -> re-deploy
 
-    const rows1 = await rows();
-    const cols1 = await cols();
+    // The re-deploy is a server round-trip (Configure -> ⎕WS Values/RowTitles)
+    // that lands some time AFTER the form itself has resized, so read these
+    // with a retrying assertion rather than a one-shot count — a plain read
+    // races the round-trip and sees the previous deployment.
+    await expect.poll(rows, { timeout: 15000 }).toBeGreaterThan(rows0 + 3);
+    await expect.poll(cols, { timeout: 15000 }).toBeGreaterThan(cols0);
 
-    // The grid deployed strictly more rows and columns to fill the larger area.
-    expect(rows1).toBeGreaterThan(rows0 + 3);
-    expect(cols1).toBeGreaterThan(cols0);
+    const rows1 = await rows();
 
     await resize(); // shrink back -> fewer cells again
-    expect(await rows()).toBeLessThan(rows1);
+    await expect.poll(rows, { timeout: 15000 }).toBeLessThan(rows1);
   });
 
   // The grid uses VScroll ¯2 = "scrollable but no native scrollbar" (the
