@@ -19,10 +19,12 @@ function posn(id) {
   return [bb.y - pbb.y - 1, bb.x - pbb.x - 1];
 }
 
+// As per boundingBox, but excludes the border
 function size(id) {
-  const bb = boundingBox(id);
-  if (bb === null) return null;
-  return [bb.height, bb.width];
+  const el =
+    document.getElementById(id + ".$CONTAINER") || document.getElementById(id);
+  if (el === null) return null;
+  return [el.clientHeight, el.clientWidth];
 }
 
 export {size, posn};
