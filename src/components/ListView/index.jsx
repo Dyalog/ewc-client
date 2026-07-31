@@ -15,7 +15,7 @@ import {
   handleKeyPressUtils,
   keyShiftState,
 } from "../../utils";
-import { useAppData } from "../../hooks";
+import { useAppData, useAttachStyle } from "../../hooks";
 
 const ListView = ({ data }) => {
   const { findCurrentData, socket } = useAppData();
@@ -36,6 +36,7 @@ const ListView = ({ data }) => {
   const customStyles = parseFlexStyles(CSS);
 
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
 
   const font = findCurrentData(FontObj);
   const fontStyles = getFontStyles(font, 12);
@@ -110,6 +111,7 @@ const ListView = ({ data }) => {
           ...style,
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
         onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
@@ -227,6 +229,7 @@ const ListView = ({ data }) => {
           overflowY: "scroll",
           ...customStyles,
           ...fontStyles,
+          ...attachStyle,
         }}
       >
         {/* Header of the component */}

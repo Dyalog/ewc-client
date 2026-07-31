@@ -61,35 +61,39 @@
 
 /* Cell styles */
 .grid-cell {
+  /* Here be dragons: changing this style is known to break a customer app */
+  box-sizing: border-box;
   border: 1px solid #c0c0c0;
   padding: 0 4px;
   min-width: 60px;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* `pre` (not `nowrap`) so runs of spaces in a value are preserved instead of
-     collapsed to one — matches what the embedded editor shows and the native
-     grid. Still single-line (no wrap), so text-overflow: ellipsis applies. */
   white-space: pre;
   font-family: inherit;
   font-size: inherit;
-  /* Pin the text line box so it stops inflating the row. In a border-collapse
-     table the row pitch is (line-height + 1px collapsed gridline); 15px -> 16px
-     pitch, matching the native Win32 grid. Absolute px deliberately overrides
-     the inherited Bootstrap line-height:1.5 (--bs-body-line-height) that was
-     rendering rows at 20.5px. Only affects text line boxes — embedded
-     inputs/combos/checkboxes are unaffected. */
   line-height: 15px;
   cursor: cell;
   user-select: none;
   background-color: #fff;
-  /* Positioning context for the selection overlay (::after), which paints the
-     selection on top of the cell's own (possibly BCol) background. */
   position: relative;
 }
 
 /* Simple flat header styles */
 .grid-header-row {
   background-color: #f0f0f0;
+}
+
+.grid-col-header,
+.grid-row-header,
+.grid-corner-cell {
+  box-sizing: border-box;
+}
+
+.grid-col-header,
+.grid-corner-cell {
+  line-height: calc(
+    (var(--grid-title-band, 16px) - 2px) / var(--grid-title-lines, 1)
+  );
 }
 
 .grid-col-header,
@@ -135,6 +139,9 @@
   align-items: center;
   justify-content: center;
   flex: 1;
+  /* Inherited from .grid-col-header */
+  line-height: inherit;
+  min-height: 0;
 }
 
 /* Sticky column headers - stay fixed at top during vertical scroll */

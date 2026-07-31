@@ -22,6 +22,7 @@ import * as Globals from "./Globals";
 import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
+import { noteServerSize } from "./hooks/useConfigureReport";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -226,6 +227,9 @@ const App = () => {
           ...data,
         };
       } else if (mode === "WS") {
+        // Try to prevent the resize loop issue where client and server send
+        // slightly disagreeing sizes backwards and forwards forever.
+        if (data.Properties) noteServerSize(data.ID, data.Properties);
         // TODO move to a new home and organise it better!
         // Catch if we're moving outside of bounds and bring us back in
         if(currentLevel[finalKey]?.Properties?.Type === 'StatusField'){
@@ -694,11 +698,14 @@ const App = () => {
           const doWG = () => {
             const serverEvent = evData.WG;
             const updateAndStringify = (resp) => {
-              if (serverEvent.Properties.includes('Posn') && resp.WG.Properties['Posn'] === undefined) {
-                resp.WG.Properties['Posn'] = posn(serverEvent.ID);
+              // Default to measured size, not last sent/received
+              if (serverEvent.Properties.includes('Posn')) {
+                const measured = posn(serverEvent.ID);
+                resp.WG.Properties['Posn'] = measured ? measured.map(Math.round) : resp.WG.Properties['Posn'];
               }
-              if (serverEvent.Properties.includes('Size') && resp.WG.Properties['Size'] === undefined) {
-                resp.WG.Properties['Size'] = size(serverEvent.ID);
+              if (serverEvent.Properties.includes('Size')) {
+                const measured = size(serverEvent.ID);
+                resp.WG.Properties['Size'] = measured ? measured.map(Math.round) : resp.WG.Properties['Size'];
               }
               return JSON.stringify(resp);
             };
@@ -1597,8 +1604,10 @@ const App = () => {
               });
             } else if (Event == "Scroll") {
               const thumbValue = Info[1];
-//               console.log("300", { thumbValue });
-              handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+              // Ignore thumbValue == 0 - it's the equivalent of 'not set'
+              if (thumbValue >= 1) {
+                handleData({ ID: ID, Properties: { Thumb: thumbValue } }, "WS");
+              }
               const element = document.getElementById(nqEvent.ID);
               element && element.focus();
               nqCallback({
@@ -1693,7 +1702,10 @@ const App = () => {
         } else if (keys[0] == "EX") {
           const serverEvent = evData.EX;
 
-          deleteObjectsById(dataRef.current, serverEvent?.ID);
+          const exIds = Array.isArray(serverEvent?.ID)
+            ? serverEvent.ID
+            : [serverEvent?.ID];
+          deleteObjectsById(dataRef.current, exIds);
         } else if (keys[0] == "Options") {
           handleData(evData.Options, "WC");
 //           console.log("label", evData.Options);

@@ -1,7 +1,7 @@
 import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import "../styles/font.css";
-import { useAppData } from "../hooks";
+import { useAppData, useAttachStyle } from "../hooks";
 import { useGridContext } from "./Grid/GridContext";
 
 const Label = ({ data, gridValue }) => {
@@ -9,6 +9,7 @@ const Label = ({ data, gridValue }) => {
   const gridContext = useGridContext();
   const isInGrid = !!gridContext;
   let styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
 
   const { inheritedProperties, findCurrentData, fontScale, socket } = useAppData();
   const haveColor = data?.Properties.hasOwnProperty("FCol");
@@ -87,7 +88,8 @@ const Label = ({ data, gridValue }) => {
         ...styles,
         display: Visible == 0 ? "none" : "block",
         ...getBorderStyles(EdgeStyle, Border, "#6A6A6A"),
-        ...customStyles
+        ...customStyles,
+        ...attachStyle,
       }}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
