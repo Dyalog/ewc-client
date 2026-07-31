@@ -7,7 +7,7 @@ const VerticalSplitter = ({ data }) => {
 
   const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
+  ) || {};
 
   const { Posn, SplitObj1, SplitObj2, Event, CSS } = data?.Properties;
   const style = setStyle(data.Properties)
@@ -19,10 +19,22 @@ const VerticalSplitter = ({ data }) => {
     document.getElementById(extractStringUntilLastPeriod(data?.ID))
   );
   const [oldFormValues, setoldFormValues] = useState(SubformSize && SubformSize);
+  // Becomes true a beat after mount
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
-    if (!oldFormValues) return;
+    // Wait for ready
+    if (!readyRef.current || !oldFormValues) {
+      if (dimensions?.width) setoldFormValues([dimensions.height, dimensions.width]);
+      return;
+    }
+    // No-op if the form size hasn't actually changed
+    if (oldFormValues[0] === dimensions.height && oldFormValues[1] === dimensions.width) return;
 
     let calculateLeft =
       position && position.left && oldFormValues && oldFormValues[1]
@@ -94,6 +106,9 @@ const VerticalSplitter = ({ data }) => {
     backgroundColor: '#F0F0F0',
     cursor: 'col-resize',
     position: 'absolute',
+    // Sit above the panes so the divider is always grabbable, even when a pane
+    // is authored to start at the same x as the splitter (and would cover it).
+    zIndex: 10,
     top: Posn && Posn[0],
     left: left,
     ...style,

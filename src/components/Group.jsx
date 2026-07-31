@@ -18,7 +18,7 @@ import {
 } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import SelectComponent from "./SelectComponent";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useResizeObserver, useAttachStyle, useConfigureReport } from "../hooks";
 
 const Group = ({ data }) => {
   const {
@@ -66,45 +66,9 @@ const Group = ({ data }) => {
   const updatedData = excludeKeys(data);
 
   const styles = setStyle(data?.Properties, "absolute", Flex);
-
-  //   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
-  //   const x = e.clientX;
-  //   const y = e.clientY;
-  //   const button = e.button;
-
-  //   const mousedownEvent = JSON.stringify({
-  //     Event: {
-  //       EventName: "MouseDown",
-  //       ID: data?.ID,
-  //       Info: [x, y, button, shiftState],
-  //     },
-  //   });
-
-  //   const exists = Event && Event.some((item) => item[0] === "MouseDown");
-  //   if (!exists) return;
-  //   console.log(mousedownEvent);
-  //   socket.send(mousedownEvent);
-  // };
-
-  // const handleMouseUp = (e) => {
-  //   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0);
-  //   const x = e.clientX;
-  //   const y = e.clientY;
-  //   const button = e.button;
-
-  //   const mouseUpEvent = JSON.stringify({
-  //     Event: {
-  //       EventName: "MouseUp",
-  //       ID: data?.ID,
-  //       Info: [x, y, button, shiftState],
-  //     },
-  //   });
-
-  //   const exists = Event && Event.some((item) => item[0] === "MouseUp");
-  //   if (!exists) return;
-  //   console.log(mouseUpEvent);
-  //   socket.send(mouseUpEvent);
-  // };
+  const attachStyle = useAttachStyle(data);
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
 
   const hasCaption =
     data?.Properties?.Caption != null && data?.Properties?.Caption !== "";
@@ -119,7 +83,8 @@ const Group = ({ data }) => {
         display: Visible == 0 ? "none" : "block",
         ...imageStyles,
         ...flexStyles,
-        ...fontStyles
+        ...fontStyles,
+        ...attachStyle,
       }}
       id={data?.ID}
       // !!! TODO !!!
