@@ -1,228 +1,123 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import * as Icons from "./RibbonIcons";
-import { Row, Col } from "reactstrap"; // Remove if you're not using reactstrap elsewhere
 import { MdOutlineQuestionMark } from "react-icons/md";
 import { GoChevronDown } from "react-icons/go";
 import { useAppData } from "../../hooks";
 import { getCurrentUrl, getImageFromData, parseFlexStyles } from "../../utils";
 import RibbonDropDownItem from "./RibbonDropDownItem";
+import RibbonPopup from "./RibbonPopup";
+import { textW } from "./ribbonLayout";
 
+// 'Split' buttons - ie an icon with a default function and a dropdown for all
+// functions
 const RibbonDropDownButton = ({ data }) => {
-  const ImageList = data.ImageList
+  const ImageList = data.ImageList;
   const { socket, findCurrentData, fontScale } = useAppData();
   const font = findCurrentData(data.FontObj && data.FontObj);
   const fontProperties = font && font?.Properties;
-  const { Icon, Caption, ImageIndex, CSS, ImageListObj } = data?.Properties;
-  const [captionWrap, setCaptionWrap] = useState(false);
-//   console.log("Caption is as", Caption);
-  const captionParts = Caption ? Caption.split(" ") : [];
-//   console.log("Caption parurur", captionParts)
-
-  useEffect(() => {
-    if (captionParts.length > 2) {
-      setCaptionWrap(true);
-    } else {
-      setCaptionWrap(false);
-    }
-  }, [Caption]);
-
+  const { Icon, Caption, ImageIndex, CSS, ImageListObj, Event } = data?.Properties || {};
 
   const customStyles = parseFlexStyles(CSS);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const wrapperRef = useRef(null);
-  const ImageListObjCurrent = findCurrentData(ImageListObj)
+  const ImageListObjCurrent = findCurrentData(ImageListObj);
   const ImageData = getImageFromData(ImageListObjCurrent, ImageIndex);
 
   const handleSelectEvent = (menuItemID, Event) => {
-    const selectEvent = JSON.stringify({
-      Event: {
-        EventName: "Select",
-        ID: menuItemID,
-      },
-    });
     const exists = Event && Event.some((item) => item[0] === "Select");
-    if (!exists) return;
-//     console.log(selectEvent);
-    socket.send(selectEvent);
+    if (!exists) {
+      setDropdownOpen(false);
+      return;
+    }
+    socket.send(JSON.stringify({ Event: { EventName: "Select", ID: menuItemID } }));
     setDropdownOpen(false);
   };
 
   const IconComponent = Icons[Icon] ? Icons[Icon] : MdOutlineQuestionMark;
   const menuItems = Object.keys(data)
     .filter((key) => key.startsWith("MItem"))
-    .map((key) => data[key]);
+    .map((key) => ({ key, item: data[key] }));
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+  // The default action = the button's own Select, as fired by a plain
+  // RibbonButton. Without one there is nothing to default to, so the icon half
+  // falls through to opening the menu.
+  const hasDefaultAction = !!Event && Event.some((e) => e[0] === "Select");
+  const handleDefaultAction = (e) => {
+    e.stopPropagation();
+    if (!hasDefaultAction) {
+      setDropdownOpen((prev) => !prev);
+      return;
     }
-  }, []);
-
-  const toggleDropdown = (event) => {
-    event.stopPropagation();
-    setDropdownOpen((prevState) => !prevState);
+    setDropdownOpen(false);
+    socket.send(JSON.stringify({ Event: { EventName: "Select", ID: data?.ID } }));
+  };
+  const toggleDropdown = (e) => {
+    e.stopPropagation();
+    setDropdownOpen((prev) => !prev);
   };
 
+  const captionPx = fontProperties?.Size ? fontProperties.Size * fontScale : 12;
+  const arrowSize = captionPx;
+  const captionMaxW = Caption
+    ? textW(Caption, captionPx, fontProperties?.PName) + 3
+    : undefined;
+
   return (
-    <div
-      style=
-      {{
-        // border: "2px solid green",
-        // gap:"2px"
-      }}
-      ref={wrapperRef}>
-      <Row>
-        <Col md={12}>
-          <div
-            id={data?.ID}
-            className="d-flex align-items-center flex-column justify-content-center"
-            style={{ cursor: "pointer", ...customStyles }}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleDropdown(e);
-            }}
-          >
+    <div ref={wrapperRef} className="ewc-ribbon-col">
+      <div id={data?.ID} className="ewc-ribbon-large ewc-ribbon-split" style={customStyles}>
+        {/* Top half */}
+        <span
+          className="ewc-ribbon-split-main"
+          onClick={handleDefaultAction}
+          title={hasDefaultAction ? Caption : undefined}
+        >
+          <span className="ewc-ribbon-large-icon">
             {ImageData ? (
+              <img src={`${getCurrentUrl()}${ImageData.imageUrl}`} alt="" />
+            ) : ImageIndex && ImageList?.Properties?.Files ? (
               <img
-                style={{
-                  width: ImageData.imageSize[1],
-                  height: ImageData.imageSize[0],
-                }}
-                src={`${getCurrentUrl()}${ImageData.imageUrl}`}
-                alt="Image"
-              />
-            ) : ImageIndex ? (
-              <img
-                style={{
-                  width:
-                    ImageList?.Properties?.Size &&
-                    ImageList?.Properties?.Size[1],
-                  height:
-                    ImageList?.Properties?.Size &&
-                    ImageList?.Properties?.Size[0],
-                }}
-                src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]
-                  }`}
-                alt="Image"
+                src={`${getCurrentUrl()}${ImageList?.Properties?.Files[ImageIndex - 1]}`}
+                alt=""
               />
             ) : (
-              <IconComponent size={35} />
+              <IconComponent size={32} />
             )}
-            {/* <div className="text-center" style={{ fontFamily: fontProperties?.PName,
-                fontSize: fontProperties?.Size
-                    ? `${fontProperties.Size * fontScale}px`
-                    : `${12 * fontScale}px`,}}>
-              {Caption}
-            </div> */}
-            {/* <div
-              className="text-center"
-              style={{
-                fontFamily: fontProperties?.PName,
-                fontSize: fontProperties?.Size
-                  ? `${fontProperties.Size * fontScale}px`
-                  : `${12 * fontScale}px`,
-                whiteSpace: "normal",
-                wordWrap: "break-word",
-                textAlign: "center",
-                width: data?.Properties?.MaxButtonWidth,
-                maxWidth: "80px",
-              }}
-                 > */}
-            {captionWrap ?
-              <div
-                className="text-center"
-                style={{
-                  fontFamily: fontProperties?.PName,
-                  fontSize: fontProperties?.Size
-                    ? `${fontProperties.Size * fontScale}px`
-                    : `${12 * fontScale}px`,
-                  lineHeight: fontProperties?.Size
-                    ? `${fontProperties.Size * fontScale * 1.2}px`
-                    : "14px", // Adjust the value as needed
-                  whiteSpace: "normal",
-                  wordWrap: "break-word",
-                  textAlign: "center",
-                  width: data?.Properties?.MaxButtonWidth,
-                  maxWidth: "80px",
-                }}
-              >
+          </span>
+        </span>
 
-                {Caption}
-                <GoChevronDown
-                  size={fontProperties?.Size
-                    ? `${fontProperties.Size * fontScale}`
-                    : `${12 * fontScale}`}
-                />
-              </div> : (
-                <div>
-                <div
-                  className="text-center"
-                  style={{
-                    fontFamily: fontProperties?.PName,
-                    fontSize: fontProperties?.Size
-                      ? `${fontProperties.Size * fontScale}px`
-                      : `${12 * fontScale}px`,
-                    whiteSpace: "normal",
-                    wordWrap: "break-word",
-                    textAlign: "center",
-                    width: data?.Properties?.MaxButtonWidth,
-                    maxWidth: "80px",
-                    display: "flex",        
-                    flexDirection: "column", 
-                    alignItems: "center",    
-                    justifyContent: "center" 
-                  }}
-                >
-                  {Caption}
-                  <GoChevronDown
-                    size={
-                      fontProperties?.Size
-                        ? `${fontProperties.Size * fontScale}`
-                        : `${12 * fontScale}`
-                    }
-                  />
-                </div>
-              </div>
-             
-                )}
-          </div>
+        {/* Menu half */}
+        <span className="ewc-ribbon-split-drop" onClick={toggleDropdown}>
+          <span
+            className="ewc-ribbon-large-caption"
+            style={{
+              fontFamily: fontProperties?.PName,
+              fontSize: fontProperties?.Size ? `${captionPx}px` : undefined,
+              maxWidth: captionMaxW ? `${captionMaxW}px` : undefined,
+              minWidth: "min-content",
+            }}
+          >
+            {Caption}{" "}
+            <span className="ewc-ribbon-large-arrow">
+              <GoChevronDown size={arrowSize} />
+            </span>
+          </span>
+        </span>
+      </div>
 
-          {dropdownOpen && (
-            <div
-              className="custom-dropdown-menu"
-              ref={(el) => {
-                // Position fixed relative to the trigger so the dropdown
-                // escapes overflow:clip on ancestor TabControl/Ribbon.
-                if (el && wrapperRef.current) {
-                  const rect = wrapperRef.current.getBoundingClientRect();
-                  el.style.top = `${rect.bottom}px`;
-                  el.style.left = `${rect.left}px`;
-                }
-              }}
-              style={{
-                position: "fixed",
-                background: "#fff",
-                borderRadius: "5px",
-                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-                zIndex: 9999,
-              }}
-            >
-              {menuItems.map((item, index) => {
-                return (
-                  <RibbonDropDownItem key={index} data={item} handleSelectEvent={handleSelectEvent} menuLength={menuItems.length} startIndex={index} fontProperties={fontProperties} />
-                )
-
-              })}
-            </div>
-          )}
-        </Col>
-      </Row>
+      <RibbonPopup
+        anchorRef={wrapperRef}
+        open={dropdownOpen}
+        onClose={() => setDropdownOpen(false)}
+      >
+        {menuItems.map(({ key, item }) => (
+          <RibbonDropDownItem
+            key={item?.ID || key}
+            data={item}
+            handleSelectEvent={handleSelectEvent}
+            fontProperties={fontProperties}
+          />
+        ))}
+      </RibbonPopup>
     </div>
   );
 };
