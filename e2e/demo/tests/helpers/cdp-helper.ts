@@ -111,6 +111,12 @@ export async function findEWCPage(browser: Browser, pageTitle: string = 'EWC'): 
 // both the process leak and the backend session contention.
 let shared: { browser: Browser; page: Page } | null = null;
 
+// Playwright's default viewport. Because the page is shared, a spec that
+// calls setViewportSize (grid-longcell-*) would otherwise leak its size into
+// every later spec in the same shard — visual tests then capture at the
+// wrong dimensions (baselines are 1280x720). Restored on every re-acquire.
+const DEFAULT_VIEWPORT = { width: 1280, height: 720 };
+
 // Connect to EWC and find the EWC page (convenience function)
 export async function connectAndFindEWCPage(
   cdpPort: number = 8080,
@@ -121,9 +127,11 @@ export async function connectAndFindEWCPage(
   // a single failure doesn't cascade into every subsequent beforeAll.
   if (shared && shared.browser.isConnected() && !shared.page.isClosed()) {
     // Browser mode: refresh back to the menu so each describe starts from a
-    // clean client state ("just reload the page"). CDP/desktop mode leaves
-    // its externally-owned page untouched, as before.
+    // clean client state ("just reload the page"), at the default viewport
+    // (undoes any setViewportSize left over from a previous spec). CDP/desktop
+    // mode leaves its externally-owned page untouched, as before.
     if (BROWSER_URL) {
+      await shared.page.setViewportSize(DEFAULT_VIEWPORT);
       await shared.page.goto(BROWSER_URL);
       await waitForMenu(shared.page);
     }
