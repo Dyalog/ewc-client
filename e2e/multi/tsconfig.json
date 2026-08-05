@@ -13,7 +13,8 @@
     "types": ["node", "@playwright/test"]
   },
   "include": [
-    "tests/**/*"
+    "tests/**/*",
+    "global-setup.ts"
   ],
   "exclude": [
     "node_modules"

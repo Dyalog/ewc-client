@@ -1,4 +1,4 @@
- Initialise connected;who;i
+ Initialise connected;who;i;live
 ⍝ Called once per browser connection, in a thread of its own
 ⍝ (Handler.aplf:46 — app._EWC.TID←(app⍎fn)&CONNECTED). Must be monadic;
 ⍝ Init.aplf:58 refuses to start Multi mode without it.
@@ -30,9 +30,17 @@
 
  :Trap 0
      who←'-'
+     live←0
      :If 2=_EWC.⎕NC'QUERY'
-     :AndIf (≢_EWC.QUERY)≥i←_EWC.QUERY[;1]⍳⊂'who'
-         who←⊃_EWC.QUERY[i;2]
+         :If (≢_EWC.QUERY)≥i←_EWC.QUERY[;1]⍳⊂'who'
+             who←⊃_EWC.QUERY[i;2]
+         :EndIf
+         ⍝ ?live=1 makes this session poll the server-wide views on a Timer.
+         ⍝ Opt-in, never used by the specs: they drive F1.REFRESH explicitly so
+         ⍝ they control exactly when a snapshot is taken. It exists for the
+         ⍝ interactive playground (yarn ewc-multi:observe), where you want the
+         ⍝ Clones/Closed lists to update themselves as you open and shut windows.
+         live←(≢_EWC.QUERY)≥_EWC.QUERY[;1]⍳⊂'live'
      :EndIf
 
      'F1.T1'eWC'Label' 'Session:'(45 10)(23 130)
@@ -79,6 +87,10 @@
      ⍝ the wrong session is self-evident. Tests never type into it.
      'F1.T9'eWC'Label' 'Token:'(340 10)(23 130)
      'F1.TOKEN'eWC'Edit'(⍕⎕THIS)(340 150)(23 350)('Style' 'Single')
+
+     :If live
+         'F1.TICK'eWC'Timer' 1000('Active' 1)('Event' 'Timer' 'CBRefresh')('FireOnce' 0)
+     :EndIf
  :Else
      'F1.WHOAMI'eWS'Caption'('INIT ERROR: ',⊃⎕DMX.DM)
  :EndTrap

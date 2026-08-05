@@ -65,6 +65,7 @@ no RIDE client and no out-of-band channel.
 | `F1.CLONES` | live `mtest_*` namespaces |
 | `F1.CLOSELOG` | clones whose `onClose` has fired, from `#.mtestlog` |
 | `F1.REFRESH` / `F1.REFRESHN` | re-read the two views; sequence number |
+| `F1.TICK` | 1s auto-refresh Timer — only created when `?live=1` |
 | `F1.RUNPROBE` / `F1.PROBE` | WG round-trip probe and its verdict |
 | `F1.TOKEN` | probe target, seeded with the clone name |
 
@@ -93,6 +94,17 @@ yarn multitests
 yarn ewc-multi:stop
 ```
 
+**The server is not started for you by `yarn multitests`** — that would mean CI
+silently launching containers. If it isn't running the suite fails immediately
+with a message telling you the command to run, rather than a browser full of
+"This site can't be reached". The two interactive entry points
+(`multitests:watch`, `ewc-multi:observe`) *do* start one if it's missing, via
+`ci/ewc-multi-ensure.sh`, which reuses a running server rather than rebuilding
+it. `yarn ewc-multi:ensure` does that on its own.
+
+Note `ewc-multi:start` always destroys and recreates the container; `ensure`
+only starts one when nothing is answering.
+
 `yarn multitests:headed` to watch, `yarn multitests:report` for the HTML report,
 `yarn ewc-multi:logs` to follow the Dyalog log — session create/close, thread
 kills and namespace expunges all show up there.
@@ -102,6 +114,160 @@ how you test a candidate EWC fix without touching your main checkout.
 
 `MULTI_URL` overrides the base URL if you're running a hand-started server on
 another port.
+
+## Watching it happen
+
+Multi mode is much easier to believe once you've seen it, so there are five ways
+to watch — three live, two after the fact.
+
+| Command | What it gives you |
+|---|---|
+| `yarn multitests:step` | Click through the suite a step at a time |
+| `yarn multitests:watch` | Watch it run itself, slowed down |
+| `yarn ewc-multi:observe` | Tiled windows to poke at by hand |
+| `yarn multitests:ui` | Playwright UI mode, re-runs on change |
+| `yarn multitests:trace` | Replay a finished run |
+
+All of them tile their windows and label each one with its session.
+
+### `yarn multitests:watch` — watch the suite drive real users
+
+```bash
+yarn multitests:watch
+```
+
+Starts a Multi server if one isn't already up (and reuses it if it is), then
+runs the suite in real windows with actions slowed down, painting a banner
+along the bottom of **every open session window** naming that session
+(`#.mtest_2`) and the step currently running. So when the suite says "A sets its
+private value to 'alpha'", you see it typed in A's window and you see B's
+Private line not move.
+
+The lifecycle specs are the ones to watch: the observer window's `Clones` and
+`Closed` lines are where teardown becomes visible.
+
+Windows are tiled rather than stacked, so you can see every session at once. A
+session takes the lowest free slot and gives it back when it closes, so a
+long-lived observer keeps its position while short-lived sessions cycle through
+the slot beside it.
+
+Every knob is an environment variable, set in front of the command. The current
+values are printed at the top of each run so you don't have to remember them:
+
+```bash
+SLOWMO=800 yarn multitests:watch                  # slow the actions (default 350ms)
+STEP_PAUSE=2000 yarn multitests:watch             # dwell on each step (default 900ms)
+OBSERVE_TILE=520x600 yarn multitests:watch        # smaller windows (default 600x660)
+SLOWMO=800 STEP_PAUSE=2000 yarn multitests:watch  # combine freely
+yarn multitests:watch --grep recycled             # watch one test
+```
+
+`OBSERVE_TILE` is worth reaching for on a laptop display: the grid is computed
+by dividing the available screen by the tile size, so smaller tiles mean more
+columns. The default fits the mtest form (which occupies x 50–570, y 50–450)
+plus the banner.
+
+All of this is gated on `OBSERVE=1`, which only `multitests:watch` sets — a
+normal or CI run is untouched and takes the same time either way.
+
+One more that bites: `openSession` waits for `#F1.TOKEN`, not just
+`#F1.WHOAMI`. WHOAMI is the *first* widget `Initialise.aplf` creates (before its
+`:Trap`), so waiting on it alone hands back a session whose form is still
+streaming in — and the next click finds no control. TOKEN is the *last* widget,
+so it proves the whole form arrived. If you add widgets after it, move the wait.
+
+Two more that bite if you change this code: config `use: { viewport }` does
+**not** apply to these sessions, because `openSession` calls
+`browser.newContext()` directly and those options only reach contexts Playwright
+creates for the `page` fixture. And Chromium puts every new window in the same
+place, so the tiling is done explicitly over CDP
+(`Browser.getWindowForTarget` → `Browser.setWindowBounds`) in
+`tests/helpers/session.ts`.
+
+### `yarn multitests:step` — click through it yourself
+
+```bash
+yarn multitests:step
+```
+
+Same windows as watch mode, but nothing happens until you say so. Each session
+window's banner gains two buttons:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ #.mtest_1                                                   │
+│ B sets its own value to 'beta'      [ Next ▶ ] [ Run to end ⏭ ] │
+│ ⟵ click Next to run this                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The banner names the step that is *about* to run, so you can look at the state
+first, then click **Next ▶** and watch exactly what that one step changes.
+Clicking in any window advances them all. **Run to end ⏭** drops back to running
+normally for the rest of the run, without restarting.
+
+When the test finishes, the control becomes **End ⏹** and the windows are held
+open until you click it. Without that hold the last step's body would return,
+`afterEach` would close everything, and the final state — the one you stepped
+all the way through to see — would be on screen for a few milliseconds. The hold
+applies after "Run to end" too (which means *get me to the end*, not *and then
+throw it away*), and after a **failing** test, where seeing what was actually
+left behind is the whole point.
+
+The terminal follows along, so you can see where you are without reading the
+windows:
+
+```
+  ⏸  A sets its private value to 'alpha'   [Next ▶]
+  ⏸  B is untouched by it   [Next ▶]
+  ⏹  test complete — click End to tear down
+```
+
+The hold lives in `teardown()` (`tests/helpers/session.ts`), which every spec's
+`afterEach` calls instead of closing sessions itself — so a new spec gets the
+behaviour by using the same one-liner.
+
+There is no test timeout in this mode — the gap between steps is however long
+you take. The first step of each test runs straight through, because it opens
+the first session and there is no window to click in yet.
+
+`--grep` is especially worth it here: `yarn multitests:step --grep recycled`
+walks just the session-id recycling test, which is the most interesting one to
+take slowly.
+
+### `yarn multitests:ui` — step through with time travel
+
+Playwright's UI mode. Every step is named (the specs are written with `step()`),
+so you get a clickable list of beats and, for each one, the exact DOM of each
+window at that moment. Best for "what precisely was on screen when that
+assertion ran?" — and it re-runs on file change.
+
+### `yarn ewc-multi:observe [n]` — an interactive playground
+
+```bash
+yarn ewc-multi:observe 3
+```
+
+Opens N tiled windows (default 3, each its own EWC session) and leaves them
+open for you to poke at. Each is loaded with `?live=1`, which gives that session
+a 1-second Timer that re-reads the server-wide views — so the `Clones` and
+`Closed` lines update themselves as you open and close windows, no clicking
+required.
+
+`?live=1` is opt-in and the specs never pass it: they drive `F1.REFRESH`
+explicitly so they control exactly when a snapshot is taken.
+
+Worth trying: type in one window's Private box and watch the others ignore it;
+close a window with the OS button and watch the survivors drop it from `Clones`
+and gain it in `Closed`; hit *Run WG probe* in several windows at once and check
+each reports its own clone name.
+
+### Traces — after the fact
+
+`multitests:watch` records a trace for every test (`trace: 'on'` under
+`OBSERVE`). Open one with `yarn multitests:trace <path-to-trace.zip>`, or browse
+them from `yarn multitests:report`. Same step-by-step DOM snapshots as UI mode,
+but rewindable after the run — which is how to inspect a CI failure.
 
 ## What the specs cover
 
@@ -114,36 +280,87 @@ another port.
   each return to the session that asked; interleaved events and writes stay
   attributed to the right session.
 
+Everything passes against an EWC carrying the two fixes below, in well under a
+minute. Against `Dyalog/ewc` `main` the reaping test fails and the churn test
+intermittently wedges the server — both for the reasons documented there, not
+because Multi mode's isolation is wrong. Multi mode's core promise (a private
+clone, thread and event pump per user) holds up under every test here.
+
 `workers: 1`, for a different reason than the demo suite. There it's because one
 Browser-mode backend is one session. Here the backend handles many sessions
 happily, but the specs assert on **server-wide** state, which two workers' worth
 of sessions would make meaningless. The concurrency being tested is between
 contexts *inside* a test, not between workers.
 
-## Known failure
+## Required EWC fixes
 
-**`a session whose socket dies without a Close signal is still reaped` fails.**
-This is a real EWC defect, not a flaky test, and it is left red on purpose.
+The suite passes in full **only against an EWC that carries both fixes below**.
+Neither is in this repo; both belong in `Dyalog/ewc`.
 
-Teardown currently depends entirely on the client's graceful goodbye: the page's
-`pagehide` handler (`src/App.jsx:103-126`) sends `{"Signal":{"Name":"Close"}}`,
-and EWC tears the session down in ~300 ms. If the socket instead just dies —
-laptop lid shut, wifi dropped, browser crashed — the session is **never**
-reclaimed. Measured: still present after 60 s of idle, `onClose` never fired, the
-thread never killed, the clone never expunged.
+### 1. `onTimeout` never reaps lost connections — `EWC/onTimeout.aplf`
 
-`onTimeout.aplf` exists to reap exactly this case (it sweeps `WSS.Conx` with
-`LDRC.Exists`), but it is not catching it. For a hosting feature this leaks a
-thread and a namespace per lost connection, against `MAXSESSIONS` (default 100) —
-consistent with the "Unable to create more than 100 sessions" note in
-`ci/ewc-demo-start.sh`. The fix belongs in `Dyalog/ewc`.
+Session teardown currently depends entirely on the client's graceful goodbye: the
+page's `pagehide` handler (`src/App.jsx:103-126`) sends
+`{"Signal":{"Name":"Close"}}` and EWC tears the session down in ~300 ms. If the
+socket instead just dies — laptop lid shut, wifi dropped, browser crashed — the
+session was **never** reclaimed: still present after 60 s idle, `onClose` never
+fired, thread never `⎕TKILL`ed, clone never `⎕EX`ed. That leaks a thread and a
+namespace per lost connection against `MAXSESSIONS` (default 100), consistent
+with the "Unable to create more than 100 sessions" note in
+`ci/ewc-demo-start.sh`.
 
-## Also found by this suite
+`onTimeout.aplf` exists to reap exactly this. Its guard is the problem:
 
-`lifecycle.spec.ts`'s churn test **intermittently** wedges an unpatched EWC
-server — observed in two of three full runs, never once the fix below is applied.
-The failure mode is total: the server stops answering and every later test dies
-with `net::ERR_ABORTED`. The Dyalog log shows:
+```apl
+:If 2=⎕NC 'WSS.Conx'      ⍝ ALWAYS FALSE
+```
+
+`Conx` is a `:field public` on the `wss` instance, and `⎕NC` does not classify
+through an instance reference — it returns `0` for `'WSS.Conx'`, and also for
+`'Conx'` evaluated inside the instance. So the guard never passed and the reaper
+never ran, once, ever.
+
+Confirmed live over RIDE against an abandoned session: Conga *does* know the
+socket is gone (`WSS.LDRC.Exists¨WSS.Conx[;1]` → `1 0`), and running the body
+by hand with the guard bypassed immediately logged `Killed thread 4` /
+`Expunged #.mtest_2`. The body is correct; only the guard is broken.
+
+`⎕NC 'WSS'` does classify (returns `9`), and `Conx` is initialised with the
+instance, so:
+
+```apl
+:Trap 0
+    :If 9=⎕NC 'WSS'
+    :AndIf 0≠≢conns←WSS.Conx[;1]
+    :AndIf ∨/m←~WSS.LDRC.Exists¨conns
+        endSession¨{0 ⍵ 'Close'}¨m/conns
+    :EndIf
+:Else
+    'E' Log 'onTimeout failed: ',⊃⎕DMX.DM
+:EndTrap
+```
+
+The `:Trap` is not decoration: this runs on the Listen thread, where an escaping
+error suspends the thread and wedges the server for every user — exactly the
+failure mode of issue 2 below.
+
+### 2. `wss.aplc` monadic/dyadic `Log` — already fixed upstream
+
+`wss.aplc:381` defines `∇ Log msg` (monadic) while `:133`, `:144` and `:148` call
+it dyadically. Line 144 fires when a non-WebSocket connection errors out, so the
+`SYNTAX ERROR` suspends the Listen thread and takes the whole server down.
+
+**Already fixed on `mandelbrot` and `arachnophobia`** (identical on both), which
+make `Log` ambivalent, route it through the dyadic `#.EWC.Log` so `LOGMODES` /
+`LOGFILE` apply, and trap it so a logging failure can never crash Listen. It is
+**not** on `main`. See "How this suite found it" below.
+
+## How this suite found the `Log` wedge
+
+`lifecycle.spec.ts`'s churn test **intermittently** wedges an EWC server that
+lacks fix 2 — observed in two of three full runs, never once it is applied. The
+failure mode is total: the server stops answering and every later test dies with
+`net::ERR_ABORTED`. The Dyalog log shows:
 
 ```
 2:SYNTAX ERROR: The function does not take a left argument
@@ -164,18 +381,29 @@ cure. It also explains the intermittency: line 144 only fires when a non-WS
 connection produces a Conga `Error` event, which depends on exactly how each
 teardown is seen.
 
-Making `Log` ambivalent fixes it:
+The churn test is therefore a **regression test** for the `mandelbrot` /
+`arachnophobia` fix — it is what will tell you if that fix is ever lost or if
+`main` ships without it.
 
-```apl
-∇ {mode}Log msg
-  :If 0=⎕NC'mode' ⋄ mode←'' ⋄ :EndIf
-  ⎕←msg
-∇
+## Which EWC ref CI builds against
+
+`.github/actions/checkout-ewc-server` resolves, in order: the
+`workflow_dispatch` input → `EWC-REF: <branch>` in the PR body → a branch on
+`Dyalog/ewc` with the same name as this branch → `main`.
+
+At time of writing neither fix is on `Dyalog/ewc` `main`, and the local
+`multimode-tests` branch there is not pushed — so CI falls back to `main` and
+`e2e-multi` will fail the reaping test and intermittently wedge on churn. Until
+both fixes land on `main`, point CI at a branch that has them:
+
+```
+EWC-REF: arachnophobia
 ```
 
-Verified locally against a patched copy (`EWC_SRC=...`), where the churn test
-goes from wedging the server to passing consistently. The fix belongs in
-`Dyalog/ewc` and has not been applied there.
+in the PR body (that branch carries fix 2; fix 1 still needs applying anywhere).
+
+Locally, `EWC_SRC=/path/to/ewc` does the same job — it is how both fixes were
+verified without touching the main checkout.
 
 ## CI
 
