@@ -35,6 +35,7 @@
  'F1.RIGHT.TOP.WIDTH'eWC'Edit' (⍕width) (30 70)(23 50)('FieldType' 'Numeric')('Border' 1)
 
  'F1.RIGHT.TOP.RESIZE'eWC'Button' 'Resize Form' (25 140)(23 90)('Event' 'Select' 'CBUpdateSplit')
+ 'F1.LEFT.TOGGLE'eWC'Button' 'Toggle List AutoConf' (310 10)(23 180)('Event' 'Select' 'CBUpdateSplit')
 
  (TBL←'F1.RIGHT.BOT.TABLE') eWC 'Group' 'Players'('Posn' (10 10))('Size' (450 550))('Attach' 'Top' 'Left' 'Bottom' 'Right')
 

@@ -15,6 +15,7 @@
  'HScroll'
  'Input'
  'CellTypes'
+ 'CellSet'
  'InputMode'
  'InputModeKey'
  'FCol'
@@ -29,4 +30,5 @@
  'CSS'
  'Event'
  'Attach'
+ 'AutoConf'
 )

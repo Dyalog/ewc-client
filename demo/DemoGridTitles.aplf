@@ -58,7 +58,7 @@
  mixVals[10;]←(,'j') (,'s') 'the last scrolled row with a long value too'
  mixRows←,¨'abcdefghij'
  (F,'.LBL5')eWC'Label' 'Auto: long title / long cell / long after scroll'(340 20)(20 600)
- (F,'.G5')eWC'Grid'('Posn'(370 20))('Size'(180 488))('Values' mixVals)('ColTitles' mixCols)('RowTitles' mixRows)
+ (F,'.G5')eWC'Grid'('Posn'(370 20))('Size'(130 488))('Values' mixVals)('ColTitles' mixCols)('RowTitles' mixRows)
 
 ⍝ Hidden: TitleHeight 0 → no col-title row (thead unmounts entirely)
  (F,'.LBL6')eWC'Label' 'TitleHeight 0 (no col titles)'(560 20)(20 300)

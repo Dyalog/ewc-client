@@ -84,6 +84,10 @@
      expr←'.(_EWC_Name ',(⍕propnames,m/PropList),')←(⊂Name),v'
      REF←⍎fullname←(⍕caller),'.',nsname
      ⍎'REF',expr ⍝ Set properties in the "server-side DOM"
+     :If 'grid'≡type
+     :AndIf ~(⊂'CellSet')∊propnames
+         REF.CellSet←gridCellSet REF.Values
+     :EndIf
  :EndIf
 
  modal←(⊂type)∊⎕C modalClasses

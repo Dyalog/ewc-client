@@ -82,6 +82,11 @@
      expr←'.',(m/'('),(⍕names),(~m)↓')←',m↓'⊃values'
      REF←⍎fullname←(⍕caller),'.',nsname
      ⍎'REF',expr ⍝ Update "server-side DOM"
+     :If 'grid'≡⎕C type
+     :AndIf (⊂'Values')∊names
+     :AndIf ~(⊂'CellSet')∊names
+         REF.CellSet←gridCellSet REF.Values
+     :EndIf
  :EndIf
 
  :If type≡'imagelist'

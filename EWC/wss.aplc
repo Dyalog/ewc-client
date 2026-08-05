@@ -130,7 +130,7 @@
                           ⍝ Tracked WebSocket session - call Close
                           ⍝ Attempts to cover 1105 and any other non-zero error
                           ⍝ on a live session.
-                          'C' Log'Server: DRC.Wait reported error ',(⍕4⊃wres),' on WS session ',(2⊃wres)
+                          Log'Server: DRC.Wait reported error ',(⍕4⊃wres),' on WS session ',(2⊃wres)
                           :If ~_stop
                               :If 0≠'Close'RunHandler wres
                                   :Leave
@@ -140,14 +140,14 @@
                           ⍝ Not a tracked WS session — typically an HTTP
                           ⍝ sub-connection (asset fetch on a dying CEF
                           ⍝ renderer) or an already-cleaned-up session.
-                          ⍝ Treat as a disconnect, but log. 
-                          'C' Log'Client disconnected (Conga ',(⍕4⊃wres),') on non-WS connection ',(2⊃wres)
+                          ⍝ Treat as a disconnect, but log.
+                          Log'Client disconnected (Conga ',(⍕4⊃wres),') on non-WS connection ',(2⊃wres)
                       :EndIf
                   :Else
                       ⍝ Error event with data=0. Just a fallback error log
-                      'E' Log'Conga error event: ',⍕wres
+                      Log'Conga error event: ',⍕wres
                   :EndIf
-
+     
               :Case 'Connect'
                   :If 0≠evt RunHandler wres
                       :Leave
@@ -160,7 +160,7 @@
                   obj Serve data
      
               :Case 'WSUpgrade'
-                  :If 0≠evt RunHandler wres  
+                  :If 0≠evt RunHandler wres
                       :Leave
                   :EndIf
                   hdrs←ParseHeaders data
@@ -198,7 +198,7 @@
                   Log'Server: Object "',ServerName,'" has been closed - shutting down'
                   _stop←1
               :EndIf
-          :Else            
+          :Else
               ⎕←wres
               Log'Server: Unhandled Conga event:'
               Log⍕wres
@@ -222,22 +222,22 @@
 
 
     ∇ obj Serve data;method;url;httpver;headers;file;respheaders;rc;msg;status;payload;close;ind;i
-    ⍝ serve HTML content   
+    ⍝ serve HTML content
       (method url httpver headers)←data
       respheaders←1 2⍴'Server'(deb⍕2↑Version)
       respheaders⍪←'Date'(2⊃LDRC.GetProp'.' 'HttpDate')
       url←(¯1+url⍳'?')↑url ⍝ Ignore queries
-      :If method≡⍥⎕C'get' 
+      :If method≡⍥⎕C'get'
           :If '/'≡⍥,url
               url←DefaultPage
           :EndIf
-          url↓⍨←+/∧\'/'=url ⍝ drop off leading '/'s   
+          url↓⍨←+/∧\'/'=url ⍝ drop off leading '/'s
           :If ~0∊⍴_mappings
           :AndIf (≢_mappings)≥ind←_mappings[;1]⍳⊂url↑⍨i←¯1+url⍳'/'
               file←((⊂ind 2)⊃_mappings),i↓url
           :Else
               file←HTMLFolder,url
-          :EndIf   
+          :EndIf
           :If ⎕NEXISTS file
               respheaders⍪←'content-type'(ContentType file)
 ⍝              respheaders⍪←'content-encoding' 'gzip'

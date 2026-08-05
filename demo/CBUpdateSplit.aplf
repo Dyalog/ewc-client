@@ -55,6 +55,12 @@ label←'F1.RIGHT.TOP.Average'
      :EndSelect
      label eWS 'Caption' txt
 
+:Case 'F1.LEFT.TOGGLE'
+     :If 3≡'F1.LEFT.COLORS' eWG 'AutoConf'
+         'F1.LEFT.COLORS' eWS 'AutoConf' 0
+     :Else
+         'F1.LEFT.COLORS' eWS 'AutoConf' 3
+     :EndIf
 :Else
     ⎕←'Unexpected message: ',args
 :EndSelect

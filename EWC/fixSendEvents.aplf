@@ -23,7 +23,10 @@
      (m/vals)←props⍎(1≠+/m)↓'⊂',⍕m/vcf
      (vals ct fs)←vals
      :If ~0∊∊⍴¨fs ct
-⍝         props.FormattedValues←,¨fs[ct]⎕FMT¨⍉∘⍪¨vals
+         :If ((⍴ct)≢⍴vals)∨∨/,(ct<⎕IO)∨ct>¯1+⎕IO+≢fs
+             'W'Log'Grid ',id,': CellTypes ',(⍕⍴ct),' vs Values ',(⍕⍴vals),' - conforming'
+             ct←(¯1+⎕IO+≢fs)⌊⎕IO⌈(⍴vals)↑ct
+         :EndIf
          props.FormattedValues←fs[ct]format1Cell¨vals
      :EndIf
  :EndIf
