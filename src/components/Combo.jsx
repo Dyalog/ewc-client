@@ -417,7 +417,9 @@ const Combo = ({ data, value }) => {
         setHighlightedIndex(prev => Math.max(prev - pageSize, 0));
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (highlightedIndex >= 0 && Items?.[highlightedIndex]) {
+        // Compare against undefined, not truthiness: a legitimately empty item
+        // ('') would otherwise be unselectable by keyboard.
+        if (highlightedIndex >= 0 && Items?.[highlightedIndex] !== undefined) {
           handleOptionClick(Items[highlightedIndex], highlightedIndex, e);
         }
       } else if (e.key === 'Escape') {
