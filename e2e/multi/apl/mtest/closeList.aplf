@@ -1,0 +1,14 @@
+ r←closeList arg;c
+⍝ Space-separated names of the clones whose onClose hook has fired, oldest
+⍝ first. Read under the same :Hold that onClose writes under, since the
+⍝ writer runs on EWC's Listen thread while readers are session threads.
+
+ :Hold 'MTESTLOG'
+     c←#.mtestlog.closed
+ :EndHold
+
+ :If 0=≢c
+     r←'(none)'
+ :Else
+     r←1↓∊' ',¨c
+ :EndIf

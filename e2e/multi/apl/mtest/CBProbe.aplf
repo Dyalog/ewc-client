@@ -1,0 +1,39 @@
+ CBProbe args;want;got;bad;i;n
+⍝ Hammer the synchronous WG round-trip and report whether every reply came
+⍝ back to the session that asked for it.
+⍝
+⍝ Mechanism under test: eWG blocks the session thread in
+⍝ `WG_TIMEOUT ⎕TGET token` (WaitForWG.aplf:7) while EWC's Listen thread
+⍝ deposits the browser's reply with `⎕TPUT token` (Handler.aplf:75). Both
+⍝ sides compute token←WG_TOKENBASE+TOKENSTEP×1⌈ID×MODE=2 — per-session
+⍝ under Multi. If that routing is wrong, a reply lands in the wrong
+⍝ session's ⎕TGET and this reads back another clone's name.
+⍝
+⍝ F1.TOKEN is an Edit because only dynamic properties actually go to the
+⍝ browser; a Label's Caption would be answered locally and prove nothing.
+
+ n←8
+ want←⍕⎕THIS
+ bad←''
+
+ :Trap 0
+     :For i :In ⍳n
+         got←∊'F1.TOKEN'eWG'Text'
+         :If got≢want
+             bad,←' ',got
+         :EndIf
+         ⍝ Form Size is dynamic too — extra traffic to widen the window in
+         ⍝ which a concurrent session's reply could be mis-delivered.
+         {}'F1'eWG'Size'
+     :EndFor
+
+     :If 0=≢bad
+         'F1.PROBE'eWS'Caption'('OK ',want,' x',⍕n)
+     :Else
+         'F1.PROBE'eWS'Caption'('CROSSED ',want,' got:',bad)
+     :EndIf
+ :Else
+     ⍝ A WG timeout signals 6 from WaitForWG.aplf:11. Surface it as text so
+     ⍝ the test fails with a diagnosis instead of hanging.
+     'F1.PROBE'eWS'Caption'('ERROR ',∊⊃⎕DMX.DM)
+ :EndTrap

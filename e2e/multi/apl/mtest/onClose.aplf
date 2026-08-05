@@ -1,0 +1,17 @@
+ onClose arg
+⍝ Called when a browser session ends, so that a SURVIVING session can prove
+⍝ this one was torn down properly (see CBRefresh / F1.CLOSELOG).
+⍝
+⍝ Two constraints make this function deliberately paranoid:
+⍝
+⍝  1. closeConnection.aplf:9 calls onClose WITHOUT a trap (endSession.aplf:15
+⍝     does wrap it). A signal escaping here would break EWC's own teardown
+⍝     on the graceful-close path, so this must be total.
+⍝  2. It runs on the Listen thread, not the session thread, while session
+⍝     threads may be reading the log — hence the :Hold.
+
+ :Trap 0
+     :Hold 'MTESTLOG'
+         #.mtestlog.closed,←⊂⍕⎕THIS
+     :EndHold
+ :EndTrap

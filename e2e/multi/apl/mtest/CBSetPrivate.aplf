@@ -1,0 +1,7 @@
+ CBSetPrivate args
+⍝ Copy the Edit's contents into a clone-local variable and echo it back.
+⍝ `private` is a variable of #.mtest_N, so setting it here must have no
+⍝ effect whatsoever on any other session.
+
+ private←∊'F1.PRIVATEIN'eWG'Text'
+ 'F1.PRIVATE'eWS'Caption'private
