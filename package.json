@@ -23,7 +23,15 @@
     "ewc-demo:start": "bash ci/ewc-demo-start.sh",
     "ewc-demo:stop": "docker rm -f ewc-demo",
     "ewc-demo:logs": "docker logs -f ewc-demo",
-    "ewc-demo:restart": "yarn ewc-demo:start"
+    "ewc-demo:restart": "yarn ewc-demo:start",
+    "multitests": "playwright test --config playwright.multi.config.ts",
+    "multitests:headed": "HEADED=1 playwright test --config playwright.multi.config.ts",
+    "multitests:debug": "playwright test --config playwright.multi.config.ts --debug",
+    "multitests:report": "playwright show-report playwright-report-multi",
+    "ewc-multi:start": "bash ci/ewc-multi-start.sh",
+    "ewc-multi:stop": "docker rm -f ewc-multi",
+    "ewc-multi:logs": "docker logs -f ewc-multi",
+    "ewc-multi:restart": "yarn ewc-multi:start"
   },
   "dependencies": {
     "apexcharts": "^5.3.6",

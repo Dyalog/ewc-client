@@ -32,6 +32,10 @@ cat <<'BANNER'
 |_____/  |_/_/    \_\______\____/ \_____|
 BANNER
 
+# Which APL setup to feed in. Defaults to the Browser-mode demo server;
+# ci/ewc-multi-start.sh overrides it to bring up Multi mode instead.
+SETUP_APL="${SETUP_APL:-/scripts/setup-ewc.apl}"
+
 # Feed the APL setup, then hold stdin with a long sleep so dyalog
 # stays alive in demo.Run's wait loop.
-(cat /scripts/setup-ewc.apl; sleep infinity) | "${DYALOG}/dyalog" +s -q
+(cat "${SETUP_APL}"; sleep infinity) | "${DYALOG}/dyalog" +s -q
