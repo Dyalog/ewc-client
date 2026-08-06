@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   setStyle,
+  parentId,
   parseFlexStyles,
   rgbColor,
   getFontStyles,
@@ -12,7 +13,7 @@ import {
   handleMouseDoubleClick,
   handleMouseWheel,
 } from '../../utils';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle, useResizeObserver, useConfigureReport } from '../../hooks';
 import { getBorderStyles } from '../../styles/edgeStyles';
 import { inferCellType, getAlignmentForType, isNumericType } from './cellTypes';
 import useNumericFormatter, { normalizeAplFormatted } from './useNumericFormatter';
@@ -49,8 +50,9 @@ const columnLetter = (i) => {
   return s;
 };
 
-// Map EWC scroll values to CSS overflow values
-// 0 = hidden, -1/-2 = auto (default), -3 = always visible
+// Map ⎕WC Grid scroll values to CSS overflow (per the Dyalog VScroll/HScroll
+// docs, Grid section): 0 = no scrollbar (hidden), ¯1 = shown when required
+// (auto), ¯2 = same as ¯1 (auto), ¯3 = always shown.
 const getOverflowStyle = (scrollValue) => {
   const val = Number(scrollValue);
   if (val === 0) return 'hidden';
@@ -781,6 +783,28 @@ const Grid = ({ data }) => {
 
   const customStyles = parseFlexStyles(CSS);
   const baseStyles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
+  // Resize via Configure - especially relevant when using a customer's 'virtual
+  // grid' mechanism to only render what's needed.
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
+
+  // Scrollbars and Grid siblings collaborating
+  const externalBars = useMemo(() => {
+    const parent = findCurrentData(parentId(data?.ID));
+    let v = false;
+    let h = false;
+    if (parent && typeof parent === 'object') {
+      for (const key in parent) {
+        const p = parent[key]?.Properties;
+        if (p?.Type !== 'Scroll') continue;
+        if (Number(p.VScroll) === -1) v = true;
+        if (Number(p.HScroll) === -1) h = true;
+      }
+    }
+    return { v, h };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.ID, findCurrentData]);
 
   const styles = {
     ...baseStyles,
@@ -790,6 +814,7 @@ const Grid = ({ data }) => {
     // Honor APL Border/EdgeStyle; default keeps the historical #b4b4b4 line.
     ...getBorderStyles(EdgeStyle, Border, '#b4b4b4'),
     ...customStyles,
+    ...attachStyle,
   };
 
   // Normalize titles to arrays. Missing/empty → Excel-style auto-labels
@@ -817,10 +842,17 @@ const Grid = ({ data }) => {
   // ⎕WC behavior: undefined/empty/negative TitleWidth/Height/CellWidths
   // auto-size to fit content; 0 hides titles; positive is fixed.
   const {
-    effectiveTitleWidth, effectiveTitleHeight, autoColWidths, wantsAutoCols,
+    effectiveTitleWidth, effectiveTitleHeight, titleLines, autoColWidths, wantsAutoCols,
   } = useGridTitleSize(
     TitleWidth, TitleHeight, CellWidths, rowTitlesArray, colTitlesArray, gridRef,
   );
+
+  // Publish the effective title band height + line count as CSS vars so the
+  // header line-height derives from them (see Grid.css .grid-col-header).
+  const titleBandVars = {
+    '--grid-title-band': `${effectiveTitleHeight}px`,
+    '--grid-title-lines': titleLines || 1,
+  };
 
   // ⎕WC: TitleWidth/Height = 0 fully hides the row/col title band (no DOM at all).
   const showRowTitles = hasRowTitles && effectiveTitleWidth !== 0;
@@ -876,8 +908,8 @@ const Grid = ({ data }) => {
         ref={containerRef}
         className={`grid-container${Number(VScroll) === -3 ? ' force-vscroll' : ''}${Number(HScroll) === -3 ? ' force-hscroll' : ''}`}
         style={{
-          overflowX: getOverflowStyle(HScroll),
-          overflowY: getOverflowStyle(VScroll),
+          overflowX: externalBars.h ? 'hidden' : getOverflowStyle(HScroll),
+          overflowY: externalBars.v ? 'hidden' : getOverflowStyle(VScroll),
         }}
       >
         {Values && Values.length > 0 ? (
@@ -894,7 +926,10 @@ const Grid = ({ data }) => {
             </colgroup>
             {showColTitles && (
               <thead>
-                <tr className="grid-header-row" style={{ height: effectiveTitleHeight }}>
+                <tr
+                  className="grid-header-row"
+                  style={{ height: effectiveTitleHeight, ...titleBandVars }}
+                >
                   {showRowTitles && (
                     <th
                       className="grid-corner-cell"

@@ -7,6 +7,18 @@
   font-family: 'Noto Sans', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Default behaviour should be to inherit fonts. NB, this is in CSS and not using
+   inheritedProperties() in JS, as there are default styles too */ 
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 input[type='number'] {
   text-align: right;
 }

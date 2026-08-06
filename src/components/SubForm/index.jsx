@@ -19,7 +19,7 @@ import {
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import SelectComponent from "../SelectComponent";
-import { useAppData } from "../../hooks";
+import { useAppData, useAttachStyle, useResizeObserver, useConfigureReport } from "../../hooks";
 
 const SubForm = ({ data }) => {
   const { findCurrentData, socket, inheritedProperty } = useAppData();
@@ -38,10 +38,18 @@ const SubForm = ({ data }) => {
 
   const observedDiv = useRef(null);
   const styles = setStyle(data?.Properties, "absolute", Flex);
+  const attachStyle = useAttachStyle(data);
+  const configureDims = useResizeObserver(document.getElementById(data?.ID), { box: 'content' });
+  useConfigureReport(data?.ID, Event, socket, configureDims);
 
   const flexStyles = parseFlexStyles(CSS);
 
   const updatedData = excludeKeys(data);
+
+  // Does the SubForm have a Ribbon?
+  const hostsRibbon = Object.values(updatedData).some(
+    (c) => c?.Properties?.Type === "Ribbon"
+  );
 
   const ImageData = findCurrentData(Picture && Picture[0]);
 
@@ -136,8 +144,13 @@ const SubForm = ({ data }) => {
   );
   // Omit `height` rather than setting it undefined: these are spread over
   // updatedStyles, so an explicit undefined would wipe a height coming from CSS.
+  // A hosted Ribbon sizes the SubForm itself, so it takes precedence.
   const height = Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined;
-  const heightStyle = isFlexContainer ? { minHeight: height } : { height };
+  const heightStyle = hostsRibbon
+    ? { height: "max-content" }
+    : isFlexContainer
+    ? { minHeight: height }
+    : { height };
 
   // Zilde is no background, otherwise inherited, otherwise default
   let background;
@@ -165,6 +178,7 @@ const SubForm = ({ data }) => {
         width:  Size ? Size[1] : inheritedSize ? inheritedSize[1] : undefined,
         top: Posn && Posn[0],
         left: Posn && Posn[1],
+        ...attachStyle,
       }}
       ref={observedDiv}
       onMouseDown={(e) => {

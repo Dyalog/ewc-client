@@ -7,6 +7,8 @@ export * from "./getLastTabButton";
 export * from "./locateInDataRef";
 export * from "./getFontStyles"
 export * from "./keyShiftState";
+export * from "./getAttachStyle";
+export * from "./autoconfGate";
 
 // 1,4,2 is what quad-WC uses and annoyingly what e.buttons uses in JS, but
 // 0,1,2 is what e.button (NB no s) uses in JS

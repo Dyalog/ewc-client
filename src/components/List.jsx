@@ -13,11 +13,12 @@ import {
 } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import { useEffect, useRef, useState } from "react";
-import { useAppData, useResizeObserver } from "../hooks";
+import { useAppData, useResizeObserver, useAttachStyle } from "../hooks";
 
 const List = ({ data }) => {
   const { socket, findCurrentData, inheritedProperties } = useAppData();
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const { Items, SelItems, Visible, Size, Event, CSS, EdgeStyle, Border, TabIndex } = data?.Properties;
   const { FontObj } = inheritedProperties(data, 'FontObj');
   const customStyles = parseFlexStyles(CSS);
@@ -266,6 +267,7 @@ const List = ({ data }) => {
           : { border: "1px solid " + (isFocused ? "black" : "darkgrey") }
         ),
         display: Visible === 0 ? "none" : "block",
+        ...attachStyle,
       }}
       tabIndex={TabIndex ?? 0}
       onMouseDown={(e) => {

@@ -1,0 +1,44 @@
+.ewc-tabstrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding-left: 4px;
+  --tab-pad-y: 0.35em;
+  background: #e6ebf2;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.ewc-tab {
+  --tab-accent: #2b579a;
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* Height follows the font: line-box + vertical padding, no magic px. */
+  padding: var(--tab-pad-y, 0.35em) 15px;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #3b3b3b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+
+.ewc-tab:hover {
+  background: #d7e5f6;
+  border-color: #c3d7ef;
+}
+
+.ewc-tab--active,
+.ewc-tab--active:hover {
+  color: #1a1a1a;
+  font-weight: 600;
+  background: #ffffff;
+  border-color: #d4d4d4;
+  border-top: 2px solid var(--tab-accent);
+  margin-bottom: -1px;
+  z-index: 1;
+}

@@ -1,5 +1,5 @@
 import { setStyle, getImageStyles } from '../../utils';
-import { useAppData } from '../../hooks';
+import { useAppData, useAttachStyle } from '../../hooks';
 import { useEffect } from 'react';
 
 const ImageSubForm = ({ data }) => {
@@ -7,6 +7,7 @@ const ImageSubForm = ({ data }) => {
   const { findDesiredData } = useAppData();
 
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
   const { Size, Picture, Posn } = data?.Properties;
 
   const ImageData = findDesiredData(Picture && Picture[0]);
@@ -25,7 +26,7 @@ const ImageSubForm = ({ data }) => {
     );
   }, []);
 
-  let updatedStyles = { ...styles, ...imageStyles };
+  let updatedStyles = { ...styles, ...imageStyles, ...attachStyle };
 
   return <div style={updatedStyles}></div>;
 };

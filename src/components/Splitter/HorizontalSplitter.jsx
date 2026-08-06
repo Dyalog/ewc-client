@@ -5,9 +5,10 @@ import { extractStringUntilLastPeriod, parseFlexStyles, setStyle } from '../../u
 const HorizontalSplitter = ({ data }) => {
   const elementRef = useRef(null);
 
-  const { Size: SubformSize, Posn: SubFormPosn } = JSON.parse(
+  // Grab the Subform's Size
+  const { Size: SubformSize } = JSON.parse(
     localStorage.getItem(extractStringUntilLastPeriod(data?.ID))
-  );
+  ) || {};
 
 
   const { Posn, SplitObj1, SplitObj2, Event, Size, CSS } = data?.Properties;
@@ -24,10 +25,22 @@ const HorizontalSplitter = ({ data }) => {
 
   const [oldFormValues, setoldFormValues] = useState(SubformSize && SubformSize);
   const [oldHeight, setOldHeight] = useState(Size && Size[0]);
+  // See VerticalSplitter: reflow only on genuine resizes.
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
-    if (!oldFormValues) return;
+    // Be defensive about waiting until we're ready before reflowing
+    if (!readyRef.current || !oldFormValues) {
+      if (dimensions?.height) setoldFormValues([dimensions.height, dimensions.width]);
+      return;
+    }
+    // No-op if the form size hasn't actually changed
+    if (oldFormValues[0] === dimensions.height && oldFormValues[1] === dimensions.width) return;
 
     if (oldHeight == dimensions.height) {
       const obj1 = JSON.parse(localStorage.getItem(SplitObj1));
@@ -197,6 +210,8 @@ const HorizontalSplitter = ({ data }) => {
     backgroundColor: '#F0F0F0',
     cursor: 'row-resize',
     position: 'absolute',
+    // Sit above the panes so the divider is always grabbable (see VerticalSplitter).
+    zIndex: 10,
     top: position?.top,
     left: 0,
     ...style,

@@ -1,7 +1,7 @@
 import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { createPortal } from 'react-dom';
-import { useAppData, useResizeObserver } from '../hooks';
+import { useAppData, useResizeObserver, useAttachStyle } from '../hooks';
 import { useGridContext, useGridMode } from './Grid/GridContext';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -32,6 +32,7 @@ const Combo = ({ data, value }) => {
 
   const customStyles = parseFlexStyles(CSS)
   const styles = setStyle(data?.Properties);
+  const attachStyle = useAttachStyle(data);
 
   const { Items, SelItems, Event, Visible, Posn, Size, Rows, TabIndex } = data?.Properties;
 
@@ -470,6 +471,7 @@ const Combo = ({ data, value }) => {
           top: Posn?.[0],
           left: Posn?.[1],
         }),
+        ...attachStyle,
       }}
       onMouseDown={(e) => {
         // In Grid, let the mousedown bubble to the grid cell so it can move
@@ -531,7 +533,7 @@ const Combo = ({ data, value }) => {
             left: 0,
             width: '100%',
             // Standalone: size to the button's own content (font height), NOT
-            // the wrapper's. GAMA sends inconsistent combo Size heights (16 vs
+            // the wrapper's. Some apps send inconsistent combo Size heights (16 vs
             // 24); native ⎕WC ignores them and snaps to a uniform font-based
             // height, so content-sizing the trigger gives the same uniform
             // result. In a Grid, though, the cell height IS authoritative: fill

@@ -143,9 +143,12 @@ const useGridTitleSize = (
   const effectiveTitleWidth = wantsAutoW ? autoWidth : TitleWidth;
   const effectiveTitleHeight = wantsAutoH ? autoHeight : TitleHeight;
 
+  const titleLines = useMemo(() => maxLines(colTitles), [colTitles]);
+
   return {
     effectiveTitleWidth,
     effectiveTitleHeight,
+    titleLines,
     autoColWidths,
     wantsAutoCols,
   };
