@@ -1,10 +1,6 @@
  r←cloneList arg;n;ix
-⍝ Space-separated names of the live per-session clones (mtest_1, mtest_2, …).
-⍝
-⍝ This is how a surviving session testifies about a departed one: after a
-⍝ context closes, endSession.aplf:24 does ⎕EX on its clone, so the name
-⍝ disappears from #.⎕NL 9 and hence from this list. Sorted by the numeric
-⍝ suffix so assertions don't depend on ⎕NL's ordering.
+⍝ Space-separated names of the live per-session clones, sorted by their
+⍝ numeric suffix
 
  n←{⍵~' '}¨↓#.⎕NL 9
  n←n/⍨{'mtest_'≡6↑⍵}¨n

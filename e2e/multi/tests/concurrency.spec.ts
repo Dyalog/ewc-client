@@ -1,20 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { openSessions, step, teardown, MultiSession } from './helpers/session';
 
-// Several users doing things at the same instant.
-//
-// The mechanism under test is the WG rendezvous. eWG parks the session thread
-// in `WG_TIMEOUT ⎕TGET token` (WaitForWG.aplf:7) while EWC's single Listen
-// thread deposits the browser's reply with `⎕TPUT token` (Handler.aplf:75).
-// Both sides compute:
-//
-//     token ← WG_TOKENBASE + TOKENSTEP × 1⌈ID×MODE=2
-//
-// Under Multi that is per-session and sound. Under Browser mode the `MODE=2`
-// factor is 0, collapsing it to a constant shared by every waiter — the defect
-// analysed in deliberanda/cbrundemo-wedge-fix.md. These tests pin the Multi
-// behaviour so a future change to that token layout cannot silently break it.
-
+// Several users acting at the same instant
 test.describe('Multi mode — concurrent sessions', () => {
   let sessions: MultiSession[] = [];
 
@@ -26,9 +13,7 @@ test.describe('Multi mode — concurrent sessions', () => {
     sessions = await step('three users connect', async () => openSessions(browser, 3));
 
     await step('all three fire the WG probe at once', async () => {
-      // Each probe does 8 reads of its own F1.TOKEN Edit (a dynamic property,
-      // so a real browser round-trip) and compares what came back against its
-      // own clone name.
+      // Each probe reads its own F1.TOKEN eight times and checks what came back.
       await Promise.all(sessions.map((s) => s.click('RUNPROBE')));
     });
 
@@ -41,8 +26,7 @@ test.describe('Multi mode — concurrent sessions', () => {
           })
           .not.toBe('-');
 
-        // CROSSED → a reply was routed to the wrong session's ⎕TGET.
-        // ERROR    → WaitForWG timed out and signalled 6.
+        // CROSSED → routed to the wrong session. ERROR → the round-trip timed out.
         expect(await s.caption('PROBE'), `${s.ns} probe`).toBe(`OK ${s.ns} x8`);
       }
     });
@@ -51,8 +35,7 @@ test.describe('Multi mode — concurrent sessions', () => {
   test('interleaved events keep each session count exactly its own', async ({ browser }) => {
     sessions = await step('three users connect', async () => openSessions(browser, 3));
 
-    // Distinct click counts, so a stray event landing in the wrong session is
-    // visible as an off-by-N rather than cancelling out.
+    // Distinct counts, so a stray event shows up rather than cancelling out.
     const clicks = [4, 7, 5];
 
     await step(`all three click Increment at once (${clicks.join(' / ')} times)`, async () => {

@@ -1,15 +1,9 @@
 // Fail fast, and legibly, when there is no Multi-mode server to talk to.
-//
-// Without this the first page.goto lands on Chrome's "This site can't be
-// reached" page and Playwright reports ERR_CONNECTION_REFUSED — which says
-// nothing about EWC, the port, or how to fix it. In headed/watch mode you just
-// see an error page in a browser window and have to go digging.
 
 const MULTI_URL = process.env.MULTI_URL || 'http://localhost:22323';
 
-// Retry rather than probe once: the CI job only waits for a TCP listener
-// (`wait-on tcp:22323`), and the WSS finishes binding a moment before it can
-// answer a request — so a single GET can arrive just too early.
+// Retried, because CI only waits for a TCP listener and the WSS binds a moment
+// before it can answer
 const BUDGET_MS = parseInt(process.env.MULTI_WAIT_MS || '30000', 10);
 
 async function reachableWithin(budgetMs: number): Promise<boolean> {
@@ -30,8 +24,6 @@ async function reachableWithin(budgetMs: number): Promise<boolean> {
   }
 }
 
-// Watch mode's knobs are env vars, which are undiscoverable unless something
-// says so. Print what's in force at the top of every observed run.
 function announceObserveSettings(): void {
   const manual = process.env.STEP_MODE === 'manual';
   if (process.env.OBSERVE !== '1' && !manual) return;
