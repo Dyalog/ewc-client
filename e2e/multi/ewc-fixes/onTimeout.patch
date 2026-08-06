@@ -1,0 +1,30 @@
+--- a/EWC/onTimeout.aplf
++++ b/EWC/onTimeout.aplf
+@@ -1,6 +1,23 @@
+ r←onTimeout args;m;conns
++⍝ Reap sessions whose socket died without a graceful Close signal.
+ 
+-:If 2=⎕NC 'WSS.Conx'
+-:AndIf ∨/m←~WSS.LDRC.Exists¨conns←WSS.Conx[;1]
+-    endSession¨{0 ⍵ 'Close'}¨m/conns
+-:EndIf
++⍝ The guard used to be `2=⎕NC'WSS.Conx'`, which is ALWAYS FALSE: Conx is a
++⍝ `:field public` on the wss instance, and ⎕NC does not classify through an
++⍝ instance reference — it returns 0 for both 'WSS.Conx' and (from inside)
++⍝ 'Conx'. So this reaper never ran, and any connection lost without the
++⍝ client's {"Signal":{"Name":"Close"}} leaked its session, thread and (in
++⍝ Multi mode) its cloned namespace forever. ⎕NC'WSS' does classify (9), and
++⍝ Conx is initialised with the instance, so it is safe to read once WSS exists.
++
++⍝ Trapped because this runs on the Listen thread: an error escaping here
++⍝ suspends that thread and wedges the entire server for every user.
++
++:Trap 0
++    :If 9=⎕NC 'WSS'
++    :AndIf 0≠≢conns←WSS.Conx[;1]
++    :AndIf ∨/m←~WSS.LDRC.Exists¨conns
++        endSession¨{0 ⍵ 'Close'}¨m/conns
++    :EndIf
++:Else
++    'E' Log 'onTimeout failed: ',⊃⎕DMX.DM
++:EndTrap
