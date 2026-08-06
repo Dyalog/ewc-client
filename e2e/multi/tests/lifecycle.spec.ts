@@ -7,13 +7,9 @@ import {
   MultiSession,
 } from './helpers/session';
 
-// Session teardown. When a browser goes away, endSession.aplf must call the
-// app's onClose hook, ⎕TKILL the session thread, and ⎕EX the clone. None of
-// that is visible from the departing browser — so every test here keeps an
-// `observer` session open and reads the server's view through it.
-//
-// Under OBSERVE=1 (yarn multitests:watch) the observer window is the one to
-// watch: its Clones and Closed lines are where the teardown becomes visible.
+// Session teardown: EWC must call the app's onClose, kill the session thread
+// and expunge the clone. None of that is visible from the departing browser, so
+// every test keeps an `observer` session and reads the server's view through it.
 
 test.describe('Multi mode — session lifecycle', () => {
   const opened: MultiSession[] = [];
@@ -24,10 +20,6 @@ test.describe('Multi mode — session lifecycle', () => {
   };
 
   test.afterEach(async () => {
-    // In manual mode this holds the surviving windows open for a final look —
-    // which matters most here, since what these tests produce is a *server*
-    // state (which clones remain, what the close log says) visible only in the
-    // observer window.
     await teardown(opened);
   });
 
@@ -53,20 +45,16 @@ test.describe('Multi mode — session lifecycle', () => {
         { label: `${victim.ns} to be expunged` }
       );
 
-      // ⎕EX ran (endSession.aplf:24) …
       expect(after.clones).not.toContain(victim.shortNs);
-      // … and the app's onClose hook was invoked before it (endSession.aplf:15).
       expect(after.closed).toContain(victim.ns);
-      // The observer is untouched by its neighbour's teardown.
       expect(after.clones).toContain(observer.shortNs);
       expect(await observer.caption('WHOAMI')).toBe(observer.ns);
     });
   });
 
   test('a recycled session id gets a clean clone, not the old one', async ({ browser }) => {
-    // newSession.aplf:7 assigns `⊃(⍳1+≢s)~s` — the lowest free integer — so
-    // ids are reused. A new user landing on a recycled id must not inherit any
-    // of the previous occupant's state.
+    // EWC reuses the lowest free session id, so a new user can land on one a
+    // previous user had.
     const a = await step('user A connects', async () => openSession(browser));
     const observer = await step('observer connects', async () =>
       track(await openSession(browser))
@@ -120,24 +108,15 @@ test.describe('Multi mode — session lifecycle', () => {
           { label: `cycle ${i + 1}/${CYCLES}: ${s.ns} to be expunged` }
         );
 
-        // Every cycle must return to exactly the starting set. A slow leak
-        // would show up here as growth long before it hit MAXSESSIONS in
-        // production.
+        // A slow leak shows up here... but not been an issue
         expect(after.clones.sort()).toEqual([...baseline].sort());
       });
     }
   });
 
   test('a session whose socket dies without a Close signal is still reaped', async ({ browser }) => {
-    // The graceful path works: the page's pagehide handler
-    // (src/App.jsx:103-126) sends {"Signal":{"Name":"Close"}} and EWC tears the
-    // session down in ~300ms. This test covers the UNGRACEFUL path — laptop lid
-    // shut, wifi dropped, browser crashed — where the socket simply dies.
-    //
-    // EWC has a reaper for exactly this: onTimeout.aplf sweeps WSS.Conx with
-    // LDRC.Exists and calls endSession for connections Conga has lost. It only
-    // works with the guard fix documented in e2e/multi/README.md; without it
-    // this test fails, because the session leaks forever.
+    // The ungraceful path, where no Close signal is sent
+    // EWC's onTimeout has to deal with it
     const observer = await step('observer connects', async () =>
       track(await openSession(browser))
     );

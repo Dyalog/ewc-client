@@ -1,6 +1,5 @@
  CBIncrement args
-⍝ Bump this session's own counter. Used to prove that events raised in one
-⍝ browser context are dispatched to that context's thread and no other.
+⍝ Bump this session's own counter.
 
  count←count+1
  'F1.COUNTER'eWS'Caption'(⍕count)

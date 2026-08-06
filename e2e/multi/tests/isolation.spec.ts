@@ -1,14 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openSession, step, teardown, MultiSession } from './helpers/session';
 
-// What Multi mode promises: every browser connection gets its own clone of the
-// application namespace (newSession.aplf:14), so no two users can see or
-// disturb each other's state. These tests hold two users side by side and try
-// to make one leak into the other.
-//
-// Steps are named with step() so the run is watchable — OBSERVE=1 paints the
-// current step into every open window (yarn multitests:watch), and the same
-// labels drive the HTML report, traces and `--ui` time travel.
+// Multi mode gives every connection its own clone of the application
+// namespace. These tests hold two users side by side and try to make one leak
+// into the other.
 
 test.describe('Multi mode — session isolation', () => {
   const opened: MultiSession[] = [];
@@ -19,10 +14,6 @@ test.describe('Multi mode — session isolation', () => {
   };
 
   test.afterEach(async () => {
-    // teardown() closes gracefully — abandon() would leak the clone unless the
-    // EWC onTimeout fix is present (see e2e/multi/README.md), polluting the
-    // server-wide readouts of every later test. In manual mode it also holds
-    // the windows open for a final look before closing them.
     await teardown(opened);
   });
 
@@ -36,7 +27,6 @@ test.describe('Multi mode — session isolation', () => {
 
       expect(b.ns).not.toBe(a.ns);
       expect(b.id).not.toBe(a.id);
-      // One APL thread per session (Handler.aplf:46 spawns Initialise with &).
       expect(b.tid).not.toBe(a.tid);
 
       // The clone name is derived from the session id, so they must agree.
@@ -62,7 +52,6 @@ test.describe('Multi mode — session isolation', () => {
     });
 
     await step('B is untouched by it', async () => {
-      // `private` is a variable of #.mtest_N, not shared.
       expect(await b.caption('PRIVATE')).toBe('-');
     });
 
@@ -101,9 +90,8 @@ test.describe('Multi mode — session isolation', () => {
   });
 
   test('each session reads its own query string', async ({ browser }) => {
-    // The WebSocket URL drops the query string (src/App.jsx:431-441), so this
-    // reaches APL only via the Initialise frame's URL field, which Handler
-    // parses into the per-session _EWC.QUERY (Handler.aplf:36).
+    // The WebSocket URL drops the query string, so this reaches APL only via
+    // the Initialise frame and its per-session _EWC.QUERY.
     const a = await step('user A connects as ?who=alice', async () =>
       track(await openSession(browser, { who: 'alice' }))
     );
@@ -122,9 +110,6 @@ test.describe('Multi mode — session isolation', () => {
     const b = await step('user B connects', async () => track(await openSession(browser)));
 
     await step('each token Edit holds its own clone name', async () => {
-      // F1.TOKEN is an Edit seeded with the clone name. Edit.Text is a dynamic
-      // property, so reading it is a real browser round-trip — unlike a Label's
-      // Caption, which dWG answers locally without asking the client at all.
       expect(await a.editText('TOKEN')).toBe(a.ns);
       expect(await b.editText('TOKEN')).toBe(b.ns);
     });

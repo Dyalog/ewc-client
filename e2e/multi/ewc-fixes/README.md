@@ -1,12 +1,12 @@
 # EWC fixes this suite depends on
 
-Two defects in `Dyalog/ewc` stop `e2e/multi/` passing in full. Neither is fixed
-in `~/dev/ewc`. They are recorded here — rather than only in a scratch
-directory — so the actual code survives.
+Two defects in `Dyalog/ewc` stop `e2e/multi/` passing in full. Both are applied
+in `~/dev/ewc` (uncommitted); neither is on any `Dyalog/ewc` branch except as
+noted below. Kept here so the code survives independently of that checkout.
 
 Full analysis and evidence: [`../../MULTI_BUG_REPORT.md`](../../MULTI_BUG_REPORT.md).
 
-## 1. `onTimeout` never reaps lost connections — NOT FIXED ANYWHERE
+## 1. `onTimeout` never reaps lost connections — not on any branch
 
 `EWC/onTimeout.aplf`'s guard is always false:
 

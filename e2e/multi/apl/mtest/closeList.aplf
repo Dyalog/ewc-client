@@ -1,7 +1,6 @@
  r←closeList arg;c
-⍝ Space-separated names of the clones whose onClose hook has fired, oldest
-⍝ first. Read under the same :Hold that onClose writes under, since the
-⍝ writer runs on EWC's Listen thread while readers are session threads.
+⍝ Names of the clones whose onClose has fired, oldest first. Held because the
+⍝ writer is the Listen thread and the readers are session threads.
 
  :Hold 'MTESTLOG'
      c←#.mtestlog.closed

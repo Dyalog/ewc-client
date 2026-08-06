@@ -1,26 +1,10 @@
  Initialise connected;who;i;live
-⍝ Called once per browser connection, in a thread of its own
-⍝ (Handler.aplf:46 — app._EWC.TID←(app⍎fn)&CONNECTED). Must be monadic;
-⍝ Init.aplf:58 refuses to start Multi mode without it.
-⍝
-⍝ Every widget here exists to make a server-side fact assertable from
-⍝ Playwright. The form renders each APL id as a DOM id, so a test locates
-⍝ #F1\.WHOAMI and reads this clone's own name straight out of the page.
-⍝
-⍝ Errors in this function suspend the detached thread, which reads to a
-⍝ test as a hang. So the Form and WHOAMI are created from statements that
-⍝ cannot fail, and everything after is trapped: a failure then shows up as
-⍝ an assertable caption instead of a timeout.
-⍝
-⍝ Note what this function deliberately does NOT do: the demos all open with
-⍝ `EWC.CONNECTED←connected`, which writes a global on the single shared
-⍝ #.EWC from every session. In a fixture whose entire purpose is proving
-⍝ isolation, writing shared state on connect would be self-defeating —
-⍝ and it is redundant, since Init.aplf:84 already sets CONNECTED←1.
+⍝ Called once per browser connection, in its own thread. Must be monadic.
+⍝ Each widget surfaces a server-side fact as a DOM id a test can read.
+⍝ The Form and WHOAMI are created before the Trap so a failure inside it
+⍝ shows as a caption rather than a suspended thread.
 
- ⍝ Per-clone state. NOT localised, on purpose — these become variables of
- ⍝ #.mtest_N, and proving they are not shared is what isolation.spec.ts
- ⍝ exists to do.
+ ⍝ Not localised
  count←0
  private←'-'
  refreshes←0
@@ -35,11 +19,8 @@
          :If (≢_EWC.QUERY)≥i←_EWC.QUERY[;1]⍳⊂'who'
              who←⊃_EWC.QUERY[i;2]
          :EndIf
-         ⍝ ?live=1 makes this session poll the server-wide views on a Timer.
-         ⍝ Opt-in, never used by the specs: they drive F1.REFRESH explicitly so
-         ⍝ they control exactly when a snapshot is taken. It exists for the
-         ⍝ interactive playground (yarn ewc-multi:observe), where you want the
-         ⍝ Clones/Closed lists to update themselves as you open and shut windows.
+         ⍝ ?live=1 polls the server-wide views on a Timer, for the interactive
+         ⍝ playground. The specs drive F1.REFRESH explicitly instead.
          live←(≢_EWC.QUERY)≥_EWC.QUERY[;1]⍳⊂'live'
      :EndIf
 
@@ -69,22 +50,13 @@
      'F1.REFRESH'eWC'Button' 'Refresh'(275 10)(23 140)('Event' 'Select' 'CBRefresh')
      'F1.RUNPROBE'eWC'Button' 'Run WG probe'(275 160)(23 160)('Event' 'Select' 'CBProbe')
 
-     ⍝ Refresh sequence number, written LAST by CBRefresh. A test cannot tell
-     ⍝ a stale CLONES value from a fresh one just by looking at it, so it
-     ⍝ watches this instead: WebSocket frames are applied in order, so once
-     ⍝ this changes the two captions above it are already up to date.
+     ⍝ Written last by CBRefresh, so a test can tell a fresh caption from a
+     ⍝ stale one by watching this instead.
      'F1.REFRESHN'eWC'Label'(⍕refreshes)(275 340)(23 60)
 
      'F1.T8'eWC'Label' 'Probe:'(310 10)(23 130)
      'F1.PROBE'eWC'Label' '-'(310 150)(23 350)
 
-     ⍝ The WG probe target. Caption on a Label is NOT dynamic
-     ⍝ (classes/label/Dynamic.apla is empty), so dWG answers it from APL
-     ⍝ state without ever asking the browser. Edit's Text IS dynamic, so
-     ⍝ reading this forces a real client round-trip through the per-session
-     ⍝ ⎕TGET/⎕TPUT rendezvous — which is the thing concurrency.spec.ts
-     ⍝ exists to stress. Seeded with the clone name so a reply routed to
-     ⍝ the wrong session is self-evident. Tests never type into it.
      'F1.T9'eWC'Label' 'Token:'(340 10)(23 130)
      'F1.TOKEN'eWC'Edit'(⍕⎕THIS)(340 150)(23 350)('Style' 'Single')
 
@@ -95,7 +67,4 @@
      'F1.WHOAMI'eWS'Caption'('INIT ERROR: ',⊃⎕DMX.DM)
  :EndTrap
 
- ⍝ Multi mode requires the session thread to sit in ⎕DQ, exactly as
- ⍝ demo/Initialise.aplf:13-15 does. Without this the thread returns, the
- ⍝ session's event pump stops, and the page goes dead on first click.
  eDQ'F1'

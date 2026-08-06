@@ -1,12 +1,4 @@
  CBRefresh args
-⍝ Re-read the two server-wide views. Explicitly on demand rather than on a
-⍝ Timer, so tests control exactly when the snapshot is taken and never race
-⍝ a background refresh.
-⍝
-⍝ REFRESHN is bumped LAST, on purpose. A test watching CLONES alone cannot
-⍝ distinguish the previous value from a freshly-written identical one, so it
-⍝ waits on this counter instead — and because WebSocket frames are applied in
-⍝ order, a new counter means the captions below are already in place.
 
  'F1.CLONES'eWS'Caption'(cloneList ⍬)
  'F1.CLOSELOG'eWS'Caption'(closeList ⍬)

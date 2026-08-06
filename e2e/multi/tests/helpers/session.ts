@@ -1,50 +1,31 @@
 import { Browser, BrowserContext, Page, expect, test } from '@playwright/test';
 
-// One simulated user = one Playwright BrowserContext.
+// One simulated user = one BrowserContext. Contexts are storage- and
+// cookie-partitioned, so this models different people on different machines.
 //
-// Contexts are storage- and cookie-partitioned, so this models "different
-// people on different machines" — the scenario Multi mode exists for. Tabs
-// within ONE context share a localStorage jar and currently break on
-// src/App.jsx:218-221 (localStorage.clear() on every Form create); that is a
-// separate, known problem and deliberately not what this suite covers.
-//
-// Do NOT reach for e2e/demo/tests/helpers/cdp-helper.ts here: its
-// connectAndFindEWCPage is a process-wide singleton and hands back the same
-// page every time, which would make every "user" the same user.
+// NOTA BENE: Don't use e2e/demo/tests/helpers/cdp-helper.ts here — its
+// connectAndFindEWCPage is a process-wide singleton, so every "user" would be
+// the same user.
 
 const BASE = process.env.MULTI_URL || 'http://localhost:22323';
 
-// OBSERVE=1 turns on the watch-along layer: every session page grows a banner
-// naming itself and the step currently running, and `step()` pauses between
-// steps so a human can actually read the state change. Off by default, so a
-// normal or CI run is completely unaffected.
-// STEP_MODE=manual turns the banner into a driver: each step waits for you to
-// click "Next" in any window before it runs. Implies OBSERVE — stepping by hand
-// is meaningless without windows to look at.
+// OBSERVE=1 draws a banner on each session page naming it and the running step,
+// and pauses between steps. STEP_MODE=manual makes that banner a driver: each
+// step waits for a click. Manual implies OBSERVE.
 const MANUAL = process.env.STEP_MODE === 'manual';
 const OBSERVE = process.env.OBSERVE === '1' || MANUAL;
 const STEP_PAUSE = parseInt(process.env.STEP_PAUSE || '900', 10);
 
-// Set by the "Run to end" button: drops out of manual stepping for the rest of
-// the run without having to kill and restart it.
+// Set by the "Run to end" button
 let runToEnd = false;
 
-// Live sessions, so a step announcement reaches every open window. Only
-// populated when OBSERVE is on.
 const live = new Set<MultiSession>();
 
 const BANNER_ID = '__mtest_observe';
 
-// ── Window tiling (OBSERVE only) ────────────────────────────────────────────
-//
-// Chromium stacks every new window in the same place, so without this the
-// sessions sit exactly on top of each other and you can only see the last one.
-// Note that config `use: { viewport }` does NOT apply here: those options are
-// only used for contexts Playwright creates for the `page` fixture, and these
-// contexts come from browser.newContext(). So the geometry is ours to set.
-//
-// OBSERVE_TILE=WxH overrides the per-window size. The default is big enough for
-// the mtest form (which occupies x 50–570, y 50–450) plus the step banner.
+// Window geometry has to be set here rather than via config `use: { viewport }`:
+// those options only reach contexts Playwright creates for the `page` fixture,
+// not browser.newContext(). Chromium otherwise stacks every window in one place.
 const [TILE_W, TILE_H] = (process.env.OBSERVE_TILE || '600x660')
   .split('x')
   .map((n) => parseInt(n, 10));
@@ -59,8 +40,8 @@ function takeSlot(): number {
   return i;
 }
 
-// Slots are released on close and reused, so a long-lived observer keeps its
-// position while short-lived sessions cycle through the one next to it.
+// Reused on release, so a long-lived observer keeps its position while
+// short-lived sessions cycle through the slot beside it.
 function releaseSlot(slot: number | undefined): void {
   if (slot !== undefined) takenSlots.delete(slot);
 }
@@ -97,14 +78,11 @@ async function tile(context: BrowserContext, page: Page): Promise<number | undef
     });
     return slot;
   } catch {
-    // Observation must never fail a test — an un-tiled window is still usable.
+    // An un-tiled window is still usable; tiling just failed somehow
     return undefined;
   }
 }
 
-// Injected once per page. pointer-events:none so it can never swallow a click
-// meant for the form, and pinned to the bottom because the EWC form occupies
-// the top-left of the viewport.
 async function installBanner(page: Page, ns: string, manual: boolean): Promise<void> {
   await page.evaluate(
     ([id, label, isManual]) => {
@@ -117,8 +95,6 @@ async function installBanner(page: Page, ns: string, manual: boolean): Promise<v
       bar.id = id;
       bar.style.cssText = [
         'position:fixed', 'left:0', 'right:0', 'bottom:0', 'z-index:2147483647',
-        // The bar itself must not swallow clicks meant for the EWC form above
-        // it; only the buttons opt back in.
         'pointer-events:none', 'font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace',
         'background:#101418', 'color:#e6edf3', 'padding:8px 12px',
         'border-top:2px solid #3fb950', 'box-shadow:0 -2px 12px rgba(0,0,0,.35)',
@@ -162,9 +138,6 @@ async function installBanner(page: Page, ns: string, manual: boolean): Promise<v
   );
 }
 
-// Turn the step control into the end-of-test control: the last step's body
-// returns and teardown would otherwise close every window instantly, so the
-// final state has to be held behind one more click.
 async function setEndMode(page: Page): Promise<void> {
   await page
     .evaluate((id) => {
@@ -177,15 +150,12 @@ async function setEndMode(page: Page): Promise<void> {
         next.style.borderColor = '#f85149';
         next.style.color = '#f85149';
       }
-      // "Run to end" has no meaning once we're at the end.
       const run = bar.querySelector('button[data-run]') as HTMLElement | null;
       if (run) run.style.display = 'none';
     }, BANNER_ID)
     .catch(() => {});
 }
 
-// Drop any clicks banked while gating was off (after "Run to end"), so a stale
-// flag can't skip straight past the end-of-test hold.
 async function flushClicks(): Promise<void> {
   await Promise.all(
     [...live].map((s) =>
@@ -200,17 +170,10 @@ async function flushClicks(): Promise<void> {
   );
 }
 
-// Poll every open window for a button press. Polling rather than
-// waitForFunction across N pages, because pages come and go mid-step and a
-// racing set of waiters leaves rejected promises behind when one closes.
+// Messy, but polling for knowing when the click has happened and avoid spinning
 async function waitForClick(): Promise<void> {
   for (;;) {
     for (const s of [...live]) {
-      // Drop windows that have gone away. Closing one by hand while looking at
-      // it is a perfectly reasonable thing to do, and without this the session
-      // stays in `live` forever: its evaluate fails on every poll, live.size
-      // never reaches 0, and the loop spins with nothing left to click. Manual
-      // mode has no test timeout, so that is an unbreakable stall.
       if (s.page.isClosed()) {
         live.delete(s);
         continue;
@@ -225,8 +188,6 @@ async function waitForClick(): Promise<void> {
           return hit;
         })
         .catch(() => {
-          // Also fails for a crashed or navigating page — treat it as gone
-          // rather than polling it forever.
           live.delete(s);
           return null;
         });
@@ -238,9 +199,6 @@ async function waitForClick(): Promise<void> {
       if (pressed?.next) return;
     }
 
-    // Nothing left to click in — either the first step of a test (no session
-    // open yet) or every window has been closed. Carry on rather than wait for
-    // a click that can never come.
     if (live.size === 0) return;
     await new Promise((r) => setTimeout(r, 100));
   }
@@ -255,18 +213,13 @@ async function announce(page: Page, text: string): Promise<void> {
       },
       [BANNER_ID, text] as const
     )
-    .catch(() => {
-      /* page may have closed mid-step; observation must never fail a test */
-    });
+    .catch(() => {});
 }
 
 /**
- * Name a step. Always records it as a Playwright step (so it shows up in the
- * HTML report, traces and `--ui` time-travel); additionally, under OBSERVE=1,
- * writes it into every open session's banner and pauses so it can be read.
- *
- * Use it for the meaningful beats of a test — "user A types alpha", "close user
- * A" — not for every micro-action.
+ * Name one meaningful beat of a test — "user A types alpha", not every action.
+ * Recorded as a Playwright step, so it drives the HTML report, traces and
+ * `--ui`; under observe mode it also shows in the on-page banner.
  */
 export async function step<T>(label: string, body: () => Promise<T>): Promise<T> {
   return test.step(label, async () => {
@@ -277,10 +230,6 @@ export async function step<T>(label: string, body: () => Promise<T>): Promise<T>
       );
 
       if (waiting) {
-        // Echo to the terminal too, so you can follow along without reading the
-        // windows — and so a run left waiting explains itself. Only when there
-        // is actually a window to click in; the first step of a test opens the
-        // first session and so runs straight through.
         if (live.size > 0) console.log(`  ⏸  ${label}   [Next ▶]`);
         await waitForClick();
         await Promise.all([...live].map((s) => announce(s.page, label)));
@@ -296,18 +245,8 @@ export function isObserving(): boolean {
   return OBSERVE;
 }
 
-/**
- * Close every session in `sessions`, but in manual mode hold the windows open
- * behind one last click first.
- *
- * Without this the final step's body returns and teardown closes everything
- * immediately, so the very state the last step produced — the one you stepped
- * all the way through to see — is on screen for a few milliseconds.
- *
- * Applies even after "Run to end", which means *run to the end*, i.e. get me to
- * the final state; and even when the test failed, where inspecting what it
- * actually left behind is the whole point.
- */
+// Close every session, holding the windows open behind one last click in manual
+// mode so the final state can be inspected. 
 export async function teardown(sessions: MultiSession[]): Promise<void> {
   if (MANUAL && live.size > 0) {
     await flushClicks();
@@ -325,16 +264,6 @@ export async function teardown(sessions: MultiSession[]): Promise<void> {
     await sessions.pop()!.close().catch(() => {});
   }
 
-  // Close anything still registered but not in `sessions`, then clear the
-  // registry outright.
-  //
-  // These can diverge: a spec that does `sessions = await openSessions(...)`
-  // still holds the OLD array if that call throws part-way, so the
-  // half-opened sessions never reach teardown's argument. Any survivor is
-  // poison for the next test — its window is gone, but the manual-mode gate
-  // still polls it, `live.size` never reaches zero, and the run stalls before
-  // opening a single window. That is unbreakable, because manual mode has no
-  // test timeout.
   for (const s of [...live]) {
     await s.close().catch(() => {});
   }
@@ -344,13 +273,13 @@ export async function teardown(sessions: MultiSession[]): Promise<void> {
 export interface MultiSession {
   context: BrowserContext;
   page: Page;
-  /** Clone namespace, e.g. `#.mtest_2` — read from the server, not assumed. */
+  /** Clone namespace, e.g. `#.mtest_2`. */
   ns: string;
   /** Short form, e.g. `mtest_2`, as it appears in the clones list. */
   shortNs: string;
-  /** EWC session id (`_EWC.ID`). Recycled on disconnect — see lifecycle.spec.ts. */
+  /** EWC session id (`_EWC.ID`). Recycled on disconnect. */
   id: string;
-  /** APL thread id running this session's Initialise. */
+  /** APL thread running this session's Initialise. */
   tid: string;
 
   caption(element: string): Promise<string>;
@@ -358,23 +287,17 @@ export interface MultiSession {
   click(element: string): Promise<void>;
   fill(element: string, value: string): Promise<void>;
 
-  /** Re-read the server-wide views, then return them. */
   refresh(): Promise<{ clones: string[]; closed: string[] }>;
   clones(): Promise<string[]>;
   closed(): Promise<string[]>;
 
-  /** Graceful close: the page unloads, so the client sends {Signal:{Name:"Close"}}. */
+  /** Graceful: the page unloads, so the client sends its Close signal. */
   close(): Promise<void>;
-  /**
-   * Ungraceful close: drop the context without letting the page unload, so no
-   * Close signal is ever sent — the "laptop lid shut / wifi dropped / browser
-   * crashed" case.
-   */
+  /** Ungraceful: no Close signal — lid shut, wifi dropped, browser crashed. */
   abandon(): Promise<void>;
 }
 
-// CSS id selector for an APL object id. The dots in `F1.WHOAMI` are part of
-// the id, not descendant combinators, so they must be escaped.
+// The dots in `F1.WHOAMI` are part of the APL id
 function sel(element: string): string {
   return '#' + `F1.${element}`.replace(/\./g, '\\.');
 }
@@ -389,9 +312,6 @@ export async function openSession(
   opts: { who?: string; timeout?: number } = {}
 ): Promise<MultiSession> {
   const timeout = opts.timeout ?? 20000;
-  // viewport: null under OBSERVE so the page fills whatever size the window is
-  // tiled to; a fixed viewport would leave the page a different size from its
-  // own window. Headless runs keep an explicit, deterministic viewport.
   const context = await browser.newContext(
     OBSERVE ? { viewport: null } : { viewport: { width: 720, height: 780 } }
   );
@@ -401,30 +321,22 @@ export async function openSession(
   try {
     await page.goto(BASE + query, { waitUntil: 'domcontentloaded' });
   } catch (err) {
-    // globalSetup proves the server was up when the run started, so reaching
-    // here means it went away mid-run — most often the churn test wedging it
-    // (see e2e/multi/README.md). Say so, rather than leaving a raw
-    // ERR_CONNECTION_REFUSED for the reader to interpret.
     throw new Error(
       `Lost the EWC Multi server at ${BASE} part-way through the run ` +
         `(${err instanceof Error ? err.message.split('\n')[0] : String(err)}). ` +
-        `It was reachable at start-up, so it has died or wedged since — check ` +
-        `'yarn ewc-multi:logs' for a SYNTAX ERROR on the Listen thread.`
+        `It answered at start-up, so check 'yarn ewc-multi:logs'.`
     );
   }
 
-  // Deliberately no reload-retry. Multi mode renders on the FIRST connect
-  // (unlike Browser mode's connect-time launch), and a reload would tear this
-  // session down and create another — shifting the session-id sequence that
-  // the lifecycle assertions depend on. A missing form here is a real failure.
+  // No reload-retry: a reload would end this session and start another,
+  // shifting the session ids the lifecycle specs assert on.
   try {
     await page.locator(sel('WHOAMI')).waitFor({ state: 'visible', timeout });
   } catch {
     throw new Error(
       `mtest form never rendered at ${BASE + query} within ${timeout}ms. ` +
-        `Is the Multi-mode server up (yarn ewc-multi:start)? ` +
-        `Initialise runs in a detached thread, so an APL error there shows up ` +
-        `as this timeout — check 'docker logs ewc-multi'.`
+        `Initialise runs in a detached thread, so an APL error there surfaces ` +
+        `as this timeout — check 'yarn ewc-multi:logs'.`
     );
   }
 
@@ -436,25 +348,17 @@ export async function openSession(
   let slot: number | undefined;
   const ns = await caption('WHOAMI');
   if (!ns.startsWith('#.mtest_')) {
-    // Initialise's trap rewrites WHOAMI with the error, so this reports the
-    // actual APL failure rather than a bare assertion mismatch.
     throw new Error(`Session did not initialise cleanly; WHOAMI reads: ${ns}`);
   }
 
-  // WHOAMI is only the FIRST widget — Initialise.aplf creates it before its
-  // :Trap block, and everything else streams in afterwards over the WebSocket.
-  // Returning here would hand back a session whose form is still arriving, and
-  // a test that clicks straight away gets "waiting for locator('#F1.INC')" on a
-  // control that does not exist yet. F1.TOKEN is the LAST widget created, so
-  // waiting for it proves the whole form landed.
+  // WHOAMI is the first widget Initialise creates and TOKEN the last, so this
+  // is what proves the whole form exists
   try {
     await page.locator(sel('TOKEN')).waitFor({ state: 'attached', timeout });
   } catch {
     throw new Error(
       `${ns} rendered only part of its form within ${timeout}ms ` +
-        `(F1.WHOAMI arrived, F1.TOKEN did not). Initialise runs in a detached ` +
-        `thread, so an APL error mid-way through it looks like this — check ` +
-        `'yarn ewc-multi:logs'.`
+        `(F1.WHOAMI arrived, F1.TOKEN did not) — check 'yarn ewc-multi:logs'.`
     );
   }
 
@@ -476,12 +380,9 @@ export async function openSession(
     },
 
     refresh: async () => {
-      // Watch the sequence number, not the captions themselves: a stale
-      // CLONES value is indistinguishable from a freshly-written one, so
-      // asserting "not empty" would pass instantly against the OLD value and
-      // hand the caller a pre-refresh snapshot. CBRefresh writes REFRESHN
-      // last, and WebSocket frames apply in order, so a changed counter
-      // guarantees the captions beneath it are current.
+      // Wait on the sequence number
+      // writes REFRESHN last and frames apply in order, so a changed counter
+      // means the captions are current.
       const before = await caption('REFRESHN');
       await page.locator(sel('REFRESH')).first().click();
       await expect(page.locator(sel('REFRESHN'))).not.toHaveText(before, { timeout: 15000 });
@@ -494,9 +395,8 @@ export async function openSession(
     closed: async () => splitList(await caption('CLOSELOG')),
 
     close: async () => {
-      // page.close() lets the page run its pagehide handler
-      // (src/App.jsx:103-126), which sends the Close signal EWC needs to tear
-      // the session down. Closing the context alone does NOT — see abandon().
+      // page.close() runs the page's pagehide handler, which is what sends the
+      // Close signal EWC needs. Closing the context alone does not.
       live.delete(session);
       releaseSlot(slot);
       await page.close();
@@ -512,9 +412,8 @@ export async function openSession(
   if (OBSERVE) {
     slot = await tile(context, page);
     live.add(session);
-    // Buttons whenever MANUAL, even after "Run to end": per-step gating is
-    // controlled separately by runToEnd, but the End button must exist on every
-    // window or there'd be nothing to click at the final hold.
+    // Buttons on every window even after "Run to end", or there would be
+    // nothing to click in the End state
     await installBanner(page, ns, MANUAL);
   }
 
@@ -528,8 +427,7 @@ export async function openSessions(
 ): Promise<MultiSession[]> {
   const sessions: MultiSession[] = [];
   for (let i = 0; i < n; i++) {
-    // Sequential, not Promise.all: session ids are assigned by arrival order
-    // (newSession.aplf:7 takes the lowest free integer), and the lifecycle
+    // Sequential: EWC assigns session ids by arrival order and the lifecycle
     // specs assert on that ordering.
     sessions.push(await openSession(browser, { who: opts.who?.(i) }));
   }
@@ -537,11 +435,9 @@ export async function openSessions(
 }
 
 /**
- * Poll an observer session until the server-wide view satisfies `pred`.
- *
- * Teardown is asynchronous — EWC processes the client's Close signal on its
- * Listen thread — so lifecycle assertions have to wait for a state, not read
- * once. Measured at ~320ms locally; the default budget is generous for CI.
+ * Poll an observer session until the server-wide view satisfies `pred`. EWC
+ * handles teardown on its Listen thread, so these assertions have to wait for a
+ * state rather than read once.
  */
 export async function waitForServerState(
   observer: MultiSession,
