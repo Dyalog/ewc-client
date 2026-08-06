@@ -25,27 +25,35 @@ for (const { demo, indicator, minChildren } of FLEX_DEMOS) {
       page = await navigateToDemo(result.page, demo, indicator, 15000);
     });
 
-    test('children of the flex row share lines instead of stacking', async () => {
-      const rows = await page.locator('#F1\\.INPUT').evaluate((el) => {
-        const parent = el.getBoundingClientRect();
-        return [...el.children].map((c) => {
-          const r = c.getBoundingClientRect();
-          return { id: (c as HTMLElement).id, left: Math.round(r.left), width: Math.round(r.width) };
-        }).concat([{ id: '#parent', left: Math.round(parent.left), width: Math.round(parent.width) }]);
+    test('children are content-sized and none is clipped out of the row', async () => {
+      const { parent, children } = await page.locator('#F1\\.INPUT').evaluate((el) => {
+        const box = (n: Element) => {
+          const { right, bottom, width } = n.getBoundingClientRect();
+          return { right, bottom, width };
+        };
+        return {
+          parent: box(el),
+          children: [...el.children].map((c) => ({ id: (c as HTMLElement).id, ...box(c) })),
+        };
       });
-      const parent = rows.pop()!;
-      expect(rows.length).toBeGreaterThanOrEqual(minChildren);
+      expect(children.length).toBeGreaterThanOrEqual(minChildren);
 
-      // The bug: every child was exactly as wide as its container.
-      const fullWidth = rows.filter(c => c.width >= parent.width - 12);
+      // The bug: every child was handed the CONTAINER's own width, so no two
+      // could ever share a flex line.
+      const fullWidth = children.filter((c) => c.width >= parent.width - 12);
       expect(fullWidth, `children as wide as the row: ${fullWidth.map(c => c.id).join(', ')}`)
         .toHaveLength(0);
 
-      // ...so every one started a new flex line, all flush to the same left
-      // edge — a column, in a flex-direction:row container. Compare lefts, not
-      // tops: align-items:end gives same-line children different tops.
-      const lefts = new Set(rows.map(c => c.left));
-      expect(lefts.size, `all children flush left at ${[...lefts]}`).toBeGreaterThan(1);
+      // ...so each wrapped onto its own line, past the row's fixed height,
+      // where overflow:clip ate it. Don't assert they now fit on one line:
+      // content widths follow font metrics, which differ between macOS and the
+      // Linux CI runner, so wrapping is legitimate. What must hold everywhere is
+      // that the row grew to contain every child instead of clipping it away.
+      const clipped = children.filter(
+        (c) => c.bottom > parent.bottom + 1 || c.right > parent.right + 1
+      );
+      expect(clipped, `children clipped out of the row: ${clipped.map(c => c.id).join(', ')}`)
+        .toHaveLength(0);
     });
 
     test('the demo menu is visible and clickable', async () => {
@@ -56,7 +64,12 @@ for (const { demo, indicator, minChildren } of FLEX_DEMOS) {
       // was there to hit, so .click() timed out on an intercepting element.
       await combo.click({ timeout: 5000 });
       await expect(page.locator('[role="listbox"][id$=".MENU-listbox"]').first()).toBeVisible();
-      await page.keyboard.press('Escape');
+
+      // Close it by toggling the trigger, and wait for that to land. Tests in
+      // this describe share one page, so an open dropdown left behind would be
+      // toggled SHUT by the next test's click and its options never appear.
+      await combo.click();
+      await expect(combo).toHaveAttribute('aria-expanded', 'false');
     });
 
     test('the placeholder returns to the home page', async () => {
