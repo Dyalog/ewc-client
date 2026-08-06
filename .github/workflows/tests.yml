@@ -278,6 +278,125 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # Multi-mode (EWC.MODE=2) suite: many browser contexts against ONE server,
+  # asserting per-session namespace cloning, teardown and WG routing.
+  #
+  # A separate job rather than a project inside the e2e matrix, deliberately.
+  # A Dyalog process runs EWC in exactly one mode, so this needs its own
+  # server; folding it into the matrix would make all 5 shards start a second
+  # container that 4 of them would never use.
+  #
+  # Not sharded: the suite is small, and its assertions are on SERVER-WIDE
+  # state (which clones exist, what the close log holds), which two concurrent
+  # backends' worth of sessions would make meaningless.
+  e2e-multi:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: |
+      needs.check.outputs.skip != 'true' &&
+      github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout ewc-client
+        uses: actions/checkout@v7
+
+      - name: Checkout Dyalog/ewc
+        uses: ./.github/actions/checkout-ewc-server
+        with:
+          ref: ${{ inputs.ewc_server_ref || '' }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          pr-body: ${{ github.event.pull_request.body || '' }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright system deps (apt)
+        timeout-minutes: 12
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update && npx playwright install-deps chromium && break
+            echo "::warning::apt attempt $i failed; retrying in 15s"; sleep 15
+          done
+
+      - name: Install Playwright browser
+        timeout-minutes: 6
+        run: npx playwright install chromium
+
+      - name: Build ewc-client
+        run: yarn build
+
+      - name: Start Dyalog EWC server in Multi mode (Docker)
+        run: |
+          # SETUP_APL swaps ci/setup-ewc.apl (Browser, :22322) for
+          # ci/setup-ewc-multi.apl (Multi, :22323) — see ci/run-server.sh.
+          #
+          # The test app is mounted at /work/mtest, NOT /work, which would
+          # shadow /work/ewc and /work/ewc-client. ]link.create names the
+          # namespace after the directory, so the mount point must be
+          # called `mtest` for the app to land at #.mtest.
+          docker run -d --name ewc-multi --network host \
+            -e SETUP_APL=/scripts/setup-ewc-multi.apl \
+            --entrypoint /scripts/run-server.sh \
+            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
+            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
+            -v "${{ github.workspace }}/e2e/multi/apl/mtest:/work/mtest:ro" \
+            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            dyalog/dyalog:latest
+
+      - name: Diagnostics — what's running before wait-on
+        run: |
+          sleep 5
+          echo '=== Listening ports ==='
+          (ss -tln 2>/dev/null || netstat -tln) | head -30 || true
+          echo
+          echo '=== Docker container status ==='
+          docker ps -a --filter name=ewc-multi || true
+          echo
+          echo '=== Dyalog container logs ==='
+          docker logs ewc-multi 2>&1 | tail -80 || true
+
+      - name: Wait for EWC Multi server
+        # tcp: only — EWC's WSS answers GET but not HEAD, and wait-on's
+        # http probe uses HEAD.
+        run: npx wait-on tcp:22323 --timeout 120000
+
+      - name: Run Multi-mode Playwright tests
+        # Step timeout below the job cap so a wedged run is SIGINT-stopped
+        # and the log-capture step below still runs.
+        timeout-minutes: 15
+        env:
+          MULTI_URL: http://localhost:22323
+        run: npx playwright test --config playwright.multi.config.ts --reporter=list,html
+
+      - name: Capture Dyalog container logs (post-run)
+        # The Multi server's log is where session create/close, thread kills
+        # and namespace expunges are recorded — the server-side counterpart to
+        # whatever the specs asserted. Worth keeping even on success.
+        if: always()
+        run: docker logs ewc-multi || true
+
+      - name: Upload Multi-mode Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-multi
+          path: playwright-report-multi/
+          if-no-files-found: ignore
+          retention-days: 7
+
   # Recombine the per-shard blob reports into ONE browsable html report
   # with aggregate pass/fail. Runs even when shards fail (visual diffs, a
   # wedged shard) via !cancelled(); skipped only if the whole e2e matrix
