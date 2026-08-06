@@ -378,8 +378,12 @@
     ∇
 
 
-    ∇ Log msg
-      ⎕←msg
+    ∇ {mode} Log msg
+     ⍝ Small HACK to route through EWC.Log
+     ⍝ If we want to set EWC.LOGFILE to redirect logs, we also want WebSocket
+     ⍝ related messages to go there.
+      :If 0=⎕NC'mode' ⋄ mode←'C' ⋄ :EndIf
+      :Trap 0 ⋄ mode #.EWC.Log msg ⋄ :Else ⋄ ⎕←mode,': ',msg ⋄ :EndTrap
     ∇
 
     dlb←{⍵↓⍨+/∧\' '=⍵}

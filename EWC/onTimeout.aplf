@@ -1,6 +1,11 @@
 r←onTimeout args;m;conns
-
-:If 2=⎕NC 'WSS.Conx'
-:AndIf ∨/m←~WSS.LDRC.Exists¨conns←WSS.Conx[;1]
-    endSession¨{0 ⍵ 'Close'}¨m/conns
-:EndIf
+⍝ Admittedly slightly over-defensive Trap
+ :Trap 0
+     :If 9=⎕NC 'WSS'
+     :AndIf 0≠≢conns←WSS.Conx[;1]
+     :AndIf ∨/m←~WSS.LDRC.Exists¨conns
+         endSession¨{0 ⍵ 'Close'}¨m/conns
+     :EndIf
+ :Else
+     'E' Log 'onTimeout failed: ',⊃⎕DMX.DM
+ :EndTrap
