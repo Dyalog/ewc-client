@@ -269,8 +269,7 @@ export async function teardown(sessions: MultiSession[]): Promise<void> {
   }
   live.clear();
 
-  // Per test, not per run: "Run to end" means this test, so the next one gates
-  // again.
+  // Per test, not per run
   runToEnd = false;
 }
 
