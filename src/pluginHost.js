@@ -52,9 +52,19 @@ const registerComponent = (type, entry) => {
   return type;
 };
 
+/**
+ * Resolve a path against the EWC server, which is not always the page's own
+ * origin: while ewc-client itself is being developed the page comes from Vite
+ * on one port and EWC - along with anything a plugin mounted through its
+ * Resources - is on another. A plugin fetching its own assets should go through
+ * this rather than use a bare relative URL.
+ */
+const url = (path) => new URL(path, utils.getCurrentUrl()).href;
+
 window.EWC.React = React;
 window.EWC.components = components;
 window.EWC.registerComponent = registerComponent;
+window.EWC.url = url;
 
 export const pluginEntry = (type) => (type ? components[type] : undefined);
 
