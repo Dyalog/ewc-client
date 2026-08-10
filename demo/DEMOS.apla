@@ -34,6 +34,9 @@
  'TicTacToe'
  'TimerLines'
  'TreeView'
+ 'FlappyBird'
+ 'Life'
+ 'Bounce'
  '--- SubForm'
  'SubFormEdit'
  'SubFormGrid'
@@ -47,6 +50,7 @@
  'ApexHorizontalBar'
  'ApexMovAvg'
  'ApexSineWave'
+ 'Ticker'
  '--- Flex'
  'FlexLogin'
 )
