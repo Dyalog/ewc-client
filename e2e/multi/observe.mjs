@@ -3,7 +3,7 @@
 //   yarn ewc-multi:observe [n]      (default 3)
 //
 // Opens N real, tiled browser windows against a running Multi-mode server and
-// leaves them open. Each is a separate EWC session with its own #.mtest_N
+// leaves them open. Each is a separate EWC session with its own #.multitest_N
 // clone, so you can type in one and watch the others stay untouched — and
 // close one and watch the survivors' Clones/Closed lists update.
 //
@@ -60,7 +60,7 @@ console.log(`Opening ${N} session${N === 1 ? '' : 's'} against ${BASE} …\n`);
 const windows = [];
 for (let i = 0; i < N; i++) {
   // Sequential so session ids are assigned in window order, which makes the
-  // tiling correspond to #.mtest_1, _2, _3 left-to-right.
+  // tiling correspond to #.multitest_1, _2, _3 left-to-right.
   windows.push(await openWindow(i));
 }
 

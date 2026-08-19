@@ -301,11 +301,29 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Checkout Dyalog/ewc
+        id: ewc
         uses: ./.github/actions/checkout-ewc-server
         with:
           ref: ${{ inputs.ewc_server_ref || '' }}
           branch: ${{ github.head_ref || github.ref_name }}
           pr-body: ${{ github.event.pull_request.body || '' }}
+
+      - name: Check the resolved ewc ref carries the Multi test app
+        # The app is test-apps/multitest in Dyalog/ewc, so a ref predating it
+        # fails inside APL on multitest.Run — a VALUE ERROR buried in the
+        # container log, 2 minutes after wait-on gives up. Say so up front.
+        # Ref via env, not inline: same precaution as checkout-ewc-server.
+        env:
+          EWC_REF: ${{ steps.ewc.outputs.ref }}
+        run: |
+          if [ ! -d ewc-server/test-apps/multitest ]; then
+            echo "::error::Dyalog/ewc@${EWC_REF} has no test-apps/multitest."
+            echo "The Multi-mode test app lives in Dyalog/ewc. Point this job"
+            echo "at a ref that has it with an 'EWC-REF: <branch>' line in the"
+            echo "PR body, or land the app on that branch first."
+            exit 1
+          fi
+          echo "Multi test app present in Dyalog/ewc@${EWC_REF}"
 
       - uses: actions/setup-node@v6
         with:
@@ -343,16 +361,14 @@ jobs:
           # SETUP_APL swaps ci/setup-ewc.apl (Browser, :22322) for
           # ci/setup-ewc-multi.apl (Multi, :22323) — see ci/run-server.sh.
           #
-          # The test app is mounted at /work/mtest, NOT /work, which would
-          # shadow /work/ewc and /work/ewc-client. ]link.create names the
-          # namespace after the directory, so the mount point must be
-          # called `mtest` for the app to land at #.mtest.
+          # The test app comes from Dyalog/ewc (test-apps/multitest), so it
+          # arrives inside the ewc-server mount and tracks whichever ref
+          # checkout-ewc-server resolved.
           docker run -d --name ewc-multi --network host \
             -e SETUP_APL=/scripts/setup-ewc-multi.apl \
             --entrypoint /scripts/run-server.sh \
             -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
             -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
-            -v "${{ github.workspace }}/e2e/multi/apl/mtest:/work/mtest:ro" \
             -v "${{ github.workspace }}/ci:/scripts:ro" \
             dyalog/dyalog:latest
 

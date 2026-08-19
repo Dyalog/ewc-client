@@ -57,7 +57,7 @@ export default defineConfig({
       slowMo: OBSERVE ? parseInt(process.env.SLOWMO || '350', 10) : 0,
     },
 
-    // Room for the mtest form plus the banner, small enough to see several at
+    // Room for the multitest form plus the banner, small enough to see several at
     // once. Ignored under OBSERVE, where session.ts sizes the windows itself.
     viewport: { width: 720, height: 780 },
 

@@ -13,15 +13,14 @@
 ⍝ browser ever connected.
 ⍝
 ⍝ Mount layout (set up by ci/ewc-multi-start.sh / the CI job):
-⍝   /work/ewc              → the Dyalog/ewc repo
+⍝   /work/ewc              → the Dyalog/ewc repo, which carries the test app
+⍝                            at test-apps/multitest — so EWC_SRC picks the
+⍝                            backend and its fixture app as one unit
 ⍝   /work/ewc-client/dist  → freshly-built ewc-client (sibling of
 ⍝                            /work/ewc, so EWC.Init's auto-discovery
 ⍝                            picks it up)
-⍝   /work/mtest            → e2e/multi/apl/mtest from THIS repo, so the
-⍝                            test app versions in lockstep with the specs
-⍝                            that assert against it
 
 ]link.create /work/ewc/EWC
-]link.create /work/mtest
+]link.create /work/ewc/test-apps/multitest
 EWC.FOLDER←'/work/ewc'
-mtest.Run
+multitest.Run
