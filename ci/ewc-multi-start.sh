@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start an `ewc-multi` Docker container running the mtest app in EWC's
+# Start an `ewc-multi` Docker container running the multitest app in EWC's
 # MULTI mode on port 22323 (with RIDE on :4503). Used by:
 #
 #   yarn ewc-multi:start      # this script
@@ -25,6 +25,15 @@ if [ ! -d "$EWC_SRC" ]; then
     exit 1
 fi
 
+# The test app lives in Dyalog/ewc, so an EWC checkout predating it would
+# otherwise fail deep inside APL with a VALUE ERROR on multitest.Run.
+if [ ! -d "$EWC_SRC/test-apps/multitest" ]; then
+    echo "ERROR: $EWC_SRC has no test-apps/multitest." >&2
+    echo "       The Multi-mode test app lives in Dyalog/ewc; this checkout" >&2
+    echo "       predates it. Update it, or point EWC_SRC at one that has it." >&2
+    exit 1
+fi
+
 # Without dist/, EWC's JSClientFolder auto-discovery falls back to the
 # bundled client inside Dyalog/ewc — i.e. not your local changes.
 if [ ! -d dist ]; then
@@ -36,9 +45,9 @@ fi
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 
-# The mtest app mounts at /work/mtest (NOT /work — that would shadow
-# /work/ewc and /work/ewc-client). ]link.create names the namespace after
-# the directory, so the mount point has to be called `mtest`.
+# The test app rides along inside the ewc mount, at
+# /work/ewc/test-apps/multitest — so EWC_SRC swaps the backend and the
+# fixture app together.
 docker run -d --name "$NAME" \
   -e RIDE_INIT="SERVE:*:${RIDE_PORT}" \
   -e SETUP_APL=/scripts/setup-ewc-multi.apl \
@@ -47,7 +56,6 @@ docker run -d --name "$NAME" \
   --entrypoint /scripts/run-server.sh \
   -v "$EWC_SRC:/work/ewc:ro" \
   -v "$PWD/dist:/work/ewc-client/dist:ro" \
-  -v "$PWD/e2e/multi/apl/mtest:/work/mtest:ro" \
   -v "$PWD/ci:/scripts:ro" \
   dyalog/dyalog:latest >/dev/null
 

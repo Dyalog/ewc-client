@@ -21,7 +21,7 @@ let runToEnd = false;
 
 const live = new Set<MultiSession>();
 
-const BANNER_ID = '__mtest_observe';
+const BANNER_ID = '__multitest_observe';
 
 // Window geometry has to be set here rather than via config `use: { viewport }`:
 // those options only reach contexts Playwright creates for the `page` fixture,
@@ -87,9 +87,9 @@ async function installBanner(page: Page, ns: string, manual: boolean): Promise<v
   await page.evaluate(
     ([id, label, isManual]) => {
       if (document.getElementById(id)) return;
-      const w = window as unknown as { __mtestNext?: boolean; __mtestRun?: boolean };
-      w.__mtestNext = false;
-      w.__mtestRun = false;
+      const w = window as unknown as { __multitestNext?: boolean; __multitestRun?: boolean };
+      w.__multitestNext = false;
+      w.__multitestRun = false;
 
       const bar = document.createElement('div');
       bar.id = id;
@@ -120,8 +120,8 @@ async function installBanner(page: Page, ns: string, manual: boolean): Promise<v
             'background:transparent', `color:${accent}`,
           ].join(';');
           b.onclick = () => {
-            if (flag === 'next') w.__mtestNext = true;
-            else w.__mtestRun = true;
+            if (flag === 'next') w.__multitestNext = true;
+            else w.__multitestRun = true;
           };
           return b;
         };
@@ -161,9 +161,9 @@ async function flushClicks(): Promise<void> {
     [...live].map((s) =>
       s.page
         .evaluate(() => {
-          const w = window as unknown as { __mtestNext?: boolean; __mtestRun?: boolean };
-          w.__mtestNext = false;
-          w.__mtestRun = false;
+          const w = window as unknown as { __multitestNext?: boolean; __multitestRun?: boolean };
+          w.__multitestNext = false;
+          w.__multitestRun = false;
         })
         .catch(() => {})
     )
@@ -181,10 +181,10 @@ async function waitForClick(): Promise<void> {
 
       const pressed = await s.page
         .evaluate(() => {
-          const w = window as unknown as { __mtestNext?: boolean; __mtestRun?: boolean };
-          const hit = { next: !!w.__mtestNext, run: !!w.__mtestRun };
-          w.__mtestNext = false;
-          w.__mtestRun = false;
+          const w = window as unknown as { __multitestNext?: boolean; __multitestRun?: boolean };
+          const hit = { next: !!w.__multitestNext, run: !!w.__multitestRun };
+          w.__multitestNext = false;
+          w.__multitestRun = false;
           return hit;
         })
         .catch(() => {
@@ -276,9 +276,9 @@ export async function teardown(sessions: MultiSession[]): Promise<void> {
 export interface MultiSession {
   context: BrowserContext;
   page: Page;
-  /** Clone namespace, e.g. `#.mtest_2`. */
+  /** Clone namespace, e.g. `#.multitest_2`. */
   ns: string;
-  /** Short form, e.g. `mtest_2`, as it appears in the clones list. */
+  /** Short form, e.g. `multitest_2`, as it appears in the clones list. */
   shortNs: string;
   /** EWC session id (`_EWC.ID`). Recycled on disconnect. */
   id: string;
@@ -337,7 +337,7 @@ export async function openSession(
     await page.locator(sel('WHOAMI')).waitFor({ state: 'visible', timeout });
   } catch {
     throw new Error(
-      `mtest form never rendered at ${BASE + query} within ${timeout}ms. ` +
+      `multitest form never rendered at ${BASE + query} within ${timeout}ms. ` +
         `Initialise runs in a detached thread, so an APL error there surfaces ` +
         `as this timeout — check 'yarn ewc-multi:logs'.`
     );
@@ -350,7 +350,7 @@ export async function openSession(
 
   let slot: number | undefined;
   const ns = await caption('WHOAMI');
-  if (!ns.startsWith('#.mtest_')) {
+  if (!ns.startsWith('#.multitest_')) {
     throw new Error(`Session did not initialise cleanly; WHOAMI reads: ${ns}`);
   }
 

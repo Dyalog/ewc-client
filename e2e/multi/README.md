@@ -6,6 +6,18 @@ Separate from `e2e/demo/` because a Dyalog process runs EWC in exactly one mode.
 The demo suite drives a **Browser**-mode server on `:22322`; this one drives a
 **Multi**-mode server on `:22323`. Both can run at once.
 
+## The app under test lives in Dyalog/ewc
+
+Only the specs are here. The APL app they drive is `test-apps/multitest/` in
+[Dyalog/ewc](https://github.com/Dyalog/ewc), beside the EWC code it exercises, so
+`EWC_SRC=/path/to/ewc` swaps backend and fixture together. It links as
+`#.multitest` and EWC clones it per session as `#.multitest_1`, `_2`, … — the
+names the specs assert on.
+
+Changing a widget id or a callback there is therefore a two-repo change. CI pairs
+them automatically when both repos have a branch of the same name; otherwise put
+`EWC-REF: <branch>` in the PR body (see `.github/actions/checkout-ewc-server`).
+
 ## One user = one playwright context
 
 Contexts are storage- and cookie-partitioned, so this models different people on

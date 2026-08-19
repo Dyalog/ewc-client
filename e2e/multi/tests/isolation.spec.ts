@@ -22,16 +22,16 @@ test.describe('Multi mode — session isolation', () => {
     const b = await step('user B connects', async () => track(await openSession(browser)));
 
     await step('each got a distinct clone, session id and thread', async () => {
-      expect(a.ns).toMatch(/^#\.mtest_\d+$/);
-      expect(b.ns).toMatch(/^#\.mtest_\d+$/);
+      expect(a.ns).toMatch(/^#\.multitest_\d+$/);
+      expect(b.ns).toMatch(/^#\.multitest_\d+$/);
 
       expect(b.ns).not.toBe(a.ns);
       expect(b.id).not.toBe(a.id);
       expect(b.tid).not.toBe(a.tid);
 
       // The clone name is derived from the session id, so they must agree.
-      expect(a.ns).toBe(`#.mtest_${a.id}`);
-      expect(b.ns).toBe(`#.mtest_${b.id}`);
+      expect(a.ns).toBe(`#.multitest_${a.id}`);
+      expect(b.ns).toBe(`#.multitest_${b.id}`);
     });
 
     await step('A refreshes and sees both clones alive', async () => {
