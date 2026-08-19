@@ -1,0 +1,5 @@
+ CBIncrement args
+⍝ Bump this session's own counter.
+
+ count←count+1
+ 'F1.COUNTER'eWS'Caption'(⍕count)

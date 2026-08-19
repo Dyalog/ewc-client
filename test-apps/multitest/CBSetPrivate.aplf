@@ -1,0 +1,5 @@
+ CBSetPrivate args
+⍝ Copy the Edit into this clone's own variable and echo it back.
+
+ private←∊'F1.PRIVATEIN'eWG'Text'
+ 'F1.PRIVATE'eWS'Caption'private

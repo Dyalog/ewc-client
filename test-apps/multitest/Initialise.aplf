@@ -1,0 +1,70 @@
+ Initialise connected;who;i;live
+⍝ Called once per browser connection, in its own thread. Must be monadic.
+⍝ Each widget surfaces a server-side fact as a DOM id a test can read.
+⍝ The Form and WHOAMI are created before the Trap so a failure inside it
+⍝ shows as a caption rather than a suspended thread.
+
+ ⍝ Not localised
+ count←0
+ private←'-'
+ refreshes←0
+
+ 'F1'eWC'Form'('EWC Multi Test — ',⍕⎕THIS)(50 50)(400 520)('Coord' 'Pixel')
+ 'F1.WHOAMI'eWC'Label'(⍕⎕THIS)(10 10)(23 500)
+
+ :Trap 0
+     who←'-'
+     live←0
+     :If 2=_EWC.⎕NC'QUERY'
+         :If (≢_EWC.QUERY)≥i←_EWC.QUERY[;1]⍳⊂'who'
+             who←⊃_EWC.QUERY[i;2]
+         :EndIf
+         ⍝ ?live=1 polls the server-wide views on a Timer, for the interactive
+         ⍝ playground. The specs drive F1.REFRESH explicitly instead.
+         live←(≢_EWC.QUERY)≥_EWC.QUERY[;1]⍳⊂'live'
+     :EndIf
+
+     'F1.T1'eWC'Label' 'Session:'(45 10)(23 130)
+     'F1.SESSIONID'eWC'Label'(⍕_EWC.ID)(45 150)(23 120)
+     'F1.T2'eWC'Label' 'Thread:'(45 280)(23 90)
+     'F1.TID'eWC'Label'(⍕⎕TID)(45 380)(23 120)
+
+     'F1.T3'eWC'Label' 'Query who:'(75 10)(23 130)
+     'F1.QUERY'eWC'Label'who(75 150)(23 350)
+
+     'F1.T4'eWC'Label' 'Private:'(105 10)(23 130)
+     'F1.PRIVATEIN'eWC'Edit' ''(105 150)(23 200)('Style' 'Single')
+     'F1.SETPRIVATE'eWC'Button' 'Set'(105 360)(23 140)('Event' 'Select' 'CBSetPrivate')
+     'F1.PRIVATE'eWC'Label'private(135 150)(23 350)
+
+     'F1.T5'eWC'Label' 'Counter:'(170 10)(23 130)
+     'F1.COUNTER'eWC'Label'(⍕count)(170 150)(23 120)
+     'F1.INC'eWC'Button' 'Increment'(170 280)(23 140)('Event' 'Select' 'CBIncrement')
+
+     'F1.T6'eWC'Label' 'Clones:'(210 10)(23 130)
+     'F1.CLONES'eWC'Label'(cloneList ⍬)(210 150)(23 350)
+
+     'F1.T7'eWC'Label' 'Closed:'(240 10)(23 130)
+     'F1.CLOSELOG'eWC'Label'(closeList ⍬)(240 150)(23 350)
+
+     'F1.REFRESH'eWC'Button' 'Refresh'(275 10)(23 140)('Event' 'Select' 'CBRefresh')
+     'F1.RUNPROBE'eWC'Button' 'Run WG probe'(275 160)(23 160)('Event' 'Select' 'CBProbe')
+
+     ⍝ Written last by CBRefresh, so a test can tell a fresh caption from a
+     ⍝ stale one by watching this instead.
+     'F1.REFRESHN'eWC'Label'(⍕refreshes)(275 340)(23 60)
+
+     'F1.T8'eWC'Label' 'Probe:'(310 10)(23 130)
+     'F1.PROBE'eWC'Label' '-'(310 150)(23 350)
+
+     'F1.T9'eWC'Label' 'Token:'(340 10)(23 130)
+     'F1.TOKEN'eWC'Edit'(⍕⎕THIS)(340 150)(23 350)('Style' 'Single')
+
+     :If live
+         'F1.TICK'eWC'Timer' 1000('Active' 1)('Event' 'Timer' 'CBRefresh')('FireOnce' 0)
+     :EndIf
+ :Else
+     'F1.WHOAMI'eWS'Caption'('INIT ERROR: ',⊃⎕DMX.DM)
+ :EndTrap
+
+ eDQ'F1'
