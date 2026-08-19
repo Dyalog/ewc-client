@@ -10,7 +10,7 @@ const useAppData = () => {
 
   const {
     socketData, dataRef, socket, handleData, focusedElement, reRender, proceed, setProceed, proceedEventArray,
-    setProceedEventArray, pendingKeypressEventRef, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,
+    setProceedEventArray, keypressVerdictsRef, colors, fontScale, nqEvents, setNqEvents , updateCurrentEvent,
     currentEventRef, isDesktop,
   } = useContext(AppDataContext);
 
@@ -110,7 +110,7 @@ const useAppData = () => {
     setProceed,
     proceedEventArray,
     setProceedEventArray,
-    pendingKeypressEventRef,
+    keypressVerdictsRef,
     colors,
     findAggregatedPropertiesData,
     fontScale,

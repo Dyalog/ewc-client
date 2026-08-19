@@ -19,7 +19,8 @@ import Upload from "./components/Upload";
 import MsgBox from "./components/MessageBox";
 import { getGrid } from "./components/Grid/getGrid";
 import * as Globals from "./Globals";
-import keypressHandlers, { keyNameToCode } from "./utils/keypressHandlers";
+import keypressHandlers from "./utils/keypressHandlers";
+import { insertTextIntoInput } from "./utils/insertTextIntoInput";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
 import { noteServerSize } from "./hooks/useConfigureReport";
@@ -37,7 +38,12 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const [proceed, setProceed] = useState(false);
   const [proceedEventArray, setProceedEventArray] = useState([]);
-  const pendingKeypressEventRef = useRef(null);
+  // Outstanding KeyPress events awaiting an EC{Proceed} verdict, keyed by
+  // EventID. Components register here when they need to know whether APL
+  // accepted a keystroke; today only Edit does, to undo a vetoed character.
+  // A map, not a single slot: typing faster than the round-trip leaves several
+  // in flight at once.
+  const keypressVerdictsRef = useRef(new Map());
   const [nqEvents, setNqEvents] = useState([]);
   const webSocketRef = useRef(null);
   const [focusedElement, setFocusedElement] = useState(null);
@@ -1534,21 +1540,13 @@ const App = () => {
               const ch = Info[0];
 
               if (ch.length == 1) {
-                // Single character insert
-                const el = document.getElementById(ID);
-                el.dispatchEvent(new KeyboardEvent("keydown", { key: ch }));
+                // Single character insert. A synthetic KeyboardEvent is
+                // untrusted, so dispatching one would notify listeners without
+                // the browser inserting anything — do the insert ourselves.
+                insertTextIntoInput(document.getElementById(ID), ch);
               } else {
                 const kph = keypressHandlers[ch];
-                if (kph) {
-                  const globalState = {
-                    pendingKeypressEvent,
-                    socketData,
-                    nqEvents,
-                    proceed,
-                    proceedEventArray
-                  };
-                  kph(handleData, ID, existingData?.Properties, globalState);
-                }
+                if (kph) kph(handleData, ID, existingData?.Properties);
               }
 
               nqCallback({
@@ -1646,56 +1644,14 @@ const App = () => {
           // setProceedEventArray((prev, index) => ({...prev, [EventID+index]: Proceed}));
           setProceed(Proceed);
 
-          // Handle pending keypress based on Proceed value - use ref instead of state
-          const currentPendingEvent = pendingKeypressEventRef.current;
-          if (currentPendingEvent && currentPendingEvent.eventId === EventID) {
-            if (Proceed === 1) {
-              const { key, shiftKey, componentId, applyKey } = currentPendingEvent;
-
-              // Navigation / editing keys are delegated to a registered EWC
-              // keypress handler (resolved by code; see keyNameToCode).
-              // Printable characters have no handler and fall to the `else`.
-              const specialHandler = keypressHandlers[keyNameToCode(key, shiftKey)];
-
-              if (specialHandler) {
-                // Special key: delegate to its handler (operates on the data
-                // tree via componentId/handleData, not the DOM element).
-                const componentData = JSON.parse(getObjectById(dataRef.current, componentId));
-                specialHandler(handleData, componentId, componentData.Properties);
-              } else if (key && key.length === 1) {
-                // Printable character.
-                if (typeof applyKey === 'function') {
-                  // Per-instance apply (registered by Edit's handleKeyPress):
-                  // mutates this Edit's own React state, never the shared
-                  // Grid column template (data.Properties). Writing a typed
-                  // char into Properties.Text would contaminate every cell in
-                  // the column.
-                  applyKey(key);
-                } else {
-                  // Legacy fallback for components that don't register applyKey:
-                  // mutate the DOM input directly and push Text/Value to the tree.
-                  const editElement = document.getElementById(componentId);
-                  if (editElement) {
-                    const start = editElement.selectionStart;
-                    const end = editElement.selectionEnd;
-                    const newValue = editElement.value.slice(0, start) + key + editElement.value.slice(end);
-
-                    editElement.value = newValue;
-                    editElement.setSelectionRange(start + 1, start + 1);
-
-                    handleData({
-                      ID: componentId,
-                      Properties: {
-                        Text: newValue,
-                        Value: newValue,
-                        SelText: [start + 2, start + 2], // 1-indexed for APL
-                      },
-                    }, "WS");
-                  }
-                }
-              }
-            }
-            pendingKeypressEventRef.current = null;
+          // Deliver the KeyPress verdict to whoever is waiting on it. The
+          // keystroke has already been applied natively by the browser, so
+          // Proceed:1 needs no work — only a veto (Proceed:0) does, and the
+          // registrant is the one that knows how to undo it.
+          const verdict = keypressVerdictsRef.current.get(EventID);
+          if (verdict) {
+            keypressVerdictsRef.current.delete(EventID);
+            verdict.onVerdict(Proceed);
           }
 
           // localStorage.setItem(`${EventID}${currentEvent.curEvent}`, Proceed);
@@ -1795,7 +1751,7 @@ const App = () => {
           setProceed,
           proceedEventArray,
           setProceedEventArray,
-          pendingKeypressEventRef,
+          keypressVerdictsRef,
           colors,
           fontScale,
           nqEvents,
