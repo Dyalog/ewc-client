@@ -15,26 +15,12 @@
          →0
      :Else
          names←(⊃args) ⎕WG 'Data'
-         ⍝ :If ∨/((≢¨names)↑¨⊂name)∊names
-         ⍝ :OrIf 'Timer'≡caller⍎name,'.Type'
          (done R)←processEvent R
-         ⍝ QUEUEIDS,←⊂{(¯1+⍵⍳'.')↑⍵}R.Event.ID ⋄ QUEUEDATA,←R
-         ⍝:Else
-         ⍝    ⎕TRAP←0 'S' ⋄ ∘∘∘
-         ⍝    'W'Log'Ignoring event on unqueued object ',name
-         ⍝:EndIf
      :EndIf
-     done∨←∧/0=caller.⎕NC names ⍝ All DQ'd objects gone?
+     done∨←∧/0=caller.⎕NC names,{0=≢⍵:⍬ ⋄ ⍵.Event.ID}R ⍝ All DQ'd AND the target object gone?
      :If done
          ⎕NQ (⊃args) 1002 R ⍝ Terminate ∆DQ
      :EndIf
-
-     ⍝:Repeat
-     ⍝    :If (≢QUEUEIDS)≥i⊣n←(QUEUEIDS,⊂⍬)[i]⊣e←(QUEUEDATA,⊂⍬)[i]⊣i←⌊/QUEUEIDS⍳names
-     ⍝        (QUEUEIDS QUEUEDATA)←(m←(⍳≢QUEUEIDS)≠QUEUEIDS⍳n)∘/¨QUEUEIDS QUEUEDATA
-     ⍝        done←processEvent e
-     ⍝    :EndIf
-     ⍝:Until done
 
  :Else
      code←⍎sns←{(-(⌽⍵)⍳'.')↓⍵}⊃args
