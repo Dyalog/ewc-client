@@ -18,7 +18,9 @@ fns←(⊂'Pick a Demo'),fns
 form eWS 'Event' 'Close' 'CBCloseDemo'
 
 posn←0 (¯124+2⊃size)
-selitems←⍬ ⋄ topright←⍬
+⍝ Select the "Pick a Demo" placeholder by default (the current demo overrides
+⍝ it below). Stating it explicitly stops a stale name showing after going back.
+selitems←⊂'SelItems'((≢fns)↑1) ⋄ topright←⍬
 
 :If noflex←0=⎕NC sf←form,'.INPUT.DEMO' ⍝ Use demo subform if Form has created a space for it
      sf←form
