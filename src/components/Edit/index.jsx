@@ -17,13 +17,27 @@ import {
   isModifierKey,
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useAppData, useAttachStyle } from "../../hooks";
 import { useGridContext, useGridMode } from "../Grid/GridContext";
 import { normalizeAplFormatted } from "../Grid/useNumericFormatter";
 import dayjs from "dayjs";
 import { NumericFormat } from "react-number-format";
 import * as Globals from "../../Globals";
+
+// How long to wait for an EC{Proceed} verdict before assuming the keystroke was
+// accepted. Only a safety net — APL normally answers within the round-trip.
+const VERDICT_TIMEOUT_MS = 2000;
+
+// Every SelText array this client has written to the data model. The observer
+// below moves the caret for an APL-sent SelText but must ignore its own echo,
+// and a "last written" reference cannot tell them apart: the effect reads
+// SelText from the props of the render it belongs to, so when two writes land
+// close together the effect for the earlier render still holds the older array
+// while the reference has moved on — and the caret gets dragged back to where
+// it was before the keystroke. Set membership does not care which snapshot the
+// effect is holding. Weak, so entries go when the arrays do.
+const clientWrittenSelText = new WeakSet();
 
 const Edit = ({
   data,
@@ -37,7 +51,7 @@ const Edit = ({
     handleData,
     fontScale,
     inheritedProperties,
-    pendingKeypressEventRef
+    keypressVerdictsRef
   } = useAppData();
 
   // Check if we're inside a Grid cell
@@ -63,7 +77,6 @@ const Edit = ({
   const [inputValue, setInputValue] = useState("");
   const [emitValue, setEmitValue] = useState("");
   const [prevFocused, setprevFocused] = useState("⌈");
-  const [eventId, setEventId] = useState(null);
   const prevInputValueRef = useRef("");
   // Track when user is actively editing to prevent decideInputValue from overwriting
   const [isEditing, setIsEditing] = useState(false);
@@ -90,6 +103,27 @@ const Edit = ({
   const hasValueProperty = data?.Properties.hasOwnProperty("Value");
   const isPassword = data?.Properties.hasOwnProperty("Password");
   const inputRef = useRef(null);
+  // Caret to apply after the next commit, as [start, end] (0-indexed). Set this
+  // rather than calling setSelectionRange inline: React captures the selection
+  // of the focused element *before* it mutates a controlled input and re-applies
+  // it afterwards (prepareForCommit → restoreSelection), so anything set before
+  // the commit is undone. useLayoutEffect runs after that restore, before paint.
+  const caretRef = useRef(null);
+  // KeyPress events sent to APL that are still awaiting an EC{Proceed} verdict,
+  // keyed by EventID → the pre-keystroke snapshot needed to undo a veto. The
+  // browser has already applied the key; we only rewind if APL says no. A map,
+  // not a single slot: typing beats the round-trip.
+  const inFlightRef = useRef(new Map());
+  // Latest value committed to local state, so a flush triggered from outside
+  // the effect that tracks it still writes the current text.
+  const latestValueRef = useRef("");
+  // What the data model holds as far as this component is concerned: the value
+  // it last wrote, or the last APL value it applied. Anything else showing up
+  // in Properties is a genuine APL instruction. Without this the observer below
+  // cannot tell "APL changed the text" from "the DOM has run ahead of the model
+  // while a keystroke awaits its verdict", and pushes the lagging value — and
+  // the pre-keystroke caret — back into the input on the next render.
+  const modelValueRef = useRef(undefined);
   const font = findCurrentData(FontObj);
   const fontProperties = font && font?.Properties;
   const customStyles = parseFlexStyles(CSS);
@@ -165,6 +199,29 @@ const Edit = ({
     isEditing,
   ]);
 
+  // Record a locally-edited value. latestValueRef is updated here rather than
+  // only in the effect below, because a verdict can land before React has
+  // flushed that effect and the flush must write what the user actually typed.
+  const commitLocalValue = (value) => {
+    latestValueRef.current = value;
+    setInputValue(value);
+    setEmitValue(value);
+  };
+
+  const applyCaret = (start, end) => {
+    const el = inputRef.current;
+    if (!el || el.type === "date") return;
+    const len = el.value?.length ?? 0;
+    el.setSelectionRange(Math.min(start, len), Math.min(end, len));
+  };
+
+  useLayoutEffect(() => {
+    const caret = caretRef.current;
+    if (!caret) return;
+    caretRef.current = null;
+    applyCaret(caret[0], caret[1]);
+  });
+
   // We need to update SelText whenever we can
   const updateSelText = () => {
     const el = document.getElementById(data.ID);
@@ -183,16 +240,118 @@ const Edit = ({
     
     
     // Update global tree for WG requests
+    const selText = [clampedStart, clampedEnd];
+    clientWrittenSelText.add(selText);
     handleData(
       {
         ID: data?.ID,
         Properties: {
-          SelText: [clampedStart, clampedEnd],
+          SelText: selText,
         },
       },
       "WS"
     );
   };
+
+  // Push Text/Value plus the caret to the data model in one write, so a ⎕WG of
+  // either sees them in step. caret is [start, end] 0-indexed; omit it to read
+  // the live selection. Grid cells never call this — data.Properties there is
+  // the column template shared by every cell in the column.
+  const writeValueToModel = (value, caret) => {
+    if (isInGrid) return;
+    const el = inputRef.current;
+    const properties = { Text: value, Value: value };
+    if (el && el.type !== "date") {
+      const len = String(value ?? "").length;
+      const [start, end] = caret ?? [el.selectionStart ?? 0, el.selectionEnd ?? 0];
+      const selText = [
+        Math.max(1, Math.min(start + 1, len + 1)),
+        Math.max(1, Math.min(end + 1, len + 1)),
+      ];
+      clientWrittenSelText.add(selText);
+      properties.SelText = selText;
+    }
+    modelValueRef.current = value;
+    handleData({ ID: data?.ID, Properties: properties }, "WS");
+  };
+
+  // Settle one outstanding KeyPress. Proceed:1 (or the failsafe below) needs no
+  // work beyond releasing the model write — the browser applied the key when it
+  // was pressed. Proceed:0 is ⎕WC's veto: rewind the field to how it looked at
+  // that keystroke, which also discards anything typed during its round-trip,
+  // so the rest of the queue is dropped rather than left to flush a value that
+  // no longer exists.
+  const resolveVerdict = (eventId, proceed) => {
+    const entry = inFlightRef.current.get(eventId);
+    if (!entry) return;
+    clearTimeout(entry.timeout);
+    inFlightRef.current.delete(eventId);
+    keypressVerdictsRef.current.delete(eventId);
+
+    if (proceed === 0 && entry.snapshot) {
+      inFlightRef.current.forEach((queued, id) => {
+        clearTimeout(queued.timeout);
+        keypressVerdictsRef.current.delete(id);
+      });
+      inFlightRef.current.clear();
+
+      const { value, start, end } = entry.snapshot;
+      const valueChanged = latestValueRef.current !== value;
+      commitLocalValue(value);
+      prevInputValueRef.current = value;
+      // A vetoed cursor key leaves the text alone, so no commit follows and the
+      // layout effect would never fire — put the caret back directly instead.
+      if (valueChanged) caretRef.current = [start, end];
+      else applyCaret(start, end);
+      writeValueToModel(value, [start, end]);
+      return;
+    }
+
+    if (inFlightRef.current.size !== 0) return;
+
+    // Nothing left in flight, so the model can catch up — unless APL changed
+    // Text/Value itself while we were waiting, in which case its value wins and
+    // ours is discarded (⎕WC applies the keystroke to whatever the callback
+    // left behind). Read the tree live: the copy captured at keydown is stale.
+    const live = findCurrentData(data?.ID);
+    const modelValue = live?.Properties?.Text ?? live?.Properties?.Value;
+    if (modelValue !== undefined && modelValue !== modelValueRef.current) {
+      modelValueRef.current = modelValue;
+      commitLocalValue(modelValue);
+      return;
+    }
+    writeValueToModel(latestValueRef.current);
+  };
+
+  // Settle every outstanding keystroke as accepted and let the model catch up.
+  // Used on blur: the user has moved on, and triggerChangeEvent writes Value
+  // straight to the model — it must not do that while Text is still a keystroke
+  // behind, or a ⎕WG would report the two disagreeing. A verdict arriving after
+  // this finds nothing to act on, so a veto that late is dropped rather than
+  // rewinding a field the user has already left.
+  const settleInFlight = () => {
+    if (inFlightRef.current.size === 0) return;
+    inFlightRef.current.forEach((entry, id) => {
+      clearTimeout(entry.timeout);
+      keypressVerdictsRef.current.delete(id);
+    });
+    inFlightRef.current.clear();
+    writeValueToModel(latestValueRef.current);
+  };
+
+  // Drop this instance's claims on unmount so a late EC can't call into a
+  // component that no longer exists.
+  useEffect(() => {
+    const inFlight = inFlightRef.current;
+    const verdicts = keypressVerdictsRef.current;
+    return () => {
+      inFlight.forEach((entry, id) => {
+        clearTimeout(entry.timeout);
+        verdicts.delete(id);
+      });
+      inFlight.clear();
+    };
+  }, [keypressVerdictsRef]);
 
   // check that the Edit is in the Grid or not
 
@@ -220,6 +379,11 @@ const Edit = ({
   useEffect(() => {
     // Don't overwrite user input while actively editing (Grid sets isEditing on focus)
     if (isEditing) return;
+    // Nor while a keystroke awaits its verdict: the model is knowingly a
+    // keystroke behind the DOM then (see the write effect below), and re-seeding
+    // from it would undo what the user just typed. Any change APL made during
+    // that window is picked up by resolveVerdict when the last verdict lands.
+    if (inFlightRef.current.size > 0) return;
     decideInputValue();
     // isEditing intentionally excluded: it should guard, not trigger.
     // When ShowInput=1 and Edit stays mounted after deselection, isEditing
@@ -239,10 +403,18 @@ const Edit = ({
     const valueFromProperties = data?.Properties?.Value;
     const selTextFromProperties = data?.Properties?.SelText;
 
-
     const input = inputRef.current;
     if (!input) return;
-    
+
+    // Only an APL-originated SelText should move the caret; our own echoes are
+    // skipped (see clientWrittenSelText above).
+    const serverSelText =
+      Array.isArray(selTextFromProperties)
+      && selTextFromProperties.length === 2
+      && !clientWrittenSelText.has(selTextFromProperties)
+        ? [Math.max(0, selTextFromProperties[0] - 1), Math.max(0, selTextFromProperties[1] - 1)]
+        : null;
+
     // Determine what text value to use
     let newTextValue = undefined;
     if (textFromProperties !== undefined) {
@@ -250,59 +422,42 @@ const Edit = ({
     } else if (valueFromProperties !== undefined) {
       newTextValue = valueFromProperties;
     }
-    
-    // Handle text changes
-    if (newTextValue !== undefined) {
+
+    // Text/Value, but only when APL genuinely changed them. A value matching
+    // what we last put in the model is either our own echo or the model still
+    // catching up with an in-flight keystroke — pushing either back into the
+    // input would undo what the user just typed and move their caret with it.
+    if (newTextValue !== undefined && newTextValue !== modelValueRef.current) {
+      modelValueRef.current = newTextValue;
       const currentDOMValue = input.value;
-      
+
       if (currentDOMValue === newTextValue) {
         // DOM is already correct, just update React state without re-render
-        if (inputValue !== newTextValue) {
-          setInputValue(newTextValue);
-          setEmitValue(newTextValue);
-        }
+        if (inputValue !== newTextValue) commitLocalValue(newTextValue);
       } else {
-        
         // Save current cursor position before React re-render (not for date inputs)
         const savedStart = input.type !== 'date' ? input.selectionStart : 0;
         const savedEnd = input.type !== 'date' ? input.selectionEnd : 0;
-        
-        setInputValue(newTextValue);
-        setEmitValue(newTextValue);
-        
-        // Schedule cursor restoration after React updates DOM
+
+        commitLocalValue(newTextValue);
+
+        // A commit is coming, so hand the caret to the layout effect — it runs
+        // after React restores the pre-commit selection and would otherwise win.
         if (input.type !== 'date') {
-          setTimeout(() => {
-            if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2) {
-              // Use SelText from Properties if available
-              const start = Math.max(0, selTextFromProperties[0] - 1);
-              const end = Math.max(0, selTextFromProperties[1] - 1);
-              const textLength = input.value.length;
-              const clampedStart = Math.min(start, textLength);
-              const clampedEnd = Math.min(end, textLength);
-              
-              input.setSelectionRange(clampedStart, clampedEnd);
-            } else {
-              // Restore previous cursor position
-              input.setSelectionRange(savedStart, savedEnd);
-            }
-          }, 0);
+          caretRef.current = serverSelText ?? [savedStart, savedEnd];
         }
+        return;
       }
-    } else if (selTextFromProperties && Array.isArray(selTextFromProperties) && selTextFromProperties.length === 2 && input.type !== 'date') {
-      // Handle SelText-only updates (no text change) - not for date inputs
-      const start = Math.max(0, selTextFromProperties[0] - 1);
-      const end = Math.max(0, selTextFromProperties[1] - 1);
-      const textLength = input.value.length;
-      const clampedStart = Math.min(start, textLength);
-      const clampedEnd = Math.min(end, textLength);
-      
-      const currentStart = input.selectionStart;
-      const currentEnd = input.selectionEnd;
-      
-      if (currentStart !== clampedStart || currentEnd !== clampedEnd) {
-        input.setSelectionRange(clampedStart, clampedEnd);
-      } else {
+    }
+
+    // An APL SelText moves the caret whether or not the text changed with it.
+    // Handled separately because an Edit almost always carries Text as well,
+    // and while this sat in the else-branch of the test above it could never be
+    // reached for one. No demo drives ⎕WS 'SelText' at a standalone Edit, so
+    // this path is reachable now but not covered by a test.
+    if (serverSelText && input.type !== 'date' && !caretRef.current) {
+      if (input.selectionStart !== serverSelText[0] || input.selectionEnd !== serverSelText[1]) {
+        applyCaret(serverSelText[0], serverSelText[1]);
       }
     }
   }, [data?.Properties?.Text, data?.Properties?.Value, data?.Properties?.SelText]);
@@ -311,19 +466,16 @@ const Edit = ({
   // Skip when in Grid - the grid handles value updates through onCellChange
   useEffect(() => {
     if (isInGrid) return;
+    latestValueRef.current = inputValue;
 
     if (inputValue !== undefined && inputValue !== prevInputValueRef.current) {
       prevInputValueRef.current = inputValue;
-      handleData(
-        {
-          ID: data?.ID,
-          Properties: {
-            Text: inputValue,
-            Value: inputValue,
-          },
-        },
-        "WS"
-      );
+      // While a KeyPress is awaiting its verdict the model deliberately lags the
+      // DOM by that keystroke, so a ⎕WG of Text/Value inside the callback reports
+      // the pre-keystroke value, as ⎕WC does. resolveVerdict flushes the catch-up
+      // write once the last verdict lands.
+      if (inFlightRef.current.size > 0) return;
+      writeValueToModel(inputValue);
     }
   }, [inputValue]); // isInGrid is constant - no need to track it
 
@@ -379,39 +531,38 @@ const Edit = ({
       return;
     }
 
-    // Prevent default behavior for keys that APL might handle
-    e.preventDefault();
-    
     const eventId = crypto.randomUUID();
-    setEventId(eventId);
-    
-    // Register a per-instance callback so the EC=1 (Proceed=1) replay path
-    // in App.jsx can apply the typed character to *this* input's own state
-    // — never to data.Properties.Text. data.Properties is the per-column
-    // template shared across every Grid cell, so writing to it from EC
-    // replay contaminates every cell in the column. Mutating local state
-    // via setInputValue keeps the change scoped to this Edit instance.
-    // For standalone (non-Grid) Edits, the useEffect on [inputValue]
-    // still propagates to data.Properties via handleData WS, so behavior
-    // is preserved.
-    pendingKeypressEventRef.current = {
-      key: e.key,
-      eventId,
-      componentId: data?.ID,
-      shiftKey: e.shiftKey,
-      applyKey: (k) => {
-        const inp = inputRef.current;
-        if (!inp) return;
-        const start = inp.selectionStart ?? inp.value.length;
-        const end = inp.selectionEnd ?? inp.value.length;
-        const newVal = inp.value.slice(0, start) + k + inp.value.slice(end);
-        setInputValue(newVal);
-        setEmitValue(newVal);
-        requestAnimationFrame(() => {
-          inputRef.current?.setSelectionRange(start + k.length, start + k.length);
-        });
-      },
-    };
+
+    // No preventDefault: the browser applies the keystroke itself. That is what
+    // keeps the caret right — a value React writes for us is followed by React
+    // restoring the selection it captured *before* the write, so any character
+    // we inject after a round-trip lands with the caret behind it (issue #471).
+    //
+    // ⎕WC still lets a KeyPress callback veto a keystroke by returning 0, so
+    // snapshot the field as it stands now — we are inside keydown, before the
+    // character lands — and register for the EC{Proceed} verdict. resolveVerdict
+    // rewinds to this snapshot if APL rejects the key, and releases the deferred
+    // model write if it accepts.
+    const inp = inputRef.current;
+    // The value comes from state, not the DOM: LongNumeric renders through
+    // NumericFormat, whose DOM value is formatted ("8,500") while state holds
+    // the raw digits. The caret is a DOM concern, so that part is read live.
+    const snapshot = inp
+      ? {
+          value: inputValue,
+          start: inp.selectionStart ?? inp.value.length,
+          end: inp.selectionEnd ?? inp.value.length,
+        }
+      : null;
+    // processEvent.aplf reaches END without sending EC on several paths (unknown
+    // object, a key that resolves to nothing, no callback defined), so a verdict
+    // may never arrive. Time out as an accept rather than strand the model write.
+    const timeout = setTimeout(() => resolveVerdict(eventId, 1), VERDICT_TIMEOUT_MS);
+    inFlightRef.current.set(eventId, { snapshot, timeout });
+    keypressVerdictsRef.current.set(eventId, {
+      onVerdict: (proceed) => resolveVerdict(eventId, proceed),
+    });
+
     // Character code [4] of the Dyalog KeyPress event: the Unicode code point of
     // the character entered, or 0 when the key resolves to no character (e.g.
     // Cursor Up => 0, per the object-reference KeyPress doc). Named keys => 0;
@@ -549,6 +700,7 @@ const Edit = ({
   };
 
   const handleBlur = () => {
+    settleInFlight();
     // Clear editing flag first so decideInputValue can run after blur if needed
     if (isInGrid) setIsEditing(false);
     setIsFocused(false);
@@ -599,8 +751,7 @@ const Edit = ({
         const seed = isNumericField
           ? String(gridContext.cellValue)
           : String(gridContext.formattedValue ?? gridContext.cellValue);
-        setInputValue(seed);
-        setEmitValue(seed);
+        commitLocalValue(seed);
       }
       // Position the caret per InputMode, after React applies any value swap above.
       // Scroll selects all (so the first keystroke replaces, and SelText reports the
@@ -748,8 +899,7 @@ const Edit = ({
           onChange={(e) => {
             // Local-only; commit via handleBlur. Never write data.Properties
             // (shared column template). ¯→'-' conversion is in handleBlur.
-            setInputValue(e.target.value);
-            setEmitValue(e.target.value);
+            commitLocalValue(e.target.value);
           }}
           style={{
             ...styles,
@@ -815,9 +965,7 @@ const Edit = ({
           ...attachStyle,
         }}
         onValueChange={(value) => {
-          const { formattedValue } = value;
-          setInputValue(value.value);
-          setEmitValue(value.value);
+          commitLocalValue(value.value);
         }}
         decimalScale={Decimal}
         value={inputValue}
@@ -861,13 +1009,8 @@ const Edit = ({
       type={inputType}
       disabled={Active === 0}
       onChange={(e) => {
-        if (FieldType == "Char") {
-          setEmitValue(e.target.value);
-          setInputValue(e.target.value);
-        }
-        if (!FieldType) {
-          setEmitValue(e.target.value);
-          setInputValue(e.target.value);
+        if (FieldType == "Char" || !FieldType) {
+          commitLocalValue(e.target.value);
         }
       }}
       onBlur={handleBlur}
