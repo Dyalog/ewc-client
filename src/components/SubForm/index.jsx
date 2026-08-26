@@ -15,6 +15,7 @@ import {
   handleMouseWheel,
   handleMouseDoubleClick,
   handleKeyPressUtils,
+  parentId,
 } from "../../utils";
 import { getBorderStyles } from "../../styles/edgeStyles";
 import SelectComponent from "../SelectComponent";
@@ -117,8 +118,34 @@ const SubForm = ({ data }) => {
     }
   }, [data]);
 
-  const inheritedSize = inheritedProperty(data, "Size", ["Form", "SubForm"]);
+  // A SubForm with no Size of its own falls back to its nearest Form/SubForm
+  // ancestor's Size so it doesn't collapse to nothing (#389). That fallback is
+  // wrong when the parent lays its children out with flexbox: giving a child
+  // the container's own width makes every sibling fill a whole line, so each
+  // wraps onto its own and the container clips all but the first. Inside a flex
+  // parent, let the child size to its content — which is what flex is for.
+  const parentProperties = findCurrentData(parentId(data.ID))?.Properties;
+  const inFlexParent =
+    parentProperties?.Type === "SubForm" &&
+    Object.prototype.hasOwnProperty.call(parentProperties, "Flex");
+
+  const inheritedSize = inFlexParent
+    ? null
+    : inheritedProperty(data, "Size", ["Form", "SubForm"]);
   const inheritedBCol = inheritedProperty(data, "BCol", ["Form", "SubForm"]);
+
+  // We ask flex to wrap (see setStyle's 'row' branch), so a flex container's
+  // content can be taller than the Size it was given. Combined with
+  // overflow:clip that silently swallows whole children, so treat the authored
+  // height as a floor and let the container grow to hold what it wraps.
+  const isFlexContainer = Object.prototype.hasOwnProperty.call(
+    data?.Properties ?? {},
+    "Flex"
+  );
+  // Omit `height` rather than setting it undefined: these are spread over
+  // updatedStyles, so an explicit undefined would wipe a height coming from CSS.
+  const height = Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined;
+  const heightStyle = isFlexContainer ? { minHeight: height } : { height };
 
   // Zilde is no background, otherwise inherited, otherwise default
   let background;
@@ -142,9 +169,7 @@ const SubForm = ({ data }) => {
         // Must have a z-index, this is important
         zIndex: data.Properties?.ZIndex || 0,
         ...updatedStyles,
-        height: hostsRibbon
-          ? "max-content"
-          : Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined,
+        ...heightStyle,
         width:  Size ? Size[1] : inheritedSize ? inheritedSize[1] : undefined,
         top: Posn && Posn[0],
         left: Posn && Posn[1],
