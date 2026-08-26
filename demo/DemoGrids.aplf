@@ -73,7 +73,9 @@
  'F1.TableSize'eWC'Edit' '10'(210 10)(23 100)('FieldType' 'Numeric')('Event' 'Change' 'EWCUpdate')
  'F1.Function'eWC'Combo'(,¨allf)f(210 120)(23 100)('SelItems'(allf=f))('Event' 'Select' 'EWCUpdate')
  'F1.CalcBtn'eWC'Button' 'Calc'(210 230)(23 100)('Event' 'Select' 'EWCUpdate')
- 'F1.Table'eWC'Grid'(∘.×⍨⍳n)(240 10)(550 780)
+⍝ 535 not 550: the MenuBar takes 25 of the Form's 800, so the client area is
+⍝ 775 - and 240+535 is exactly that. At 550 the last row was clipped, unreachably.
+ 'F1.Table'eWC'Grid'(∘.×⍨⍳n)(240 10)(535 780)
 
  'F1.PasswordField'eWC'Edit' 'Password'(210 340)(23 100)('Password' '*')('Event' 'Change' 'EWCUpdate')
 
