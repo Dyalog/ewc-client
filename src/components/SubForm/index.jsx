@@ -11,6 +11,7 @@ import {
   handleMouseMove,
   handleMouseEnter,
   handleMouseUp,
+  handleContextMenu,
   handleMouseDown,
   handleMouseWheel,
   handleMouseDoubleClick,
@@ -176,6 +177,7 @@ const SubForm = ({ data }) => {
         ...attachStyle,
       }}
       ref={observedDiv}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

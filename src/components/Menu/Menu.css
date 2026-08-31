@@ -39,3 +39,11 @@
 .menu-item:hover .dropdown {
   display: block;
 }
+
+/* ⎕WC Separator inside a Menu: a divider, not a selectable row. */
+.dropdown-separator {
+  height: 0;
+  margin: 4px 0;
+  border-top: 1px solid #c0c0c0;
+  pointer-events: none;
+}

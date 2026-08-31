@@ -1,5 +1,6 @@
 import { useAppData } from '../../hooks';
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
+import { handleMouseDoubleClick, handleContextMenu,
+  handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
 
 const Circle = ({ data }) => {
   const { FillCol, Start, FCol, Points, Radius, Event, CSS, Visible } = data?.Properties;
@@ -70,7 +71,8 @@ const Circle = ({ data }) => {
         }}
         height={height}
         width={width}
-        onMouseDown={(e) => {
+        onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
         }}
         onMouseUp={(e) => {

@@ -1,4 +1,5 @@
-import { handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
+import { handleContextMenu,
+  handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, parseFlexStyles, rgbColor, setStyle } from "../utils";
 import { getBorderStyles } from "../styles/edgeStyles";
 import "../styles/font.css";
 import { useAppData, useAttachStyle } from "../hooks";
@@ -91,6 +92,7 @@ const Label = ({ data, gridValue }) => {
         ...customStyles,
         ...attachStyle,
       }}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}

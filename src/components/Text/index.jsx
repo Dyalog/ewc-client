@@ -1,6 +1,7 @@
 import {
   getFontStyles,
   handleMouseDoubleClick,
+  handleContextMenu,
   handleMouseDown,
   handleMouseEnter,
   handleMouseLeave,
@@ -181,7 +182,8 @@ const Text = ({ data, fontProperties }) => {
                 ...customStyles,
                 ...fontStyles
               }}
-              onMouseDown={(e) => {
+              onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                 handleMouseDown(e, socket, Event, data?.ID);
               }}
               onMouseUp={(e) => {
