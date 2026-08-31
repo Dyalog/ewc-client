@@ -1,6 +1,6 @@
 r←Version
 r←⎕NS ''
-r.Server←'0.3.0'
+r.Server←'0.5.0'
 r.Client←'Unknown'
 :If 2=⎕NC 'CLIENTVERSION'
     r.Client←CLIENTVERSION

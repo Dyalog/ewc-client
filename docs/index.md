@@ -1,7 +1,7 @@
 # Introduction
 
 EWC stands for "Everywhere Window Create". EWC is a cross-platform implementation of the `⎕WC` family of system functions
-(`⎕WC, ⎕WS, ⎕WG, ⎕WN, ⎕NQ and ⎕DQ`) that are available in Dyalog APL
+(`⎕WC, ⎕WS, ⎕WG, ⎕WN, ⎕NQ, ⎕EX and ⎕DQ`) that are available in Dyalog APL
 for Microsoft Windows.
 
 EWC only supports a subset of the functionality provided by `⎕WC`.
@@ -9,16 +9,16 @@ This subset is growing, driven by the requirements of early adopters.
 The supported subset is [documented in the object reference](ObjectRef/Classes.md).
 
 !!!Note
-     At this time, EWC is work in progress, and not supported via 
-     normal channels. A supported release of EWC is expected in 2025.
+     At this time, EWC is under active development and not yet
+     supported via normal channels.
 
 EWC can run in "Desktop" mode using an HTMLRenderer. In this mode, EWC supports multiple forms in the same way as `⎕WC`, creating one HTMLRenderer for each form.
 
 Alternatively, EWC can be initialised in "Browser" mode, in which case it starts a listener on the configured port (22322 by default), and a Browser must be connected to that port. In this mode, it really only makes sense to have a single form, although modeal MsgBox's can be
 popped up if required.
 
-Finally, there is an experimental "Multi" mode, intended to support 
-multi-user applications. In this mode, EWC must also be used via browsers. 
+Finally, there is an experimental "Multi" mode, intended to support
+multi-user applications. In this mode, EWC must also be used via browsers.
 For each connection, the application namespace is cloned.
 If the application namespace is called `demo`, then clones will be named
 `demo_1`, `demo_2` etc. This allows each session to have separate state.
