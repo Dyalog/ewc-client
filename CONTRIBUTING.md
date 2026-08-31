@@ -12,7 +12,7 @@ Four similar-looking names, used consistently throughout the docs:
 | **EWC** | The project as a whole. |
 | **ewc** | The other repository — the APL server. |
 | **ewc-client** | This repository — the frontend. |
-| **`eWC`** | The APL cover function for `⎕WC` that `EWC.Init` creates (alongside `eWS`, `eWG`, …). |
+| **`eWC`** | EWC's workalike for `⎕WC` — a reimplementation of the same interface, not a wrapper around it. `EWC.Init` creates it in your namespace alongside `eWS`, `eWG`, `eWN`, `eNQ`, `eEX`, `eDQ`. |
 
 ## How ewc-client and ewc fit together
 
@@ -21,7 +21,7 @@ EWC is **two repositories, one product**:
 | Repo | Language | Responsibility |
 |---|---|---|
 | [`Dyalog/ewc-client`](https://github.com/dyalog/ewc-client) (this repo) | JavaScript / React | The frontend. Renders the GUI objects the server describes, and reports user events back. |
-| [`Dyalog/ewc`](https://github.com/dyalog/ewc) | Dyalog APL | The server. Implements the `⎕WC ⎕WS ⎕WG ⎕WN ⎕NQ ⎕DQ` covers, owns each class's property/event contract, serves this frontend, ships the demos and the User Guide. |
+| [`Dyalog/ewc`](https://github.com/dyalog/ewc) | Dyalog APL | The server. Implements `eWC eWS eWG eWN eNQ eEX eDQ` — EWC's workalikes for the `⎕WC` family — owns each class's property/event contract, serves this frontend, ships the demos and the User Guide. |
 
 The two halves talk over a **WebSocket, port `22322`** by default. The frontend never
 invents GUI behaviour on its own — the server sends objects and properties, and we render
@@ -87,7 +87,7 @@ Prefer a containerised server? `yarn ewc-demo:start` runs the ewc server in Dock
 2. Register it in `src/components/SelectComponent.jsx` so that object type routes to it.
 3. Read properties from `data.Properties` — `Posn`, `Size`, `Values` and friends arrive
    exactly as the server set them.
-4. If the server needs to **read** a live value back (`⎕WG`), add a `get<Class>.js`
+4. If the server needs to **read** a live value back (`eWG`), add a `get<Class>.js`
    handler and list the property in its `supportedProperties`.
 
 ### Properties that change at runtime
@@ -95,9 +95,9 @@ Prefer a containerised server? `yarn ewc-demo:start` runs the ewc server in Dock
 The property contract is asymmetric, and a live-readable property needs edits in **both
 repos**:
 
-- `⎕WC` sends all properties at creation.
-- `⎕WS` (runtime set) is filtered by the class's `Supported.apla` in the ewc repo.
-- `⎕WG` (read) only asks this client for a live value when the property is listed in
+- `eWC` sends all properties at creation.
+- `eWS` (runtime set) is filtered by the class's `Supported.apla` in the ewc repo.
+- `eWG` (read) only asks this client for a live value when the property is listed in
   that class's `Dynamic.apla`.
 
 So: `Supported.apla` + `Dynamic.apla` in ewc, and the `get<Class>.js` answer list here.

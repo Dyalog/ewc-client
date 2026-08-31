@@ -2,8 +2,10 @@
 
 ![ewc-client Cover](./assets/ewc_client_cover.png)
 
-The frontend for **EWC** — it renders APL `⎕WC` GUI objects as React components in the
-browser, driven by the [**ewc**](https://github.com/dyalog/ewc) APL server.
+The frontend for **EWC** — the browser half of a `⎕WC`-workalike GUI for Dyalog APL.
+An application creates GUI objects through EWC's `eWC` family on the
+[**ewc**](https://github.com/dyalog/ewc) APL server; this repository renders what the
+server describes as React components, and reports user events back.
 
 ## Using EWC
 
