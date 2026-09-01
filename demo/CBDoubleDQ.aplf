@@ -1,0 +1,16 @@
+ CBDoubleDQ args;z
+ :Select ⊃args
+ :Case 'F1.RUN'
+     'F2'eWC'Form' 'Click the button'(200 200)(100 200)('Coord' 'Pixel')
+     'F2.NQTIMER'eWC'Button' 'Close via NQ'(13 10)(23 100)('Event' 'Select' 'CBDoubleDQ')
+     'F2.CLOSE'eWC'Button' 'Close via EX'(33 10)(23 100)('Event' 'Select' 'CBDoubleDQ')
+     z←eDQ 'F2'
+     ⎕←'DQ of F2 returned ',z
+     eEX 'F2'
+ :Case 'F1.CLOSE'
+     eEX 'F1'
+ :Case 'F2.NQTIMER'
+     eNQ'TIMER' 1001
+ :Case 'F2.CLOSE'
+     eEX 'F2'
+ :EndSelect

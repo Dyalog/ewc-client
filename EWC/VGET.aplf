@@ -1,0 +1,7 @@
+r←VGET args;name;default
+(name default)←2↑{⍵,(≢⍵)↓'' ''},⊆args
+:If 2=⎕NC name
+    r←⍎name
+:Else
+    r←default
+:EndIf

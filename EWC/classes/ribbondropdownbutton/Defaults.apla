@@ -1,0 +1,17 @@
+(
+ 'RibbonDropDownButton'
+ ''
+ ''
+ 0 0
+ ⍬
+ ⍬
+ 0
+ (
+ 'Type'
+ 'Caption'
+ 'Icon'
+ 'Event'
+ 'Data'
+ 'PropList'
+ )
+)

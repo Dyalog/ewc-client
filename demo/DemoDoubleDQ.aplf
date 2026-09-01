@@ -1,0 +1,11 @@
+ DemoDoubleDQ connected;z
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ 'F1'eWC'Form' 'Double DQ'(50 50)(200 300)('Coord' 'Pixel')('Event' 'Close' ¯1)
+
+ 'F1.RUN'eWC'Button' 'Pop up New Form'(13 10)(23 200)('Event' 'Select' 'CBDoubleDQ')
+ 'F1.CLOSE'eWC'Button' 'Close'(33 10)(23 200)('Event' 'Select' 'CBDoubleDQ')
+
+ 'TIMER'eWC'Timer'('Event' 1001 1)
+ z←eDQ'F1'

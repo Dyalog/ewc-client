@@ -1,0 +1,77 @@
+ {R}←∆DQ names;⎕TRAP;caller;class;type;HR;timers;event;done;interrupt;tkn;m;i;types;z;modal;ID;conn;e;n;id;obs;pre;TIMERNAME;TIMERACTIVE;timer;OLDTIMER;level
+ ⎕TRAP←0 'S'
+
+ caller←findCaller
+ TIMERNAME←'TIMER',⍕level←1⌈+/⎕SI∊⊂'∆DQ' ⍝ Add a new timer for each DQ level
+ OLDTIMER←caller._EWC.TIMERACTIVE
+
+ names←,⊆names
+ names←⊃¨caller removeCaller¨names
+ modal←0
+
+ :If ~∧/names∊'.' '#'
+     ⎕SIGNAL(∨/~(caller.⎕NC z←names,¨⊂'.Type')∊2.1 ¯2.6)/11
+     types←,⊆caller⍎⍕z
+     :If modal←∧/types∊modalClasses
+         'Only one modal object at a time'⎕SIGNAL(1≠≢names)/11
+         R←,⊆dWX(⊃names)'OnlyDQ'(⊃names)
+         :If (1↑⊃R)≢1↑names ⍝ Validate echo-back
+             'E' Log 'Internal error: OnlyDQD returned an unexpected result: ',,⍕R
+             'INTERNAL ERROR' ⎕SIGNAL 11
+         :EndIf
+         :If USEHR
+             ((⊃names),'.HR')caller.⎕WS('Visible' 1)('Size'(HRBorder+1↓⊃R))
+         :EndIf
+
+     :EndIf
+     :If ∨/m←types∊nativeClasses ⍝ TCPSocket or other things(?)
+         'May not mix DQ of native and EWC classes'⎕SIGNAL(0∊m)/11
+         →0⊣R←caller.⎕DQ names
+     :EndIf
+ :EndIf
+
+ obs←,⊂(pre←(⍕caller),'.'),'_EWC.',TIMERNAME ⍝ The object which implements our message queue
+ :If 9≠⎕NC ⊃obs ⍝ If it was not created in make_EWC
+ :OrIf ⎕TID≠(⍎⊃obs).TID
+     timer←make_EWC_TIMER caller._EWC
+ :EndIf
+
+ caller._EWC.TIMERACTIVE←TIMERNAME
+ (⊃obs) ⎕WS 'Data' names
+ :If USEHR ⍝ In Desktop mode, also DQ all the HTMLRenderers
+     obs,←pre∘,¨names,¨(modal∨types∊⊂'Form')/¨⊂'.HR'
+ :EndIf
+
+ done←interrupt←0
+ (ID conn)←getConnection caller(⊃names)
+
+ :Trap 1002 1003 ⍝ Catch interrupts
+     ⎕←'∆DQ in thread ',(⍕⎕TID),' ⎕DQing ',⍕names
+     z←⎕DQ obs        ⍝ Should only exit on 1002 to TIMER
+     R←3⊃z
+     ⎕←'DQ of ' obs 'returned' z
+ :Else
+     interrupt←1 ⋄ R←⍬
+ :EndTrap
+
+ :If 0≠≢R
+     z←⊢/R
+     :If 9=⎕NC'z.Event'
+         R←z.Event.((ID EventName),{6::⍵ ⋄ Info}⍬) ⍝ /// Need a proper queue
+     :Else
+         ∘∘∘
+     :EndIf ⍝ Else return R as is
+ :EndIf
+
+ :If modal ⍝ Exit from Modal mode
+     :If USEHR
+         ((⊃names),'.HR')caller.⎕WS'Visible' 0
+     :EndIf
+     z←dWX(⊃names)'OnlyDQ'
+ :EndIf
+ 'INTERRUPT'⎕SIGNAL interrupt/999
+
+ caller._EWC.TIMERACTIVE←OLDTIMER
+ :If level>1 ⍝ More that one level of DQ
+     ⎕EX ⊃obs
+ :EndIf

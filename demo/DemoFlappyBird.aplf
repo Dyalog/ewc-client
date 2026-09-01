@@ -1,0 +1,53 @@
+ DemoFlappyBird connected;F;nR;tops;bots;pts;sz
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Flappy Bird: EWC's first Timer-driven animation demo. The client Timer sends
+⍝ a tick every Interval ms; CBFlappyBird advances the physics and pushes the
+⍝ new geometry back (bird SubForm Posn, one vectorized Rect for all pipes).
+
+⍝ Geometry / physics constants (shared with CBFlappyBird)
+ FB_PFW←400 ⋄ FB_PFH←440 ⋄ FB_GROUNDH←30
+ FB_GROUNDTOP←FB_PFH-FB_GROUNDH             ⍝ lethal floor (playfield y)
+ FB_BX←80 ⋄ FB_BW←40 ⋄ FB_BH←34             ⍝ bird: fixed x, size (H W)
+ FB_BY0←⌊(FB_GROUNDTOP-FB_BH)÷2             ⍝ deterministic start height
+ FB_NPIPES←4 ⋄ FB_PW←60 ⋄ FB_GAP←140 ⋄ FB_SPACING←160 ⋄ FB_SPEED←4
+ FB_GRAV←1 ⋄ FB_FLAPV←¯8 ⋄ FB_MAXV←12
+
+⍝ Dynamic game state (deterministic initial layout; random gaps only on recycle)
+ FB_PX←260 420 580 740                      ⍝ pipe left edges
+ FB_GY←150 100 200 120                      ⍝ gap-top y per pipe
+ FB_SCORED←FB_NPIPES⍴0
+ FB_VY←0 ⋄ FB_BY←FB_BY0 ⋄ FB_SCORE←0
+ FB_STATE←'idle'                            ⍝ 'idle' | 'play' | 'over'
+
+ F←'F1'
+ F eWC'Form' 'Flappy Bird'(50 50)(575 420)('Coord' 'Pixel')('BCol'(230 230 230))
+ (F,'.STATUS')eWC'Label' 'Click to start'(12 12)(24 250)('CSS' 'font-size:16px;font-weight:bold')
+ (F,'.SCORE')eWC'Label' 'Score: 0'(40 12)(24 200)('CSS' 'font-size:16px')
+
+⍝ Playfield owns the tap-to-flap MouseDown; child clicks bubble up to it
+ (F,'.PF')eWC'SubForm'('Posn'(70 10))('Size'(FB_PFH FB_PFW))('BCol'(135 206 235))('Event' 'MouseDown' 'CBFlappyBird')
+
+⍝ All pipes are ONE Rect object (2 rects per pipe pair), batch-moved per tick
+ nR←2×FB_NPIPES
+ tops←0×FB_PX ⋄ bots←FB_GY+FB_GAP
+ pts←(tops,bots)(FB_PX,FB_PX)
+ sz←(FB_GY,FB_GROUNDTOP-FB_GY+FB_GAP)(nR⍴FB_PW)
+ (F,'.PF.PIPES')eWC'Rect'('Points'pts)('Size'sz)('FillCol'(nR⍴⊂0 170 60))('FStyle'(nR⍴0))('FCol'(nR⍴⊂0 110 40))
+
+ (F,'.PF.GROUND')eWC'SubForm'('Posn'(FB_GROUNDTOP 0))('Size'(FB_GROUNDH FB_PFW))('BCol'(222 184 135))
+
+⍝ Bird sprite: created last so it paints above the pipes and ground.
+⍝ Attach pins it at a fixed size instead of scaling with the playfield, so the
+⍝ pixel physics in CBFlappyBird stays in step with where the sprite is drawn.
+ 'BIRD'eWC'BitMap'('File' '/images/rubberduck.png')
+ (F,'.PF.BIRD')eWC'SubForm'('Picture'('BIRD' 2))('Posn'(FB_BY FB_BX))('Size'(FB_BH FB_BW))('BCol'⍬)('Attach'('Top' 'Left' 'Top' 'Left'))
+
+⍝ Controls sit outside the playfield so their clicks don't count as taps.
+⍝ Default 1 makes Enter press the Flap button (keyboard flap).
+ (F,'.FLAP')eWC'Button' 'Flap'(520 10)(30 185)('Default' 1)('Event' 'Select' 'CBFlappyBird')
+ (F,'.RESET')eWC'Button' 'Reset'(520 215)(30 185)('Event' 'Select' 'CBFlappyBird')
+
+⍝ Game-loop timer: idle until the first tap; CBFlappyBird toggles Active
+ (F,'.TICK')eWC'Timer' 60 ('Active' 0)('Event' 'Timer' 'CBFlappyBird')('FireOnce' 0)

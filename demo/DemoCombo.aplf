@@ -1,0 +1,65 @@
+DemoCombo connected;colours;sizes;fruits;status
+⍝ Combo Component Demo
+⍝ Demonstrates: Selection events, Reselection, Styling, Grid integration
+⍝
+EWC.CONNECTED←connected
+⎕PW←1000
+
+⍝ --- Sample Data ---
+colours←'Red' 'Green' 'Blue' 'Yellow' 'Orange' 'Purple'
+sizes←'Small' 'Medium' 'Large' 'Extra Large'
+fruits←'Apple' 'Banana' 'Cherry' 'Date' 'Elderberry'
+status←'Active' 'Pending' 'Completed' 'Cancelled'
+
+⍝ === Main Form ===
+'F1'eWC'Form' 'Combo Component Demo'(50 50)(700 700)('Coord' 'Pixel')
+
+⍝ --- Section 1: Basic Combo with Event Reporting ---
+'F1.LBL1'eWC'Label' 'Basic Combo (Select Event)'(20 20)
+'F1.Colour'eWC'Combo'('Items' colours)('Posn'(40 20))('Size'(23 150))('SelItems'(1 0 0 0 0 0))('Event' 'Select' 'CBComboDemo')
+
+'F1.LBL1B'eWC'Label' 'Last Selection:'(40 200)
+'F1.ColourResult'eWC'Label' '(none)'(40 310)('Size'(23 150))
+
+⍝ --- Section 2: Reselection Demo ---
+'F1.LBL2'eWC'Label' 'Reselection Demo - Click same item twice!'(90 20)('FCol'(0 100 0))
+'F1.SizeCombo'eWC'Combo'('Items' sizes)('Posn'(110 20))('Size'(23 150))('SelItems'(0 1 0 0))('Event' 'Select' 'CBComboDemo')
+
+'F1.LBL2B'eWC'Label' 'Event count:'(110 200)
+'F1.SizeCount'eWC'Label' '0'(110 310)('Size'(23 50))
+'F1.LBL2C'eWC'Label' 'Last value:'(110 370)
+'F1.SizeResult'eWC'Label' '(none)'(110 450)('Size'(23 100))
+
+⍝ --- Section 3: Styled Combos ---
+'F1.LBL3'eWC'Label' 'Styled Combos'(160 20)('FontObj' 'F1.BoldFont')
+'F1.BoldFont'eWC'Font' 'Arial' 12('Weight' 700)
+
+⍝ Combo with custom CSS
+'F1.LBL3A'eWC'Label' 'Custom border:'(185 20)
+'F1.StyledCombo1'eWC'Combo'('Items' fruits)('Posn'(185 120))('Size'(25 150))('SelItems'(1 0 0 0 0))('CSS' 'border: 2px solid #0078D7; border-radius: 4px;')('Event' 'Select' 'CBComboDemo')
+
+'F1.LBL3B'eWC'Label' 'Large font:'(215 20)
+'F1.LargeFont'eWC'Font' 'Arial' 16
+'F1.StyledCombo2'eWC'Combo'('Items' status)('Posn'(215 120))('Size'(28 150))('FontObj' 'F1.LargeFont')('SelItems'(1 0 0 0))('Event' 'Select' 'CBComboDemo')
+
+⍝ --- Section 4: Grid with Combo Column ---
+'F1.LBL4'eWC'Label' 'Grid with Combo Column'(270 20)('FontObj' 'F1.BoldFont')
+
+'F1.Orders'eWC'Grid'('Posn'(295 20))('Size'(150 400))('TitleWidth' 0)('ColTitles'('Product' 'Status' 'Quantity'))('CellWidths'(150 120 80))('Event'('CellChanged' 'Select')'CBGridCombo')
+'F1.Orders.Product'eWC'Edit'('Size'(23 150))
+'F1.Orders.Status'eWC'Combo'('Items' status)('Size'(23 120))
+'F1.Orders.Qty'eWC'Edit'('FieldType' 'Numeric')('Size'(23 80))
+
+⍝ Initial grid data
+'F1.Orders'eWS('Values'(3 3⍴'Widget' 'Active' '10' 'Gadget' 'Pending' '5' 'Gizmo' 'Completed' '20'))('CellTypes'(3 3⍴1 2 1))('Input'('F1.Orders.Product' 'F1.Orders.Status' 'F1.Orders.Qty'))
+
+'F1.LBL4B'eWC'Label' 'Grid events:'(450 20)
+'F1.GridLog'eWC'Label' '(waiting for grid events...)'(450 120)('Size'(23 300))
+
+⍝ --- Event Log Section ---
+'F1.LBL5'eWC'Label' 'Event Log'(480 20)('FontObj' 'F1.BoldFont')
+'F1.EventLog'eWC'Edit' ''(510 20)(150 650)('Style' 'Multi')('ReadOnly' 1)
+
+⍝ Initialize counter and log
+EWC.COMBO_COUNT←0
+EWC.COMBO_LOG←''

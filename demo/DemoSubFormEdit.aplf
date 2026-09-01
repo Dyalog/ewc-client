@@ -1,0 +1,83 @@
+ DemoSubFormEdit connected
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ SubForm Edit Demo - Tests Edit variants inside SubForm
+⍝ Targets: Bug 1 (missing key - many same-type children), EdgeStyle, font/color inheritance
+⍝ Every editable Edit has a Change event + mirror label so its value can be tested round-trip
+
+ EWC.SF_EVENT_COUNT←0
+
+ 'F1'eWC'Form' 'SubForm Edit Tests'(50 50)(820 620)('Coord' 'Pixel')
+
+⍝ Font objects at Form level for inheritance testing
+ 'F1.BIGFONT'eWC'Font' 'Arial' 16('Weight' 700)
+
+⍝ --- Main SubForm containing all Edit variants ---
+⍝ Posn (50,10) leaves clearance for the demo menu combo at top-right
+ 'F1.SF'eWC'SubForm'('Posn'(50 10))('Size'(720 580))('EdgeStyle' 'Groove')
+
+⍝ Section 1: Basic text Edit
+ 'F1.SF.L1'eWC'Label' 'Text Edit:'(10 10)(20 80)
+ 'F1.SF.EDIT1'eWC'Edit' 'Hello World'(10 100)(23 200)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT1MIRROR'eWC'Label' 'Hello World'(10 320)(23 250)
+
+⍝ Section 2: Numeric Edit (tests Locale access from inside SubForm)
+ 'F1.SF.L2'eWC'Label' 'Numeric:'(40 10)(20 80)
+ 'F1.SF.EDIT2'eWC'Edit' '12345'(40 100)(23 200)('FieldType' 'Numeric')('Decimals' 0)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT2MIRROR'eWC'Label' '12345'(40 320)(23 250)
+
+⍝ Section 3: LongNumeric Edit (tests thousand separator via Locale)
+ 'F1.SF.L3'eWC'Label' 'LongNumeric:'(70 10)(20 80)
+ 'F1.SF.EDIT3'eWC'Edit' '1234567.89'(70 100)(23 200)('FieldType' 'LongNumeric')('Decimals' 2)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT3MIRROR'eWC'Label' '1234567.89'(70 320)(23 250)
+
+⍝ Section 4: Password Edit
+ 'F1.SF.L4'eWC'Label' 'Password:'(100 10)(20 80)
+ 'F1.SF.EDIT4'eWC'Edit' 'secret'(100 100)(23 200)('Password' '*')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT4MIRROR'eWC'Label' 'secret'(100 320)(23 250)
+
+⍝ Section 5: Multi-line Edit (Style 'Multi')
+ 'F1.SF.L5'eWC'Label' 'Multi-line:'(130 10)(20 80)
+ 'F1.SF.EDIT5'eWC'Edit'('Line one' 'Line two' 'Line three')(130 100)(80 200)('Style' 'Multi')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT5MIRROR'eWC'Label' '(multi-line)'(130 320)(80 250)
+
+⍝ Section 6: EdgeStyle variations on Edits (each editable, with small mirror below)
+ 'F1.SF.L6'eWC'Label' 'EdgeStyles:'(220 10)(20 80)
+ 'F1.SF.ES1'eWC'Edit' 'Ridge'(220 100)(23 80)('EdgeStyle' 'Ridge')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.ES2'eWC'Edit' 'Groove'(220 190)(23 80)('EdgeStyle' 'Groove')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.ES3'eWC'Edit' 'Recess'(220 280)(23 80)('EdgeStyle' 'Recess')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.ES1MIRROR'eWC'Label' 'Ridge'(245 100)(20 80)
+ 'F1.SF.ES2MIRROR'eWC'Label' 'Groove'(245 190)(20 80)
+ 'F1.SF.ES3MIRROR'eWC'Label' 'Recess'(245 280)(20 80)
+ 'F1.SF.ES4'eWC'Edit' 'Plinth'(270 100)(23 80)('EdgeStyle' 'Plinth')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.ES5'eWC'Edit' 'Shadow'(270 190)(23 80)('EdgeStyle' 'Shadow')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.ES6'eWC'Edit' 'None'(270 280)(23 80)('EdgeStyle' 'None')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.ES4MIRROR'eWC'Label' 'Plinth'(295 100)(20 80)
+ 'F1.SF.ES5MIRROR'eWC'Label' 'Shadow'(295 190)(20 80)
+ 'F1.SF.ES6MIRROR'eWC'Label' 'None'(295 280)(20 80)
+
+⍝ Section 7: Edit with custom font (tests FontObj inheritance through SubForm)
+ 'F1.SF.L7'eWC'Label' 'Bold font:'(330 10)(20 80)
+ 'F1.SF.EDIT6'eWC'Edit' 'Bold Text'(330 100)(23 200)('FontObj' 'F1.BIGFONT')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT6MIRROR'eWC'Label' 'Bold Text'(330 320)(23 250)
+
+⍝ Section 8: Edit with FCol/BCol colors
+ 'F1.SF.L8'eWC'Label' 'Colors:'(360 10)(20 80)
+ 'F1.SF.EDIT7'eWC'Edit' 'Blue on Yellow'(360 100)(23 200)('FCol'(0 0 255))('BCol'(255 255 200))('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT7MIRROR'eWC'Label' 'Blue on Yellow'(360 320)(23 250)
+
+⍝ Section 9: Disabled Edit (Active 0) - no mirror since it's not editable
+ 'F1.SF.L9'eWC'Label' 'Disabled:'(390 10)(20 80)
+ 'F1.SF.EDIT8'eWC'Edit' 'Cannot edit'(390 100)(23 200)('Active' 0)
+
+⍝ Section 10: Second text Edit (for Bug 1 sibling isolation test)
+ 'F1.SF.L10'eWC'Label' 'Second text:'(420 10)(20 80)
+ 'F1.SF.EDIT9'eWC'Edit' 'Second Value'(420 100)(23 200)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.SF.EDIT9MIRROR'eWC'Label' 'Second Value'(420 320)(23 250)
+
+⍝ Manual mirror-update button (diagnostic: decouples Change event from value-read)
+ 'F1.SF.UPDATEBTN'eWC'Button' 'Update Mirrors'(460 10)(23 130)('Event' 'Select' 'CBSubFormDemo')
+
+⍝ Status label outside SubForm
+ 'F1.STATUS'eWC'Label' 'Status: OK'(780 10)(23 200)

@@ -1,0 +1,6 @@
+ CBDownload
+
+⍝  Can be a random string
+ 'F1.AKUDFGS'eWC'Link' 'images/dyalog-logo.jpg' 'Download Logo' ('Target' '_blank') ('Download' 1)
+ eNQ'F1.AKUDFGS' 'Select'
+ eEX'F1.AKUDFGS'

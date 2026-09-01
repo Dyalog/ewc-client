@@ -1,0 +1,36 @@
+ CBGridKey args;id;eventName;src;logMsg;currentLog;gridId;editId
+⍝ KeyPress duplicate-repro callback for DemoGridKeyPress (review finding #14).
+⍝ The server delivers events flattened as (ID Event),Info — EWC/processEvent.aplf:91 —
+⍝ so ⊃args is the SOURCE object ID and 2⊃args is the event name (same shape
+⍝ CBGrid.aplf:6-7 relies on). We log a DISTINCT, unambiguous label per source
+⍝ (GRID vs EDIT) plus the raw id, so a human/test can count how many KeyPress
+⍝ events fire for one keystroke and see which object emitted each.
+⍝ Source-branching idiom: CBGrid2.aplf (:Select ⊃msg), CBUpdateScroll.aplf:51.
+
+ id←⊃args
+ eventName←2⊃args
+ gridId←'F1.G'
+ editId←'F1.G.E1'
+
+ :Select eventName
+ :Case 'KeyPress'
+     ⍝ Info: [key, charCode, keyCode, shiftState] (Info[1] is at 3⊃args)
+     :Select id
+     :Case gridId
+         src←'GRID'
+     :Case editId
+         src←'EDIT'
+     :Else
+         src←'OTHER'
+     :EndSelect
+     logMsg←src,' KeyPress key="',(⍕3⊃args),'" shift=',(⍕6⊃args),' (id=',id,')'
+ :Case 'CellMove'
+     ⍝ Info: [row, col, scrollFlag, selectionFlag, mouseFlag, ...]
+     logMsg←'----- CellMove Row ',(⍕3⊃args),' Col ',(⍕4⊃args),' -----'
+ :Else
+     logMsg←id,' ',eventName,': ',⍕2↓args
+ :EndSelect
+
+⍝ Prepend the new line to the Log label (CBGrid.aplf:54-55 idiom).
+ currentLog←'F1.Log'eWG'Caption'
+ 'F1.Log'eWS'Caption'(logMsg,(⎕UCS 10),currentLog)

@@ -50,3 +50,11 @@ TODO.md
 /.local-dyalog/
 
 notes/
+
+# --- APL side (from ewc) ---
+EWC/server/*
+aplcore
+.linkconfig
+# mkdocs output
+/site/
+/demo/images/ribbonimages/*

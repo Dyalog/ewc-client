@@ -1,0 +1,48 @@
+ CBTicker args;id;leaf;sgn;vals;pct;i;j;tm
+⍝ Shared callback for DemoTicker, dispatched on the source's leaf name:
+⍝   TICK  - random-walk prices, push Grid Values + chart Series + movers + status
+⍝   RUN   - check-button: timer Active follows its State
+⍝   RESET - restore seed prices, flat series, tick counter 0, paused
+⍝ State (TK_*) lives in #.demo; mover label colors are fixed at creation
+⍝ (green gainer / red loser), only their captions change per tick.
+
+ sgn←{('+' '-'⊃⍨1+⍵<0),(2⍕|⍵)~' '}          ⍝ signed 2-decimal format (ASCII sign, no padding)
+
+ vals←{                                     ⍝ (P P0) → 6x4 nested Values matrix
+     p p0←⍵
+     chg←p-p0 ⋄ pc←100×chg÷p0
+     ⍉↑TK_SYM({(2⍕⍵)~' '}¨p)(sgn¨chg)((sgn¨pc),¨⊂,'%')
+ }
+
+ id←⊃args
+ leaf←{(1-(⌽⍵)⍳'.')↑⍵}id
+
+ :Trap 0
+     :Select leaf
+     :Case 'TICK'
+         TK_P←TK_P×1+0.004×0.5-?6⍴0         ⍝ ±0.2% random walk per tick
+         TK_SERIES←1↓TK_SERIES,(+/TK_P)÷6
+         TK_TICKS+←1
+         pct←100×(TK_P-TK_P0)÷TK_P0
+         i←pct⍳⌈/pct ⋄ j←pct⍳⌊/pct
+         'F1.G'eWS'Values'(vals TK_P TK_P0)
+         'F1.CHART'eWS'Series'TK_SERIES
+         'F1.UP'eWS'Caption'('▲ ',(i⊃TK_SYM),' ',(sgn i⊃pct),'%')
+         'F1.DOWN'eWS'Caption'('▼ ',(j⊃TK_SYM),' ',(sgn j⊃pct),'%')
+         tm←,'ZI2,<:>,ZI2,<:>,ZI2'⎕FMT 1 3⍴3↑3↓⎕TS
+         'F1.SB.S1'eWS'Text'((⍕TK_TICKS),'   ',tm)
+     :Case 'RUN'
+         'F1.TICK'eWS'Active'(id eWG'State')
+     :Case 'RESET'
+         TK_P←TK_P0 ⋄ TK_SERIES←60⍴(+/TK_P)÷6 ⋄ TK_TICKS←0
+         'F1.TICK'eWS'Active' 0
+         'F1.RUN'eWS'State' 0
+         'F1.G'eWS'Values'(vals TK_P TK_P0)
+         'F1.CHART'eWS'Series'TK_SERIES
+         'F1.UP'eWS'Caption' '▲ —'
+         'F1.DOWN'eWS'Caption' '▼ —'
+         'F1.SB.S1'eWS'Text' '0'
+     :EndSelect
+ :Else
+     ⎕←'CBTicker: ',(⊃⎕DM),' (likely a late Timer tick after a demo switch)'
+ :EndTrap
