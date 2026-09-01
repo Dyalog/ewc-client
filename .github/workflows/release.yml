@@ -57,39 +57,20 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Clone ewc-client
+      - name: Setup Node.js
+        if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Build the client
+        # Built here rather than committed: client/dist is git-ignored, and
+        # this build is what ships in the release asset below.
         if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
         run: |
-          git clone --depth=1 https://github.com/dyalog/ewc-client.git /tmp/ewc-client
-          echo "EWC_CLIENT_SHA=$(git -C /tmp/ewc-client rev-parse --short HEAD)" >> "$GITHUB_ENV"
-
-      - name: Refresh client/dist from ewc-client
-        if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
-        id: refresh
-        run: |
-          rm -rf client/dist
-          mkdir -p client
-          cp -R /tmp/ewc-client/dist client/dist
-
-          if git diff --quiet -- client/dist; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Commit refreshed dist to main
-        if: |
-          steps.parse.outputs.skip != 'true' &&
-          steps.tag_check.outputs.exists != 'true' &&
-          steps.refresh.outputs.changed == 'true'
-        run: |
-          set -euo pipefail
-          version="${{ steps.parse.outputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add client/dist
-          git commit -m "chore(release): $version - refresh client/dist from ewc-client@${EWC_CLIENT_SHA}"
-          git push origin HEAD:main
+          yarn install --frozen-lockfile
+          yarn build
 
       - name: Tag and create GitHub Release
         if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
@@ -103,11 +84,24 @@ jobs:
           git tag -a "$version" -m "Release $version"
           git push origin "$version"
 
+          # A runnable tree: the APL server plus the client we just built.
+          # GitHub's auto-generated "Source code" archive is a git archive and
+          # therefore has no client/dist, so this named asset is the only
+          # download that actually runs. Sources and tooling are excluded.
+          zip -r "/tmp/ewc-${version}.zip" . \
+            -x '.git/*' '.github/*' \
+               'node_modules/*' 'client/node_modules/*' \
+               'client/src/*' 'client/public/*' \
+               'e2e/*' 'tests/*' \
+               '*.DS_Store'
+
+          # Secondary asset for anyone who only wants the frontend.
           (cd client && zip -r /tmp/client-dist.zip dist)
 
           gh release create "$version" \
             --title "$version" \
             --notes-file /tmp/notes.md \
+            "/tmp/ewc-${version}.zip" \
             /tmp/client-dist.zip
 
   # A release opens a docs-regeneration PR for review; merging it publishes the site

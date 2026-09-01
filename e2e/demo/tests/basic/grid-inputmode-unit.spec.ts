@@ -8,7 +8,7 @@ import {
   initialEffectiveMode,
   toggleMode,
   matchesInputModeKey,
-} from '../../../../src/components/Grid/inputMode.js';
+} from '../../../../client/src/components/Grid/inputMode.js';
 
 test('restMode: a cell move reverts to Scroll unless locked AlwaysInCell', () => {
   expect(restMode('Scroll')).toBe('Scroll');

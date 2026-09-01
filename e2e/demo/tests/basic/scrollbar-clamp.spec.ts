@@ -4,7 +4,7 @@
 // helper used for incoming Thumb values. Pure-logic test (no browser) so it's
 // deterministic in CI.
 import { test, expect } from '@playwright/test';
-import { thumbValueInRange } from '../../../../src/components/ScrollBar/clamp.js';
+import { thumbValueInRange } from '../../../../client/src/components/ScrollBar/clamp.js';
 
 test('ScrollBar thumbValueInRange clamps to [1, Range]', () => {
   const RANGE = 1000;

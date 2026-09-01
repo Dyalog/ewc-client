@@ -38,9 +38,13 @@ adopters; see the [object reference](https://dyalog.github.io/ewc/latest/ObjectR
    That produces `client/dist`, which the server picks up automatically. See
    [CONTRIBUTING.md](CONTRIBUTING.md) for the full development workflow.
 
-2. **Start Dyalog APL** and link the folder:
+2. **Start Dyalog APL** and link the two APL directories:
 
-        ]link.create # /path/to/ewc
+        ]link.create #.EWC /path/to/ewc/EWC
+        ]link.create #.demo /path/to/ewc/demo
+
+   > Don't link the repository root — Link would walk `node_modules` too, where npm
+   > package names collide as APL names and abort the link.
 
 3. **Run the demo** to check everything works:
 
@@ -110,7 +114,7 @@ default):
 
 | Path | What it is |
 |---|---|
-| `EWC/` | The APL server — implements the `eWC` family and owns each class's property and event contract. Link this with `]link.create`. |
+| `EWC/` | The APL server — implements the `eWC` family and owns each class's property and event contract. Link this with `]link.create #.EWC <repo>/EWC`. |
 | `demo/` | The demo application (~100 examples), also what the e2e suite drives. |
 | `docs/` | This User Guide, published to <https://dyalog.github.io/ewc/>. |
 | `client/` | The frontend — a JavaScript/React app that renders the GUI objects the server describes and reports user events back. Builds to `client/dist/`. |

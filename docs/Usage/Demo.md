@@ -6,7 +6,7 @@ After linking the EWC folder to your active workspace, you can launch
 this application by calling `demo.Run` with a right argument that selects
 the mode (one of 'Desktop', 'Browser' or 'Multi'):
 
-`]link.create # /path/to/ewc`
+`]link.create #.EWC /path/to/ewc/EWC` and `]link.create #.demo /path/to/ewc/demo`
 `demo.Run 'Desktop'`
 
 Every window that is created by the Demo app contains a drop-down at the

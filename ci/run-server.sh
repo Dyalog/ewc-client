@@ -34,4 +34,4 @@ BANNER
 
 # Feed the APL setup, then hold stdin with a long sleep so dyalog
 # stays alive in demo.Run's wait loop.
-(cat /scripts/setup-ewc.apl; sleep infinity) | "${DYALOG}/dyalog" +s -q
+(cat /work/ewc/ci/setup-ewc.apl; sleep infinity) | "${DYALOG}/dyalog" +s -q

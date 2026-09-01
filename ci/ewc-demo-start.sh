@@ -17,23 +17,21 @@ set -e
 
 NAME="ewc-demo"
 
-# EWC_SRC=... overrides the default sibling `ewc` directory (worktree pairs).
-EWC_SRC="${EWC_SRC:-$PWD/../ewc}"
-if [ ! -d "$EWC_SRC" ]; then
-    echo "ERROR: EWC source not found at $EWC_SRC" >&2
-    echo "       Set EWC_SRC=/path/to/ewc to override." >&2
+# The APL server lives in this repo now. EWC_SRC=... still overrides it,
+# for running the demo against a different checkout or worktree.
+EWC_SRC="${EWC_SRC:-$PWD}"
+if [ ! -d "$EWC_SRC/EWC" ]; then
+    echo "ERROR: no EWC/ directory at $EWC_SRC" >&2
+    echo "       Run this from the repo root, or set EWC_SRC=/path/to/ewc." >&2
     exit 1
 fi
 
-# Warn if the user hasn't built ewc-client recently — without dist/,
-# EWC's JSClientFolder auto-discovery falls back to the bundled
-# `<repo>/client/dist/` inside Dyalog/ewc, which means visual
-# regression would capture the wrong (stale) UI.
-if [ ! -d client/dist ]; then
-    echo "WARNING: client/dist is missing. EWC will fall back to the bundled" >&2
-    echo "         client in Dyalog/ewc, not your local changes."     >&2
-    echo "         Run 'yarn build' first if you're testing UI work." >&2
-    echo                                                              >&2
+# client/dist is no longer committed, so a missing build is fatal rather
+# than a silent fall-back to a stale bundled copy.
+if [ ! -d "$EWC_SRC/client/dist" ]; then
+    echo "ERROR: client/dist is missing — the server has no client to serve." >&2
+    echo "       Run 'yarn build' from the repo root first."                  >&2
+    exit 1
 fi
 
 # Nuke any prior container with the same name. Suppress the error if
@@ -44,10 +42,8 @@ docker run -d --name "$NAME" \
   -e RIDE_INIT='SERVE:*:4502' \
   -p 4502:4502 \
   -p 22322:22322 \
-  --entrypoint /scripts/run-server.sh \
+  --entrypoint /work/ewc/ci/run-server.sh \
   -v "$EWC_SRC:/work/ewc:ro" \
-  -v "$PWD/client/dist:/work/ewc-client/dist:ro" \
-  -v "$PWD/ci:/scripts:ro" \
   dyalog/dyalog:latest >/dev/null
 
 echo "Starting EWC server (waiting for :22322)..."

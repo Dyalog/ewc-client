@@ -61,14 +61,14 @@
  :EndIf
 
  :If 0=⎕NC'JSClientFolder'
-     :If ⎕NEXISTS folder←'ewc-client/dist/',⍨⊃⎕NPARTS ¯1↓FOLDER ⍝ Is there a separate checkout of client?
-         JSClientFolder←folder
-     :ElseIf ⎕NEXISTS folder←'jswc-client/dist/',⍨⊃⎕NPARTS ¯1↓FOLDER ⍝ Is there a separate checkout of client?
-         JSClientFolder←folder
-     :ElseIf ⎕NEXISTS folder←FOLDER,'client/dist/'
+     ⍝ The client is built in-tree. The sibling ewc-client/jswc-client
+     ⍝ lookups are gone: a leftover checkout beside this one would shadow
+     ⍝ this repo's own build. Set JSClientFolder to point elsewhere.
+     :If ⎕NEXISTS folder←FOLDER,'client/dist/'
          JSClientFolder←folder
      :Else
-         'Unable to locate EWC Client'⎕SIGNAL 11
+         ⍝ client/dist is not committed, so this is what a fresh clone hits.
+         ('No EWC client at ',folder,'. Run "yarn build" from the repo root, or use a release download, which bundles one.')⎕SIGNAL 11
      :EndIf
  :EndIf
  ⎕←'Using client found at ',JSClientFolder

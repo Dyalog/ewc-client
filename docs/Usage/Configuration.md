@@ -97,7 +97,10 @@ code resides, you can set this variable to point to a specific folder. This is o
 useful if you are either a developer or on the bleeding edge of client development,
 and need to switch between versions of the client.
 
-If this variable is not set, EWC will first look for a sibling folder called
-`EWC-client` in case you have a checkout of the JavaScript code in that location,
-and if that does not exist use the client in the `/client/dist` folder within the
-EWC folder.
+If this variable is not set, EWC uses the client in the `client/dist` folder within the
+EWC folder — which is where `yarn build` writes it, and where a release download
+already has one.
+
+Earlier versions also probed for a sibling `ewc-client` checkout. That is gone: the
+client now lives in this repository, and a leftover sibling folder would silently
+shadow this repository's own build.

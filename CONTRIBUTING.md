@@ -68,9 +68,15 @@ automatically, so a local build is picked up with no configuration.
 3. Start **Dyalog APL Unicode 18.2 or later**, link the repo and run a demo:
 
    ```apl
-   ]link.create # /tmp/ewc
+   ]link.create #.EWC /tmp/ewc/EWC
+   ]link.create #.demo /tmp/ewc/demo
    demo.Run 'Desktop'    ⍝ or 'Browser', then open http://localhost:22322
    ```
+
+   Link the two APL directories, **not the repository root**: the root now contains
+   `client/node_modules`, whose npm package names collide when Link maps them to APL
+   names (`acorn-jsx` with `acorn`, `eslint-scope` with `eslint`) and abort the link.
+   `ci/setup-ewc.apl` does the same thing for CI.
 
 `Browser` mode is usually easier to develop against — you get browser devtools. See
 the [User Guide](https://dyalog.github.io/ewc/latest/) for installation and
@@ -168,7 +174,7 @@ Demos are the primary way we exercise and showcase features, and the e2e suite d
 APL unit tests live in `tests/` as `test_<thing>.aplf`, using the `assert` helper:
 
 ```apl
-]link.create # /path/to/ewc
+]link.create #.tests /path/to/ewc/tests
 tests.test_proxySpace
 ```
 

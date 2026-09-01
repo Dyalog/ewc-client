@@ -3,7 +3,7 @@ name: Update Docs
 # Manual trigger (Actions → "Update Docs") or invoked by release.yml.
 # Regenerates the reference docs (docs/ObjectRef/*.md + the mkdocs.yml nav) by
 # running EWC.Doc.Make in a Dyalog container, then opens a PR so the changes are
-# reviewed before they reach the docs site. Mirrors ewc-client's update-baselines
+# reviewed before they reach the docs site. Mirrors the update-baselines
 # PR flow (GITHUB_TOKEN + peter-evans/create-pull-request).
 
 on:

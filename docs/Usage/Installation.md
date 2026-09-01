@@ -1,21 +1,53 @@
 # Installation                                     
  
- EWC is developed as an open-sourcen GitHub repository. To download the code, you can either install Git and clone the repository using the following command:
+EWC is developed as an open-source GitHub repository.
+
+## To use EWC
+
+Download the **`ewc-vX.Y.Z.zip`** asset from the
+[latest release](https://github.com/dyalog/ewc/releases) and unpack it. It contains the
+APL server and a matching prebuilt JavaScript client, so nothing else is needed — no
+Node.js and no build step.
+
+!!! warning "Use the named asset"
+    Take `ewc-vX.Y.Z.zip`, **not** GitHub's auto-generated "Source code" archive. The
+    built client is not committed to the repository, so only the named asset contains a
+    runnable EWC.
+
+## To develop EWC
+
+Clone the repository and build the client once:
 
 ```
 git clone https://github.com/dyalog/ewc.git
+cd ewc
+yarn install
+yarn build
 ```
 
- Alternatively, you can just download a [zip file](https://github.com/dyalog/ewc/archive/refs/heads/main.zip) containing all the code.
+That produces `client/dist`, which the server locates automatically. All JavaScript
+commands are a yarn workspace rooted at the repository root, so they run from there —
+there is no need to change into `client/`. See
+[CONTRIBUTING.md](https://github.com/dyalog/ewc/blob/main/CONTRIBUTING.md) for the full
+development workflow.
 
 ## Verify Installation
 
 The simplest way to verify installation is to run the demo application:
 
 ```
-]link.create # /path/to/ewc
+]link.create #.EWC /path/to/ewc/EWC
+]link.create #.demo /path/to/ewc/demo
 demo.Run 'Desktop'
 ```
+
+!!! note "Why two links, not `]link.create # /path/to/ewc`"
+    Linking the repository root would also walk `client/` — including
+    `node_modules` once you have run `yarn install`. Link maps directory names to
+    APL names, and npm package names collide when it does (`acorn-jsx` with
+    `acorn`, `eslint-scope` with `eslint`), which aborts the whole link. Naming the
+    two APL directories keeps the link to the code you actually want.
+
 
 This will pop up a form with a Dyalog logo and a dropdown on the right which allows
 you to select a variety of simple test applications that have been used to test
@@ -28,6 +60,9 @@ Note that, if you use `]link.import` instead of `]link.create`, or you do not ha
 ```
 EWC.FOLDER←'/tmp/ewc'
 ```
+
+`EWC.FOLDER` must be the **repository root**, not the `EWC` subdirectory — EWC looks
+for the JavaScript client at `<EWC.FOLDER>/client/dist/`.
 
 ## The Demo Application
 
@@ -50,15 +85,8 @@ EWC.Init 'Desktop'
 This should create an HTMLRenderer window with the caption "Hello World". For more
 information on getting started, see [initialisation](Initialisation.md).
 
-## EWC Development
+## Upgrading
 
-If you are developing EWC, or you are working with EWC developers and need to
-quickly pick up changes to the JavaScript client, it may be a good idea to clone
-the client code separately. In order for EWC to automatically find this code,
-it must be located in a folder called ewc-client, in the same folder as EWC itself.
-
-You can achieve this using:
-
-```
-git clone https://github.com/dyalog/ewc-client.git
-```
+Releases are independent downloads; unpack a newer one alongside or over the old
+folder. If you are working from a clone, `git pull` and re-run `yarn build` to refresh
+the client.
