@@ -29,8 +29,8 @@ fi
 # EWC's JSClientFolder auto-discovery falls back to the bundled
 # `<repo>/client/dist/` inside Dyalog/ewc, which means visual
 # regression would capture the wrong (stale) UI.
-if [ ! -d dist ]; then
-    echo "WARNING: dist/ is missing. EWC will fall back to the bundled" >&2
+if [ ! -d client/dist ]; then
+    echo "WARNING: client/dist is missing. EWC will fall back to the bundled" >&2
     echo "         client in Dyalog/ewc, not your local changes."     >&2
     echo "         Run 'yarn build' first if you're testing UI work." >&2
     echo                                                              >&2
@@ -46,7 +46,7 @@ docker run -d --name "$NAME" \
   -p 22322:22322 \
   --entrypoint /scripts/run-server.sh \
   -v "$EWC_SRC:/work/ewc:ro" \
-  -v "$PWD/dist:/work/ewc-client/dist:ro" \
+  -v "$PWD/client/dist:/work/ewc-client/dist:ro" \
   -v "$PWD/ci:/scripts:ro" \
   dyalog/dyalog:latest >/dev/null
 
