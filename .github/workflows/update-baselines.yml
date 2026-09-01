@@ -28,17 +28,12 @@ name: update visual baselines
 # DO NOT commit baselines generated on a different OS (e.g. local
 # macOS); they'll show false-positive diffs against CI even when
 # nothing real has changed.
+#
+# Both halves of the product are in this repo, so a regeneration run
+# always pairs the client and the demos it renders.
 
 on:
   workflow_dispatch:
-    inputs:
-      ewc_server_ref:
-        description: |
-          Dyalog/ewc branch to build against. Leave blank to use the
-          same branch name as the dispatched ewc-client branch (falls
-          back to main if that branch doesn't exist on Dyalog/ewc).
-        required: false
-        default: ''
 
 permissions:
   # `contents: write` to push the bot branch with new PNGs.
@@ -60,21 +55,12 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4, 5]
     steps:
-      - name: Checkout ewc-client
+      - name: Checkout
         uses: actions/checkout@v7
         with:
           # No explicit `ref:` — defaults to the branch selected in the
           # workflow_dispatch dropdown (github.ref_name), our PR target.
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout Dyalog/ewc
-        # The dispatched-branch's same-name branch on Dyalog/ewc is the
-        # default; the workflow_dispatch input lets a maintainer pin a
-        # different ref. See .github/actions/checkout-ewc-server.
-        uses: ./.github/actions/checkout-ewc-server
-        with:
-          ref: ${{ inputs.ewc_server_ref }}
-          branch: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v6
         with:
@@ -108,7 +94,7 @@ jobs:
         timeout-minutes: 6
         run: npx playwright install chromium
 
-      - name: Build ewc-client
+      - name: Build the client
         run: yarn build
 
       - name: Start Dyalog EWC server (Docker)
@@ -117,10 +103,8 @@ jobs:
         # tests.yml's runs. One fresh container PER SHARD.
         run: |
           docker run -d --name ewc-demo --network host \
-            --entrypoint /scripts/run-server.sh \
-            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
-            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
-            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            --entrypoint /work/ewc/ci/run-server.sh \
+            -v "${{ github.workspace }}:/work/ewc:ro" \
             dyalog/dyalog:latest
 
       - name: Wait for EWC server
@@ -178,7 +162,7 @@ jobs:
     if: ${{ !cancelled() && needs.update.result != 'skipped' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout ewc-client
+      - name: Checkout
         uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

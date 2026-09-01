@@ -1,0 +1,11 @@
+ Demo_Issue270 connected;n;size;wd;f;props;t
+ ⎕PW←1000
+
+ (f←'F1')eWC'Form' 'Issue #270'(50 50)(300 420)('Coord' 'Pixel')
+
+ t←1 3⍴2024 'onsdag 13. marts' '2024-03-13 Referat af medlemsmode.pdf'
+ t⍪←2024 'søndag 18. februar' '2024-02-18 Referat Generalforsamling.pdf'
+ t⍪←2024 'onsdag 17. januar' '2024-01-17 Referat af medlemsmode.pdf'
+
+ props←'Grid't('CellWidths'(50 150 200))('ColTitles'('År' 'Dato' 'Beskrivelse'))('TitleWidth' 0)('Size'(250 410))('Posn'(45 5))
+ (f,'.G')eWC props

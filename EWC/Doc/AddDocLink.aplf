@@ -1,0 +1,25 @@
+r←type AddDocLink name;i;pref;slug;order;c;cat
+⍝ Add link to Dyalog documentation. Link to whichever object-reference category
+⍝ actually has a page for this name, preferring the one implied by 'type' (e.g. the
+⍝ Font property has no properties/ page but is documented under objects/). If the doc
+⍝ source (DocsRoot) is unavailable, link unconditionally to the preferred category.
+
+i←'class' 'prop' 'event' ⍳⊂type
+'type must be ''class'', ''prop'' or ''event''' ⎕SIGNAL (4=i)/11
+pref←i⊃'objects' 'properties' 'methodorevents'
+slug←⎕C name
+cat←pref
+
+:If 2=⎕NC'DocsRoot'
+:AndIf 0≠≢DocsRoot
+    cat←''
+    order←(⊂pref),('objects' 'properties' 'methodorevents')~⊂pref
+    :For c :In order
+        :If ⎕NEXISTS DocsRoot,c,'/',slug,'.md'
+            cat←c ⋄ :Leave
+        :EndIf
+    :EndFor
+    :If 0=≢cat ⋄ →0⊣r←name ⋄ :EndIf  ⍝ no Dyalog page in any category → plain text
+:EndIf
+
+r←'[',name,'](https://docs.dyalog.com/20.0/object-reference/',cat,'/',slug,'/)'

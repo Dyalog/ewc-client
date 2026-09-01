@@ -1,0 +1,40 @@
+ DemoEditKeyPress connected;F;e
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Edit KeyPress behaviour that no other demo reaches (ewc-client issue #471).
+⍝ The client no longer cancels a keystroke and re-inserts it after the callback
+⍝ answers — the browser types it and the client rewinds only on a veto — so the
+⍝ paths worth showing here are:
+⍝   * the ⎕WC veto: a KeyPress callback returning 0 suppresses the keystroke
+⍝     (EWC/processEvent.aplf[109] treats ⍬, 1 and (,1) as "proceed", 0 as "no")
+⍝   * what ⎕WG reports from *inside* a KeyPress callback — the keystroke has not
+⍝     been applied yet at that point, so Text is the field as it was before it
+⍝   * ⎕WS 'SelText' moving the caret of a standalone Edit
+⍝   * ⎕NQ of a KeyPress (Mode 2), both a printable character and an input
+⍝     code (DB) — see CBEditKeyPress for why Mode 2 and not the default
+⍝ CBEditKeyPress logs one line per event so a human/test can read the sequence.
+⍝ Idioms: DemoGridKeyPress.aplf (log-label repro shape), CBUpdate.aplf:47-58
+⍝ (SelText via eWG/eWS), CBUpdate.aplf:37 (eNQ).
+
+ F←'F1'
+ F eWC'Form' 'Edit KeyPress'(50 50)(430 620)('Coord' 'Pixel')
+
+⍝ Digits-only field. The callback vetoes any other printable character, so a
+⍝ rejected key must never be left in the field.
+ (F,'.LDIGITS')eWC'Label' 'Digits only - the callback vetoes anything else:'(20 20)(18 400)
+ (F,'.DIGITS')eWC'Edit' '12'(42 20)(23 160)('Event' 'KeyPress' 'CBEditKeyPress')
+
+⍝ Free field. The callback always accepts, so this one shows the ⎕WG timing and
+⍝ takes the ⎕WS / ⎕NQ operations from the buttons below.
+ (F,'.LFREE')eWC'Label' 'Accepts everything - target of the buttons below:'(75 20)(18 400)
+ (F,'.FREE')eWC'Edit' 'abcdef'(97 20)(23 160)('Event' 'KeyPress' 'CBEditKeyPress')
+
+ e←'Event' 'Select' 'CBEditKeyPress'
+ (F,'.SETSEL')eWC'Button' 'WS SelText 3 5'(132 20)(23 140)e
+ (F,'.NQCHAR')eWC'Button' 'NQ 2 KeyPress Z'(132 170)(23 140)e
+ (F,'.NQBS')eWC'Button' 'NQ 2 KeyPress DB'(132 320)(23 140)e
+ (F,'.SHOW')eWC'Button' 'Show WG'(132 470)(23 110)e
+
+ (F,'.LLOG')eWC'Label' 'Event log, newest first:'(170 20)(18 400)
+ (F,'.LOG')eWC'Label' ''(192 20)(215 580)

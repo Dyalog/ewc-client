@@ -1,0 +1,21 @@
+mode Log msg
+⍝ Log modes: Controlled by EWC.LOGMODES
+⍝ D: Debug
+⍝ E: Error
+⍝ F: Format Request
+⍝ W: Warning
+⍝ T: Transmit on WebSocket
+⍝ R: Receive on WebSocket
+⍝ C: Connect or Disconnect
+⍝ U: Unsupported feature
+⍝ N: Explicit NQ
+⍝ P: ProcessEvent
+⍝ G: WG
+⍝ K: Keep-Alive
+
+→(mode∊LOGMODES)↓0
+:If 0≠≢LOGFILE
+    (⊂⍕((,'ZI2,<:>,ZI2,<.>,ZI3' ⎕FMT 1 3⍴¯3↑⎕TS),' ',mode,':') msg) ⎕NPUT LOGFILE 2
+:Else
+    ⎕←((,'ZI2,<:>,ZI2,<.>,ZI3' ⎕FMT 1 3⍴¯3↑⎕TS),' ',mode,':') msg
+:EndIf

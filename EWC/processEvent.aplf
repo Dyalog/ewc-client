@@ -1,0 +1,125 @@
+ {result}←processEvent ns;Info;ID;Event;event;events;fns;info;fn;z;async;class;e;code;res;gui;shift;k;i;m;t;⎕TRAP;end;R;formClose;nc;id
+
+ :If 2=ns.⎕NC'CodeLocation'
+     code←⍎ns.CodeLocation
+ :Else
+     code←CODELOCATION
+ :EndIf
+
+ :If 9=code.⎕NC '_EWC_GUI_NS'
+     gui←code._EWC_GUI_NS
+ :Else
+     gui←code
+ :EndIf
+
+ end←0 ⋄ R←ns
+
+ :Trap 6
+     (Event ID Info)←ns.Event.(EventName ID({0::⍵ ⋄ Info}⍬))
+ :Else
+     'E' Log 'Invalid Event message received - EventName or ID missing'
+     →END
+ :EndTrap
+
+ :If 0=gui.⎕NC ID
+     'W' Log 'Ignoring Event on non-existant object ',ID
+     →END ⊣ R←''
+ :EndIf
+
+ :If (MODE=0)∧Event≡'Configure'
+ :AndIf 9=gui.⎕NC 'HR'
+ :AndIf (HRBorder+2↑2↓Info)≡gui⍎ID,'.HR.Size'
+     'W' Log '(No-op Configure event)'
+     ⍝ →END
+ :EndIf
+
+⍝ Ping exists purely as a mechanism to keep a connection alive. We simply drop
+⍝ the event.
+ :If Event≡'Ping'
+     →END
+ :EndIf
+
+ :If Event≡'KeyPress'
+     :If (≢JSKeys)≥z←JSKeys⍳Info[1]
+         shift←4⊃Info
+         Info[1 2]←(k←⊃APLKeys[z;1+2⌊4⊃Info])({⍵×⍵∊8 9 10}3⊃Info)
+         :If shift>2 ⋄ Info[1]←⊂'' ⋄ :EndIf
+         →(0≡k)⍴END ⍝ Ignore KeyPress with 0 in APLKeys (Shift/Ctrl & friends)
+         :If Info[3]=13
+             Info[2]←Info[3]-3×Info[4]=2 ⍝ Last condition puts 10 in for ctrl+enter
+         :ElseIf Info[3]=9
+             Info[2]←Info[3]×Info[4]≠2
+         :ElseIf 229 2≡Info[3 4] ⍝ Ctrl BS
+             Info[1 2 3]←'' 127 8
+         :EndIf
+     :ElseIf 1=≢k←1⊃Info
+         (1⊃Info)←k[1] ⍝ Turn single char into a scalar
+     :EndIf
+ :EndIf
+
+ :Trap 6
+     :If ID≡⊂'null'
+         'E'Log'Client sent null ID'
+         →END
+     :Else
+         event←gui⍎z←ID,'.Event'
+     :EndIf
+ :Else
+     'E'Log'*** Unable to find ',z,', cannot process ',⎕JSON ns
+     →END
+ :EndTrap
+
+ (events fns)←↓⍉↑event
+ formClose←('Form'≡gui⍎ID,'.Type')∧'Close'≡Event
+ :If ~formClose∨∨/m←(t←(⊂Event),⊂'on',Event)∊events
+    'E'Log'*** No callback defined for event ',Event,' on object ',ID
+     →END
+ :EndIf
+
+ →(∨/m)↓NOEVENT
+ Event←⊃m/t ⍝ Event or onEvent
+ fn←⊃info←,⊆(events⍳⊂Event)⊃fns
+ 'P' Log 'Action = ',(⍕fn),' for ',(⎕JSON ns.Event),' at ',⎕SI,¨'[',¨(⍕¨⎕LC),¨']'
+ →((fn≡¯1)∨end←fn≡1)⍴END ⍝ No code to execute
+
+ :If (⊂Event)∊⊆2⊃BREAK
+ :OrIf (⊂ID)∊⊆1⊃BREAK
+     ⎕←'Stopping on ',⎕JSON ns
+     ∘∘∘
+ :EndIf
+
+ res←execUserCode info code ((ID Event),Info)
+
+ :If 7=i←⍬ 1 (,1) ((ID Event),Info) 0 (,0) ⍳ ⊂res
+ :AndIf res≢ID Event,Info
+     'D'Log'Callback function ',fn,' returned modified event: ',⍕res
+ :EndIf
+
+NOEVENT:
+ :If 9=nc←gui.⎕NC ID ⍝ Form still exists
+ :AndIf formClose←('Form'≡gui⍎ID,'.Type')∧'Close'≡Event
+     gui.⎕EX ID               ⍝ Default processing = Expunge
+ :EndIf
+
+ :If 0=nc ⍝ Object is gone - do not return event
+     R←''
+ :EndIf
+
+ :If 2=ns.Event.⎕NC 'EventID' ⍝ Is client expecting a response?
+     sendCBResponse ns.Event.EventID (i≤4) ns.Conn ⍝ Proceed if res∊⍬ 1 (,1)
+ :EndIf
+
+ :If 1 ⍝ Recording events
+ :AndIf 9=⎕NC(⍕code),'.',ID
+ :AndIf 9=⎕NC class←'classes.',⎕C code⍎ID,'.Type'
+     class←⍎class
+     e←{0::⍵ ⋄ class.SupportedEvents}''
+     :If ~(⊂Event)∊e
+     :AndIf isChar Event
+         'D'Log'Adding event ',Event,,' to ',⍕class
+         class.SupportedEvents←∪e,⊂Event
+         ⎕SE.Link.Add(⍕class),'.SupportedEvents'
+     :EndIf
+ :EndIf
+
+ END:result←end R

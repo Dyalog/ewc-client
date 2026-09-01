@@ -1,13 +1,16 @@
 {
-  "name": "demo-jswc",
+  "name": "ewc",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "client"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
+    "dev": "yarn workspace ewc-client dev",
+    "build": "yarn workspace ewc-client build",
+    "lint": "yarn workspace ewc-client lint",
+    "preview": "yarn workspace ewc-client preview",
     "demotests:browser:headed": "HEADED=1 BROWSER_URL=http://localhost:5173 playwright test --headed",
     "demotests:browser:debug": "BROWSER_URL=http://localhost:5173 playwright test --debug",
     "demotests:update-baselines": "UPDATE_BASELINES=1 BROWSER_URL=http://localhost:5173 playwright test",
@@ -25,32 +28,9 @@
     "ewc-demo:logs": "docker logs -f ewc-demo",
     "ewc-demo:restart": "yarn ewc-demo:start"
   },
-  "dependencies": {
-    "apexcharts": "^5.3.6",
-    "bootstrap": "^5.3.2",
-    "dayjs": "^1.11.10",
-    "lodash": "^4.17.21",
-    "rc-tree": "^5.8.0",
-    "react": "^18.3.1",
-    "react-apexcharts": "^1.9.0",
-    "react-dom": "^18.3.1",
-    "react-icons": "^5.5.0",
-    "react-number-format": "^5.3.1",
-    "reactstrap": "^9.2.0"
-  },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.0.1",
-    "@types/react": "^18.3.27",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^5.1.2",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.3",
-    "globals": "^16.5.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.7"
+    "typescript": "^5.9.3"
   }
 }

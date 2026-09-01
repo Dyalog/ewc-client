@@ -1,0 +1,41 @@
+ res←execUserCode(event ns eventargs);stack;prefix;async;exec;fn;expr;cmd;niladic;varname;larg;x;ok;haslarg
+⍝ Run user callback code
+ varname←'#.EWC._ARGS_',⍕⎕TID
+ expr←1⊃event
+ haslarg←1<≢event
+ larg←{⊃⍣(1=≢⍵)⊢⍵}1↓event
+ ⍎varname,'←larg eventargs'
+
+ async←'&'=¯1↑expr
+ niladic←exec←'⍎'=1↑expr
+ fn←exec↓(-async)↓expr
+ :If ~(⊂'∆DQ')∊⎕SI ⍝ Switching to calling space won't automatically put us in the right namespace
+     fn←(⍕ns),'.',(exec/'('),fn,exec/')'
+ :EndIf
+
+ res←⍬
+ :If exec
+     'W'Log 'NB ⍎callbacks not properly supported - expression executed BEFORE default processing'
+ :ElseIf 3≠ns.⎕NC fn
+     'E'Log'Callback function not found: ',fn
+     →0
+ :Else ⍝ It's a function
+     niladic←0=1 2⊃ns.⎕AT fn ⍝ Niladic fn
+ :EndIf
+
+ 'P'Log'    ',((1+(1+haslarg)×~niladic)⊃'Niladic' 'Monadic' 'Dyadic'),' call to ',expr
+ expr←(haslarg/'(1⊃',varname,')'),fn,(~niladic)/' 2⊃',varname
+
+ x←(⎕RSI∊⎕THIS)⍳0 ⍝ How far up the stack to go to escape EWC
+ :If async
+    res←⍬ ⊣ x 0 (86⌶)&expr
+ :Else
+    :Trap 11
+        (ok res)←x 0(86⌶)expr
+    :Else
+        :If 'Invalid left argument'≡⎕DMX.Message
+        :AndIf 'execUserCode'≡12↑2⊃⎕DMX.DM
+            res←x(86⌶)expr ⍝ Don't have the extension from svn revision 51229
+        :EndIf
+    :EndTrap
+ :EndIf

@@ -1,0 +1,37 @@
+ DemoAutoConfWin connected;LF
+⍝ Reproduces the WINDOW-resize (⎕WS form Size) reflow path that a real desktop
+⍝ app hits - a fixed-height top BAR, a fixed-width left SIDE bar, and a filling APP area.
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+ LF←⎕UCS 10
+ TOTAL←200   ⍝ rows in the virtual dataset (global; used by CBAutoConfWin)
+ top←0       ⍝ 0-based offset of the first visible row (global)
+ vis←10      ⍝ rows currently shown (recomputed on Configure)
+ cols←3      ⍝ columns currently shown (recomputed on Configure)
+
+⍝ Start small so a resize to large reproduces the "balloons on grow" symptom.
+ 'F1'eWC'Form' 'AutoConf window-resize'(0 0)(460 700)('Coord' 'Pixel')('AutoConf' 2)
+
+⍝ Top BAR — fixed height, stretch width (Top Left Top Right). This is what a
+⍝ ribbon/toolbar should do; if the base size is wrong it balloons vertically.
+ 'F1.BAR'eWC'SubForm'('Posn'(0 0))('Size'(70 700))('BCol'(150 180 230))('EdgeStyle' 'Border')('Attach' 'Top' 'Left' 'Top' 'Right')
+ 'F1.BAR.BTN'eWC'Button' 'Resize window'(8 8)(24 130)('Event' 'Select' 'CBAutoConfWin')('Attach' 'Top' 'Left' 'Top' 'Left')
+ 'F1.BAR.LBL'eWC'Label' ('BAR: Top Left Top Right',LF,'(fixed height, stretch width)')(8 150)(50 520)('Attach' 'Top' 'Left' 'Top' 'Right')
+
+⍝ Left SIDE bar — fixed width, full height (Top Left Bottom Left).
+ 'F1.SIDE'eWC'SubForm'('Posn'(73 0))('Size'(387 170))('BCol'(230 230 200))('EdgeStyle' 'Border')('Attach' 'Top' 'Left' 'Bottom' 'Left')
+ 'F1.SIDE.LBL'eWC'Label' ('SIDE',LF,'Top Left Bottom Left',LF,'(fixed width)')(10 8)(80 150)('Attach' 'Top' 'Left' 'Top' 'Right')
+
+⍝ Main APP — fills the rest (lowercase 'top left bottom right' on purpose).
+ 'F1.APP'eWC'SubForm'('Posn'(73 173))('Size'(387 527))('BCol'(255 255 255))('EdgeStyle' 'Border')('Attach' 'top' 'left' 'bottom' 'right')
+ 'F1.APP.LBL'eWC'Label' ('APP: lowercase top left bottom right — fills. GRID is "virtual":',LF,'it re-deploys cells to fit (Configure) and the bar pages ',(⍕TOTAL),' rows (Scroll).')(6 8)(32 500)('Attach' 'Top' 'Left' 'Top' 'Right')
+
+⍝ Grid that shows only a subset of the data
+ 'F1.APP.GRID'eWC'Grid'('Posn'(44 8))('Size'(336 491))('Values'((⍕¨⍳vis)∘.,'/',¨⍕¨⍳cols))('CellWidths' 84)('VScroll' ¯2)('HScroll' 0)('Event' 'Configure' 'CBAutoConfWin')('Attach' 'Top' 'Left' 'Bottom' 'Right')
+⍝ The app's own vertical scrollbar to the grid's right: a real Scroll with a
+⍝ Scroll callback that pages the visible window through the TOTAL-row dataset.
+ 'F1.APP.VS'eWC'Scroll'('VScroll' ¯1)('Posn'(44 503))('Size'(336 16))('Range' TOTAL)('Thumb' vis)('Event' 'Scroll' 'CBAutoConfWin')('Attach' 'Top' 'Right' 'Bottom' 'Right')
+
+ :If ~connected
+     ⎕EX 'F1.HR'
+ :EndIf

@@ -1,0 +1,23 @@
+(
+ 'Ribbon'
+ 1
+ 128 1200
+ 255 255 255
+ 134 171 220
+ 192 192 192
+ ''
+ ⍬
+ (
+ 'Type'
+ 'Visible'
+ 'Size'
+ 'FCol'
+ 'BCol'
+ 'TitleBCol'
+ 'ImageListObj'
+ 'Data'
+ 'PropList'
+ )
+ 120
+ 120
+)

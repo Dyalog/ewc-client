@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ['RELEASES.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.parse.outputs.skip }}
+    steps:
+      - name: Checkout EWC
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse top release section
+        id: parse
+        run: |
+          set -euo pipefail
+          version=$(awk '/^## \[v[0-9]+\.[0-9]+\.[0-9]+\]/ {
+            match($0, /v[0-9]+\.[0-9]+\.[0-9]+/)
+            print substr($0, RSTART, RLENGTH)
+            exit
+          }' RELEASES.md)
+
+          if [ -z "$version" ]; then
+            echo "::notice::No versioned section in RELEASES.md (only Unreleased?). Nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            /^## / && found { exit }
+            found { print }
+          ' RELEASES.md > /tmp/notes.md
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        if: steps.parse.outputs.skip != 'true'
+        id: tag_check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.parse.outputs.version }}" >/dev/null 2>&1; then
+            echo "::notice::Tag ${{ steps.parse.outputs.version }} already exists; nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Build the client
+        # Built here rather than committed: client/dist is git-ignored, and
+        # this build is what ships in the release asset below.
+        if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+
+      - name: Tag and create GitHub Release
+        if: steps.parse.outputs.skip != 'true' && steps.tag_check.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.parse.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$version" -m "Release $version"
+          git push origin "$version"
+
+          # A runnable tree: the APL server plus the client we just built.
+          # GitHub's auto-generated "Source code" archive is a git archive and
+          # therefore has no client/dist, so this named asset is the only
+          # download that actually runs. Sources and tooling are excluded.
+          zip -r "/tmp/ewc-${version}.zip" . \
+            -x '.git/*' '.github/*' \
+               'node_modules/*' 'client/node_modules/*' \
+               'client/src/*' 'client/public/*' \
+               'e2e/*' 'tests/*' \
+               '*.DS_Store'
+
+          # Secondary asset for anyone who only wants the frontend.
+          (cd client && zip -r /tmp/client-dist.zip dist)
+
+          gh release create "$version" \
+            --title "$version" \
+            --notes-file /tmp/notes.md \
+            "/tmp/ewc-${version}.zip" \
+            /tmp/client-dist.zip
+
+  # A release opens a docs-regeneration PR for review; merging it publishes the site
+  update-docs:
+    needs: release
+    if: needs.release.outputs.skip != 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/update-docs.yml

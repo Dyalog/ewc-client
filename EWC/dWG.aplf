@@ -1,0 +1,87 @@
+ R←Name ∆WG Props;msg;WG;wg;z;caller;p;class;remote;dynamic;r;d;i;⎕TRAP;proplist;PropList;m;ix;ID;conn;n;cp;size;lp;m;ref;wgid;tkn;nsname
+ ⎕TRAP←0 'S'
+
+ Name←⍕∊Name
+
+ caller←findCaller
+ (Name nsname)←caller removeCaller Name
+
+ (ID conn)←getConnection caller Name
+ :If (⊂,Name)∊,¨'⎕SE' '#' '.' ⍝ Pass WG of System properties through
+     :If (⊃Name)≠'⎕'
+     :AndIf (⎕C Props)≡'devcaps'
+        :If (MODE>0)∨'Mac'≡3↑⊃'.' ⎕WG 'APLVersion'
+        :AndIf 0<≢⊃SESSIONS
+           z←((2+ID⍳⍨⊃SESSIONS)⊃SESSIONS).devCaps
+           size←⊂(1+MODE≠0)⊃z.(ScreenSize ViewPort) ⍝ Browser Size or Screen Size
+           →0⊣R←(⌊0.5+size÷1(z.PPI÷25.4)),¯1 100
+        :Else ⍝ No relevant browser session
+           →0⊣R←DevCaps
+        :EndIf
+     :Else
+         →0⊣R←Name ⎕WG Props
+     :EndIf
+ :EndIf
+
+ p←,⊆Props
+ :Trap 2 6
+     class←GetClass caller nsname
+ :Else
+     (⊃⎕DMX.DM)⎕SIGNAL ⎕DMX.EN
+ :EndTrap
+
+ :If 'textsize'≡⊃⊃lp←⎕C p
+     Warning'TextSize invoked'
+     →0⊣R←15 20×⍴⎕FMT 2⊃⊃p
+ :EndIf
+
+ proplist←⎕C PropList←class.PropList,objProps
+ :If ∨/m←(≢proplist)<i←proplist⍳lp
+     Warning'Unsupported on ',class,': ',⍕m/p
+ :EndIf
+ p[ix]←PropList[i[ix←⍸~m]]
+
+ :If remote←∨/,dynamic←p∊⍥⎕C class.Dynamic,⊂'NoSuchProperty' ⍝ Any reason to ask remote client for values?
+     (wgid msg)←sendWGmsg conn ((2×'#.'≡2↑Name)↓Name) (d←dynamic/p)
+ :EndIf
+
+ :If USEWIN32
+     R←Name caller.⎕WG p
+ :Else
+     R←(≢p)⍴⊂⍬
+     :If 0≠≢i←⍸~dynamic
+         :Trap 6
+             ref←⍎(⍕caller),'.',nsname
+             R[i]←⍎(1≠≢i)↓'⊂ref.(',(⍕p[i]),')'
+         :Else
+             ⎕DMX.Message ⎕SIGNAL 6
+         :EndTrap
+     :EndIf
+ :EndIf
+
+ :If remote∧USEWIN32∧~CONNECTED
+     wg.Properties←⎕NS''
+     r←dynamic/R
+     ⍎'wg.Properties.(',(⍕d),')←',(1≠≢r)↓'⊃r'
+     msg←⎕JSON⍠'HighRank' 'Split'⊢WG
+     tkn←WG_TOKENBASE+TOKENSTEP×1⌈ID×MODE=2
+     enQueue (⎕JSON msg) caller
+ :EndIf
+
+ :If remote∧CONNECTED
+     :Trap 6 ⍝ Request for unsupported property
+         r←msg WaitForWG d ID wgid
+         R[p⍳d]←r
+         :If (≢p)≥i←p⍳⊂'Size'
+         :AndIf USEHR
+         :AndIf 'Form'≡class.ClassName
+            ⍝ (i⊃R)-←HRBorder
+         :EndIf
+     :Else
+         ⎕DMX.EM ⎕SIGNAL ⎕DMX.EN
+     :EndTrap
+ :EndIf
+
+ :If 1=≡Props
+     R←⊃R
+ :EndIf

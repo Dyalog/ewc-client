@@ -8,6 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
+# Build output (no longer committed — shipped as a release asset)
+client/dist
+.vite
 licenses.json
 generate-license-list.cjs
 dist-ssr
@@ -46,3 +50,11 @@ TODO.md
 /.local-dyalog/
 
 notes/
+
+# --- APL side (from ewc) ---
+EWC/server/*
+aplcore
+.linkconfig
+# mkdocs output
+/site/
+/demo/images/ribbonimages/*

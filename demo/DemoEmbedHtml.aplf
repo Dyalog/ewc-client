@@ -1,0 +1,12 @@
+ DemoEmbedHtml connected
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ 'F1'eWC'Form' 'Embed HTML'(50 50)(480 620)('Coord' 'Pixel')
+
+ 'F1.D'eWC'Div' (20 20)(50 200)('HTML' '<p><b>Some</b> <i>raw</i> HTML</p>')('CSS' 'background-color: cyan')
+
+ 'F1.G'eWC'Grid' '' (100 20)(100 400)('Values' (1 '<a href="http://example.com">example</a>')(4 '<b>bold</b> <i>italic</i>')(7 '<img src="/images/flags16/dk.png">'))
+ 'F1.G.E1'eWC'Edit'
+ 'F1.G.D2'eWC'Div'('CSS' 'background-color: pink') ⍝ Apply Div style for all elements
+ 'F1.G'eWS('Input' ('F1.G.E1' 'F1.G.D2'))('CellTypes' (3 2⍴1 2))

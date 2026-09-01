@@ -1,0 +1,35 @@
+ DemoGridFlex connected;values;F;colTitles;rowTitles;cellWidths
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Grid Flex Demo - Tests Grid in flex and fixed positioning modes
+⍝ Three scenarios: flex row, flex column, and fixed (with Posn)
+
+ F←'F1'
+ F eWC'Form' 'Grid Flex vs Fixed'(50 50)(550 750)('Coord' 'Pixel')('Flex' 'fill')
+
+⍝ Shared data: 3 rows x 3 columns
+ values←3 3⍴⍬
+ values[1;]←'Apple' 10 'A'
+ values[2;]←'Banana' 20 'B'
+ values[3;]←'Cherry' 30 'C'
+
+ colTitles←'Name' 'Qty' 'Grade'
+ rowTitles←⍳3
+ cellWidths←100 60 60
+
+⍝ --- Section 1: Flex Row --- two Grids side by side (no Posn)
+ (F,'.ROW')eWC'SubForm'('Flex' 'row')('Border' 1)
+ (F,'.ROW.L')eWC'Label' 'Row Flex:'
+ (F,'.ROW.G1')eWC'Grid'('Size'(70 253))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 30)('CurCell'(1 1))
+ (F,'.ROW.G2')eWC'Grid'('Size'(70 253))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 30)('CurCell'(1 1))
+
+⍝ --- Section 2: Flex Column --- label then Grid vertically (no Posn)
+ (F,'.COL')eWC'SubForm'('Flex' 'column')('Border' 1)
+ (F,'.COL.L')eWC'Label' 'Column Flex:'
+ (F,'.COL.G')eWC'Grid'('Size'(70 253))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 30)('CurCell'(1 1))
+
+⍝ --- Section 3: Fixed --- Grid with explicit Posn (absolute positioning)
+ (F,'.FIXED')eWC'SubForm'('Size'(200 350))('Border' 1)
+ (F,'.FIXED.L')eWC'Label' 'Fixed (Posn 40 20):'(10 10)(20 300)
+ (F,'.FIXED.G')eWC'Grid'('Posn'(40 20))('Size'(70 253))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 30)('CurCell'(1 1))

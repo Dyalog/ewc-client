@@ -1,0 +1,36 @@
+ DemoGridInputMode connected;values;F;colTitles;cellWidths;cellTypes
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Grid InputMode demo. InputModeKey is specified like the Accelerator property —
+⍝ a (keyNumber shiftState) pair. Here we override the F2 default with
+⍝ Ctrl+Shift+A = (65 3): 65 is the key number for "a", 3 = Shift(1)+Ctrl(2).
+⍝ Scroll mode: cursor keys move between cells. Press Ctrl+Shift+A to switch to
+⍝ InCell mode, where cursor keys move within the cell's text; press it again to
+⍝ switch back.
+
+ F←'F1'
+ F eWC'Form' 'Grid InputMode (InputModeKey = Ctrl+Shift+A)'(50 50)(430 580)('Coord' 'Pixel')
+
+ values←5 2⍴⍬
+ values[1;]←'Apple' 150
+ values[2;]←'Banana' 250
+ values[3;]←'Cherry' 50
+ values[4;]←'Date' 75
+ values[5;]←'Fig' 100
+ colTitles←'Product' 'Quantity'
+ cellWidths←130 90
+
+ ⍝ Size (height width): fit all 5 rows + col-title band and both columns
+ ⍝ (TitleWidth 40 + 130 + 90 = 260 + border) with no scrollbar.
+ (F,'.G')eWC'Grid'('Posn'(120 20))('Size'(120 280))('Values' values)('ColTitles' colTitles)('RowTitles'(⍳5))('CellWidths' cellWidths)('TitleWidth' 40)('CurCell'(1 1))('VScroll' ¯1)('InputMode' 'Scroll')('InputModeKey'(65 3))
+
+⍝ Cell editors: text (Product) and numeric (Quantity).
+ (F,'.G.E1')eWC'Edit'
+ (F,'.G.E2')eWC'Edit'('FieldType' 'Numeric')
+ (F,'.G')eWS'Input'((F,'.G.E1')(F,'.G.E2'))
+ cellTypes←5 2⍴1 2
+ (F,'.G')eWS'CellTypes' cellTypes
+
+ ⍝ Posn y=52 keeps the text clear of the auto-added demo menu (top-right, ~y0-44).
+ (F,'.Info')eWC'Label'('Caption' 'Scroll mode: arrow keys move between cells. Press Ctrl+Shift+A (the InputModeKey) to switch to InCell mode, where arrow keys move within the cell text. Press it again to switch back.')(52 20)(55 540)
