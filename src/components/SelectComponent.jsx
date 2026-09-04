@@ -1,4 +1,5 @@
 import { getObjectById } from '../utils';
+import { pluginEntry, pluginContext } from '../pluginHost';
 
 import Form from './Form';
 import MenuBar from './MenuBar';
@@ -49,7 +50,6 @@ const SelectComponent = ({
   row = '',
   column = '',
   location,
-  inSplitter = null,
   values = [],
   formatString = '',
   activeTab = null,
@@ -58,7 +58,8 @@ const SelectComponent = ({
   activebgColor = null,
   handleTabClick = () => {},
 }) => {
-  const { dataRef } = useAppData();
+  const appData = useAppData();
+  const { dataRef } = appData;
 
   if (data?.Properties?.Type == 'Form') return <Form data={data} />;
   if (data?.Properties?.Type == 'MenuBar')
@@ -179,6 +180,18 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
   if (data?.Properties?.Type == 'Div') return <Div data={data} />;
   if (data?.Properties?.Type == 'StatusBar') return <StatusBar data={data} />;
+
+  // Classes contributed by a plugin, registered from JS the server injected.
+  // See src/pluginHost.js for what `ewc` carries.
+  const plugin = pluginEntry(data?.Properties?.Type);
+  if (plugin)
+    return (
+      <plugin.component
+        data={data}
+        location={location}
+        ewc={pluginContext(appData, SelectComponent)}
+      />
+    );
 //   console.log("UNKNOWN: " + data?.Properties?.Type);
 };
 

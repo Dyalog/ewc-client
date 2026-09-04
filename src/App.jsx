@@ -24,6 +24,7 @@ import { insertTextIntoInput } from "./utils/insertTextIntoInput";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
 import { noteServerSize } from "./hooks/useConfigureReport";
+import { pluginEntry } from "./pluginHost";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -242,6 +243,12 @@ const App = () => {
           StatusField.WS(wsSend, data, currentLevel[finalKey]);
           return;
         }
+        // A plugin class may take full control of its own WS, as StatusField does.
+        const pluginWS = pluginEntry(currentLevel[finalKey]?.Properties?.Type)?.WS;
+        if (pluginWS) {
+          pluginWS(wsSend, data, currentLevel[finalKey]);
+          return;
+        }
         // Special logic for radio buttons! This goes up to the parent, and sets
         // all other radio buttons within the container to false.
         // N.B. the assumption is that radios are always within a container of
@@ -448,6 +455,11 @@ const App = () => {
 
     const webSocket = webSocketRef.current;
     setSocket(webSocket);
+
+    // Holds incoming frames while an EvalJS injection is still resolving. See
+    // the EvalJS branch below for why.
+    const gate = { paused: false, queue: [] };
+
     webSocket.onopen = () => {
       let event = JSON.stringify({
         DeviceCapabilities: {
@@ -471,7 +483,7 @@ const App = () => {
       webSocket.send(eventInit);
       // webSocket.send('Initialise')
     };
-    webSocket.onmessage = (event) => {
+    const handleFrame = (event) => {
       const evData = JSON.parse(event.data);
       const keys = Object.keys(evData);
 
@@ -542,14 +554,43 @@ const App = () => {
           );
         } else if (Method == "EvalJS") {
           // Here be dragons!
-          const results = Info.map((code) => {
-            try {
-              return [0, eval?.(code)];
-            } catch (e) {
-              return [-1, e.toString()];
+          //
+          // Injected code may resolve asynchronously - a plugin fetching its
+          // bundle, a script tag, a CDN import. Snippets run in sequence (a
+          // later one may depend on an earlier one) and the reply waits for all
+          // of them, so the APL caller blocks until the JS is actually live.
+          //
+          // Meanwhile the pump is paused: a WC for a class the injected code is
+          // about to register must not be handled before that registration
+          // exists. Pausing even the WX-immediate path is safe because APL is
+          // single-threaded per session and each browser has its own socket, so
+          // a second WX cannot be outstanding.
+          gate.paused = true;
+          (async () => {
+            const results = [];
+            for (const code of Info) {
+              try {
+                results.push([0, await eval?.(code)]);
+              } catch (e) {
+                results.push([-1, e.toString()]);
+              }
             }
-          });
-          return webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
+            try {
+              webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
+            } catch (e) {
+              // A result APL cannot be told about still beats the 3s timeout
+              // and a VALUE ERROR on the caller.
+              webSocket.send(
+                JSON.stringify({
+                  WX: { Info: results.map(([rc]) => [rc, ""]), WGID },
+                })
+              );
+            } finally {
+              gate.paused = false;
+              drainGate();
+            }
+          })();
+          return;
         } else {
           // Default response for unknown methods
           return webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
@@ -582,7 +623,9 @@ const App = () => {
             // without the server defaults. The server normally sends these at ⎕WC.
             Grid: { CurCell: [1, 1], InputMode: "Scroll", InputModeKey: [113, 0] },
           };
-          const dflts = defaultProperties[evData.WC?.Properties?.Type];
+          const wcType = evData.WC?.Properties?.Type;
+          const dflts =
+            defaultProperties[wcType] ?? pluginEntry(wcType)?.defaultProperties;
           if (dflts) {
             evData.WC.Properties = { ...dflts, ...evData.WC.Properties };
           }
@@ -1410,6 +1453,8 @@ const App = () => {
               } else if (Type === "Upload") {
                 // TODO size and posn
                 return Upload.WG(wsSend, serverEvent);
+              } else if (pluginEntry(Type)?.WG) {
+                return pluginEntry(Type).WG(wsSend, serverEvent, refData);
               } else {
                 const replyProps = {};
 
@@ -1699,6 +1744,20 @@ const App = () => {
       requestAnimationFrame(() => {
         setTimeout(handleMessage, 1);
       });
+    };
+
+    const drainGate = () => {
+      // shift() rather than draining a copy: a nested injection that re-pauses
+      // leaves the rest of the queue ahead of anything that arrived later.
+      while (!gate.paused && gate.queue.length) handleFrame(gate.queue.shift());
+    };
+
+    webSocket.onmessage = (event) => {
+      if (gate.paused) {
+        gate.queue.push(event);
+        return;
+      }
+      handleFrame(event);
     };
   };
 
