@@ -4,7 +4,6 @@ import { navigateToDemo } from '../helpers/navigation';
 
 const CDP_PORT = parseInt(process.env.CDP_PORT || '8080', 10);
 
-// The plugin host surface, as published by src/pluginHost.js.
 declare global {
   interface Window {
     EWC?: {
@@ -20,9 +19,6 @@ declare global {
 // SelectComponent and no import anywhere: its React component arrives as a
 // JavaScript string over the WebSocket, injected by EWC on first use of the
 // class, and registers itself through window.EWC.registerComponent.
-//
-// The demo deliberately has no external dependency, so this runs everywhere the
-// rest of the suite does.
 test.describe('DemoPluginRegistry', () => {
   let page: Page;
 
@@ -45,20 +41,12 @@ test.describe('DemoPluginRegistry', () => {
 
   test('exposes React and registerComponent, and nothing else new', async () => {
     const keys = await page.evaluate(() => Object.keys(window.EWC || {}).sort());
-    // React, registerComponent and url are the load-time surface: what a plugin
-    // needs before it can define, publish and fetch. Everything render-time
-    // arrives on the `ewc` prop instead. ping/pingMS predate plugins;
-    // components is the registry itself.
     expect(keys).toEqual([
       'React', 'components', 'ping', 'pingMS', 'registerComponent', 'url',
     ]);
   });
 
   test('publishes a usable React whose output joins the app\'s tree', async () => {
-    // A plugin bundling its own React would break hooks, so window.EWC.React
-    // must be the instance the client renders with. The evidence is that
-    // elements the plugin built with it were accepted by the app's reconciler
-    // and mounted inside the app root.
     const surface = await page.evaluate(() => {
       const R = window.EWC?.React as any;
       return R && typeof R.createElement === 'function' && typeof R.useState === 'function';

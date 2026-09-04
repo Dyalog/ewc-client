@@ -1,21 +1,3 @@
-/**
- * The surface a server-injected plugin can reach.
- *
- * Plugin JS arrives through the EvalJS WX method (App.jsx), which uses indirect
- * eval and so runs in global scope - it can see no module binding of ours. The
- * split between what lives on `window` and what does not follows from that:
- *
- *   Load time  - the bundle is evaluated globally and must be able to *define*
- *                React components. It needs React (plugin components must share
- *                this app's instance or their hooks break) and somewhere to put
- *                the result. Those two have no other route in, so they are the
- *                only globals.
- *   Render time - hooks, utils, rendering children. By then the component is
- *                inside React and is simply handed `ewc`, built by
- *                pluginContext() and passed as a prop.
- *
- * A registered component is called as ({ data, location, ewc }).
- */
 import React from 'react';
 
 import * as utils from './utils';
@@ -28,18 +10,7 @@ if (!window.EWC) window.EWC = {};
 
 const components = Object.create(null);
 
-/**
- * Register a component for an EWC class. `entry` is either the component
- * itself or an object mirroring the static-method convention core components
- * already use (Upload.Defaults, Upload.WG, StatusField.WS):
- *
- *   { component, Defaults?, WG?, WS?, defaultProperties? }
- *
- * No re-render is triggered. EWC injects a plugin from within ⎕WC, before the
- * WC message is sent, and the client holds every later frame until the
- * injection resolves - so registration always precedes the first WC of the
- * type. A plugin that needs to repaint later can call ewc.handleData().
- */
+// Bit of a dance, but all we want is the component in the components object
 const registerComponent = (type, entry) => {
   if (typeof type !== 'string' || !type) {
     throw new Error('EWC.registerComponent: type must be a non-empty string');
@@ -52,13 +23,6 @@ const registerComponent = (type, entry) => {
   return type;
 };
 
-/**
- * Resolve a path against the EWC server, which is not always the page's own
- * origin: while ewc-client itself is being developed the page comes from Vite
- * on one port and EWC - along with anything a plugin mounted through its
- * Resources - is on another. A plugin fetching its own assets should go through
- * this rather than use a bare relative URL.
- */
 const url = (path) => new URL(path, utils.getCurrentUrl()).href;
 
 window.EWC.React = React;
