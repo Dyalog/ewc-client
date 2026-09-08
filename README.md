@@ -1,46 +1,48 @@
-# EWC Client
+# ewc-client
 
-![EWC-Client Cover](./assets/ewc_client_cover.png)
+![ewc-client Cover](./assets/ewc_client_cover.png)
 
-This is the JavaScript/React client for the [EWC project](https://github.com/dyalog/ewc).
+The frontend for **EWC** — the browser half of a `⎕WC`-workalike GUI for Dyalog APL.
+An application creates GUI objects through EWC's `eWC` family on the
+[**ewc**](https://github.com/dyalog/ewc) APL server; this repository renders what the
+server describes as React components, and reports user events back.
 
-## Getting Started
+## Using EWC
 
-Clone [ewc](https://github.com/dyalog/ewc) and this repository. It is suggested
-that you place the two repositories next to each other, for example:
+You don't need this repository to *use* EWC. Each release bundles the built frontend,
+so grab one from the server repo:
 
-    /my/dev/directory/ewc
-    /my/dev/directory/ewc-client
+- **Releases:** <https://github.com/dyalog/ewc/releases>
+- **Documentation:** [EWC User Guide](https://dyalog.github.io/ewc/latest/)
 
-This ensures that when running ewc, it will, by default, pick up the latest
-build from ewc-client automatically.
+## Developing the ewc-client
 
-Follow the [instructions for verifying an ewc installation](https://dyalog.github.io/ewc/0.2/Usage/Installation/).
+To work on this repository itself:
 
-When working on the JavaScript code, we use [vite](https://vite.dev) for hot
-reloading. To point to EWC on the default websocket port 22322, simply copy
-.env.example:
+1. Clone [`ewc`](https://github.com/dyalog/ewc) and `ewc-client` next to each
+   other, so the server picks up your local build automatically:
 
-    cp .env.example .env.development
+        /my/dev/directory/ewc
+        /my/dev/directory/ewc-client
 
-Then run the vite server:
+2. Install dependencies and point the frontend at a running server (default WebSocket
+   port `22322`):
 
-    vite
+        yarn install
+        cp .env.example .env.development
 
-For development, it's much easier to run in a browser to use all the tooling.
-In APL, you simply change mode from 'Desktop' to 'Browser':
+3. Start the Vite dev server (hot reload on port `5173`):
 
-    demo.Run 'Browser'
+        yarn dev
 
-Then open http://localhost:5173 (assuming default vite port). By default, this
-will connect a websocket over the :22322 port, as mentioned above.
+4. In your APL session, switch the demo to browser mode:
 
-## Branches
+        demo.Run 'Browser'
 
-We use three permanent branches in ewc-client.
+   then open <http://localhost:5173> — it connects back to the server over `:22322`.
 
-* `main`: this code has been released.
-* `next`: this will become the next `main`. It should be stable.
-* `devt`: this is unstable and should be considered the 'bleeding edge'.
+## Contributing
 
-Contributors should checkout devt, and create PRs against that branch.
+Development happens on `main`; open pull requests against `main`. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for conventions, testing, and how this repository
+relates to the `ewc` server.
