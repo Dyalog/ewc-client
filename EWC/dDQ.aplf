@@ -9,7 +9,7 @@
  names←⊃¨caller removeCaller¨names
  modal←0
 
- :If ~∧/names∊'.' '#'
+ :If ~∧/(∊names)∊'.#'  ⍝ '.' (all) / '#' (root) DQ tokens; ∊ normalises depth — ⊃¨removeCaller leaves them nested, so a bare names∊'.' '#' spuriously fails
      ⎕SIGNAL(∨/~(caller.⎕NC z←names,¨⊂'.Type')∊2.1 ¯2.6)/11
      types←,⊆caller⍎⍕z
      :If modal←∧/types∊modalClasses

@@ -2,4 +2,6 @@
  'Type'
  'File'
  'Size'
+ 'CBits'
+ 'KeepBits'
 )

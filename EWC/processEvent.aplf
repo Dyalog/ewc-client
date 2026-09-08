@@ -71,14 +71,14 @@
 
  (events fns)←↓⍉↑event
  formClose←('Form'≡gui⍎ID,'.Type')∧'Close'≡Event
- :If ~formClose∨∨/m←(t←(⊂Event),⊂'on',Event)∊events
+ :If ~formClose∨∨/m←(⎕C¨t←(⊂Event),⊂'on',Event)∊⎕C¨events  ⍝ ⎕WC event names are case-insensitive
     'E'Log'*** No callback defined for event ',Event,' on object ',ID
      →END
  :EndIf
 
  →(∨/m)↓NOEVENT
  Event←⊃m/t ⍝ Event or onEvent
- fn←⊃info←,⊆(events⍳⊂Event)⊃fns
+ fn←⊃info←,⊆((⎕C¨events)⍳⊂⎕C Event)⊃fns  ⍝ case-insensitive index of the registered event
  'P' Log 'Action = ',(⍕fn),' for ',(⎕JSON ns.Event),' at ',⎕SI,¨'[',¨(⍕¨⎕LC),¨']'
  →((fn≡¯1)∨end←fn≡1)⍴END ⍝ No code to execute
 
