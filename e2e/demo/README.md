@@ -4,6 +4,12 @@ End-to-end Playwright tests for the EWC demo. Exercises the full stack:
 the React UI (this package's `dist/`), EWC's WebSocket server (Dyalog APL),
 and the demos under `Dyalog/ewc/demo/`.
 
+> **Looking for the multi-user tests?** They live in [`../multi/`](../multi/README.md)
+> and drive a **Multi**-mode (`EWC.MODE=2`) server on `:22323`, with one browser
+> context per simulated user. This suite drives a **Browser**-mode server on
+> `:22322`. A Dyalog process runs EWC in exactly one mode, so the two suites need
+> separate servers — but they use different ports and can run concurrently.
+
 ## How tests connect to EWC
 
 Tests connect via the `BROWSER_URL` env var. Three modes are supported:
@@ -122,7 +128,7 @@ Three workflows live in `.github/workflows/`:
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `build-and-commit.yml` | push | Builds and commits `dist/` |
-| `tests.yml` | push, PR, manual (`workflow_dispatch`) | Runs Playwright against `:22322` (EWC-served browser mode) |
+| `tests.yml` | push, PR, manual (`workflow_dispatch`) | `e2e` job: Playwright against `:22322` (EWC-served browser mode), sharded 5×. `e2e-multi` job: the [multi-user suite](../multi/README.md) against a Multi-mode server on `:22323`, unsharded |
 | `update-baselines.yml` | manual (`workflow_dispatch`) | Regenerates visual baselines on the runner; opens a PR for review |
 
 `tests.yml` and `update-baselines.yml` both use `ci/run-server.sh` to bring up
