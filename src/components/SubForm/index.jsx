@@ -146,7 +146,14 @@ const SubForm = ({ data }) => {
   // Omit `height` rather than setting it undefined: these are spread over
   // updatedStyles, so an explicit undefined would wipe a height coming from CSS.
   const height = Size ? Size[0] : inheritedSize ? inheritedSize[0] : undefined;
-  const heightStyle = isFlexContainer ? { minHeight: height } : { height };
+  // A ribbon tab page is created with no Size, so the fallback above would hand
+  // it the whole form's height and its BCol would paint over everything below
+  // the band. Hug the ribbon instead.
+  const heightStyle = hostsRibbon
+    ? { height: "max-content" }
+    : isFlexContainer
+    ? { minHeight: height }
+    : { height };
 
   // Zilde is no background, otherwise inherited, otherwise default
   let background;
