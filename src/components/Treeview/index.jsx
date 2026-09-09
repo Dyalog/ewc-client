@@ -6,6 +6,7 @@ import {
   findParentIndex,
   getFontStyles,
   extractStringUntilLastPeriod,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -254,6 +255,7 @@ const Treeview = ({ data }) => {
         ...customStyles,
         ...attachStyle,
       }}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

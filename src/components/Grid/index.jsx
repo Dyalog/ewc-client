@@ -5,6 +5,7 @@ import {
   parseFlexStyles,
   rgbColor,
   getFontStyles,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -896,6 +897,7 @@ const Grid = ({ data }) => {
       tabIndex={0}
       onKeyDownCapture={handleModeKeyCapture}
       onKeyDown={handleKeyDown}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
       onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
       onMouseEnter={(e) => handleMouseEnter(e, socket, Event, data?.ID)}
@@ -934,7 +936,8 @@ const Grid = ({ data }) => {
                     <th
                       className="grid-corner-cell"
                       style={{ width: effectiveTitleWidth, height: effectiveTitleHeight, cursor: 'cell' }}
-                      onMouseDown={() => {
+                      onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={() => {
                         setAnchor({ r: 1, c: 1 });
                         setSelection({ sr: 1, sc: 1, er: numRows, ec: numCols });
                         moveTo(1, 1);
@@ -946,7 +949,8 @@ const Grid = ({ data }) => {
                     <th
                       key={colIndex}
                       className={`grid-col-header${Array.isArray(title) ? ' multi-line' : ''}${isColInSelection(colIndex + 1) ? ' selected-col' : ''}`}
-                      onMouseDown={(e) => {
+                      onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                         const col = colIndex + 1;
                         if (e.shiftKey && anchor) {
                           const sc = Math.min(anchor.c, col), ec = Math.max(anchor.c, col);
@@ -1002,7 +1006,8 @@ const Grid = ({ data }) => {
                   {showRowTitles && (
                     <th
                       className={`grid-row-header${isRowInSelection(rowIndex + 1) ? ' selected-row' : ''}`}
-                      onMouseDown={(e) => {
+                      onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                         const row = rowIndex + 1;
                         if (e.shiftKey && anchor) {
                           const sr = Math.min(anchor.r, row), er = Math.max(anchor.r, row);

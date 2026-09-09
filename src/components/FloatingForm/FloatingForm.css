@@ -1,0 +1,61 @@
+/* A non-primary Form rendered as a window-in-the-page: titlebar, close box and
+   drag, over the primary form. Native ⎕WC opens a real top-level window; a
+   browser cannot (window.open is a popup, and a blocked popup is worse than a
+   visible bug because nobody notices it), so the "window" lives in the page. */
+
+.floatform {
+  position: fixed;
+  background: #f0f0f0;
+  border: 1px solid #6f6f6f;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  display: inline-block;
+  /* let the wrapped Form set its own size */
+}
+
+.floatform-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(#3a6ea5, #2c568a);
+  color: #fff;
+  font: 12px/1.4 ui-sans-serif, system-ui, sans-serif;
+  padding: 3px 4px 3px 8px;
+  cursor: move;
+  user-select: none;
+}
+
+.floatform-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.floatform-close {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font: 15px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.floatform-close:hover {
+  background: #c0392b;
+}
+
+.floatform-body {
+  position: relative;
+}
+
+/* Invisible click-shield under the topmost floater: the form beneath is
+   visible but must not be interacted with while a window is up, matching what
+   native does when ⎕DQ scopes events to the subsidiary window. Transparent,
+   not dimmed — native does not dim either. This is a v0 placeholder; the real
+   pseudo-modal behaviour (gating dispatch on the active ⎕DQ) comes next. */
+.floatform-shield {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+}

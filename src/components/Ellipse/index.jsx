@@ -1,5 +1,6 @@
 import { useAppData } from '../../hooks';
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
+import { handleMouseDoubleClick, handleContextMenu,
+  handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor } from '../../utils';
 
 const Ecllipse = ({ data }) => {
   const { FillCol, Start, FCol, Size, End, Points, Event, CSS, Visible } = data?.Properties;
@@ -112,7 +113,8 @@ const Ecllipse = ({ data }) => {
         }}
         height={height}
         width={width}
-        onMouseDown={(e) => {
+        onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
         }}
         onMouseUp={(e) => {

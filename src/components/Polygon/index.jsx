@@ -1,5 +1,6 @@
 import { useAppData } from "../../hooks";
-import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor, setStyle } from "../../utils";
+import { handleMouseDoubleClick, handleContextMenu,
+  handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor, setStyle } from "../../utils";
 
 const Poly = ({ data }) => {
   const { FCol, FillCol, LWidth, Points, FStyle, Visible, Event, CSS } = data?.Properties;
@@ -48,7 +49,8 @@ const Poly = ({ data }) => {
             }}
             height={height}
             width={width}
-            onMouseDown={(e) => {
+            onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
               handleMouseDown(e, socket, Event, data?.ID);
             }}
             onMouseUp={(e) => {

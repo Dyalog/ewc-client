@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   handleMouseDoubleClick,
+  handleContextMenu,
   handleMouseDown,
   handleMouseEnter,
   handleMouseLeave,
@@ -179,7 +180,8 @@ const TextArea = ({ data }) => {
         value={textString}
         onChange={handleChange}
         onMouseUp={(e) => handleMouseUpLocal(e, "mouseUp")}
-        onMouseDown={(e) => handleMouseUpLocal(e, "mouseDown")}
+        onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => handleMouseUpLocal(e, "mouseDown")}
         onMouseEnter={(e) => handleMouseUpLocal(e, "mouseEnter")}
         onMouseLeave={(e) => handleMouseUpLocal(e, "mouseLeave")}
         onMouseMove={(e) => handleMouseUpLocal(e, "mouseMove")}

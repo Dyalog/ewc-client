@@ -14,6 +14,8 @@ import List from './List';
 import Splitter from './Splitter';
 import Group from './Group';
 import ScrollBar from './ScrollBar';
+import TrackBar from './TrackBar';
+import ColorButton from './ColorButton';
 import TabControl from './TabControl';
 import TabButton from './TabButton';
 
@@ -38,6 +40,9 @@ import MessageBox from './MessageBox';
 import Link from './Link';
 import Upload from './Upload';
 import Div from './Div';
+import Static from './Static';
+import Locator from './Locator';
+import MenuBarItem from './MenuBarItem';
 import StatusBar from './StatusBar';
 
 import RibbonDropDownButton from './Ribbon/RibbonDropDownButton';
@@ -81,6 +86,7 @@ const SelectComponent = ({
       </div>
     );
   if (data?.Properties?.Type == 'Menu') return <Menu data={data} />;
+  if (data?.Properties?.Type == 'MenuItem') return <MenuBarItem data={data} />;
   if (data?.Properties?.Type == 'Grid') return <Grid data={data} />;
   if (data?.Properties?.Type == 'Edit' && data?.Properties?.Style !== 'Multi')
     return (
@@ -134,6 +140,8 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Splitter') return <Splitter data={data} />;
   if (data?.Properties?.Type == 'Group') return <Group data={data} />;
   if (data?.Properties?.Type == 'Scroll') return <ScrollBar data={data} />;
+  if (data?.Properties?.Type == 'Trackbar') return <TrackBar data={data} />;
+  if (data?.Properties?.Type == 'ColorButton') return <ColorButton data={data} />;
   if (data?.Properties?.Type == 'TabControl') return <TabControl data={data} />;
   if (data?.Properties?.Type == 'TabButton')
     return (
@@ -179,6 +187,8 @@ const SelectComponent = ({
   if (data?.Properties?.Type == 'Link') return <Link data={data} />;
   if (data?.Properties?.Type == 'Upload') return <Upload data={data} />;
   if (data?.Properties?.Type == 'Div') return <Div data={data} />;
+  if (data?.Properties?.Type == 'Static') return <Static data={data} />;
+  if (data?.Properties?.Type == 'Locator') return <Locator data={data} />;
   if (data?.Properties?.Type == 'StatusBar') return <StatusBar data={data} />;
 
   // Classes contributed by a plugin, registered from JS the server injected.

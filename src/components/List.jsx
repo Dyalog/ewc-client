@@ -2,6 +2,7 @@ import {
   extractStringUntilLastPeriod,
   getFontStyles,
   handleMouseDoubleClick,
+  handleContextMenu,
   handleMouseDown,
   handleMouseEnter,
   handleMouseLeave,
@@ -270,6 +271,7 @@ const List = ({ data }) => {
         ...attachStyle,
       }}
       tabIndex={TabIndex ?? 0}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}
@@ -301,7 +303,8 @@ const List = ({ data }) => {
         Items.map((item, index) => (
           <div
             key={index}
-            onMouseDown={(e) => handleMouseDownDrag(index,e)}
+            onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => handleMouseDownDrag(index,e)}
             onMouseOver={(e) => handleMouseOverDrag(index,e)}
             onClick={(e) => handleClick(index, e)}
             style={{
