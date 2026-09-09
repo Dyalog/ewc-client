@@ -35,7 +35,7 @@ test.describe('DemoRect', () => {
 
   test('form has correct title', async () => {
     const title = await page.title();
-    expect(title).toBe('EWC');
+    expect(title).toBe('Rect');
   });
 
   test('visual regression - rect demo', async () => {
