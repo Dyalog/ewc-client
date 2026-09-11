@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppDataContext } from "./context";
 import { SelectComponent } from "./components";
+import FloatingForm from "./components/FloatingForm";
 import {
   getObjectById,
   checkSupportedProperties,
   findFormParentID,
+  findFormIDs,
+  findPrimaryFormID,
   deleteFormAndSiblings,
   getCurrentUrl,
   locateParentByPath,
@@ -24,6 +27,7 @@ import { insertTextIntoInput } from "./utils/insertTextIntoInput";
 import {size, posn} from "./utils/sizeposn"
 import StatusField from "./components/StatusField";
 import { noteServerSize } from "./hooks/useConfigureReport";
+import { pluginEntry } from "./pluginHost";
 
 function useForceRerender() {
   const [_state, setState] = useState(true);
@@ -242,6 +246,12 @@ const App = () => {
           StatusField.WS(wsSend, data, currentLevel[finalKey]);
           return;
         }
+        // A plugin class may take full control of its own WS, as StatusField does.
+        const pluginWS = pluginEntry(currentLevel[finalKey]?.Properties?.Type)?.WS;
+        if (pluginWS) {
+          pluginWS(wsSend, data, currentLevel[finalKey]);
+          return;
+        }
         // Special logic for radio buttons! This goes up to the parent, and sets
         // all other radio buttons within the container to false.
         // N.B. the assumption is that radios are always within a container of
@@ -448,6 +458,11 @@ const App = () => {
 
     const webSocket = webSocketRef.current;
     setSocket(webSocket);
+
+    // Holds incoming frames while an EvalJS injection is still resolving. See
+    // the EvalJS branch below for why.
+    const gate = { paused: false, queue: [] };
+
     webSocket.onopen = () => {
       let event = JSON.stringify({
         DeviceCapabilities: {
@@ -471,7 +486,7 @@ const App = () => {
       webSocket.send(eventInit);
       // webSocket.send('Initialise')
     };
-    webSocket.onmessage = (event) => {
+    const handleFrame = (event) => {
       const evData = JSON.parse(event.data);
       const keys = Object.keys(evData);
 
@@ -542,14 +557,43 @@ const App = () => {
           );
         } else if (Method == "EvalJS") {
           // Here be dragons!
-          const results = Info.map((code) => {
-            try {
-              return [0, eval?.(code)];
-            } catch (e) {
-              return [-1, e.toString()];
+          //
+          // Injected code may resolve asynchronously - a plugin fetching its
+          // bundle, a script tag, a CDN import. Snippets run in sequence (a
+          // later one may depend on an earlier one) and the reply waits for all
+          // of them, so the APL caller blocks until the JS is actually live.
+          //
+          // Meanwhile the pump is paused: a WC for a class the injected code is
+          // about to register must not be handled before that registration
+          // exists. Pausing even the WX-immediate path is safe because APL is
+          // single-threaded per session and each browser has its own socket, so
+          // a second WX cannot be outstanding.
+          gate.paused = true;
+          (async () => {
+            const results = [];
+            for (const code of Info) {
+              try {
+                results.push([0, await eval?.(code)]);
+              } catch (e) {
+                results.push([-1, e.toString()]);
+              }
             }
-          });
-          return webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
+            try {
+              webSocket.send(JSON.stringify({ WX: { Info: results, WGID } }));
+            } catch (e) {
+              // A result APL cannot be told about still beats the 3s timeout
+              // and a VALUE ERROR on the caller.
+              webSocket.send(
+                JSON.stringify({
+                  WX: { Info: results.map(([rc]) => [rc, ""]), WGID },
+                })
+              );
+            } finally {
+              gate.paused = false;
+              drainGate();
+            }
+          })();
+          return;
         } else {
           // Default response for unknown methods
           return webSocket.send(JSON.stringify({ WX: { Info: [], WGID } }));
@@ -560,13 +604,29 @@ const App = () => {
         if (keys[0] == "WC") {
           let windowCreationEvent = evData.WC;
           if (windowCreationEvent?.Properties?.Type == "Form") {
-            localStorage.clear();
-            const updatedData = deleteFormAndSiblings(dataRef.current);
-            dataRef.current = {};
-            dataRef.current = updatedData;
-
+            // Creating a form used to DELETE every form already present. ⎕WC
+            // does no such thing: a second window opens over the first and the
+            // first is still there — applications open a subsidiary window,
+            // ⎕DQ it, ⎕EX it, and carry on with the original. Destroying the
+            // first meant that when the second closed there was no window left
+            // at all and the application became unreachable.
+            //
+            // Forms now accumulate; findFormParentID renders the most recent,
+            // and the EX handler below removes one when the application
+            // expunges it, which brings the previous form back by itself.
             handleData(evData.WC, "WC");
             return;
+          }
+
+          // A Locator is only live while the application is ⎕DQ-ing it, but the
+          // object persists afterwards (SELECT_STACK never expunges it), and a
+          // remount would otherwise arm a locator that nothing is waiting on —
+          // it then swallows the user's next click and, with handler 1, returns
+          // it out of the application's main ⎕DQ. Stamp each ⎕WC so the
+          // component can arm exactly once per creation.
+          if (windowCreationEvent?.Properties?.Type == "Locator") {
+            window.__ewcLocatorSeq = (window.__ewcLocatorSeq || 0) + 1;
+            windowCreationEvent.Properties.WCSeq = window.__ewcLocatorSeq;
           }
 
           // Handle Message Box separately
@@ -582,7 +642,9 @@ const App = () => {
             // without the server defaults. The server normally sends these at ⎕WC.
             Grid: { CurCell: [1, 1], InputMode: "Scroll", InputModeKey: [113, 0] },
           };
-          const dflts = defaultProperties[evData.WC?.Properties?.Type];
+          const wcType = evData.WC?.Properties?.Type;
+          const dflts =
+            defaultProperties[wcType] ?? pluginEntry(wcType)?.defaultProperties;
           if (dflts) {
             evData.WC.Properties = { ...dflts, ...evData.WC.Properties };
           }
@@ -1072,7 +1134,7 @@ const App = () => {
                     },
                   })
                 );
-              } else if (Type == "Scroll") {
+              } else if (Type == "Scroll" || Type == "Trackbar") {
                 const { Thumb = 1 } = Properties;
                 const supportedProperties = ["Thumb"];
 
@@ -1255,17 +1317,22 @@ const App = () => {
                   serverEvent?.Properties
                 );
 
-                if (!localStorage.getItem(serverEvent.ID)) {
-                  const serverPropertiesObj = {};
-                  serverEvent.Properties.map((key) => {
-                    return (serverPropertiesObj[key] =
-                      key == "State" ? (State ? State : 0) : Properties[key]);
-                  });
+                // A WG read of a Button returns its current State straight from
+                // the central tree (refData/dataRef above). handleData keeps
+                // Properties.State live on create (State 1) and on radio toggle,
+                // so the former localStorage "stored-event" branch sent the same
+                // value and is removed. Posn/Size are filled by updateAndStringify.
+                const serverPropertiesObj = {};
+                serverEvent.Properties.map((key) => {
+                  return (serverPropertiesObj[key] =
+                    key == "State" ? (State ? State : 0) : Properties[key]);
+                });
 
-                  delete serverPropertiesObj['Size'];
-                  delete serverPropertiesObj['Posn'];
+                delete serverPropertiesObj['Size'];
+                delete serverPropertiesObj['Posn'];
 
-                  const event = updateAndStringify({
+                return webSocket.send(
+                  updateAndStringify({
                     WG: {
                       ID: serverEvent.ID,
                       Properties: serverPropertiesObj,
@@ -1276,40 +1343,8 @@ const App = () => {
                         ? { NotSupported: result.NotSupported }
                         : null),
                     },
-                  });
-
-                  //                 console.log(event);
-                  return webSocket.send(event);
-                }
-
-                const { Event } = JSON.parse(localStorage.getItem(serverEvent.ID));
-                const { Value } = Event;
-
-                const serverPropertiesObj = {};
-
-                serverEvent.Properties.map((key) => {
-                  return (serverPropertiesObj[key] =
-                    key == "State" ? Value : Event[key]);
-                });
-
-                delete serverPropertiesObj['Size'];
-                delete serverPropertiesObj['Posn'];
-                const event = updateAndStringify({
-                  WG: {
-                    ID: serverEvent.ID,
-                    Properties: serverPropertiesObj,
-                    WGID: serverEvent.WGID,
-                    ...(result &&
-                      result.NotSupported &&
-                      result.NotSupported.length > 0
-                      ? { NotSupported: result.NotSupported }
-                      : null),
-                  },
-                });
-
-                //               console.log(event);
-
-                return webSocket.send(event);
+                  })
+                );
               } else if (Type == "TreeView") {
                 const supportedProperties = ["SelItems"];
                 const result = checkSupportedProperties(
@@ -1410,6 +1445,8 @@ const App = () => {
               } else if (Type === "Upload") {
                 // TODO size and posn
                 return Upload.WG(wsSend, serverEvent);
+              } else if (pluginEntry(Type)?.WG) {
+                return pluginEntry(Type).WG(wsSend, serverEvent, refData);
               } else {
                 const replyProps = {};
 
@@ -1700,6 +1737,20 @@ const App = () => {
         setTimeout(handleMessage, 1);
       });
     };
+
+    const drainGate = () => {
+      // shift() rather than draining a copy: a nested injection that re-pauses
+      // leaves the rest of the queue ahead of anything that arrived later.
+      while (!gate.paused && gate.queue.length) handleFrame(gate.queue.shift());
+    };
+
+    webSocket.onmessage = (event) => {
+      if (gate.paused) {
+        gate.queue.push(event);
+        return;
+      }
+      handleFrame(event);
+    };
   };
 
   const handleFocus = (element) => {
@@ -1729,6 +1780,44 @@ const App = () => {
   };
 
   const formParentID = findFormParentID(dataRef.current);
+
+  // Multi-form rendering is Browser/Multi mode ONLY. In Desktop mode every form
+  // is a real OS window, as before, so the in-page floating path stays off and
+  // `Primary` is simply inert. Gate on it, and fall back to the previous
+  // single-form render whenever there is no primary to float things over — a
+  // lone form, or several untagged forms (see findPrimaryFormID: no inference).
+  const isDesktopMode = dataRef?.current?.Mode?.Properties?.Desktop === 1;
+  const primaryFormID = isDesktopMode ? null : findPrimaryFormID(dataRef.current);
+  const floaterFormIDs = primaryFormID
+    ? findFormIDs(dataRef.current).filter((id) => id !== primaryFormID)
+    : [];
+
+  // Keyboard half of pseudo-modality. The shield blocks POINTER events to the
+  // forms beneath a floating window, but keyboard events go to the focused
+  // element, not through the shield — so a focused input in a frozen form would
+  // still take keystrokes. While a floater is up, swallow key events whose
+  // target is not the topmost floater (or a MsgBox raised over it), so only the
+  // active window — the top of the ⎕DQ stack — is live. This is the browser
+  // reimposing "only the top pump is live", which native gets for free.
+  //
+  // The listener attaches ONCE and reads a live ref, rather than attaching and
+  // detaching as the floater count changes: a transient re-render that briefly
+  // reports zero floaters would otherwise remove the listener for a tick, and a
+  // keystroke in that window would slip through.
+  const hasFloatersRef = useRef(false);
+  hasFloatersRef.current = floaterFormIDs.length > 0;
+  useEffect(() => {
+    const block = (e) => {
+      if (!hasFloatersRef.current) return;
+      if (!e.target.closest || !e.target.closest('[data-floattop], .msgbox-overlay')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    const types = ['keydown', 'keypress', 'keyup'];
+    types.forEach((t) => window.addEventListener(t, block, true));
+    return () => types.forEach((t) => window.removeEventListener(t, block, true));
+  }, []);
 
   const handleMsgBoxClose = (button, ID) => {
     // console.log(`Button pressed: ${button}`);
@@ -1761,9 +1850,30 @@ const App = () => {
           isDesktop: dataRef?.current?.Mode?.Properties?.Desktop
         }}
       >
-        {dataRef && formParentID && (
-          <SelectComponent data={dataRef.current[formParentID]} />
+        {/* Render the primary form (a tagged one) if there is a floater to
+            float over it; otherwise the most-recent form, exactly as before —
+            a single-form app sets no Primary and is untouched. */}
+        {dataRef && (primaryFormID || formParentID) && (
+          <SelectComponent data={dataRef.current[primaryFormID || formParentID]} />
         )}
+        {/* Non-primary forms float over the primary, newest on top. A
+            transparent shield under each keeps the forms beneath inert while a
+            window is up — visible but not clickable, as native ⎕DQ scoping
+            makes them. z stays under the MsgBox overlay (1000) so a dialog
+            raised from a floating window still lands on top. */}
+        {floaterFormIDs.flatMap((id, i) => [
+          <div
+            key={`shield-${id}`}
+            className="floatform-shield"
+            style={{ zIndex: 500 + 2 * i }}
+          />,
+          <FloatingForm
+            key={id}
+            data={dataRef.current[id]}
+            zIndex={500 + 2 * i + 1}
+            isTop={i === floaterFormIDs.length - 1}
+          />,
+        ])}
       </AppDataContext.Provider>
       {messageBoxData && (
         <MsgBox

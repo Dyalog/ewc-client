@@ -5,6 +5,7 @@ import {
   rgbColor,
   getImageStyles,
   parseFlexStyles,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -36,8 +37,20 @@ const Form = ({ data }) => {
     Flex = 0,
     Event,
     CSS,
-    FontObj
+    FontObj,
+    Caption,
   } = data?.Properties;
+
+  // A ⎕WC Form's Caption is its window title. In Desktop mode the
+  // HTMLRenderer window shows it; in a browser there is no window chrome, so
+  // it belongs in the tab. Applications keep state there — Arachnid's TITLE
+  // rewrites it on every deal ("APL Arachnid : Deal 2 of 5") — and without
+  // this the user never sees any of it.
+  useEffect(() => {
+    if (typeof Caption === 'string' && Caption.length) {
+      document.title = Caption;
+    }
+  }, [Caption]);
 
 //   console.log("Dtaa is as",data,Posn);
   
@@ -94,6 +107,21 @@ const Form = ({ data }) => {
 
   // useEffect to check the size is present otherwise Viewport half height and width
 
+  // ⎕WC's Size is the CLIENT area. On Win32 the menu bar lives in the window's
+  // non-client area, above it, so a Form of Size 300 600 gives 300 pixels of
+  // usable height whether or not it has menus. EWC draws the menu bar inside
+  // the form, so without this the content area is Size minus the menu — the
+  // application's own layout arithmetic then overflows, and children positioned
+  // against the bottom of the form fall off it.
+  //
+  // Arachnid makes this visible: SET_TABLE sizes its ten Static panels to the
+  // full form height, so they hung 25px past the bottom edge onto the page
+  // background.
+  const MENUBAR_HEIGHT = 25;
+  const hasMenuBar = Object.keys(updatedData).some(
+    (key) => updatedData[key]?.Properties?.Type === "MenuBar"
+  );
+
   useEffect(() => {
     const hasSize = data?.Properties?.hasOwnProperty("Size");
 
@@ -123,7 +151,7 @@ const Form = ({ data }) => {
         {
           ...data?.Properties,
           ...(hasSize
-            ? { Size }
+            ? { Size: [Size[0] + (hasMenuBar ? MENUBAR_HEIGHT : 0), Size[1]] }
             : { Size: [halfViewportHeight, halfViewportWidth] }),
         },
         "relative",
@@ -131,7 +159,7 @@ const Form = ({ data }) => {
         "Form"
       )
     );
-  }, [data]);
+  }, [data, hasMenuBar]);
 
   useEffect(() => {
     sendConfigureEvent();
@@ -143,6 +171,7 @@ const Form = ({ data }) => {
 
   return (
     <div
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}
@@ -187,11 +216,8 @@ const Form = ({ data }) => {
       }}
     >
       {(() => {
-        const hasMenuBar = Object.keys(updatedData).some(
-          key => updatedData[key]?.Properties?.Type === 'MenuBar'
-        );
         // TODO: This needs to be determined by menubar styling and font size, etc
-        const menuBarOffset = hasMenuBar ? 25 : 0;
+        const menuBarOffset = hasMenuBar ? MENUBAR_HEIGHT : 0;
         
         return (
           <>

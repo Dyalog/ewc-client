@@ -4,6 +4,7 @@ import {
   calculateDateAfterDays,
   calculateDaysFromDate,
   rgbColor,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -843,7 +844,8 @@ const Edit = ({
             handleBlur();
           }}
           onKeyDown={(e) => handleKeyPress(e)}
-          onMouseDown={(e) => {
+          onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
             handleMouseDown(e, socket, Event,data?.ID);
           }}
           onMouseUp={(e) => {
@@ -922,7 +924,8 @@ const Edit = ({
           onFocus={handleGotFocus}
           onBlur={handleBlur}
           onKeyDown={(e) => handleKeyPress(e)}
-          onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
+          onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => handleMouseDown(e, socket, Event, data?.ID)}
           onMouseUp={(e) => handleMouseUp(e, socket, Event, data?.ID)}
           onMouseEnter={(e) => handleMouseEnter(e, socket, Event, data?.ID)}
           onMouseMove={(e) => handleMouseMove(e, socket, Event, data?.ID)}
@@ -974,7 +977,8 @@ const Edit = ({
         onBlur={handleBlur}
         onKeyDown={(e) => handleKeyPress(e)}
         onFocus={handleGotFocus}
-        onMouseDown={(e) => {
+        onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
           handleMouseDown(e, socket, Event,data?.ID);
         }}
         onMouseUp={(e) => {
@@ -1040,6 +1044,7 @@ const Edit = ({
       }}
       maxLength={MaxLength}
       onFocus={handleGotFocus}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event,data?.ID);
       }}

@@ -16,6 +16,13 @@ const MenuBar = ({ data }) => {
     <div
       style={{
         display: Visible == 0 ? 'none' : 'flex',
+        alignItems: 'center',
+        // ⎕WC draws the menu bar on the system control colour, not on the
+        // form. Without this the bar is transparent and unreadable over a
+        // coloured form — Arachnid's table is dark green.
+        background: '#F0F0F0',
+        color: '#000',
+        width: '100%',
         ...style,
         ...customStyles,
         ...fontStyles,

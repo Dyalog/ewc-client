@@ -24,9 +24,9 @@ export interface InjectedPage {
   dispose: () => Promise<void>;
 }
 
-// Open a new page that captures the first WebSocket the app opens, navigate it
-// to `?Demo=<demoName>`, and wait for the indicator selector. Returns a `send`
-// that pushes server frames at the captured socket.
+// Open a new page that captures the WebSockets it opens, navigate it to
+// `?Demo=<demoName>`, and wait for the indicator selector. Returns a `send`
+// that pushes server frames at the app's socket.
 export async function openInjectablePage(
   browser: Browser,
   demoName: string,
@@ -43,15 +43,16 @@ export async function openInjectablePage(
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  // Wrap WebSocket before app scripts run so we grab the app's first socket.
+  // Wrap WebSocket before app scripts run, and keep every socket: under Vite
+  // the first is its HMR channel, which has no `onmessage`. `send` picks the
+  // app's socket by handler rather than by open order.
   await page.addInitScript(() => {
     const Native = window.WebSocket;
-    (window as unknown as { __EWC_WS__: WebSocket | null }).__EWC_WS__ = null;
+    (window as unknown as { __EWC_WS__: WebSocket[] }).__EWC_WS__ = [];
     // @ts-expect-error — replacing the global constructor on purpose.
     window.WebSocket = function (...args: ConstructorParameters<typeof WebSocket>) {
       const ws = new Native(...args);
-      const w = window as unknown as { __EWC_WS__: WebSocket | null };
-      if (!w.__EWC_WS__) w.__EWC_WS__ = ws;
+      (window as unknown as { __EWC_WS__: WebSocket[] }).__EWC_WS__.push(ws);
       return ws;
     };
     window.WebSocket.prototype = Native.prototype;
@@ -69,8 +70,9 @@ export async function openInjectablePage(
 
   const send = (frame: unknown) =>
     page.evaluate((f) => {
-      const ws = (window as unknown as { __EWC_WS__: WebSocket | null }).__EWC_WS__;
-      if (!ws || !ws.onmessage) throw new Error('no live websocket captured');
+      const sockets = (window as unknown as { __EWC_WS__: WebSocket[] }).__EWC_WS__ || [];
+      const ws = sockets.find((s) => typeof s.onmessage === 'function');
+      if (!ws) throw new Error('no live websocket captured');
       // Synthesize the server→client message through the live handler.
       (ws.onmessage as (ev: { data: string }) => void)({ data: JSON.stringify(f) });
     }, frame);

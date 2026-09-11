@@ -3,6 +3,7 @@ import {
   setStyle,
   getFontStyles,
   createListViewObjects,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   handleMouseEnter,
@@ -113,7 +114,8 @@ const ListView = ({ data }) => {
           ...fontStyles,
           ...attachStyle,
         }}
-        onMouseDown={(e) => {
+        onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
           handleMouseDown(e, socket, Event, data?.ID);
         }}
         onMouseUp={(e) => {
@@ -244,7 +246,8 @@ const ListView = ({ data }) => {
                   fontSize: "12px",
                   paddingLeft: "5px",
                 }}
-                onMouseDown={(e) => {
+                onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                   handleMouseDown(e, socket, Event, data?.ID);
                 }}
                 onMouseUp={(e) => {
@@ -288,7 +291,8 @@ const ListView = ({ data }) => {
                   onDoubleClick={(e) =>
                     handleEvent(e.nativeEvent, index, "ItemDblClick")
                   }
-                  onMouseDown={(e) => {
+                  onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                     handleMouseDown(e, socket, Event, data?.ID);
                   }}
                   onMouseUp={(e) => {
@@ -325,7 +329,8 @@ const ListView = ({ data }) => {
                   onDoubleClick={(e) =>
                     handleEvent(e.nativeEvent, index, "ItemDblClick")
                   }
-                  onMouseDown={(e) => {
+                  onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                     handleMouseDown(e, socket, Event, data?.ID);
                   }}
                   onMouseUp={(e) => {
@@ -363,7 +368,8 @@ const ListView = ({ data }) => {
                   onDoubleClick={(e) =>
                     handleEvent(e.nativeEvent, index, "ItemDblClick")
                   }
-                  onMouseDown={(e) => {
+                  onContextMenu={(e) => handleContextMenu(e, Event)}
+      onMouseDown={(e) => {
                     handleMouseDown(e, socket, Event, data?.ID);
                   }}
                   onMouseUp={(e) => {

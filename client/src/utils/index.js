@@ -18,6 +18,23 @@ const buttonCode = {
   2: 2, // Right click
 };
 
+// The browser raises its own context menu on right-button RELEASE. Native ⎕WC
+// has no such thing: button 2 arrives as MouseDown/MouseUp with the button in
+// the message and nothing else happens. So on an object whose application has
+// REGISTERED those events, the menu lands on top of whatever the right button
+// was doing — a right-drag ends with the browser menu over the result.
+//
+// Gated on registration, exactly like handleMouseDown itself. An object the
+// application has not claimed the button on keeps the browser's menu, because
+// that is the platform's behaviour and EWC has no business overriding it
+// globally. Wire it up beside onMouseDown; leaving it off simply means the
+// menu still appears there.
+export const handleContextMenu = (e, Event) => {
+  const claimed = Event && Event.some((item) =>
+    ["mousedown", "mouseup", "mousedbl"].includes(item[0]?.toLowerCase()));
+  if (claimed) e.preventDefault();
+};
+
 export const handleMouseDown = (e, socket, Event, ID) => {
   const shiftState = (e.shiftKey ? 1 : 0) + (e.ctrlKey ? 2 : 0); // Shift + Ctrl state
   const rect = e.currentTarget.getBoundingClientRect();
@@ -33,7 +50,7 @@ export const handleMouseDown = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseDown");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousedown");
   if (!exists) return;
 //   console.log(mousedownEvent);
   socket.send(mousedownEvent);
@@ -54,7 +71,7 @@ export const handleMouseUp = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseUp");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mouseup");
   if (!exists) return;
 //   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
@@ -75,7 +92,7 @@ export const handleMouseDoubleClick = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseDblClick");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousedblclick");
   if (!exists) return;
 //   console.log(mouseUpEvent);
   socket.send(mouseUpEvent);
@@ -92,7 +109,7 @@ export const handleMouseEnter = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseEnter");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mouseenter");
   if (!exists) return;
 //   console.log("mouseEnter", mouseEnterEvent);
   socket.send(mouseEnterEvent);
@@ -109,7 +126,7 @@ export const handleMouseLeave = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseLeave");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mouseleave");
   if (!exists) return;
 //   console.log(mouseLeaveEvent);
   socket.send(mouseLeaveEvent);
@@ -131,7 +148,7 @@ export const handleMouseMove = (e, socket, Event, ID) => {
   });
 
   // console.log("mouseMove1", mouseMoveEvent);
-  const exists = Event && Event.some((item) => item[0] === "MouseMove");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousemove");
   if (!exists) return;
   // console.log(mouseMoveEvent);
   // console.log("mouseMove2", mouseMoveEvent);
@@ -156,7 +173,7 @@ export const handleMouseWheel = (e, socket, Event, ID) => {
     },
   });
 
-  const exists = Event && Event.some((item) => item[0] === "MouseWheel");
+  const exists = Event && Event.some((item) => item[0]?.toLowerCase() === "mousewheel");
   if (!exists) return;
 //   console.log(mouseWheelEvent);
   socket.send(mouseWheelEvent);
@@ -611,13 +628,43 @@ export const getElementPosition = (
 };
 
 export const findFormParentID = (data) => {
-  // Replace the condition inside the find function with your specific criteria⌈
-  const formParentID = Object.keys(data).find((key) => {
+  // The MOST RECENT form, not the first. ⎕WC applications open a subsidiary
+  // window over the main one and expect it on top; when it is expunged the
+  // previous form should reappear, which falls out of this for free because the
+  // expunged form is gone from the data by then.
+  //
+  // Object key order is insertion order for string keys, so the last matching
+  // key is the most recently created form.
+  const formIDs = Object.keys(data).filter((key) => {
     const item = data[key];
     return item && item.Properties && item.Properties.Type === "Form";
   });
 
-  return formParentID;
+  return formIDs[formIDs.length - 1];
+};
+
+// Every top-level Form, in creation (insertion) order.
+export const findFormIDs = (data) =>
+  Object.keys(data || {}).filter(
+    (key) => data[key] && data[key].Properties && data[key].Properties.Type === "Form"
+  );
+
+// The form the others float over, or null if there is none.
+//
+// The whole rule: a form tagged ('Primary' 1) is the base; otherwise there is
+// no primary and the caller renders the single most-recent form exactly as it
+// always did. `Primary` is an EWC-only, opt-in property and is NEVER demanded —
+// a lone-form application sets nothing and renders unchanged, which is the
+// common case and the point. There is deliberately no inference for several
+// untagged forms: creation order breaks the moment an app replaces its main
+// window or opens a login first, so nothing new happens until an application
+// says which form is the base by tagging it. Light and breezy on purpose.
+export const findPrimaryFormID = (data) => {
+  const isPrimary = (p) => p === 1 || p === "1" || p === true;
+  return (
+    findFormIDs(data).find((key) => isPrimary(data[key]?.Properties?.Primary)) ??
+    null
+  );
 };
 
 export const createListViewObjects = (

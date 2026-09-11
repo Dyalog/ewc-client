@@ -5,6 +5,7 @@ import {
   handleMouseMove,
   handleMouseLeave,
   handleMouseEnter,
+  handleContextMenu,
   handleMouseDown,
   handleMouseUp,
   parseFlexStyles,
@@ -394,6 +395,7 @@ const Button = ({
   return (
     <div
       id={data?.ID}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         handleMouseDown(e, socket, Event, data?.ID);
       }}

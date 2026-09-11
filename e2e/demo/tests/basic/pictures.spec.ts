@@ -62,7 +62,9 @@ test.describe('DemoPictures', () => {
 
   test('displays flag images', async () => {
     const flags = page.locator('#F1\\.FLAGS');
-    await expect(flags).toBeVisible();
+    await expect(flags).toBeAttached();
+    await expect(page.locator('#F1\\.FLAGS-i1')).toBeVisible();
+    await expect(page.locator('#F1\\.FLAGS-i2')).toBeVisible();
   });
 
   test('visual regression - pictures demo', async () => {

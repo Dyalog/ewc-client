@@ -1,4 +1,5 @@
-import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
+import { setStyle, getFontStyles, extractStringUntilLastPeriod, handleContextMenu,
+  handleMouseDown, handleMouseUp, handleMouseEnter, handleMouseMove, handleMouseLeave, parseFlexStyles, handleMouseWheel, handleMouseDoubleClick, handleKeyPressUtils } from '../utils';
 
 import { createPortal } from 'react-dom';
 import { useAppData, useResizeObserver, useAttachStyle } from '../hooks';
@@ -473,6 +474,7 @@ const Combo = ({ data, value }) => {
         }),
         ...attachStyle,
       }}
+      onContextMenu={(e) => handleContextMenu(e, Event)}
       onMouseDown={(e) => {
         // In Grid, let the mousedown bubble to the grid cell so it can move
         // CurCell + fire CellMove; standalone, keep it contained as before.
