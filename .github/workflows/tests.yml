@@ -242,37 +242,11 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: |
-      needs.check.outputs.skip != 'true' &&
-      github.actor != 'github-actions[bot]'
+    # Same gate as the e2e job above.
+    if: needs.check.outputs.skip != 'true'
     steps:
-      - name: Checkout ewc-client
+      - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Checkout Dyalog/ewc
-        id: ewc
-        uses: ./.github/actions/checkout-ewc-server
-        with:
-          ref: ${{ inputs.ewc_server_ref || '' }}
-          branch: ${{ github.head_ref || github.ref_name }}
-          pr-body: ${{ github.event.pull_request.body || '' }}
-
-      - name: Check the resolved ewc ref carries the Multi test app
-        # The app is test-apps/multitest in Dyalog/ewc, so a ref predating it
-        # fails inside APL on multitest.Run — a VALUE ERROR buried in the
-        # container log, 2 minutes after wait-on gives up. Say so up front.
-        # Ref via env, not inline: same precaution as checkout-ewc-server.
-        env:
-          EWC_REF: ${{ steps.ewc.outputs.ref }}
-        run: |
-          if [ ! -d ewc-server/test-apps/multitest ]; then
-            echo "::error::Dyalog/ewc@${EWC_REF} has no test-apps/multitest."
-            echo "The Multi-mode test app lives in Dyalog/ewc. Point this job"
-            echo "at a ref that has it with an 'EWC-REF: <branch>' line in the"
-            echo "PR body, or land the app on that branch first."
-            exit 1
-          fi
-          echo "Multi test app present in Dyalog/ewc@${EWC_REF}"
 
       - uses: actions/setup-node@v6
         with:
@@ -302,7 +276,7 @@ jobs:
         timeout-minutes: 6
         run: npx playwright install chromium
 
-      - name: Build ewc-client
+      - name: Build the client
         run: yarn build
 
       - name: Start Dyalog EWC server in Multi mode (Docker)
@@ -310,15 +284,12 @@ jobs:
           # SETUP_APL swaps ci/setup-ewc.apl (Browser, :22322) for
           # ci/setup-ewc-multi.apl (Multi, :22323) — see ci/run-server.sh.
           #
-          # The test app comes from Dyalog/ewc (test-apps/multitest), so it
-          # arrives inside the ewc-server mount and tracks whichever ref
-          # checkout-ewc-server resolved.
+          # One mount: the server, test-apps/multitest and the freshly built
+          # client/dist are all under the same root now.
           docker run -d --name ewc-multi --network host \
-            -e SETUP_APL=/scripts/setup-ewc-multi.apl \
-            --entrypoint /scripts/run-server.sh \
-            -v "${{ github.workspace }}/ewc-server:/work/ewc:ro" \
-            -v "${{ github.workspace }}/dist:/work/ewc-client/dist:ro" \
-            -v "${{ github.workspace }}/ci:/scripts:ro" \
+            -e SETUP_APL=/work/ewc/ci/setup-ewc-multi.apl \
+            --entrypoint /work/ewc/ci/run-server.sh \
+            -v "${{ github.workspace }}:/work/ewc:ro" \
             dyalog/dyalog:latest
 
       - name: Diagnostics — what's running before wait-on
