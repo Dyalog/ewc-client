@@ -1,0 +1,28 @@
+ r←caller sessionNS names;name;top;n;p
+⍝ The per-session _EWC namespace for an object name, or ⎕NULL if there is none.
+⍝
+⍝ Desktop gives each Form's HTMLRenderer its own copy; Multi clones the whole
+⍝ application namespace per connection; otherwise there is a single one, in
+⍝ CODELOCATION. getConnection reads (ID conn) out of whatever this returns.
+ name←,⊃⊆names
+ n←≢p←(⍕caller),'.'
+ name←(n×p≡n↑name)↓name ⍝ drop caller prefix
+ top←(¯1+name⍳'.')↑name
+
+ :If 9=caller.⎕NC n←top,'.HR._EWC'
+     r←caller⍎n
+
+ :ElseIf MODE=2 ⍝ Multi
+     :If 9=caller.⎕NC'_EWC'
+         r←caller._EWC
+     :Else
+         r←⎕NULL
+     :EndIf
+
+ :Else
+     :Trap 0
+         r←CODELOCATION._EWC
+     :Else
+         r←⎕NULL
+     :EndTrap
+ :EndIf

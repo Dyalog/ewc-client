@@ -1,0 +1,53 @@
+ larg CBInput args;obj;event;data;tests;types;wg;text;value;i
+ (tests types)←larg
+ (obj event)←2↑args
+ wg←{0::'***FAILED***' ⋄ ⍺ eWG ⍵}
+
+ :If event≡'KeyPress'
+     eNQ 1001@2⊢args
+ :EndIf
+
+ :If 'B'∊obj ⍝ One of the "Set" buttons
+     i←⍎4↓obj
+     obj←'C'@4⊢obj ⍝ Switch from button to control
+     :Select i⊃types
+     :Case 'Edit'
+         :Select obj eWG 'FieldType'
+         :Case 'Numeric'
+             obj eWS 'Value' 3.1415
+         :Case 'Date'
+             obj eWS 'Value' (⌊1 ⎕DT 'J')
+         :Else
+             obj eWS 'Value' 'Value Set'
+         :EndSelect
+
+     :Case 'Combo'
+         obj eWS 'SelItems' (1 0 0)
+     :Case 'Button'
+         obj eWS 'State' 1
+     :EndSelect
+ :EndIf
+
+ data←((≢types)3)⍴⊂''
+ :If 0≠≢args
+    data[⍎4↓obj;3]←⊂'<--'
+ :EndIf
+ :For i :In ⍳≢tests
+     ctl←'F1.C',⍕i
+     :Select i⊃types
+     :Case 'Edit'
+         text←ctl wg 'Text'
+         value←ctl wg 'Value'
+     :Case 'Combo'
+         text←ctl wg 'Text'
+         :If 11=⎕DR value←ctl wg 'SelItems'
+             value←⍸value
+         :EndIf
+     :Case 'Button'
+         value←ctl wg 'State'
+         text←''
+     :EndSelect
+     data[i;1 2]←value text
+ :EndFor
+
+ 'F1.GRID' eWS 'Values' data

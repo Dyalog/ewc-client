@@ -1,0 +1,9 @@
+r←Version
+r←⎕NS ''
+r.Server←'0.5.0'
+r.Client←'Unknown'
+:If 2=⎕NC 'CLIENTVERSION'
+    r.Client←CLIENTVERSION
+:EndIf
+
+r.(⎕DF 'EWC Server: ',Server,', Client: ',Client)

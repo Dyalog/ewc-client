@@ -1,0 +1,33 @@
+ DemoBounce connected;F;i
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Bounce benchmark: N bouncing circles from ONE vectorized Rect, with live
+⍝ FPS and tick round-trip stats measured server-side via ⎕AI[3] deltas.
+⍝ Fully deterministic (no randomness): positions and velocities come from
+⍝ arithmetic formulas so the idle frame and +10/-10 results are reproducible.
+
+ BN_PAL←(220 60 60)(60 160 220)(60 190 90)(240 180 40)(170 90 220)(240 120 40)(80 200 200)(230 100 160)
+ BN_N←20
+ i←⍳BN_N
+ BN_Y←346|17×i ⋄ BN_X←386|23×i          ⍝ must match mk in CBBounce
+ BN_VY←2+4|i ⋄ BN_VX←3-6|i
+ BN_DT←⍬ ⋄ BN_T←0 ⋄ BN_TICKS←0          ⍝ rolling tick-delta stats
+
+ F←'F1'
+ F eWC'Form' 'Bounce Benchmark'(50 50)(455 420)('Coord' 'Pixel')('BCol'(230 230 230))
+ (F,'.CNT')eWC'Label' 'Balls: 20'(12 12)(22 85)('CSS' 'font-size:14px;font-weight:bold')
+ (F,'.FPS')eWC'Label' 'FPS: —'(12 100)(22 85)('CSS' 'font-size:14px')
+ (F,'.LAT')eWC'Label' 'Avg: — ms'(12 190)(22 100)('CSS' 'font-size:14px')
+
+ (F,'.PF')eWC'SubForm'('Posn'(45 10))('Size'(360 400))('BCol'(25 35 60))
+
+⍝ Equal 14px balls: Radius 7 turns every rect into a circle (Radius[0] applies to all)
+ (F,'.PF.BALLS')eWC'Rect'('Points'(BN_Y BN_X))('Size'((BN_N⍴14)(BN_N⍴14)))('Radius' 7)('FillCol'(BN_N⍴BN_PAL))('FStyle'(BN_N⍴0))
+
+ (F,'.RUN')eWC'Button' 'Run'(415 10)(24 60)('Style' 'Check')('Event' 'Select' 'CBBounce')
+ (F,'.ADD')eWC'Button' '+10'(415 85)(24 55)('Event' 'Select' 'CBBounce')
+ (F,'.SUB')eWC'Button' '-10'(415 150)(24 55)('Event' 'Select' 'CBBounce')
+ (F,'.RESET')eWC'Button' 'Reset'(415 215)(24 60)('Event' 'Select' 'CBBounce')
+
+ (F,'.TICK')eWC'Timer' 60 ('Active' 0)('Event' 'Timer' 'CBBounce')('FireOnce' 0)

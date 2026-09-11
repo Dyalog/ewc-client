@@ -1,2 +1,7 @@
-# Mark dist folder as generated code to collapse in GitHub PR diffs
-dist/** linguist-generated
+# APL sources are LF-only and should be reported as APL by linguist.
+# Deliberately scoped to APL paths rather than `* text=auto eol=lf`: the
+# JavaScript side has files committed with CRLF, and a repo-wide rule would
+# renormalise them into a large unrelated diff.
+*.apl      text eol=lf
+*.apl?     text eol=lf linguist-language=APL
+*.dyalog   text eol=lf linguist-language=APL

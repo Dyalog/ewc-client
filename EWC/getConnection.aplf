@@ -1,0 +1,14 @@
+ r←getConnection(caller names);ns
+ ns←caller sessionNS names
+
+ :If ⎕NULL≢ns
+     :Trap 0
+         r←ns.(ID conn)
+     :Else
+         r←0 ¯1 ⍝ no connection: ¯1 is an invalid conn (0 is a VALID Conga connection)
+     :EndTrap
+ :ElseIf MODE=2 ⍝ Multi
+     ∘∘∘ ⍝ Unable to locate app session
+ :Else
+     r←0 ¯1
+ :EndIf

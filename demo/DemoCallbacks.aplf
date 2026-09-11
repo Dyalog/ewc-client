@@ -1,0 +1,23 @@
+ DemoCallbacks connected;F;⎕TRAP;z
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+ ⎕TRAP←666 'C' '⎕←''Trapped: '' (↑⎕DMX.DM) ⋄ →DQ'
+
+ F←'F1'
+ F eWC'Form' 'Test Callbacks & Traps'(50 50)(250 300)('Coord' 'Pixel')('SysMenu' 0)
+
+ (F,'.FRUIT')eWC'Group' 'Pick a Fruit'('Posn'(10 10))('Size'(80 280))
+ (F,'.FRUIT.C1')eWC'Button' 'Monadic'(13 10)(23 100)('Style' 'Radio')('Event' 'Select' 'CBTestMonadic')
+ (F,'.FRUIT.C2')eWC'Button' 'Niladic'(33 10)(23 100)('Style' 'Radio')('Event' 'Select' 'CBTestNiladic')
+ (F,'.FRUIT.C3')eWC'Button' 'Dyadic'(53 10)(23 100)('Style' 'Radio')('Event' 'Select' 'CBTestDyadic' 'Left')
+
+ (F,'.C4')eWC'Button' 'Exec CBTestNiladic'(100 10)(23 300)('Style' 'Radio')('Event' 'Select' '⍎CBTestNiladic')('Align' 'Right')
+ (F,'.C5')eWC'Button' 'TestMonadic async'(125 10)(23 300)('Style' 'Radio')('Event' 'Select' 'CBTestMonadic&')('Align' 'Left')
+
+ (F,'.STATUS')eWC'Label' 'Click on something!'(175 10)(23 300)
+
+ (F,'.END')eWC'Button' 'END'(205 10)(23 100)('Event' 'Select' 1)
+
+DQ:
+ z←eDQ F
+ ⎕←'eDQ F terminated: ',z

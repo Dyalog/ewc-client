@@ -1,0 +1,39 @@
+ DemoLife connected;F;idx;n
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Conway's Game of Life: the classic APL idiom driving a single vectorized
+⍝ Rect — every generation is one eWS push of the alive cells' Points+Size.
+⍝ Click a cell to toggle it; the Scroll slider maps to the Timer Interval.
+
+⍝ Board: 30 rows x 40 cols, 10px cells. Deterministic start pattern
+⍝ (glider + blinker + toad) so the idle frame is stable for visual tests.
+ LIFE_B←30 40⍴0
+ LIFE_B[(2 3)(3 4)(4 2)(4 3)(4 4)]←1                     ⍝ glider
+ LIFE_B[(10 15)(10 16)(10 17)]←1                         ⍝ blinker
+ LIFE_B[(20 26)(20 27)(20 28)(21 25)(21 26)(21 27)]←1    ⍝ toad
+ LIFE_G←0                                                ⍝ generation counter
+
+ F←'F1'
+ F eWC'Form' 'Game of Life'(50 50)(440 420)('Coord' 'Pixel')('BCol'(230 230 230))
+ (F,'.GEN')eWC'Label' 'Gen: 0'(12 12)(22 100)('CSS' 'font-size:15px;font-weight:bold')
+ (F,'.POP')eWC'Label' 'Pop: 14'(12 120)(22 100)('CSS' 'font-size:15px')
+
+⍝ Playfield owns the toggle-cell MouseDown; coords arrive playfield-relative
+ (F,'.PF')eWC'SubForm'('Posn'(45 10))('Size'(300 400))('BCol'(255 255 255))('Event' 'MouseDown' 'CBLife')
+
+⍝ All alive cells are ONE Rect; no colors set → SVG default black fill+stroke
+ idx←⍸LIFE_B
+ n←≢idx
+ (F,'.PF.CELLS')eWC'Rect'('Points'((10×¯1+⊃¨idx)(10×¯1+2⊃¨idx)))('Size'((n⍴10)(n⍴10)))('FStyle'(n⍴0))
+
+ (F,'.RUN')eWC'Button' 'Run'(355 10)(24 60)('Style' 'Check')('Event' 'Select' 'CBLife')
+ (F,'.STEP')eWC'Button' 'Step'(355 85)(24 60)('Event' 'Select' 'CBLife')
+ (F,'.CLEAR')eWC'Button' 'Clear'(355 150)(24 60)('Event' 'Select' 'CBLife')
+ (F,'.RANDOM')eWC'Button' 'Random'(355 215)(24 70)('Event' 'Select' 'CBLife')
+
+⍝ Speed slider: Thumb 1..15 → Interval 50×(16-value) ms, so right = faster
+ (F,'.SPDLBL')eWC'Label' 'Speed'(390 10)(20 45)
+ (F,'.SPEED')eWC'Scroll'('Posn'(388 60))('Size'(20 200))('HScroll' ¯1)('Range' 15)('Thumb' 13)('Event' 'Scroll' 'CBLife')
+
+ (F,'.TICK')eWC'Timer' 150 ('Active' 0)('Event' 'Timer' 'CBLife')('FireOnce' 0)

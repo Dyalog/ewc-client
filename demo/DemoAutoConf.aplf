@@ -1,0 +1,52 @@
+ DemoAutoConf connected;mkbox;COORD;LF
+⍝ Two Splitter layout (horizontal and vertical), 
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+ COORD←'Pixel'
+ LF←⎕UCS 10
+
+ mkbox←{
+     (nm cap P S C A ac)←⍵
+     _←nm eWC'SubForm'('Posn' P)('Size' S)('BCol' C)('EdgeStyle' 'Border')('Attach' A)('AutoConf' ac)
+     _←(nm,'.CAP')eWC'Label' cap(3 4)((¯6+1⊃S),(¯8+2⊃S))
+     0
+ }
+
+ 'F1'eWC'Form' 'AutoConf and Attach'(0 0)(800 800)('Coord' COORD)
+
+⍝ === CENTER test pane. Two splitters => the test pane resizes in both axes. ===
+ 'F1.LEFT'eWC'SubForm'('Posn'(0 0))('Size'(800 240))('BCol'(245 245 245))
+ 'F1.RIGHT'eWC'SubForm'('Posn'(0 243))('Size'(800 557))('BCol'(250 250 250))
+ 'F1.SPLIT'eWC'Splitter' 'F1.LEFT' 'F1.RIGHT'('Posn'(0 240))
+
+ 'F1.RIGHT.TOP'eWC'SubForm'('Posn'(0 0))('Size'(100 557))('BCol'(235 240 245))
+ 'F1.RIGHT.BOT'eWC'SubForm'('Posn'(103 0))('Size'(697 557))('BCol'(255 255 255))
+ 'F1.RIGHT.SPLIT'eWC'Splitter'('SplitObj1' 'F1.RIGHT.TOP')('SplitObj2' 'F1.RIGHT.BOT')('Style' 'Horz')('Posn'(100 0))
+
+⍝ Hints in the top strip so it's clear which splitter does what.
+ 'F1.RIGHT.TOP.H1'eWC'Label' ('↔  Vertical splitter (left) — drag to resize the test pane WIDTH')(14 12)(18 530)
+ 'F1.RIGHT.TOP.H2'eWC'Label' ('↕  Horizontal splitter (above) — drag to resize the test pane HEIGHT')(40 12)(18 530)
+
+⍝ === CENTER test pane ===
+⍝ All default AutoConf 3, so only Attach differs. Resize the pane in either axis.
+ mkbox 'F1.RIGHT.BOT.TB'('Toolbar',LF,'Top Left Top Right')(6 6)(34 545)(200 220 255)('Top' 'Left' 'Top' 'Right')3
+ mkbox 'F1.RIGHT.BOT.LB'('Left side',LF,'Top Left Bottom Left')(46 6)(605 110)(255 245 200)('Top' 'Left' 'Bottom' 'Left')3
+ mkbox 'F1.RIGHT.BOT.CF'('Center fill',LF,'Top Left Bottom Right')(46 122)(605 313)(225 210 255)('Top' 'Left' 'Bottom' 'Right')3
+ mkbox 'F1.RIGHT.BOT.RB'('Right side',LF,'Top Right Bottom Right')(46 441)(605 110)(255 220 190)('Top' 'Right' 'Bottom' 'Right')3
+ mkbox 'F1.RIGHT.BOT.SB'('Status bar',LF,'Bottom Left Bottom Right')(657 6)(34 545)(200 255 200)('Bottom' 'Left' 'Bottom' 'Right')3
+
+⍝ === LEFT strip ===
+⍝ This strip resizes horizontally (via the vertical splitter F1.SPLIT).
+ 'F1.LEFT.TITLE'eWC'Label' 'AutoConf + Attach'(8 10)(20 220)
+ 'F1.LEFT.I1'eWC'Label' ('Drag either splitter to',LF,'resize the test pane →')(30 10)(32 225)
+
+ mkbox 'F1.LEFT.PIN'('Pinned',LF,'Top Left Top Left')(70 10)(52 200)(255 210 225)('Top' 'Left' 'Top' 'Left')3
+ mkbox 'F1.LEFT.PROP'('Proportional',LF,'None x4 (scales)')(130 10)(60 220)(200 245 245)('None' 'None' 'None' 'None')3
+
+ 'F1.LEFT.ACLBL'eWC'Label' 'Same Attach, different AutoConf:'(200 10)(30 225)
+ mkbox 'F1.LEFT.AC3'('AutoConf 3',LF,'accepts → stretches')(235 10)(50 220)(200 245 200)('Top' 'Left' 'Top' 'Right')3
+ mkbox 'F1.LEFT.AC0'('AutoConf 0',LF,'ignores → frozen')(295 10)(50 220)(255 205 205)('Top' 'Left' 'Top' 'Right')0
+
+ :If ~connected
+     ⎕EX 'F1.HR'
+ :EndIf

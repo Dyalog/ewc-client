@@ -1,0 +1,3 @@
+enQueue (event code);timer
+'N' Log 'NQ of of ',(⎕JSON event),' to ',⍕timer←code._EWC⍎'⍎TIMERACTIVE'
+⎕NQ timer 1001 event

@@ -1,0 +1,24 @@
+(
+  'Link'
+  ''         ⍝ Href
+  ⍬          ⍝ Label
+  '_blank'   ⍝ Target
+  0          ⍝ Download
+  0 0        ⍝ Posn
+  ⍬          ⍝ Size
+  1          ⍝ Visible
+  ''         ⍝ FontObj
+  ''         ⍝ CSS
+  'None'     ⍝ Event
+  ('Select') ⍝ EventList 
+  (          ⍝ PropList
+   'Type'
+   'Href'
+   'Label'
+   'Target'
+   'Download'
+   'Event'
+   'EventList'
+   'PropList'
+  )
+)

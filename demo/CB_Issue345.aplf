@@ -1,0 +1,9 @@
+CB_Issue345 ctl
+
+⎕←ctl
+:Select 1⊃ctl
+:Case 'F1.combo'
+    eNQ 'F1.ok' 'Select'
+:Case 'F1.ok'
+    ⎕←' User selected: ','F1.combo' eWG 'Text'
+:EndSelect

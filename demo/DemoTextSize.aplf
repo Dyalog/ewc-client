@@ -1,0 +1,27 @@
+ DemoTextSize connected;BY;BX;RY;RX;P;formsize;cols;rows;points;sizes;radii;colours;z;txt
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ formsize←600 400
+ (rows cols)←3 2
+ 'F1'eWC'Form' 'Boxes and Lines'(50 50)(200 400)('Coord' 'Pixel')
+ 'F1.FNT'eWC'Font' 'Segoe UI'('Size' 20)
+
+ 'F1.BX'eWC'SubForm'('Posn'(100 10))('Size'(formsize-110 20))('EdgeStyle' 'Groove') ⍝ To draw boxes in
+
+
+ z←2 eNQ'F1' 'GetTextSize' (txt←(↑'Hello to' 'all of the World'))
+ 'F1.HW' eWC 'Text' txt (10 10)
+ 'F1.HWBX' eWC 'Rect' (10 10) z
+
+ z←2 eNQ'F1' 'GetTextSize' (txt←'Hello everyone, EWC Rocks!') 'F1.FNT'
+ 'F1.H' eWC 'Text' txt (50 10)('FontObj' 'F1.FNT')
+ 'F1.HBX' eWC 'Rect' (50 10) z
+
+ z←2 eNQ'F1' 'GetTextSize' (txt←'   ')
+ 'F1.EMPTY' eWC 'Text' txt (90 10)
+ 'F1.EMPTYX' eWC 'Rect' (90 10) z
+
+ z←2 eNQ'F1' 'GetTextSize' (txt←'One Line')
+ 'F1.ONE' eWC 'Text' txt (130 10)
+ 'F1.ONeX' eWC 'Rect' (130 10) z

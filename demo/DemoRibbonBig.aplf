@@ -1,0 +1,439 @@
+ DemoRibbonBig connected;props;msgs;msg;wc;imagefiles16;imagefiles32;folder;n;path
+
+⍝ This test requires GAMA ribbon images in images/ribbonimages - see below
+ 'F1'eWC'Form' 'Big Ribbon Test'('Size'(601 1157))('Coord' 'Pixel')
+ n←≢folder←({⊃⎕NPARTS ¯1↓⍵}⊃⎕NPARTS 4⊃5179⌶⊃⎕SI),'demo'
+
+ :Trap 22
+     imagefiles16←n↓¨⊃0 ⎕NINFO⍠('Wildcard' 1)⊢path←folder,'/images/ribbonimages/16x16/*.png'
+     imagefiles32←n↓¨⊃0 ⎕NINFO⍠('Wildcard' 1)⊢path←folder,'/images/ribbonimages/32x32/*.png'
+ :Else
+     'MB' eWC 'MsgBox' 'Ribbon images not found' path 'Error' 'OK' ('Size' (100 600))('Event' ('MsgBtn1') 1)
+     R←eDQ 'MB'
+     eEX 'MB'
+     →0
+ :EndTrap
+
+ 'Images16'eWC'ImageList'('Size'(16 16))('Masked' 2)('Files' imagefiles16)
+ 'Images32'eWC'ImageList'('Size'(32 32))('Masked' 2)('Files' imagefiles32)
+
+ msgs←⎕JSON¨1↓¨{(⍵⍳⊂'LOG:')↓⍵}⎕NR⊃⎕SI ⍝ Extract JSON fragments following LOG: label
+ :For msg :In msgs
+     :Select ⊃msg.⎕NL-9
+     :Case 'WC'
+         props←msg.WC.Properties.({⍵(⍎⍵)}¨(⎕NL-2)~⊂'Type')
+         msg.WC.ID eWC(⊂msg.WC.Properties.Type),props
+     :Case 'WS'
+         props←msg.WS.Properties.({⍵(⍎⍵)}¨⎕NL-2)
+         msg.WS.ID eWS props
+     :EndSelect
+ :EndFor
+
+LOG:
+⍝{"WC":{"ID":"F1.TC","Properties":{"ActiveBCol":[134,171,220],"Attach":["Top","Left","Bottom","Right"],"BCol":[67,85,110],"FCol":[255,255,255],"MultiLine":1,"Posn":[0,0],"Size":[200,1157],"Type":"TabControl"}}}
+⍝{"WC":{"ID":"F1.TC.T1","Properties":{"Caption":["FILE"],"Event":[["Select",""]],"Type":"TabButton"}}}
+⍝{"WC":{"ID":"F1.TC.SF1","Properties":{"BCol":[134,171,220],"TabObj":"F1.TC.T1","Type":"SubForm"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon","Properties":{"BCol":[134,171,220],"FCol":[255,255,255],"TitleBCol":[0,0,0],"Type":"Ribbon"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["File"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Export/Import"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1.Item0","Properties":{"Caption":"Export...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem2.Item0","Properties":{"Caption":"Import...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item1.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item2","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Print"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0","Properties":{"Caption":"Print","Icon":[5],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"Caption":"Print","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":5}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":5}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"Caption":"Print Setup...","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":4}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":4}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Report"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0","Properties":{"Caption":"Report","Icon":[145],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"Caption":"Report","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":145}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":145}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"Caption":"Report Generator...","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":6}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":6}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item3.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item4","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Other"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item4.GroupItem1.Item0","Properties":{"Caption":"Properties","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item4.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item4.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF1.Ribbon.Item4.GroupItem2.Item0","Properties":{"Caption":"Exit","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF1.Ribbon.Item4.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.T2","Properties":{"Caption":["EDIT"],"Event":[["Select",""]],"Type":"TabButton"}}}
+⍝{"WC":{"ID":"F1.TC.SF2","Properties":{"BCol":[134,171,220],"TabObj":"F1.TC.T2","Type":"SubForm"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon","Properties":{"BCol":[134,171,220],"FCol":[255,255,255],"TitleBCol":[0,0,0],"Type":"Ribbon"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Edit"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem1.Item0","Properties":{"Caption":"Copy","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem2.Item0","Properties":{"Caption":"Paste","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item1.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item2","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Insert"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item2.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item2.GroupItem1.Item0","Properties":{"Caption":"Row(s)","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item2.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item2.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item3","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Selection"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item3.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item3.GroupItem1.Item0","Properties":{"Caption":"Field Selection...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item3.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item3.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item3.GroupItem2.Item0","Properties":{"Caption":"Row Selection...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item3.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Utilities"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0","Properties":{"Caption":"Direction","Icon":[257],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"Caption":"Down","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"Caption":"Right","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0","Properties":{"Caption":"Quick Access","Icon":[257],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem1","Properties":{"Caption":"Invisible","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem1","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem1","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem2","Properties":{"Caption":"Above","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem2","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem2","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem3","Properties":{"Caption":"Below","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem3","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem3","Properties":{"ImageIndex":257}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem2.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem3.Item0","Properties":{"Caption":"User Dictionary","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF2.Ribbon.Item4.GroupItem3.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.T3","Properties":{"Caption":["HOME"],"Event":[["Select",""]],"Type":"TabButton"}}}
+⍝{"WC":{"ID":"F1.TC.SF3","Properties":{"BCol":[134,171,220],"TabObj":"F1.TC.T3","Type":"SubForm"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon","Properties":{"BCol":[134,171,220],"FCol":[255,255,255],"TitleBCol":[0,0,0],"Type":"Ribbon"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Locks"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0","Properties":{"Caption":"Access","Icon":[18],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"Caption":"Lock/Unlock Spec.","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":18}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":18}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"Caption":"Lock/Unlock Data","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":240}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":240}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Macros"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0","Properties":{"Caption":"Macros","Icon":[111],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"Caption":"Macros","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":111}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":111}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"Caption":"Macro Editor","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":19}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":19}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item2.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Dashboard"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0","Properties":{"Caption":"Dashboard","Icon":[142],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"Caption":"New Dashboard","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":142}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":142}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"Caption":"Show Dashboard","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":114}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":114}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"Caption":"Load data into memory","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":150}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":150}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"Caption":"Параметры","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageIndex":143}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageIndex":143}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Utilities"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Application"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1.Item0","Properties":{"Caption":"Archive","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem2.Item0","Properties":{"Caption":"Date","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem3.Item0","Properties":{"Caption":"Stock Exchange","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem3.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem4","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem4.Item0","Properties":{"Caption":"Share/option","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem4.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem5","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem5","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem5.Item0","Properties":{"Caption":"Comparative dynamics","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem5.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0","Properties":{"Caption":"******","Cols":3,"ItemHeight":40,"ItemWidth":100,"Type":"RibbonGallery"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem1","Properties":{"Caption":"Black and Scholes","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem2","Properties":{"Caption":"VAR analysis","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem3","Properties":{"Caption":"Checking Prices","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem4","Properties":{"Caption":"Calculate Option Prices","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem4","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem5","Properties":{"Caption":"Check prices arhive","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item4.GroupItem6.Item0.MItem5","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Data Quality"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0","Properties":{"Caption":"Overal Data Quality","Icon":[250],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem1","Properties":{"Caption":"Outline","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem2","Properties":{"Caption":"Details","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0","Properties":{"Caption":"Local Data Quality","Icon":[250],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem1","Properties":{"Caption":"Outline","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem1","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem1","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem2","Properties":{"Caption":"Details","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem2","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem2","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem3","Properties":{"Caption":"Data quality check","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem3","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem3","Properties":{"ImageIndex":250}}}
+⍝{"WS":{"ID":"F1.TC.SF3.Ribbon.Item5.GroupItem2.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.T4","Properties":{"Caption":["DATA"],"Event":[["Select",""]],"Type":"TabButton"}}}
+⍝{"WC":{"ID":"F1.TC.SF4","Properties":{"BCol":[134,171,220],"TabObj":"F1.TC.T4","Type":"SubForm"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon","Properties":{"BCol":[134,171,220],"FCol":[255,255,255],"TitleBCol":[0,0,0],"Type":"Ribbon"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Sort"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0","Properties":{"Caption":"Sort","Icon":[21],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"Caption":"Sort","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":21}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":21}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"Caption":"Inverse Sort","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":72}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":72}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem3","Properties":{"Caption":"Sort Setup...","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":22}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":22}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item1.GroupItem1.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item2","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Sum"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item2.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item2.GroupItem1.Item0","Properties":{"Caption":"Sum","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item2.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Selection"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0","Properties":{"Caption":"Select All","Icon":[12],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"Caption":"Select","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":10}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":10}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"Caption":"Select All","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":12}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":12}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"Caption":"Deselect","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":256}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":256}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"Caption":"Deselect All","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageIndex":13}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"ImageIndex":13}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item3.GroupItem1.Item0.MItem4","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Filter"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0","Properties":{"Caption":"Select Row...","Icon":[24],"Type":"RibbonDropDownButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"Caption":"Select Row...","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":24}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"ImageIndex":24}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem1","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"Caption":"Next Selection","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":25}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"ImageIndex":25}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem2","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem3","Properties":{"Caption":"Select Archive","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":26}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem3","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem3","Properties":{"ImageIndex":26}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem3","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem4","Properties":{"Caption":"Filter...","Type":"RibbonMenuItem"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem4","Properties":{"ImageListObj":"xRibbonControlLargeImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem4","Properties":{"ImageIndex":56}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem4","Properties":{"ImageListObj":"xRibbonControlImages"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem4","Properties":{"ImageIndex":56}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item4.GroupItem1.Item0.MItem4","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Zoom"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem1.Item0","Properties":{"Caption":"Zoom...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem2.Item0","Properties":{"Caption":"ZoomIn","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem3.Item0","Properties":{"Caption":"ZoomOut","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF4.Ribbon.Item5.GroupItem3.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.T5","Properties":{"Caption":["DEVELOPER"],"Event":[["Select",""]],"Type":"TabButton"}}}
+⍝{"WC":{"ID":"F1.TC.SF5","Properties":{"BCol":[134,171,220],"TabObj":"F1.TC.T5","Type":"SubForm"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon","Properties":{"BCol":[134,171,220],"FCol":[255,255,255],"TitleBCol":[0,0,0],"Type":"Ribbon"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Developer"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem1.Item0","Properties":{"Caption":"Form...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem2.Item0","Properties":{"Caption":"Developer Utilities...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem3.Item0","Properties":{"Caption":"DevExpress Reports","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem3.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem4","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem4.Item0","Properties":{"Caption":"DevExpress Snap","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem4.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem5","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem5.Item0","Properties":{"Caption":"Break to APL","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF5.Ribbon.Item1.GroupItem5.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.T6","Properties":{"Caption":["HELP"],"Event":[["Select",""]],"Type":"TabButton"}}}
+⍝{"WC":{"ID":"F1.TC.SF6","Properties":{"BCol":[134,171,220],"TabObj":"F1.TC.T6","Type":"SubForm"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon","Properties":{"BCol":[134,171,220],"FCol":[255,255,255],"TitleBCol":[0,0,0],"Type":"Ribbon"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item1","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Support"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item1.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item1.GroupItem1.Item0","Properties":{"Caption":"Ask Support","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF6.Ribbon.Item1.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["Help"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem1.Item0","Properties":{"Caption":"Knowledge Base","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem2","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem2.Item0","Properties":{"Caption":"Field Description","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem2.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem3","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem3.Item0","Properties":{"Caption":"Contents","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF6.Ribbon.Item2.GroupItem3.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item3","Properties":{"BorderCol":[192,192,192],"Size":2,"Title":["GAMA"],"Type":"RibbonGroup"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item3.GroupItem1","Properties":{"Size":[12],"Type":"RibbonGroupItem"}}}
+⍝{"WC":{"ID":"F1.TC.SF6.Ribbon.Item3.GroupItem1.Item0","Properties":{"Caption":"About GAMA...","Type":"RibbonButton"}}}
+⍝{"WS":{"ID":"F1.TC.SF6.Ribbon.Item3.GroupItem1.Item0","Properties":{"Event":[["Select",""]]}}}
+⍝{"WX":{"ID":"F1.TC.SF3","Info":[],"Method":"GetFocus","WGID":"22"}}

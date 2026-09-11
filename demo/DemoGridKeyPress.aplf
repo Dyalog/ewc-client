@@ -1,0 +1,54 @@
+ DemoGridKeyPress connected;values;F;colTitles;rowTitles;cellWidths;cellTypes
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Duplicate-KeyPress repro for Grid (review finding #14).
+⍝ KeyPress is registered on BOTH the grid (F1.G) AND the embedded text Edit
+⍝ template (F1.G.E1). The callback CBGridKey logs a DISTINCT line per source
+⍝ (GRID vs EDIT), so a human/test can count how many KeyPress events fire for a
+⍝ single keystroke typed inside an Edit cell.
+⍝   - With the client fix (Grid suppresses its grid-level KeyPress while the
+⍝     keystroke originates in an embedded editor): ONE 'EDIT' line per char.
+⍝   - Without the fix: a 'GRID' line AND an 'EDIT' line — the duplicate.
+⍝ Idioms: DemoGrid.aplf:8-9,31,35,51,56,62 (Form/grid/Input/CellTypes/grid
+⍝ event) and Demo_Issue250.aplf:11 (KeyPress on the embedded Edit child).
+
+ F←'F1'
+ F eWC'Form' 'Grid KeyPress Duplicate Repro'(50 50)(450 540)('Coord' 'Pixel')
+
+⍝ Sample data: 4 rows x 2 columns — Col1 text Edit, Col2 numeric Edit
+ values←4 2⍴⍬
+ values[1;]←'Apple' 150
+ values[2;]←'Banana' 250
+ values[3;]←'Cherry' 50
+ values[4;]←'Date' 75
+
+ colTitles←'Product' 'Quantity'
+ rowTitles←⍳4
+ cellWidths←120 90
+
+⍝ Create the Grid and register KeyPress (+ CellMove for context) on the GRID.
+ (F,'.G')eWC'Grid'('Posn'(70 20))('Size'(150 280))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 40)('CurCell'(1 1))('VScroll' ¯1)
+
+⍝ Embedded Input templates (children of the grid). The text Edit ALSO registers
+⍝ KeyPress — it is the second potential source per keystroke.
+ (F,'.G.E1')eWC'Edit' ''('Event' 'KeyPress' 'CBGridKey')
+ (F,'.G.E2')eWC'Edit'('FieldType' 'Numeric')
+
+⍝ Wire the Input array + CellTypes matrix (1-based indices into Input).
+ (F,'.G')eWS'Input'((F,'.G.E1')(F,'.G.E2'))
+ cellTypes←4 2⍴1 2
+ (F,'.G')eWS'CellTypes' cellTypes
+
+⍝ Register events on the grid (each event name once — EWC/eventOK.aplf rejects
+⍝ duplicate names on a single object; the duplicate we want is ACROSS objects).
+ (F,'.G')eWS'Event'(⊂'KeyPress' 'CBGridKey')
+ (F,'.G')eWS'Event'(⊂'CellMove' 'CBGridKey')
+
+⍝ Info labels
+ (F,'.Info1')eWC'Label' 'KeyPress registered on BOTH grid (F1.G) and Edit (F1.G.E1).'(20 20)(18 490)
+ (F,'.Info2')eWC'Label' 'Click the Product cell, type a character: each line below = one KeyPress fired.'(40 20)(18 490)
+
+⍝ Event log label (read+rewrite Caption to prepend, per CBGrid.aplf:54-55)
+ (F,'.LogTitle')eWC'Label' 'KeyPress Log:'(230 20)(18 120)
+ (F,'.Log')eWC'Label' '(events appear here)'(252 20)(180 490)

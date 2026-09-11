@@ -1,0 +1,5 @@
+ Demo_Issue303 connected
+ ⎕PW←1000
+
+ 'F1'eWC'Form' 'Resize Me!'(0 0)(400 500)('Coord' 'Pixel')('Event' 'Configure' 'CBIssue303')
+ 'F1.SF'eWC'SubForm' ''(0 0)(400 500)('Event' 'Configure' 'CBIssue303')

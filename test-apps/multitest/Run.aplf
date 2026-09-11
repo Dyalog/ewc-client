@@ -1,0 +1,17 @@
+ Run;EWC
+⍝ Bring up EWC in Multi mode for the Playwright multi-session suite.
+
+ EWC←##.EWC
+ EWC.PORT←22323
+ EWC.SHOWDEVTOOLS←0
+
+ ⍝ Outside this namespace so it outlives the clones it records, and stays
+ ⍝ reachable from all of them.
+ :If 0=#.⎕NC'multitestlog'
+     'multitestlog'#.⎕NS''
+     #.multitestlog.closed←0⍴⊂''
+ :EndIf
+
+ 'e'EWC.Init'Multi'
+
+ ⎕←'multitest running in Multi mode on port ',⍕EWC.PORT

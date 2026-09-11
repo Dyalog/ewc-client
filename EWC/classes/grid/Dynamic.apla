@@ -1,0 +1,13 @@
+(
+ 'Values'
+ 'Size'
+ 'Posn'
+ 'ColTitles'
+ 'RowTitles'
+ 'CurCell'
+ 'VScroll'
+ 'HScroll'
+ 'Input'
+ 'InputMode'
+ 'InputModeKey'
+)

@@ -1,0 +1,29 @@
+ CBComboDemo args;id;event;info;text;msg
+ id event info text←4↑args
+
+ ⍝ Used by: DemoCombo
+
+ :Select id
+ :Case 'F1.Colour'
+     'F1.ColourResult'eWS'Caption' text
+     msg←'Colour selected: ',text
+
+ :Case 'F1.SizeCombo'
+     EWC.COMBO_COUNT+←1
+     'F1.SizeCount'eWS'Caption'(⍕EWC.COMBO_COUNT)
+     'F1.SizeResult'eWS'Caption' text
+     msg←'Size #',(⍕EWC.COMBO_COUNT),': ',text,' (even reselects fire!)'
+
+ :Case 'F1.StyledCombo1'
+     msg←'Fruit: ',text
+
+ :Case 'F1.StyledCombo2'
+     msg←'Status: ',text
+
+ :Else
+     msg←id,' Select: ',text
+ :EndSelect
+
+ ⍝ Append to event log
+ ⎕←msg
+ AppendComboLog msg

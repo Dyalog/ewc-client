@@ -1,0 +1,9 @@
+(Name nsname)←caller removeCaller Name;n;cp
+⍝ Remove absolute space prefix from a name prior to sending to JS Client
+
+n←≢cp←'.',⍨⍕caller
+nsname←Name←(n×cp≡n↑Name)↓Name
+
+:If ~0∊caller.⎕NC 'Type' '_EWC_Name'
+   Name←caller._EWC_Name,'.',Name
+:EndIf

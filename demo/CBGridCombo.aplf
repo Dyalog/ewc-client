@@ -1,0 +1,18 @@
+ CBGridCombo args;id;event;row;col;val;msg
+ id event←2↑args
+
+ ⍝ Used by: DemoCombo
+
+ :Select event
+ :Case 'CellChanged'
+     row col val←3↑2↓args
+     msg←'Grid CellChanged: Row ',(⍕row),' Col ',(⍕col),' = "',val,'"'
+     'F1.GridLog'eWS'Caption' msg
+
+ :Case 'Select'
+     row col←2↑2↓args
+     msg←'Grid Select: Row ',(⍕row),' Col ',(⍕col)
+     'F1.GridLog'eWS'Caption' msg
+ :EndSelect
+
+ AppendComboLog msg

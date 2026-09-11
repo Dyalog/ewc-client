@@ -1,0 +1,57 @@
+ CBBounce args;id;leaf;mk;t;avg
+⍝ Shared callback for DemoBounce, dispatched on the source's leaf name:
+⍝   TICK  - integrate positions, bounce off walls, push balls; stats every 15 ticks
+⍝   RUN   - check-button: timer Active follows its State
+⍝   ADD   - +10 balls (max 300), deterministic rebuild
+⍝   SUB   - -10 balls (min 10), deterministic rebuild
+⍝   RESET - back to 20 balls, stats cleared
+⍝ State (BN_*) lives in #.demo. Field is 360x400, balls 14px, so centers
+⍝ travel 0..346 vertically and 0..386 horizontally.
+
+ mk←{i←⍳⍵ ⋄ (346|17×i)(386|23×i)(2+4|i)(3-6|i)}   ⍝ n → (Y X VY VX), no randomness
+
+ id←⊃args
+ leaf←{(1-(⌽⍵)⍳'.')↑⍵}id
+
+ :Trap 0
+     :Select leaf
+     :Case 'TICK'
+         t←⎕AI[3]                          ⍝ server-side tick timestamp (ms)
+         :If BN_T>0
+             BN_DT←¯30↑BN_DT,t-BN_T        ⍝ rolling window of tick round-trip deltas
+         :EndIf
+         BN_T←t ⋄ BN_TICKS+←1
+         BN_Y+←BN_VY ⋄ BN_X+←BN_VX
+         BN_VY×←1-2×(BN_Y≤0)∨BN_Y≥346 ⋄ BN_Y←0⌈346⌊BN_Y
+         BN_VX×←1-2×(BN_X≤0)∨BN_X≥386 ⋄ BN_X←0⌈386⌊BN_X
+         'F1.PF.BALLS'eWS('Points'(BN_Y BN_X))('Size'((BN_N⍴14)(BN_N⍴14)))
+         :If (0=15|BN_TICKS)∧0<≢BN_DT      ⍝ stats labels ~once per second
+             avg←(+/BN_DT)÷≢BN_DT
+             'F1.FPS'eWS'Caption'('FPS: ',(1⍕1000÷1⌈avg)~' ')
+             'F1.LAT'eWS'Caption'('Avg: ',(⍕⌈avg),' ms')
+         :EndIf
+     :Case 'RUN'
+         BN_T←0                            ⍝ don't count the pause gap in the stats
+         'F1.TICK'eWS'Active'(id eWG'State')
+     :Case 'ADD'
+         BN_N←300⌊BN_N+10
+         →RESIZE
+     :Case 'SUB'
+         BN_N←10⌈BN_N-10
+         →RESIZE
+     :Case 'RESET'
+         BN_N←20 ⋄ BN_DT←⍬ ⋄ BN_T←0 ⋄ BN_TICKS←0
+         'F1.TICK'eWS'Active' 0
+         'F1.RUN'eWS'State' 0
+         'F1.FPS'eWS'Caption' 'FPS: —'
+         'F1.LAT'eWS'Caption' 'Avg: — ms'
+         →RESIZE
+     :EndSelect
+     →0
+RESIZE:
+     (BN_Y BN_X BN_VY BN_VX)←mk BN_N
+     'F1.PF.BALLS'eWS('Points'(BN_Y BN_X))('Size'((BN_N⍴14)(BN_N⍴14)))('FillCol'(BN_N⍴BN_PAL))('FStyle'(BN_N⍴0))
+     'F1.CNT'eWS'Caption'('Balls: ',⍕BN_N)
+ :Else
+     ⎕←'CBBounce: ',(⊃⎕DM),' (likely a late Timer tick after a demo switch)'
+ :EndTrap

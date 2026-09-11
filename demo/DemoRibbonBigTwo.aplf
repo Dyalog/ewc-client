@@ -1,0 +1,65 @@
+ DemoRibbonBigTwo connected;props;msgs;msg;wc;imagefiles16;imagefiles32;folder;n;path;sizes
+
+⍝ This test requires GAMA ribbon images in images/ribbonimages - see below
+ 'F1'eWC'Form' 'Big Ribbon Test'('Size'(601 1157))('Coord' 'Pixel')
+ n←≢folder←({⊃⎕NPARTS ¯1↓⍵}⊃⎕NPARTS 4⊃5179⌶⊃⎕SI),'demo'
+
+ :Trap 22
+     imagefiles16←{⍵[⍋⍵]}n↓¨⊃0 ⎕NINFO⍠('Wildcard' 1)⊢path←folder,'/images/ribbonimages/16x16/*.png'
+     imagefiles32←{⍵[⍋⍵]}n↓¨⊃0 ⎕NINFO⍠('Wildcard' 1)⊢path←folder,'/images/ribbonimages/32x32/*.png'
+ :Else
+     'MB' eWC 'MsgBox' 'Ribbon images not found' path 'Error' 'OK' ('Size' (100 600))('Event' ('MsgBtn1') 1)
+     R←eDQ 'MB'
+     eEX 'MB'
+     →0
+ :EndTrap
+
+ 'Images16'eWC'ImageList'('Size'(16 16))('Masked' 2)('Files' imagefiles16)
+ 'Images32'eWC'ImageList'('Size'(32 32))('Masked' 2)('Files' imagefiles32)
+
+'F1.TC' eWC'TabControl'('ActiveBCol' (134 171 220))('Attach' ('Top' 'Left' 'Bottom' 'Right'))('BCol' (67 85 110))('FCol' (255 255 255))('MultiLine' 1)('Posn' (0 0))('Size' (200 1157))
+'F1.TC.T1' eWC'TabButton'('Caption' 'FILE')
+'F1.TC.SF1' eWC'SubForm'('BCol' (134 171 220))('TabObj' 'F1.TC.T1')
+sizes←('BodyHeight' 125)('MaxButtonWidth' 125)
+'F1.TC.SF1.Ribbon' eWC'Ribbon'('BCol' (134 171 220))('FCol' (255 255 255))('TitleBCol' (0 0 0)), sizes
+'F1.TC.SF1.Ribbon.Item1'eWC'RibbonGroup'('BorderCol' (192 192 192 ))('Size' 2)('Title' 'Export/Import')
+'F1.TC.SF1.Ribbon.Item1.GroupItem1' eWC'RibbonGroupItem'
+'F1.TC.SF1.Ribbon.Item1.GroupItem1.Item0' eWC'RibbonButton'('Caption' 'Export...')
+'F1.TC.SF1.Ribbon.Item1.GroupItem1.Item0' eWS('ImageListObj' 'Images32')
+'F1.TC.SF1.Ribbon.Item1.GroupItem1.Item0' eWS('ImageIndex' 1)
+'F1.TC.SF1.Ribbon.Item1.GroupItem1.Item0' eWS('Event' ('Select'  ''))
+'F1.TC.SF1.Ribbon.Item1.GroupItem2' eWC'RibbonGroupItem'
+'F1.TC.SF1.Ribbon.Item1.GroupItem2.Item0' eWC'RibbonButton'('Caption'  'Import...' )
+'F1.TC.SF1.Ribbon.Item1.GroupItem2.Item0' eWS('ImageListObj'  'Images32')
+'F1.TC.SF1.Ribbon.Item1.GroupItem2.Item0' eWS('ImageIndex' 2)
+'F1.TC.SF1.Ribbon.Item1.GroupItem2.Item0' eWS(( 'Event' (( 'Select'  '' ))))
+'F1.TC.SF1.Ribbon.Item1.GroupItem3' eWC'RibbonGroupItem'
+'F1.TC.SF1.Ribbon.Item2' eWC'RibbonGroup'('BorderCol' (192 192 192))('Title' 'Print')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1' eWC'RibbonGroupItem'
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0' eWC'RibbonDropDownButton'('Caption' 'Print')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0' eWS('ImageListObj' 'Images32')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0' eWS('ImageIndex' 5)
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1' eWC'RibbonMenuItem'('Caption' 'Print')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1' eWS('ImageListObj' 'Images16')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem1' eWS('ImageIndex' '5' )
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2' eWC'RibbonMenuItem'('Caption' 'Print Setup...')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2' eWS('ImageListObj' 'Images16')
+'F1.TC.SF1.Ribbon.Item2.GroupItem1.Item0.MItem2' eWS('ImageIndex' '4')
+'F1.TC.SF1.Ribbon.Item3' eWC'RibbonGroup'('BorderCol' (192 192 192))('Size' 1)( 'Title' ( 'Report' ))
+'F1.TC.SF1.Ribbon.Item3.GroupItem1' eWC'RibbonGroupItem'
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0' eWC'RibbonDropDownButton'('Caption' 'Report')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0' eWS('ImageListObj' 'Images32')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0' eWS('ImageIndex' '7')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1' eWC'RibbonMenuItem'('Caption' 'Report')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1' eWS('ImageListObj' 'Images16')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem1' eWS('ImageIndex' '145')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2' eWC'RibbonMenuItem'('Caption' 'Report Generator...')
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2' eWS('ImageListObj' 'Images16' )
+'F1.TC.SF1.Ribbon.Item3.GroupItem1.Item0.MItem2' eWS('ImageIndex' '6' )
+
+'F1.TC.T2' eWC'TabButton'('Caption' 'EDIT')
+'F1.TC.SF2' eWC'SubForm'('BCol' (134 171 220))('TabObj' 'F1.TC.T2')
+'F1.TC.SF2.Ribbon' eWC'Ribbon'('BCol' (134 171 220))('FCol' (255 255 255))('TitleBCol' (0 0 0))
+'F1.TC.SF2.Ribbon.Item1' eWC'RibbonGroup'('BorderCol' (192 192 192))( 'Title' 'Edit')
+'F1.TC.SF2.Ribbon.Item1.GroupItem1' eWC'RibbonGroupItem'
+'F1.TC.SF2.Ribbon.Item1.GroupItem1.ButtonGroup1'eWC'RibbonButtonGroup'('Copy' 'Paste')('FcShare' 'FcTreeStructure')

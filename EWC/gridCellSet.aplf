@@ -1,0 +1,3 @@
+ r←gridCellSet values
+
+ r←(⍴values)⍴1

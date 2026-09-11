@@ -1,0 +1,18 @@
+ {r}←name validateClass class;props;defs;i;msg
+⍝ Some sanity checks for ClassName, PropList etc
+ msg←'Plugin class ',name,': '
+
+ (msg,'ClassName is missing or empty')⎕SIGNAL(0=≢{0::'' ⋄ ,class.ClassName}⍬)/11
+ (msg,'PropList is missing or empty')⎕SIGNAL(0=≢props←{0::⍬ ⋄ ,class.PropList}⍬)/11
+ (msg,'Defaults is missing')⎕SIGNAL(2≠class.⎕NC'Defaults')/11
+
+ defs←,class.Defaults
+ (msg,'Defaults has ',(⍕≢defs),' entries, PropList has ',⍕≢props)⎕SIGNAL((≢defs)≠≢props)/11
+
+ :If (≢props)<i←props⍳⊂'PropList'
+     Warning msg,'PropList is not itself listed in PropList, so ∆WS will not reach the client'
+ :ElseIf 0=≢i⊃defs
+     Warning msg,'the default for PropList is empty, so ∆WS will not reach the client'
+ :EndIf
+
+ r←1

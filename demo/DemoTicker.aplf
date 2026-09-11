@@ -1,0 +1,38 @@
+ DemoTicker connected;F;vals;opts
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Live ticker dashboard: a display-only Grid, an ApexChart, mover Labels and
+⍝ a StatusBar all updating from one Timer — components composing into a
+⍝ reactive UI. Starts paused with fixed seed prices so the idle frame is
+⍝ deterministic; prices random-walk only while running.
+
+ TK_SYM←'AAPL' 'DYAL' 'MSFT' 'GOOG' 'AMZN' 'TSLA'
+ TK_P0←182.52 999 411.22 176.31 186.45 251.02
+ TK_P←TK_P0
+ TK_SERIES←60⍴(+/TK_P)÷6                    ⍝ index = mean price, last 60 ticks
+ TK_TICKS←0
+
+ F←'F1'
+ F eWC'Form' 'Live Ticker'(50 50)(520 420)('Coord' 'Pixel')('BCol'(230 230 230))
+ (F,'.TITLE')eWC'Label' 'Live market (demo data)'(12 12)(22 270)('CSS' 'font-size:15px;font-weight:bold')
+
+⍝ Display-only grid: no Input/CellTypes, so per-tick Values pushes never
+⍝ collide with an editor
+ vals←⍉↑TK_SYM({(2⍕⍵)~' '}¨TK_P)(6⍴⊂'+0.00')(6⍴⊂'+0.00%')
+ (F,'.G')eWC'Grid'('Posn'(45 10))('Size'(190 400))('Values' vals)('ColTitles'('Symbol' 'Price' 'Change' 'Chg%'))('TitleWidth' 0)('CellWidths'(100 100 100 97))
+
+ (F,'.UP')eWC'Label' '▲ —'(245 10)(22 190)('FCol'(0 150 60))('CSS' 'font-size:14px;font-weight:bold')
+ (F,'.DOWN')eWC'Label' '▼ —'(245 210)(22 190)('FCol'(190 30 30))('CSS' 'font-size:14px;font-weight:bold')
+
+⍝ Chart animations must be off: ApexCharts would re-animate on every Series push
+ opts←'{chart:{animations:{enabled:false},toolbar:{show:false}},xaxis:{labels:{show:false}},yaxis:{decimalsInFloat:2},stroke:{width:2}}'
+ (F,'.CHART')eWC'ApexChart'(275 10)(170 400)TK_SERIES'line'('Options' opts)
+
+ (F,'.RUN')eWC'Button' 'Run'(455 10)(24 60)('Style' 'Check')('Event' 'Select' 'CBTicker')
+ (F,'.RESET')eWC'Button' 'Reset'(455 85)(24 60)('Event' 'Select' 'CBTicker')
+
+ (F,'.SB')eWC'StatusBar'('BCol'(245 245 245))
+ (F,'.SB.S1')eWC'StatusField' 'Ticks: ' '0'
+
+ (F,'.TICK')eWC'Timer' 500 ('Active' 0)('Event' 'Timer' 'CBTicker')('FireOnce' 0)

@@ -1,0 +1,8 @@
+(
+ 'Configure'
+ 'MouseUp'
+ 'MouseDown'
+ 'MouseEnter'
+ 'MouseMove'
+ 'MouseLeave'
+)

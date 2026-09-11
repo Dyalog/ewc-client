@@ -1,0 +1,60 @@
+ CBSubFormDemo args;id;event;info;text;editId;msg
+ id event info text←4↑args
+
+⍝ Shared callback for SubForm demos
+⍝ Used by: DemoSubFormEdit, DemoSubFormGrid, DemoSubFormCombo, DemoSubFormNested
+
+ msg←id,' ',event
+ :If 0<≢text
+     msg,←': ',text
+ :EndIf
+ ⎕←'SubForm event: ',msg
+
+⍝ Single-event display label — only updates if it exists in the running demo
+ :Trap 0
+     'F1.SF.RESULT'eWS'Caption' msg
+ :EndTrap
+ :Trap 0
+     'F1.OUTER.INNER.RESULT'eWS'Caption' msg
+ :EndTrap
+
+⍝ Mirror update on Change — query the new value via eWG since Change event doesn't carry text
+⍝ Pattern: any Edit with id F1.SF.X has a mirror label at F1.SF.XMIRROR
+ :If event≡'Change'
+ :AndIf 0<≢id
+     :Trap 0
+         (id,'MIRROR')eWS'Caption'(⍕id eWG'Text')
+     :EndTrap
+ :EndIf
+
+⍝ Update Mirrors button — Edit demo
+ :If id≡'F1.SF.UPDATEBTN'
+     :For editId :In 'F1.SF.EDIT1' 'F1.SF.EDIT2' 'F1.SF.EDIT3' 'F1.SF.EDIT4' 'F1.SF.EDIT5' 'F1.SF.EDIT6' 'F1.SF.EDIT7' 'F1.SF.EDIT9' 'F1.SF.ES1' 'F1.SF.ES2' 'F1.SF.ES3' 'F1.SF.ES4' 'F1.SF.ES5' 'F1.SF.ES6'
+         :Trap 0
+             (editId,'MIRROR')eWS'Caption'(⍕editId eWG'Text')
+         :EndTrap
+     :EndFor
+ :EndIf
+
+⍝ Update Mirrors button — Nested demo (mirrors at outer and inner levels)
+ :If id≡'F1.OUTER.INNER.UPDATEBTN'
+     :For editId :In 'F1.OUTER.EDIT1' 'F1.OUTER.INNER.EDIT1' 'F1.OUTER.INNER.EDIT2' 'F1.OUTER.INNER.ES1' 'F1.OUTER.INNER.EDIT3'
+         :Trap 0
+             (editId,'MIRROR')eWS'Caption'(⍕editId eWG'Text')
+         :EndTrap
+     :EndFor
+ :EndIf
+
+⍝ Update event counter
+⍝ The Reset button (F1.SF.BTN1) sets counter back to 0; everything else increments
+ :If 0=⎕NC'EWC.SF_EVENT_COUNT'
+     EWC.SF_EVENT_COUNT←0
+ :EndIf
+ :If id≡'F1.SF.BTN1'
+     EWC.SF_EVENT_COUNT←0
+ :Else
+     EWC.SF_EVENT_COUNT+←1
+ :EndIf
+ :Trap 0
+     'F1.COUNT'eWS'Caption'('Events: ',⍕EWC.SF_EVENT_COUNT)
+ :EndTrap

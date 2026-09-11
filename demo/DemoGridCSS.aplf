@@ -1,0 +1,28 @@
+ DemoGridCSS connected;values;F;colTitles;rowTitles;cellWidths
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Grid CSS Demo - Tests the CSS property for custom inline styles
+
+ F←'F1'
+ F eWC'Form' 'Grid CSS Demo'(50 50)(450 700)('Coord' 'Pixel')
+
+⍝ Create sample data: 3 rows x 3 columns
+ values←3 3⍴⍬
+ values[1;]←'Alice' 95 'A'
+ values[2;]←'Bob' 82 'B'
+ values[3;]←'Carol' 71 'C'
+
+ colTitles←'Name' 'Score' 'Grade'
+ rowTitles←⍳3
+ cellWidths←120 80 80
+
+⍝ Styled Grid - with CSS property
+ (F,'.G1')eWC'Grid'('Posn'(60 20))('Size'(72 325))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 40)('CurCell'(1 1))('VScroll' ¯1)('CSS' 'border-radius: 8px; border: 2px solid #336699; box-shadow: 0 2px 8px #00000026')
+
+⍝ Unstyled Grid - no CSS property
+ (F,'.G2')eWC'Grid'('Posn'(250 20))('Size'(70 323))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('CellWidths' cellWidths)('TitleWidth' 40)('CurCell'(1 1))('VScroll' ¯1)
+
+⍝ Labels
+ (F,'.Label1')eWC'Label' 'Styled Grid (CSS: border-radius, border, box-shadow)'(40 20)(20 660)
+ (F,'.Label2')eWC'Label' 'Unstyled Grid (no CSS property)'(230 20)(20 660)

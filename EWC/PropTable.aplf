@@ -1,0 +1,26 @@
+ r←PropTable classname;class;p;defs;sup;dyn;s;d;v;n;sm;dm;tbl;sep;bar
+⍝ Display a property table for an EWC class
+⍝ Example: PropTable 'Button'
+ class←classes⍎⎕C classname
+ p←class.PropList
+ defs←class.Defaults
+ sup←class.Supported
+ dyn←⍬
+ :If 2=class.⎕NC 'Dynamic'
+     dyn←class.Dynamic
+ :EndIf
+ n←≢p
+ s←p∊sup ⋄ d←p∊dyn
+⍝ Format default values, truncate long ones
+ maxv←85-1↓⍴↑(⊂'Property'),p ⍝ size Default col so table fits in 120 cols
+ v←{t←,⎕SE.Dyalog.Utils.repObj ⍵ ⋄ (maxv<≢t):((maxv-3)↑t),'...' ⋄ t}¨n↑defs
+⍝ Supported / Dynamic markers
+ sm←n⍴⊂'' ⋄ sm[⍸s]←⊂'✓'
+ dm←n⍴⊂'' ⋄ dm[⍸d]←⊂'✓'
+⍝ Assemble columns with headers
+ bar←((1+n),3)⍴' │ '
+ tbl←(↑(⊂'Property'),p),bar,(↑(⊂'Sup'),sm),bar,(↑(⊂'Dyn'),dm),bar,(↑(⊂'Default'),v)
+⍝ Insert separator after header
+ sep←(1,1↓⍴tbl)⍴'─'
+ sep[1;⍸tbl[1;]='│']←'┼'
+ r←(1↑tbl)⍪sep⍪1↓tbl

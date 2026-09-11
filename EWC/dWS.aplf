@@ -1,0 +1,110 @@
+ {R}←Name ∆WS Props;WS;msg;ws;i;z;ref;expr;caller;⎕TRAP;proplist;pname;names;values;PropList;m;class;type;ix;HR;e;objref;fullname;nsname;REF
+ R←⍬
+ ⎕SIGNAL (2>|≡Props)/11
+ Props←,Props
+ Name←⍕∊Name
+
+ ⎕TRAP←0 'S'
+ LogCalls Name 'WS' Props
+ :If (⊂,Name)∊,¨'⎕SE' '#' '.' ⍝ Pass WS of System properties through
+    :Trap 0
+       →0⊣R←Name ⎕WS Props
+    :Else
+       'E' Log 'Unable to set ',(,⍕Props),' on ',Name
+       →0
+    :EndTrap
+ :EndIf
+
+ caller←findCaller
+ (Name nsname)←caller removeCaller Name
+ (type class objref)←getObj nsname
+ ('Not a EWC object: ',(⍕caller),'.',Name)⎕SIGNAL (0=≢type)/11
+
+ proplist←⎕C PropList←class.PropList,objProps
+ :If (names←⎕C 1↑Props)∊proplist
+     values←,⊂1↓Props
+ :Else
+     :If ∧/(names←⎕C⊃¨Props)∊proplist
+         values←1↓¨Props
+     :Else
+         values←(≢names)⍴⊂⍬
+     :EndIf
+ :EndIf
+
+ :If ~∧/m←(≢proplist)≥proplist⍳names
+     Warning'Unknown properties: ',(~m)/names
+     (names values)←m∘/¨names values
+     :If 0=≢names
+         Warning 'No valid property names found'
+         →0
+     :EndIf
+ :EndIf
+
+ :If 0≠≢ix←⍸1=≢¨values
+     values[ix]←⊃¨values[ix]
+ :EndIf
+
+ names←PropList[proplist⍳names] ⍝ Correct case
+
+ :If ~∧/m←names∊class.Supported,'Event' 'Data'
+     Warning'Unsupported properties for type ',type,': ',(~m)/names
+     (names values)←m∘/¨names values
+ :EndIf
+
+ :If type≡'Form'
+ :AndIf 1=≢HR←'HTMLRenderer'⎕WN caller⍎Name
+     :If (≢names)≥i←names⍳⊂'Posn'
+         (⊃HR)⎕WS'Posn'(i⊃values) ⍝ Move the HTMLRenderer instead
+         (names values)←(i≠⍳≢names)∘/¨names values
+     :EndIf
+     :If (≢names)≥i←names⍳⊂'Size'
+         (⊃HR)⎕WS'Size'(HRBorder+i⊃values) ⍝ Resize the HTMLRenderer
+     :EndIf
+     :If (≢names)≥i←names⍳⊂'Caption'
+         (⊃HR)⎕WS'Caption'(i⊃values)
+     :EndIf
+ :EndIf
+
+ values←names((⎕C type) fixUpProps)values       ⍝ Regularise things for the poor JS code
+ :If 0≠i←(1+≢names)-(⌽names)⍳⊂'Event'      ⍝ Last Event
+ :AndIf 0 0≢i⊃values                       ⍝ Reset
+ :AndIf 0≢⍴e←caller⍎nsname,'.Event'          ⍝ Event property is "additive"
+     e←((e≢0 0)/e),i⊃values
+     (i⊃values)←e[{⊢/⍵}⌸⊃¨e] ⍝ Pick last occurrence of each event
+ :EndIf
+
+ WS←makeWSns Name names values
+
+ :If USEWIN32
+     R←Name caller.⎕WS Props
+ :ElseIf 0≠≢names
+     m←1≠≢values ⍝ multi
+     expr←'.',(m/'('),(⍕names),(~m)↓')←',m↓'⊃values'
+     REF←⍎fullname←(⍕caller),'.',nsname
+     ⍎'REF',expr ⍝ Update "server-side DOM"
+     :If 'grid'≡⎕C type
+     :AndIf (⊂'Values')∊names
+     :AndIf ~(⊂'CellSet')∊names
+         REF.CellSet←gridCellSet REF.Values
+     :EndIf
+ :EndIf
+
+ :If type≡'imagelist'
+     ⍎(⍕caller),'.',nsname,'.(ImageCount←≢Files)' ⍝ Update read-only ImageCount
+ :EndIf
+
+ :If RECORD ⍝ Collecting lists
+     ref←⍎'Classes.',Name ⎕WG'Type'
+     ref.Supported∪←1⊃¨Props
+ :EndIf
+
+ WS.WS.ID←{(2×'#.'≡2↑⍵)↓⍵}WS.WS.ID
+  :If (⊂WS.WS.ID)∊⊆1⊃BREAK
+     ⎕←'BREAK on WS of ',WS.WS.ID
+     ⎕←⎕JSON WS
+     ∘∘∘
+ :EndIf
+
+:If ~DIRECT ⍝ In Direct mode, assignment will already have caused a send
+    caller sendWSns WS
+:EndIf

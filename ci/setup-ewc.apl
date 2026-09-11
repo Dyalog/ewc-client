@@ -7,10 +7,9 @@
 ⍝ cycling — events get drained instead of piling up on _EWC.TIMER1.
 ⍝
 ⍝ Mount layout (set up by the docker invocation):
-⍝   /work/ewc              → the Dyalog/ewc repo
-⍝   /work/ewc-client/dist  → freshly-built ewc-client (sibling of
-⍝                            /work/ewc, so EWC.Init's auto-discovery
-⍝                            picks it up)
+⍝   /work/ewc  → the whole repo. The APL server, the demos and the
+⍝                freshly-built client/dist are all under it, so
+⍝                EWC.Init resolves FOLDER,'client/dist/' directly.
 
 ]link.create /work/ewc/EWC
 ]link.create /work/ewc/demo

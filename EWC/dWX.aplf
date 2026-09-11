@@ -1,0 +1,34 @@
+ {R}←{timeout}dWX args;Name;Method;Info;caller;ID;conn;WX;wx;msg;z;⎕TRAP;txt
+⍝ Optional left argument: seconds to wait for the client, defaulting to
+⍝ WG_TIMEOUT. Loading a plugin's JavaScript can take longer than a property read.
+ ⎕TRAP←0 'S'
+ :If 0=⎕NC'timeout' ⋄ timeout←WG_TIMEOUT ⋄ :EndIf
+ (Name Method)←2↑args ⋄ Info←2↓args
+
+ :If 'gettextsize'≡⎕C Method
+ :AndIf 1=⍴⍴txt←⊃Info
+     (⊃Info)←,⊂txt ⍝ Make vector a 1-element list
+ :EndIf
+
+ caller←findCaller
+ Name←⊃caller removeCaller Name
+
+ (ID conn)←getConnection caller Name
+ WX←⎕NS''
+ wx←WX.WX←⎕NS''
+ WGID+←1
+ wx.(ID Method Info WGID)←Name Method Info(⍕WGID)
+
+ msg←⎕JSON⍠'HighRank' 'Split'⊢WX
+ :If CONNECTED∧conn≥0
+     'T'Log'#',(⍕conn),': ',msg
+     z←conn WSS.Send msg
+ :Else
+     'T'Log'(no connection): ',msg
+ :EndIf
+
+ :Trap 6 ⍝ If we get no response
+     R←msg WaitForWG 'WX' ID(⍕WGID)timeout
+ :Else
+     ⎕DMX.EM ⎕SIGNAL ⎕DMX.EN
+ :EndTrap

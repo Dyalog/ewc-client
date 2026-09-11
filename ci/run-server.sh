@@ -34,7 +34,7 @@ BANNER
 
 # Which APL setup to feed in. Defaults to the Browser-mode demo server;
 # ci/ewc-multi-start.sh overrides it to bring up Multi mode instead.
-SETUP_APL="${SETUP_APL:-/scripts/setup-ewc.apl}"
+SETUP_APL="${SETUP_APL:-/work/ewc/ci/setup-ewc.apl}"
 
 # Feed the APL setup, then hold stdin with a long sleep so dyalog
 # stays alive in demo.Run's wait loop.

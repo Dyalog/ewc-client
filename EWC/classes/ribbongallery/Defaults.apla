@@ -1,0 +1,17 @@
+(
+ 'RibbonGroupDropDown'
+ ''
+ 2
+ 30
+ 150
+ ⍬
+ (
+ 'Type'
+ 'Caption'
+ 'Cols'
+ 'ItemHeight'
+ 'ItemWidth'
+ 'Data'
+ 'PropList'
+ )
+)

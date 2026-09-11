@@ -1,0 +1,9 @@
+(
+ 'GetTextSize'
+ 'GetFocus'
+ 'SetCookie'
+ 'GetCookie'
+ 'SetTitle'
+ 'GetTitle'
+ 'EvalJS'
+)

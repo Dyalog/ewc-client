@@ -1,0 +1,43 @@
+ DemoGridEmployees connected;F;Surname;JobTitle;Region;Salary;DATA;Jobs;Regions
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ The classic ⎕WC Grid "Employee DataBase" example, ported to the EWC Grid
+⍝ (⎕WC → eWC, property assignments → eWS). Shown twice to contrast ShowInput:
+⍝   • top grid    — ShowInput unset: Combo inputs appear only on the current cell
+⍝   • bottom grid — ShowInput 1: Combo inputs are shown in every row
+
+ F←'F1'
+ F eWC'Form' 'Employee DataBase'(50 50)(320 445)('Coord' 'Pixel')
+
+ Surname←'Brown' 'Jones' 'Green' 'Black' 'White'
+ JobTitle←'Manager' 'Project Leader' 'Consultant'
+ JobTitle,←'Programmer' 'Assistant'
+ Region←'South' 'South' 'South' 'East' 'Central'
+ Salary←64000 43250 45000 30000 4000
+ DATA←↑[0.5]Surname JobTitle Region Salary
+ Jobs←JobTitle
+ Regions←'North' 'South' 'East' 'West' 'Central'
+
+⍝ ─── Grid 1: ShowInput unset — inputs appear only on the current cell ───
+ (F,'.LBL1')eWC'Label' 'ShowInput unset — inputs appear on the current cell'(48 10)(18 420)
+ (F,'.G')eWC'Grid'('Values' DATA)('Posn'(70 10))('Size'(102 403))
+ (F,'.G.JobTitle')eWC'Combo'('Items' Jobs)
+ (F,'.G.Region')eWC'Combo'('Items' Regions)
+ (F,'.G.Salary')eWC'Label'('FieldType' 'Currency')
+ (F,'.G')eWS'Input'('' (F,'.G.JobTitle')(F,'.G.Region')(F,'.G.Salary'))
+ (F,'.G')eWS'CellTypes'((⍴DATA)⍴1 2 3 4)
+ (F,'.G')eWS'TitleWidth' 0
+ (F,'.G')eWS'ColTitles'('Surname' 'Job Title' 'Region' 'Salary')
+
+⍝ ─── Grid 2: identical, but ShowInput 1 — Combo inputs shown in every row ───
+ (F,'.LBL2')eWC'Label' 'ShowInput 1 — Combo inputs shown in every row'(184 10)(18 420)
+ (F,'.G2')eWC'Grid'('Values' DATA)('Posn'(206 10))('Size'(102 403))
+ (F,'.G2.JobTitle')eWC'Combo'('Items' Jobs)
+ (F,'.G2.Region')eWC'Combo'('Items' Regions)
+ (F,'.G2.Salary')eWC'Label'('FieldType' 'Currency')
+ (F,'.G2')eWS'Input'('' (F,'.G2.JobTitle')(F,'.G2.Region')(F,'.G2.Salary'))
+ (F,'.G2')eWS'CellTypes'((⍴DATA)⍴1 2 3 4)
+ (F,'.G2')eWS'TitleWidth' 0
+ (F,'.G2')eWS'ColTitles'('Surname' 'Job Title' 'Region' 'Salary')
+ (F,'.G2')eWS'ShowInput' 1

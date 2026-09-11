@@ -1,0 +1,44 @@
+Make;folder;r;classes;class;root;yml;p;f;t;i;e;expected;present;stale;mdf;DocsRoot
+⍝ Generate Class documentation
+
+root←{⊃⎕NPARTS ¯1↓⍵}⍣3⊢4⊃5179⌶⊃⎕SI
+:If 0=≢root                      ⍝ no source path (headless/CI) → use current directory
+    root←⊃1 ⎕NPARTS 'x'
+:EndIf
+folder←root,'docs/ObjectRef'
+
+⍝ Locate the object-reference doc source (sibling checkout) so AddDocLink only
+⍝ links names that have a Dyalog page; if it is absent, all names are linked
+DocsRoot←(⊃⎕NPARTS ¯1↓root),'documentation/object-reference/docs/'
+:If ~⎕NEXISTS DocsRoot
+    ⎕←'Note: doc source not found at ',DocsRoot,' — linking all names'
+    DocsRoot←''
+:EndIf
+
+r←'# Classes' '',,Classes
+r Put folder,'/Classes.md'
+
+classes←##.classes.(⍎¨⎕NL -9).ClassName
+
+:For class :In classes
+   r←('# ',class) '',,Details class
+   r Put folder,'/',class,'.md'
+:EndFor
+
+⍝ Prune docs for classes that no longer exist (orphans left by removals)
+expected←(⊂'Classes.md'),classes,¨⊂'.md'
+present←{(2⊃mdf),3⊃mdf←⎕NPARTS ⍵}¨⊃(⎕NINFO⍠1)folder,'/*.md'
+:For stale :In (present~expected)
+    ⎕←'Deleting ',folder,'/',stale
+    ⎕NDELETE folder,'/',stale
+:EndFor
+
+yml←⊃⎕NGET (f←root,'mkdocs.yml') 1
+:If (≢yml)≥p←yml⍳⊂'  - Supported Features:'
+    t←p↑yml
+    i←((↑p↓yml)∧.=' ')⍳1
+    e←(¯1+p+i)↓yml
+    (t,('    - ObjectRef/'∘,¨(⊂'Classes.md'),classes,¨⊂'.md'),e) Put f
+:Else
+    ⎕←'Unable to update ',f,': Supported Features section not found'
+:EndIf

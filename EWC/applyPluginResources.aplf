@@ -1,0 +1,7 @@
+ applyPluginResources;nm
+ :If 9≠⎕NC'PLUGINS' ⋄ →0 ⋄ :EndIf
+ :For nm :In PLUGINS.⎕NL ¯9
+     :If 'classes'≢nm
+         applyResources PLUGINS⍎nm
+     :EndIf
+ :EndFor

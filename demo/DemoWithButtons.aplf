@@ -1,0 +1,19 @@
+ DemoWithButtons connected;F;z
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ F←'F1'
+ :With F eWC'Form' 'Buttons'(50 50)(200 300)('Coord' 'Pixel')
+     :With 'FRUIT' #.demo.eWC'Group' 'Pick a Fruit'('Posn'(10 10))('Size'(80 280))
+         'C1' #.demo.eWC'Button' 'Apple'(13 10)(23 100)('Style' 'Radio')('Event' 'Select' 'CBUpdateButtons')
+         'C2' #.demo.eWC'Button' 'Banana'(33 10)(23 100)('Style' 'Radio')('Event' 'Select' 'CBUpdateButtons')
+         'C2' #.demo.eWS 'State' 1 ⍝ Have a Banana!
+         :If 1≠z←'C1' #.demo.eWG 'State' ⋄ ⎕←'C1 state is ',⍕z ⋄ :EndIf
+         'C3' #.demo.eWC'Button' 'Pear'(53 10)(23 100)('Style' 'Radio')('Event' 'Select' 'CBUpdateButtons')
+
+     :EndWith
+     'ICE'#.demo.eWC'Button' 'Ice Cream'(100 10)(23 100)('Style' 'Check')('Event' 'Select' 'CBUpdateButtons')('Align' 'Right')
+     'CHOKO'#.demo.eWC'Button' 'Chocolate'(125 10)(23 100)('Style' 'Check')('Event' 'Select' 'CBUpdateButtons')('Align' 'Left')
+     'STATUS'#.demo.eWC'Label' 'Click on something!'(175 10)(23 300)
+     #.demo.eNQ 'CHOKO' 'Select'
+ :EndWith

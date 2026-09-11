@@ -1,0 +1,10 @@
+ r Put file
+
+ :If ⎕NEXISTS file
+     old←⊃⎕NGET file 1
+     :If r≡old
+         →0
+     :EndIf
+ :EndIf
+ ⎕←'Updated ',file
+ (⊂r)⎕NPUT file 1

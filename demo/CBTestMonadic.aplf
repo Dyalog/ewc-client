@@ -1,0 +1,2 @@
+r←CBTestMonadic args
+⎕←'This is CBTestMonadic: ' args 'in thread' ⎕TID

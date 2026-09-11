@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { acAccepts, acPropagates, acEffective } from '../../../../src/utils/autoconfGate';
+import { acAccepts, acPropagates, acEffective } from '../../../../client/src/utils/autoconfGate';
 
 // Our understanding of AutoConf from docs:
 //   AutoConf | on parent resize      | when itself resized (its children)

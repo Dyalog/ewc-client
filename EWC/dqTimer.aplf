@@ -1,0 +1,31 @@
+ dqTimer args;R;done;code;sns;names;i;n;e;m;timer;name;⎕TRAP
+⍝ Handle one Timer event for interactive operation - called on event 1001
+ R←3⊃args
+
+ :If (⊂'∆DQ')∊⎕SI    ⍝ If we are in a ∆DQ
+     done←0 ⋄ names←0⍴⊂''
+     :If 'N'∊LOGMODES
+         'N'Log'Message received for ',(⊃args),': ',1 ⎕JSON⍠'HighRank' 'Split'⊢R
+     :EndIf
+     :If MODE=2
+         R.CodeLocation←⍕caller
+     :EndIf
+     :If 0=caller.⎕NC name←R.Event.ID
+         'W'Log'Ignoring event on non-existent object ',R.Event.ID
+         →0
+     :Else
+         names←(⊃args) ⎕WG 'Data'
+         (done R)←processEvent R
+     :EndIf
+     done∨←∧/0=caller.⎕NC names,{0=≢⍵:⍬ ⋄ ⍵.Event.ID}R ⍝ All DQ'd AND the target object gone?
+     :If done
+         ⎕NQ (⊃args) 1002 R ⍝ Terminate ∆DQ
+     :EndIf
+
+ :Else
+     code←⍎sns←{(-(⌽⍵)⍳'.')↓⍵}⊃args
+     :If 0≠≢R
+         R.CodeLocation←{(-(⌽⍵)⍳'.')↓⍵}sns
+         done←processEvent R
+     :EndIf
+ :EndIf

@@ -1,0 +1,71 @@
+ DemoSubFormNested connected
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Nested SubForm Demo - Tests components inside SubForm inside SubForm
+⍝ Targets: Bug 1 (key), Bug 3 (localStorage shadowing), Bug 6 (race with 2 levels)
+⍝ Also tests: font inheritance chain, BCol isolation, EdgeStyle at multiple levels
+⍝ Each editable Edit has a Change event + mirror so its value can be tested round-trip
+
+ EWC.SF_EVENT_COUNT←0
+
+ 'F1'eWC'Form' 'Nested SubForm Tests'(50 50)(620 880)('Coord' 'Pixel')
+
+⍝ Font at Form level for inheritance testing
+ 'F1.FORMFONT'eWC'Font' 'Segoe UI' 13
+
+⍝ --- Outer SubForm ---
+⍝ Posn (50,10) leaves clearance for the demo menu combo at top-right
+ 'F1.OUTER'eWC'SubForm'('Posn'(50 10))('Size'(420 840))('EdgeStyle' 'Ridge')('BCol'(240 240 240))('FontObj' 'F1.FORMFONT')
+
+ 'F1.OUTER.L1'eWC'Label' 'Outer SubForm'(5 5)(20 200)('FCol'(0 0 150))
+
+⍝ Edit in outer SubForm + mirror
+ 'F1.OUTER.EDIT1'eWC'Edit' 'Outer edit'(30 10)(23 200)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.OUTER.EDIT1MIRROR'eWC'Label' 'Outer edit'(30 220)(23 200)
+
+⍝ Combo in outer SubForm
+ 'F1.OUTER.COMBO1'eWC'Combo'('Items'('Alpha' 'Beta' 'Gamma'))('Posn'(60 10))('Size'(23 150))('SelItems'(1 0 0))('Event' 'Select' 'CBSubFormDemo')
+
+⍝ --- Inner SubForm (nested inside outer) ---
+ 'F1.OUTER.INNER'eWC'SubForm'('Posn'(100 20))('Size'(290 800))('EdgeStyle' 'Groove')('BCol'(230 230 250))
+
+ 'F1.OUTER.INNER.L1'eWC'Label' 'Inner SubForm (nested)'(5 5)(20 200)('FCol'(150 0 0))
+
+⍝ Edit in inner SubForm (2 levels deep) + mirror
+ 'F1.OUTER.INNER.EDIT1'eWC'Edit' 'Inner edit'(30 10)(23 200)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.OUTER.INNER.EDIT1MIRROR'eWC'Label' 'Inner edit'(30 220)(23 200)
+
+⍝ Numeric Edit in inner SubForm (tests Locale from 2 levels deep) + mirror
+ 'F1.OUTER.INNER.EDIT2'eWC'Edit' '9999'(60 10)(23 200)('FieldType' 'Numeric')('Decimals' 0)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.OUTER.INNER.EDIT2MIRROR'eWC'Label' '9999'(60 220)(23 200)
+
+⍝ Combo in inner SubForm (tests portal + localStorage at 2 levels)
+ 'F1.OUTER.INNER.COMBO1'eWC'Combo'('Items'('Red' 'Green' 'Blue'))('Posn'(90 10))('Size'(23 150))('SelItems'(0 1 0))('Event' 'Select' 'CBSubFormDemo')
+
+⍝ Button in inner SubForm (tests getElementById at 2 levels)
+ 'F1.OUTER.INNER.BTN1'eWC'Button' 'Nested Button'(130 10)(23 120)('Event' 'Select' 'CBSubFormDemo')
+
+⍝ Checkbox in inner SubForm
+ 'F1.OUTER.INNER.CHK1'eWC'Button' 'Nested Check'(160 10)(23 130)('Style' 'Check')('State' 0)('Event' 'Select' 'CBSubFormDemo')
+
+⍝ Edit with EdgeStyle in inner SubForm (deepest nesting for EdgeStyle) + mirror
+ 'F1.OUTER.INNER.ES1'eWC'Edit' 'Ridge nested'(200 10)(23 150)('EdgeStyle' 'Ridge')('Event' 'Change' 'CBSubFormDemo')
+ 'F1.OUTER.INNER.ES1MIRROR'eWC'Label' 'Ridge nested'(200 170)(23 200)
+
+⍝ Second Edit in inner SubForm (for cross-level isolation test, Bug 1) + mirror
+ 'F1.OUTER.INNER.EDIT3'eWC'Edit' 'Another inner'(230 10)(23 200)('Event' 'Change' 'CBSubFormDemo')
+ 'F1.OUTER.INNER.EDIT3MIRROR'eWC'Label' 'Another inner'(230 220)(23 200)
+
+⍝ Manual mirror-update button for nested edits (diagnostic)
+ 'F1.OUTER.INNER.UPDATEBTN'eWC'Button' 'Update Mirrors'(265 10)(23 130)('Event' 'Select' 'CBSubFormDemo')
+
+⍝ Single-event display inside inner SubForm
+ 'F1.OUTER.INNER.RESL'eWC'Label' 'Last event:'(295 10)(20 80)
+ 'F1.OUTER.INNER.RESULT'eWC'Label' '(none)'(295 100)(23 300)
+
+⍝ Outside both SubForms
+ 'F1.OUTSIDE'eWC'Label' 'Outside: OK'(490 10)(23 200)
+
+⍝ Event counter
+ 'F1.COUNT'eWC'Label' 'Events: 0'(520 10)(23 200)
