@@ -35,13 +35,12 @@ if [ ! -d "$EWC_SRC/test-apps/multitest" ]; then
     exit 1
 fi
 
-# Without dist/, EWC's JSClientFolder auto-discovery falls back to the
-# bundled client inside Dyalog/ewc — i.e. not your local changes.
-if [ ! -d dist ]; then
-    echo "WARNING: dist/ is missing. EWC will fall back to the bundled" >&2
-    echo "         client in Dyalog/ewc, not your local changes."     >&2
-    echo "         Run 'yarn build' first if you're testing UI work." >&2
-    echo                                                              >&2
+# client/dist is no longer committed, so a missing build is fatal rather
+# than a silent fall-back to a stale bundled copy.
+if [ ! -d "$EWC_SRC/client/dist" ]; then
+    echo "ERROR: client/dist is missing — the server has no client to serve." >&2
+    echo "       Run 'yarn build' from the repo root first."                  >&2
+    exit 1
 fi
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true

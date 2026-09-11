@@ -1,0 +1,28 @@
+ CBProbe args;want;got;bad;i;n
+⍝ Hammer the synchronous WG round-trip and report whether every reply came
+⍝ back to the session that asked. eWG parks the session thread on a ⎕TGET
+⍝ token that EWC's Listen thread ⎕TPUTs to; under Multi that token is
+⍝ per-session
+
+ n←8
+ want←⍕⎕THIS
+ bad←''
+
+ :Trap 0
+     :For i :In ⍳n
+         got←∊'F1.TOKEN'eWG'Text'
+         :If got≢want
+             bad,←' ',got
+         :EndIf
+         {}'F1'eWG'Size'
+     :EndFor
+
+     :If 0=≢bad
+         'F1.PROBE'eWS'Caption'('OK ',want,' x',⍕n)
+     :Else
+         'F1.PROBE'eWS'Caption'('CROSSED ',want,' got:',bad)
+     :EndIf
+ :Else
+     ⍝ Surface a WG timeout as text, so the JS test reports it rather than hangs
+     'F1.PROBE'eWS'Caption'('ERROR ',∊⊃⎕DMX.DM)
+ :EndTrap
