@@ -1,8 +1,9 @@
-r←GetClass (ns name);t;c;m
+r←GetClass (ns name);t;m
+r←⎕NULL
 :If 9=⎕NC 'ns'
 :AndIf ∨/m←0≠ns.⎕NC t←name∘,¨'.type' '.Type'
-:AndIf 9=⎕NC c←'classes.',⎕C ns⍎⊃m/t
-    r←⍎c
-:Else
+    r←findClass ns⍎⊃m/t
+:EndIf
+:If ⎕NULL≡r
     ('Not a supported GUI object: ',name) ⎕SIGNAL 6
 :EndIf

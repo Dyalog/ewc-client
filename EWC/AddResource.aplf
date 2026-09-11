@@ -1,0 +1,19 @@
+ alias AddResource folder;m;rc
+⍝ Serve a folder over HTTP as a virtual folder, e.g.
+⍝     'widgets' AddResource '/path/to/some/folder'
+⍝ makes that folder's contents available at /widgets/. Takes effect immediately -
+⍝ wss reads its mappings per request - so this works before or after Init.
+ 'Alias must not contain "/"'⎕SIGNAL('/'∊alias)/11
+ :If 2≠⎕NC'RESOURCES' ⋄ RESOURCES←0 2⍴⊂'' ⋄ :EndIf
+ :If 2≠⍴⍴RESOURCES ⋄ RESOURCES←1 2⍴RESOURCES ⋄ :EndIf
+
+ m←(0≠≢¨RESOURCES[;1])∧~RESOURCES[;1]∊⊂alias
+ RESOURCES←(m⌿RESOURCES)⍪alias folder
+
+ :If 9=⌊⎕NC'WSS'
+     WSS.Aliases←RESOURCES
+     rc←WSS.CheckAliases
+     :If 0≠⊃rc
+         'W'Log'AddResource ',alias,': ',2⊃rc
+     :EndIf
+ :EndIf

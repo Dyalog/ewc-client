@@ -1,0 +1,31 @@
+ {r}←RegisterPlugin plugin;name;nm;target
+⍝ Register a plugin with EWC. Safe before or after Init.
+⍝
+⍝ plugin is a namespace ref providing:
+⍝   Name      plugin id; also the key its classes are tagged with
+⍝   Classes   ref to a namespace whose sub-namespaces are EWC class definitions
+⍝   Folder    the plugin's root folder on disk
+⍝   Inject    (optional) niladic fn returning the JavaScript to evaluate in the
+⍝             client, the first time one of the plugin's classes is created
+⍝   Resources (optional) an (alias folder) pair, or a 2-column matrix of them
+⍝
+⍝ Class definitions are copied rather than referenced, so a plugin can be
+⍝ re-registered after editing its source without stale state.
+ ensurePlugins
+ 'Plugin must supply a Name'⎕SIGNAL(2≠plugin.⎕NC'Name')/11
+ 'Plugin must supply Classes'⎕SIGNAL(9≠plugin.⎕NC'Classes')/11
+ r←name←,plugin.Name
+
+ ⍎'PLUGINS.',name,'←plugin'
+
+ :For nm :In plugin.Classes.⎕NL ¯9
+     nm validateClass plugin.Classes⍎nm
+     target←(⍕PLUGINS),'.classes.',nm
+     target ⎕NS plugin.Classes⍎nm
+     (⍎target).PluginName←name
+ :EndFor
+ ensurePlugins ⍝ the class namespaces are new, so detach those too
+
+ applyResources plugin
+
+ 'D'Log'Registered plugin "',name,'", classes: ',⍕plugin.Classes.⎕NL ¯9

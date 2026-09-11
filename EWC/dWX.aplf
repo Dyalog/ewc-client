@@ -1,5 +1,8 @@
- {R}←dWX args;Name;Method;Info;caller;ID;conn;WX;wx;msg;z;⎕TRAP;txt
+ {R}←{timeout}dWX args;Name;Method;Info;caller;ID;conn;WX;wx;msg;z;⎕TRAP;txt
+⍝ Optional left argument: seconds to wait for the client, defaulting to
+⍝ WG_TIMEOUT. Loading a plugin's JavaScript can take longer than a property read.
  ⎕TRAP←0 'S'
+ :If 0=⎕NC'timeout' ⋄ timeout←WG_TIMEOUT ⋄ :EndIf
  (Name Method)←2↑args ⋄ Info←2↓args
 
  :If 'gettextsize'≡⎕C Method
@@ -25,7 +28,7 @@
  :EndIf
 
  :Trap 6 ⍝ If we get no response
-     R←msg WaitForWG 'WX' ID(⍕WGID)
+     R←msg WaitForWG 'WX' ID(⍕WGID)timeout
  :Else
      ⎕DMX.EM ⎕SIGNAL ⎕DMX.EN
  :EndTrap

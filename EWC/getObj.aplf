@@ -1,11 +1,9 @@
- (type class objref)←getObj Name;t
+ (type class objref)←getObj Name
 
  :Trap 0
      objref←caller⍎Name
      type←objref.Type
-     :If 9=classes.⎕NC t←⎕C type
-         class←classes⍎t
-     :Else
+     :If ⎕NULL≡class←findClass type
          Warning'Unsupported class: ',type
          ⎕←Props
          →0

@@ -1,12 +1,13 @@
- R←msg WaitForWG(Props ID WGID);j;⎕TRAP;p;seqok;nl;nlc;m;t;token;wx;z;ref;ok
+ R←msg WaitForWG arg;Props;ID;WGID;timeout;j;⎕TRAP;p;seqok;nl;nlc;m;t;token;wx;z;ref;ok
+ (Props ID WGID timeout)←4↑arg,⊂WG_TIMEOUT
 
  wx←Props≡'WX' ⍝ A WX rather than a WG
 
  token←WG_TOKENBASE+TOKENSTEP×1⌈ID×MODE=2
 AGAIN:
- j←WG_TIMEOUT ⎕TGET token
+ j←timeout ⎕TGET token
  :If 0=≢j
-     'W' Log 'Client did not respond within ',(⍕WG_TIMEOUT),' seconds.'
+     'W' Log 'Client did not respond within ',(⍕timeout),' seconds.'
      'W' Log 'Request was: ',msg
      ⎕SIGNAL 6
  :EndIf

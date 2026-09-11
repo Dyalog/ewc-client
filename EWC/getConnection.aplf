@@ -1,23 +1,14 @@
- r←getConnection(caller names);name;top;n;p
- name←,⊃⊆names
- n←≢p←(⍕caller),'.'
- name←(n×p≡n↑name)↓name ⍝ drop caller prefix
- top←(¯1+name⍳'.')↑name
+ r←getConnection(caller names);ns
+ ns←caller sessionNS names
 
- :If 9=caller.⎕NC n←top,'.HR._EWC'
-     r←(caller⍎n).(ID conn)
-
- :ElseIf MODE=2 ⍝ Multi
-     :If 9=caller.⎕NC'_EWC'
-         r←caller._EWC.(ID conn)
-     :Else
-         ∘∘∘ ⍝ Unable to locate app session
-     :EndIf
-
- :Else
+ :If ⎕NULL≢ns
      :Trap 0
-         r←CODELOCATION._EWC.(ID conn)
+         r←ns.(ID conn)
      :Else
          r←0 ¯1 ⍝ no connection: ¯1 is an invalid conn (0 is a VALID Conga connection)
      :EndTrap
+ :ElseIf MODE=2 ⍝ Multi
+     ∘∘∘ ⍝ Unable to locate app session
+ :Else
+     r←0 ¯1
  :EndIf

@@ -17,15 +17,19 @@
      →0⊣R←nsname caller.⎕WC Props
  :EndIf
 
- :If 9≠classes.⎕NC type
+ class←findClass type
+ :If ⎕NULL≡class
      Warning 'WC ',Name,' - unsupported class "',type,'"'
-     ⎕←⎕SE.UCMD 'disp ⍪Props'
+     :Trap 0 ⋄ ⎕←⎕SE.UCMD 'disp ⍪Props' ⋄ :EndTrap ⍝ disp UCMD returns no result headless -> must not halt the WC
      nsname caller.⎕NS''
      (caller⍎nsname).Type←type
      →0
  :EndIf
 
- class←classes⍎type
+ :If 2=class.⎕NC'PluginName' ⍝ First use of a plugin class loads its JS
+     caller injectPlugin class.PluginName Name
+ :EndIf
+
  proplist←⎕C PropList←class.PropList
  valid←(lcp←⎕C propnames)∊allprops←⎕C AllProps←PropList,objProps,deprecatedprops
  values←valid↓¨Props
@@ -111,7 +115,7 @@
 
  :If (type≡'form')∨modal
      :If 2=caller.⎕NC Name,'.Coord'
-     :AndIf ~(⊂caller⍎Name,'.Coord')∊'Pixel' 'ScaledPixel'
+     :AndIf ~(⊂⎕C caller⍎Name,'.Coord')∊'pixel' 'scaledpixel'
          'Coord must be Pixel or ScaledPixel'⎕SIGNAL 11
      :EndIf
      SendSettings 2⊃getConnection caller Name

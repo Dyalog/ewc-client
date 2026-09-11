@@ -10,3 +10,4 @@ setDefaults
  'BREAK'        default ⍬ ⍬ ⍝ IDs Events
  'SHOWDEVTOOLS' default 0
  'FONTMAP'      default FontMap
+ 'PLUGIN_TIMEOUT' default 30 ⍝ Seconds to wait while a plugin's JS loads
