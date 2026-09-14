@@ -6,3 +6,8 @@ The EWC implementation of RibbonDropDownButton supports:
 |--|--|--|--|
  |   Caption  |   Event  |   ImageIndex    |           |
  |   Data     |   Icon   |   ImageListObj  |           |
+
+
+| Events|  |  |  |
+|--|--|--|--|
+ |  Select  |          |          |         |

@@ -4,9 +4,10 @@ The EWC implementation of [`⎕WC` class SubForm](https://docs.dyalog.com/20.0/o
 
 | Properties|  |  |  |
 |--|--|--|--|
- |   [BCol](https://docs.dyalog.com/20.0/object-reference/properties/bcol/)      |   [Caption](https://docs.dyalog.com/20.0/object-reference/properties/caption/)      |   [Picture](https://docs.dyalog.com/20.0/object-reference/properties/picture/)  |   [TabObj](https://docs.dyalog.com/20.0/object-reference/properties/tabobj/)   |
- |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)  |   [EdgeStyle](https://docs.dyalog.com/20.0/object-reference/properties/edgestyle/)  |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)        |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
- |   CSS                                                                         |   Flex                                                                              |  *[Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)        |                                                                                |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)      |   CSS                                                                               |   [Picture](https://docs.dyalog.com/20.0/object-reference/properties/picture/)  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   [AutoConf](https://docs.dyalog.com/20.0/object-reference/properties/autoconf/)  |   [Caption](https://docs.dyalog.com/20.0/object-reference/properties/caption/)      |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)        |                                                                                |
+ |   [BCol](https://docs.dyalog.com/20.0/object-reference/properties/bcol/)          |   [EdgeStyle](https://docs.dyalog.com/20.0/object-reference/properties/edgestyle/)  |  *[Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)        |                                                                                |
+ |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)      |   Flex                                                                              |   [TabObj](https://docs.dyalog.com/20.0/object-reference/properties/tabobj/)    |                                                                                |
 
 \* indicates that the property can change after it has been set.
 

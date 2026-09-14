@@ -19,6 +19,7 @@ nav:
     - ObjectRef/BitMap.md
     - ObjectRef/Button.md
     - ObjectRef/Circle.md
+    - ObjectRef/ColorButton.md
     - ObjectRef/Combo.md
     - ObjectRef/CssStyle.md
     - ObjectRef/Div.md
@@ -58,6 +59,7 @@ nav:
     - ObjectRef/TabControl.md
     - ObjectRef/Text.md
     - ObjectRef/Timer.md
+    - ObjectRef/Trackbar.md
     - ObjectRef/TreeView.md
     - ObjectRef/Upload.md
     

@@ -4,8 +4,9 @@ The EWC implementation of [`⎕WC` class List](https://docs.dyalog.com/20.0/obje
 
 | Properties|  |  |  |
 |--|--|--|--|
- |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)  |   [EdgeStyle](https://docs.dyalog.com/20.0/object-reference/properties/edgestyle/)  |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)          |  *[Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)       |
- |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)  |   [Items](https://docs.dyalog.com/20.0/object-reference/properties/items/)          |  *[SelItems](https://docs.dyalog.com/20.0/object-reference/properties/selitems/)  |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/) |
+ |   [Attach](https://docs.dyalog.com/20.0/object-reference/properties/attach/)      |   [EdgeStyle](https://docs.dyalog.com/20.0/object-reference/properties/edgestyle/)  |  *[SelItems](https://docs.dyalog.com/20.0/object-reference/properties/selitems/)  |                                                                              |
+ |   [AutoConf](https://docs.dyalog.com/20.0/object-reference/properties/autoconf/)  |   [Items](https://docs.dyalog.com/20.0/object-reference/properties/items/)          |  *[Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)          |                                                                              |
+ |   [Border](https://docs.dyalog.com/20.0/object-reference/properties/border/)      |  *[Posn](https://docs.dyalog.com/20.0/object-reference/properties/posn/)            |   [Visible](https://docs.dyalog.com/20.0/object-reference/properties/visible/)    |                                                                              |
 
 \* indicates that the property can change after it has been set.
 

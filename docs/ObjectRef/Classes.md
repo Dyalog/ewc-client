@@ -4,15 +4,16 @@ EWC has some degree of support for the following `⎕WC` classes:
 
 | `⎕WC` Classes|  |  |  |
 |--|--|--|--|
- |   [BitMap](BitMap.md)      |   [Form](Form.md)            |   [ListView](ListView.md)  |   [StatusBar](StatusBar.md)     |
- |   [Button](Button.md)      |   [Grid](Grid.md)            |   [Menu](Menu.md)          |   [StatusField](StatusField.md) |
- |   [Circle](Circle.md)      |   [Group](Group.md)          |   [MenuBar](MenuBar.md)    |   [SubForm](SubForm.md)         |
- |   [Combo](Combo.md)        |   [Icon](Icon.md)            |   [MenuItem](MenuItem.md)  |   [TabButton](TabButton.md)     |
- |   [CssStyle](CssStyle.md)  |   [Image](Image.md)          |   [MsgBox](MsgBox.md)      |   [TabControl](TabControl.md)   |
- |   [Div](Div.md)            |   [ImageList](ImageList.md)  |   [Poly](Poly.md)          |   [Text](Text.md)               |
- |   [Edit](Edit.md)          |   [Label](Label.md)          |   [Rect](Rect.md)          |   [Timer](Timer.md)             |
- |   [Ellipse](Ellipse.md)    |   [Link](Link.md)            |   [Scroll](Scroll.md)      |   [TreeView](TreeView.md)       |
- |   [Font](Font.md)          |   [List](List.md)            |   [Splitter](Splitter.md)  |   [Upload](Upload.md)           |
+ |   [BitMap](BitMap.md)            |   [Form](Form.md)            |   [Menu](Menu.md)                |   [SubForm](SubForm.md)       |
+ |   [Button](Button.md)            |   [Grid](Grid.md)            |   [MenuBar](MenuBar.md)          |   [TabButton](TabButton.md)   |
+ |   [Circle](Circle.md)            |   [Group](Group.md)          |   [MenuItem](MenuItem.md)        |   [TabControl](TabControl.md) |
+ |   [ColorButton](ColorButton.md)  |   [Icon](Icon.md)            |   [MsgBox](MsgBox.md)            |   [Text](Text.md)             |
+ |   [Combo](Combo.md)              |   [Image](Image.md)          |   [Poly](Poly.md)                |   [Timer](Timer.md)           |
+ |   [CssStyle](CssStyle.md)        |   [ImageList](ImageList.md)  |   [Rect](Rect.md)                |   [Trackbar](Trackbar.md)     |
+ |   [Div](Div.md)                  |   [Label](Label.md)          |   [Scroll](Scroll.md)            |   [TreeView](TreeView.md)     |
+ |   [Edit](Edit.md)                |   [Link](Link.md)            |   [Splitter](Splitter.md)        |   [Upload](Upload.md)         |
+ |   [Ellipse](Ellipse.md)          |   [List](List.md)            |   [StatusBar](StatusBar.md)      |                               |
+ |   [Font](Font.md)                |   [ListView](ListView.md)    |   [StatusField](StatusField.md)  |                               |
 
 EWC adds the following classes not supported by `⎕WC`:
 

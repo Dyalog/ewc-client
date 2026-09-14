@@ -4,7 +4,7 @@ The EWC implementation of [`⎕WC` class BitMap](https://docs.dyalog.com/20.0/ob
 
 | Properties|  |  |  |
 |--|--|--|--|
- |   [File](https://docs.dyalog.com/20.0/object-reference/properties/file/)  |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/)  |                                                                           |                                                                          |
+ |   [CBits](https://docs.dyalog.com/20.0/object-reference/properties/cbits/)  |   [File](https://docs.dyalog.com/20.0/object-reference/properties/file/)  |   [KeepBits](https://docs.dyalog.com/20.0/object-reference/properties/keepbits/)  |   [Size](https://docs.dyalog.com/20.0/object-reference/properties/size/) |
 
 NB: Links above are to the complete `⎕WC` documentation
 
