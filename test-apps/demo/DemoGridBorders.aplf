@@ -1,0 +1,23 @@
+ DemoGridBorders connected;F;values;colTitles;rowTitles
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Grid Borders Demo
+⍝ Exercises the Border property on Grid: Border 1 (visible) vs Border 0 (none).
+⍝ Two grids side by side with otherwise identical configuration.
+
+ F←'F1'
+ F eWC'Form' 'Grid Border Property'(50 50)(420 760)('Coord' 'Pixel')
+
+⍝ Shared 3×2 data
+ values←3 2⍴'Alpha' 1 'Beta' 2 'Gamma' 3
+ colTitles←'Name' 'Value'
+ rowTitles←⍳3
+
+⍝ Left grid: Border 1 (default) — visible 1px border around the grid
+ (F,'.LBL1')eWC'Label' 'Border 1 (default)'(10 20)(20 200)
+ (F,'.G1')eWC'Grid'('Posn'(40 20))('Size'(70 303))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('Border' 1)
+
+⍝ Right grid: Border 0 — grid renders with no outer border
+ (F,'.LBL0')eWC'Label' 'Border 0 (no border)'(10 380)(20 200)
+ (F,'.G0')eWC'Grid'('Posn'(40 380))('Size'(68 301))('Values' values)('ColTitles' colTitles)('RowTitles' rowTitles)('Border' 0)

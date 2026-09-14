@@ -1,0 +1,4 @@
+ r←left CBTestDyadic args
+ ⎕←'This is CBTestDyadic: 'args'with left:'left
+ ⎕←'⎕TRAP is: ' ⎕TRAP
+ 'CBTestDyalog signalling 666' ⎕SIGNAL 666

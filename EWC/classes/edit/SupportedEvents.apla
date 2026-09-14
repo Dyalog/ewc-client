@@ -1,0 +1,11 @@
+(
+ 'GotFocus'
+ 'LostFocus'
+ 'Change'
+ 'KeyPress'
+ 'MouseDown'
+ 'MouseUp'
+ 'MouseEnter'
+ 'MouseMove'
+ 'MouseLeave'
+)

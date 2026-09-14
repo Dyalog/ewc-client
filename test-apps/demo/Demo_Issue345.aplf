@@ -1,0 +1,13 @@
+ ctl←Demo_Issue345 connected;itm;size;Caption;ctl
+ ⎕PW←1000
+
+ itm←'0' '⎕LC'
+ Caption←20↑'Restart from:'
+ 'F1'eWC'Form'('Sizeable' 0)('Coord' 'Pixel')('Border' 3)('SysMenu' 0)('MaxButton' 0)('MinButton' 0)('OnTop' 1)
+ 'F1.myFont'eWC(⊂'Font'),(⎕SE.⎕WG'Font')
+ 'F1'eWS('FontObj' 'F1.myFont')('Caption'Caption)
+ size←2 eNQ'F1' 'GetTextSize'(↑itm,2⍴⊂Caption)'F1.myFont'
+ 'F1'eWS'Size' (100 300+size)
+ 'F1.label'eWC'Label' 'Select something' (0 0)
+ 'F1.combo'eWC'Combo'('Size'(size))('Posn'(0 0))('Items'(↑itm))('SelItems'(0 1))('Event' 'Select' 'CB_Issue345')
+ 'F1.ok'eWC'Button'('Visible' 0)('Default' 1)('Event' 'Select' 1)('Event' 'Select' 'CB_Issue345')

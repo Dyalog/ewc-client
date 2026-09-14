@@ -1,0 +1,11 @@
+make_EWC code;ns
+⍝ Create _EWC namespace with timer
+
+code.⎕EX'_EWC'
+ns←⍎'_EWC'code.⎕NS'' ⍝ Create Session State namespace
+ns.buffer←''         ⍝ Websocket receive buffer
+ns.TIMERACTIVE←TIMERNAME←'TIMER1'
+:If MODE≠2
+    make_EWC_TIMER ns ⍝ In MULTI mode, DQ must create the TIMER
+:EndIf
+establishCovers code 'e'

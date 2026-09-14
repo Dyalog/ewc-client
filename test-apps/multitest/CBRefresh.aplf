@@ -1,0 +1,7 @@
+ CBRefresh args
+
+ 'F1.CLONES'eWS'Caption'(cloneList ⍬)
+ 'F1.CLOSELOG'eWS'Caption'(closeList ⍬)
+
+ refreshes←refreshes+1
+ 'F1.REFRESHN'eWS'Caption'(⍕refreshes)

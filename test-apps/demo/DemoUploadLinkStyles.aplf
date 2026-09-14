@@ -1,0 +1,54 @@
+ DemoUploadLinkStyles connected
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ 'F1'eWC'Form' 'Upload and Link Styling Demo'(50 50)(600 700)('Coord' 'Pixel')
+
+ ⍝ Create fonts for demonstration
+ 'F1.FntSmall'eWC'Font' 'Arial' ('Size' 10)
+ 'F1.FntLarge'eWC'Font' 'Arial' ('Size' 18) ('Weight' 700)
+ 'F1.FntItalic'eWC'Font' 'Merriweather' ('Size' 14) ('Italic' 1)
+ 'F1.FntMono'eWC'Font' 'APL385 Unicode' ('Size' 12)
+
+ ⍝ Section: Links with different styles
+ 'F1.LBL1'eWC'Label' 'Links with FontObj:' ('Posn' 20 20) ('Size' 20 200) ('FontObj' 'F1.FntLarge')
+
+ 'F1.Link1'eWC'Link' 'http://dyalog.com' 'Small Font Link' ('Posn' 50 20) ('FontObj' 'F1.FntSmall')
+ 'F1.Link2'eWC'Link' 'http://dyalog.com' 'Large Bold Link' ('Posn' 80 20) ('FontObj' 'F1.FntLarge')
+ 'F1.Link3'eWC'Link' 'http://dyalog.com' 'Italic Serif Link' ('Posn' 110 20) ('FontObj' 'F1.FntItalic')
+ 'F1.Link4'eWC'Link' 'http://dyalog.com' 'Monospace Link' ('Posn' 140 20) ('FontObj' 'F1.FntMono')
+
+ ⍝ Section: Links with CSS
+ 'F1.LBL2'eWC'Label' 'Links with CSS:' ('Posn' 180 20) ('Size' 20 200) ('FontObj' 'F1.FntLarge')
+
+ 'F1.Link5'eWC'Link' 'http://dyalog.com' 'Red Link' ('Posn' 210 20) ('CSS' 'color: red')
+ 'F1.Link6'eWC'Link' 'http://dyalog.com' 'Green Background' ('Posn' 240 20) ('CSS' 'background-color: lightgreen; padding: 5px')
+ 'F1.Link7'eWC'Link' 'http://dyalog.com' 'Custom Border' ('Posn' 270 20) ('CSS' 'border: 2px solid blue; padding: 3px')
+
+ ⍝ Section: Links with Size
+ 'F1.LBL3'eWC'Label' 'Links with Size:' ('Posn' 310 20) ('Size' 20 200) ('FontObj' 'F1.FntLarge')
+
+ 'F1.Link8'eWC'Link' 'http://dyalog.com' 'Fixed Size Link' ('Posn' 340 20) ('Size' 30 200) ('CSS' 'background-color: lightyellow; display: block')
+
+ ⍝ Section: Upload with styles
+ 'F1.LBL4'eWC'Label' 'Upload with FontObj:' ('Posn' 390 20) ('Size' 20 200) ('FontObj' 'F1.FntLarge')
+
+ 'F1.Upload1'eWC'Upload' ('Posn' 420 20) ('FontObj' 'F1.FntSmall')
+ 'F1.Upload1Lbl'eWC'Label' '← Small font' ('Posn' 420 250)
+
+ 'F1.Upload2'eWC'Upload' ('Posn' 450 20) ('FontObj' 'F1.FntLarge')
+ 'F1.Upload2Lbl'eWC'Label' '← Large bold font' ('Posn' 450 250)
+
+ ⍝ Section: Upload with CSS
+ 'F1.LBL5'eWC'Label' 'Upload with CSS:' ('Posn' 490 20) ('Size' 20 200) ('FontObj' 'F1.FntLarge')
+
+ 'F1.Upload3'eWC'Upload' ('Posn' 520 20) ('CSS' 'background-color: lavender; padding: 5px')
+ 'F1.Upload3Lbl'eWC'Label' '← Lavender background' ('Posn' 520 300)
+
+ ⍝ Section: Inherited styles via SubForm
+ 'F1.LBL6'eWC'Label' 'Inherited FontObj from SubForm:' ('Posn' 20 400) ('Size' 20 280) ('FontObj' 'F1.FntLarge')
+
+ 'F1.SF'eWC'SubForm' ('Posn' 50 400) ('Size' 200 280) ('FontObj' 'F1.FntItalic') ('BCol' 245 245 245)
+ 'F1.SF.Link'eWC'Link' 'http://dyalog.com' 'Inherits Italic Font'
+ 'F1.SF.Upload'eWC'Upload' ('Posn' 40 0)
+ 'F1.SF.Lbl'eWC'Label' 'Both inherit FontObj from SubForm' ('Posn' 80 0)

@@ -1,0 +1,18 @@
+ r←findClass type;names;i
+⍝ Resolve an EWC class name to its definition namespace, or ⎕NULL.
+⍝
+⍝ Core classes live in #.EWC.classes under lowercase names. Plugin classes live
+⍝ in PLUGINS.classes
+ type←⎕C type
+ :If 9=classes.⎕NC type
+     →0⊣r←classes⍎type
+ :EndIf
+
+ r←⎕NULL
+ :If 9=⎕NC'PLUGINS'
+ :AndIf 9=PLUGINS.⎕NC'classes'
+     names←PLUGINS.classes.⎕NL ¯9
+     :If 0≠≢i←⍸(⎕C names)∊⊂type
+         r←PLUGINS.classes⍎(⊃i)⊃names
+     :EndIf
+ :EndIf

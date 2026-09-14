@@ -1,0 +1,11 @@
+ {r}←ensurePlugins
+⍝ Break from Link. #.EWC is often Link-managed, so without this a plugin's
+⍝ classes would be serialised into the EWC source tree.
+ setDefaults
+
+ :If 9≠⎕NC'PLUGINS'
+     'PLUGINS'⎕NS''
+     'PLUGINS.classes'⎕NS''
+ :EndIf
+ {}{0::⍬ ⋄ ⎕SE.Link.Break ⍵}'#.EWC.PLUGINS' ⍝ reports "Not linked" when already detached
+ r←PLUGINS

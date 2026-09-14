@@ -1,0 +1,33 @@
+ CBAutoConfWin args;sz;id;h;w;incr;pos;maxtop
+⍝ Callbacks for DemoAutoConfWin. Uses globals set by the demo: TOTAL (rows in the
+⍝ virtual dataset), top (0-based offset of the first visible row), vis/cols (the
+⍝ window size that currently fits).
+ id←⊃args
+
+ :If id≡'F1.BAR.BTN'
+     sz←'F1' eWG 'Size'
+     :If 460=1⊃sz
+         'F1' eWS 'Size' (900 1320)
+     :Else
+         'F1' eWS 'Size' (460 700)
+     :EndIf
+
+ :ElseIf id≡'F1.APP.GRID'   ⍝ Configure Info = [top left height width]
+     h←5⊃args ⋄ w←6⊃args
+     vis←3⌈⌊(h-24)÷16       ⍝ rows that fit (minus the title band, over the pitch)
+     cols←2⌈⌊(w-4)÷90       ⍝ columns that fit
+     maxtop←0⌈TOTAL-vis
+     top←maxtop⌊top
+     'F1.APP.GRID' eWS ('Values'((⍕¨top+⍳vis)∘.,'/',¨⍕¨⍳cols))('RowTitles'(⍕¨top+⍳vis))
+     'F1.APP.VS' eWS ('Range' TOTAL)('Thumb' vis)
+
+ :ElseIf id≡'F1.APP.VS'     ⍝ Scroll Info = [increment position]
+     incr←3⊃args ⋄ pos←4⊃args
+     maxtop←0⌈TOTAL-vis
+     :If incr∊1 ¯1          ⍝ line up / line down
+         top←0⌈maxtop⌊top+incr
+     :Else                  ⍝ thumb drag / page
+         top←0⌈maxtop⌊pos-1
+     :EndIf
+     'F1.APP.GRID' eWS ('Values'((⍕¨top+⍳vis)∘.,'/',¨⍕¨⍳cols))('RowTitles'(⍕¨top+⍳vis))
+ :EndIf

@@ -1,0 +1,30 @@
+ CBUpdateTabs args;e;f;font;size;i;z
+ Event←⎕NS''
+ e←Event.Event←⎕NS''
+ e.(ID EventName Info)←(2↑args),⊂2↓args
+ ⎕←⎕JSON e
+
+ :If 'F1.TC.T'≡7↑1⊃args
+     f←font←⍬
+     :If 2=⎕NC 'fonts'
+     :AndIf 0≠≢fonts
+         f←⊂'Font' ((font←(⊃2⊃⎕VFI 7↓1⊃args)⊃fonts) 15)
+         'F1.L1' eWS (⊂'Caption' ('Caption: ',font)),f
+     :Else
+         'F1.Average' eWS 'Caption' ('You selected ',((⊃args) eWG 'Type'),' "',((⊃args)eWG 'Caption'),'"')
+     :EndIf
+
+ :ElseIf 'Configure'≡2⊃args
+     :Trap 6
+         z←'F1.TC.SF1' eWG 'Posn' 'Size'
+     :Else
+         ⎕←'*** eWG of Posn and Size of F1.TC.SF1 failed ***'
+     :EndTrap
+     size←('F1' eWG 'Size')-'F1.TC' eWG 'Posn'
+     :For i :In ⍳≢fonts
+         ('F1.TC.SF',(⍕i),'.TEXT') eWS 'Size' (size-50 20)
+     :EndFor
+
+ :Else
+     ⎕←'Unexpected message: ',args
+ :EndIf

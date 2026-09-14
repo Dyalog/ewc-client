@@ -1,0 +1,63 @@
+ CBLife args;id;leaf;step;geom;r;c;pg;n
+⍝ Shared callback for DemoLife, dispatched on the source's leaf name:
+⍝   TICK/STEP - advance one generation and repaint
+⍝   PF        - playfield MouseDown: toggle the clicked cell
+⍝   RUN       - check-button: timer Active follows its State
+⍝   CLEAR     - empty the board, stop the timer
+⍝   RANDOM    - ~35% random fill
+⍝   SPEED     - Scroll slider: Timer Interval ← 50×(16-value)
+⍝ Board LIFE_B (30x40 boolean) and LIFE_G live in #.demo; mutations happen
+⍝ in this tradfn body. Repaint is one multi-prop eWS on the CELLS Rect.
+
+ step←{↑1 ⍵∨.∧3 4=+/,¯1 0 1∘.⊖¯1 0 1∘.⌽⊂⍵}  ⍝ the classic toroidal Life idiom
+
+ geom←{                                      ⍝ boolean board → (Points Size) of alive cells
+     idx←⍸⍵
+     0=≢idx:((,0)(,0))((,0)(,0))             ⍝ zero-size guard so Points is never empty
+     yv←10×¯1+⊃¨idx
+     xv←10×¯1+2⊃¨idx
+     (yv xv)(((≢yv)⍴10)((≢yv)⍴10))
+ }
+
+ id←⊃args
+ leaf←{(1-(⌽⍵)⍳'.')↑⍵}id
+
+ :Trap 0
+     :Select leaf
+     :Case 'TICK'
+         LIFE_B←step LIFE_B ⋄ LIFE_G+←1
+         →PAINT
+     :Case 'STEP'
+         LIFE_B←step LIFE_B ⋄ LIFE_G+←1
+         →PAINT
+     :Case 'PF'                              ⍝ args: id 'MouseDown' y x button shift
+         r←1+⌊(3⊃args)÷10 ⋄ c←1+⌊(4⊃args)÷10
+         :If (r≤30)∧c≤40
+             LIFE_B[r;c]←~LIFE_B[r;c]
+         :EndIf
+         →PAINT
+     :Case 'RUN'
+         'F1.TICK'eWS'Active'(id eWG'State')
+         →0
+     :Case 'CLEAR'
+         LIFE_B←30 40⍴0 ⋄ LIFE_G←0
+         'F1.TICK'eWS'Active' 0
+         'F1.RUN'eWS'State' 0
+         →PAINT
+     :Case 'RANDOM'
+         LIFE_B←0.35>?30 40⍴0 ⋄ LIFE_G←0
+         →PAINT
+     :Case 'SPEED'                           ⍝ args: id 'Scroll' direction value
+         'F1.TICK'eWS'Interval'(50×16-4⊃args)
+         →0
+     :EndSelect
+     →0
+PAINT:
+     pg←geom LIFE_B
+     n←≢⊃⊃pg
+     'F1.PF.CELLS'eWS('Points'(⊃pg))('Size'(2⊃pg))('FStyle'(n⍴0))   ⍝ FStyle 0 = solid fill
+     'F1.GEN'eWS'Caption'('Gen: ',⍕LIFE_G)
+     'F1.POP'eWS'Caption'('Pop: ',⍕+/,LIFE_B)
+ :Else
+     ⎕←'CBLife: ',(⊃⎕DM),' (likely a late Timer tick after a demo switch)'
+ :EndTrap

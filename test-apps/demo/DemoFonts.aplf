@@ -1,0 +1,51 @@
+ DemoFonts connected;size;italic;uline;weight;rotate;f;fonts;t;cols;fs;row;col;fontobj;p
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ fonts←'Noto Sans' 'Nimbus Mono' 'Merriweather' 'APL385 Unicode'
+
+ cols←40+100×¯1+⍳≢fonts
+ uline←0 1
+ weight←400 700
+ rotate←0 90 180 270
+
+ f←⊂¨↓(⊂'Size'),⍪15 10 20
+ f∘.,←⊂¨↓(⊂'Weight'),⍪400 700
+ f∘.,←⊂¨↓(⊂'Italic'),⍪0 1
+ f∘.,←⊂¨↓(⊂'Underline'),⍪0 1
+ f←(,f)∘.,⊂¨↓(⊂'PName'),⍪fonts
+
+ t←(⍕¨15 10 20),¨⊂'px '
+ t∘.,←'' 'B'
+ t∘.,←'' 'I'
+ t∘.,←'' 'U'
+ t←(,t)∘.,0/¨fonts
+
+ fs←'F1.FNT'∘,¨∊¨'ZI2'∘⎕FMT¨⍪⍳⍴f
+ 'F1' eWC'Form' 'Fonts'(50 50)(1200 600)('Coord' 'Pixel')
+ fs  eWC¨ (⊂'Font')∘,¨f
+ p←fonts⍳¨' '
+ 'F1.FNTS' eWC 'Text' (p↑¨fonts) ('Points' (((≢fonts)/40)cols))('FontObj' (⊃fs[3;1])) ⍝ Italic
+ 'F1.FNTS2' eWC 'Text' (p↓¨fonts) ('Points' (((≢fonts)/60)cols))('FontObj' (⊃fs[3;1])) ⍝ Italic
+
+ :For (row col) :In ⍳⍴f
+      fontobj←⊃fs[row;col]
+      (fontobj,'LBL')  eWC 'Label' (⊃t[row;col]) ('Posn' ((70+25×row),cols[col])) ('FontObj' fontobj)
+ :EndFor
+
+ 'F1.MB'eWC'MenuBar'('FontObj' 'F1.FNT2004')
+ 'F1.MB.X'eWC'Menu' 'A &Menu'
+ 'F1.MB.X.A'eWC'MenuItem' '&A'
+ 'F1.MB.X.B'eWC'MenuItem' '&B'
+ 'F1.MB.X.C'eWC'MenuItem' '&C'
+
+ ⍝ Subform should inherit
+ 'F1.SF'eWC'SubForm'('Posn' 750 40)('Size' 150 300)('FontObj' 'F1.FNT2004')('BCol' 250 250 250)
+ 'F1.SF.LBL'eWC'Label' 'SubForm with fonts:'('Posn' 40 0)
+ 'F1.SF.BT'eWC'Button' 'Button' ('Posn' 60 0)('Size' 30 200)
+ 'F1.SF.ED'eWC'Edit' 'edit' ('Posn' 100 0)('Size' 30 200)
+ 
+ ⍝ Simple things like Button and Menu should work
+ 'F1.LBL'eWC'Label' 'Without subform:' ('Posn' 900 40)('Size' 30 200)('FontObj' 'F1.FNT2004')
+ 'F1.BT'eWC'Button' 'A button' ('Posn' 950 40)('Size' 30 200)('FontObj' 'F1.FNT2004')
+ 'F1.ED'eWC'Edit' 'edit' ('Posn' 1000 40)('Size' 30 200)('FontObj' 'F1.FNT2004')

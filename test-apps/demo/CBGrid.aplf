@@ -1,0 +1,55 @@
+ CBGrid args;id;eventName;logMsg;currentLog;row;col;mouseFlag;newValue;sr;sc;er;ec;kind
+⍝ Grid event callback handler
+⍝ Logs events to the F1.Log label
+⍝ args is flattened: id eventName info[1] info[2] info[3] ...
+
+ id←⊃args
+ eventName←2⊃args
+
+⍝ Format the event message based on event type
+ :Select eventName
+ :Case 'CellMove'
+     ⍝ Info: [row, col, scrollFlag, selectionFlag, mouseFlag, changedFlag, newValue]
+     row←3⊃args
+     col←4⊃args
+     mouseFlag←7⊃args
+     logMsg←'CellMove: Row ',(⍕row),' Col ',(⍕col),(mouseFlag=0)/' (kbd)'
+     logMsg,←(mouseFlag=1)/' (click)'
+ :Case 'CellChanged'
+     ⍝ Info: [row, col, newValue]
+     row←3⊃args
+     col←4⊃args
+     newValue←5⊃args
+     logMsg←'CellChanged: [',(⍕row),',',(⍕col),'] = ',⍕newValue
+ :Case 'GridSelect'
+     ⍝ Per Dyalog Event 165 spec: args is [ID, 'GridSelect', Start, End]
+     ⍝ where Start and End are each 2-element [row, col] vectors.
+     sr sc←3⊃args
+     er ec←4⊃args
+     :If (sr≡er)∧(sc≡ec)
+         kind←'Cell [',(⍕sr),',',(⍕sc),']'
+     :ElseIf sr≡er
+         kind←'Row ',⍕sr
+     :ElseIf sc≡ec
+         kind←'Col ',⍕sc
+     :Else
+         kind←'Range [',(⍕sr),',',(⍕sc),']..[',(⍕er),',',(⍕ec),']'
+     :EndIf
+     logMsg←'GridSelect: ',kind
+ :Case 'KeyPress'
+     ⍝ Info: [key, charCode, keyCode, shiftState]
+     logMsg←'KeyPress: "',(⍕3⊃args),'" shift=',⍕6⊃args
+ :CaseList 'MouseDown' 'MouseUp' 'MouseDblClick'
+     ⍝ Info: [y, x, button, shiftState]
+     logMsg←eventName,': Y=',(⍕3⊃args),' X=',(⍕4⊃args),' Btn=',⍕5⊃args
+ :Case 'MouseEnter'
+     logMsg←'MouseEnter'
+ :Case 'MouseLeave'
+     logMsg←'MouseLeave'
+ :Else
+     logMsg←eventName,': ',⍕2↓args
+ :EndSelect
+
+⍝ Update the event log label (prepend new event)
+ currentLog←'F1.Log'eWG'Caption'
+ 'F1.Log'eWS'Caption'(logMsg,(⎕UCS 10),currentLog)

@@ -6,7 +6,7 @@
 ⍝ side without either disturbing the other.
 ⍝
 ⍝ The runner script (ci/run-server.sh, invoked with
-⍝ SETUP_APL=/scripts/setup-ewc-multi.apl) cats this file into dyalog and
+⍝ SETUP_APL=/work/ewc/ci/setup-ewc-multi.apl) cats this file into dyalog and
 ⍝ then `sleep`s on the same pipe so stdin stays open. That matters more
 ⍝ here than in Browser mode: EWC.Init returns immediately under Multi, so
 ⍝ without the held-open stdin dyalog would read EOF and exit before any
@@ -16,7 +16,7 @@
 ⍝   /work/ewc              → the Dyalog/ewc repo, which carries the test app
 ⍝                            at test-apps/multitest — so EWC_SRC picks the
 ⍝                            backend and its fixture app as one unit
-⍝   /work/ewc-client/dist  → freshly-built ewc-client (sibling of
+⍝   (single mount: client/dist is inside /work/ewc, found by EWC.Init)
 ⍝                            /work/ewc, so EWC.Init's auto-discovery
 ⍝                            picks it up)
 

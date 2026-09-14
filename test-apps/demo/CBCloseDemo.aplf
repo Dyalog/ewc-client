@@ -1,0 +1,8 @@
+ok←CBCloseDemo args
+⍝ Written to test whether Close events can be inhibited or not
+⍝   Called on close of demo form
+
+ok←0
+'MB' eWC 'MsgBox' 'Close Rejected' ('Plese use the Stop button to end the demo.') 'Error' 'OK' ('Event' 'MsgBtn1' 1)
+R←eDQ 'MB'
+eEX 'MB'

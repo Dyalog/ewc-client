@@ -1,0 +1,41 @@
+(
+ 'StatusField'
+ ''
+ ''
+ 100 0
+ 20 400
+'Default'
+⍬
+⍬
+⍬
+⍬
+⍬
+⍬
+ (
+
+ )
+ (
+  
+ )
+ (
+
+ )
+(
+ 'Type'
+ 'Caption'
+ 'Text'
+ 'Posn'
+ 'Size'
+ 'EdgeStyle'
+ 'CSS'
+ 'FCol'
+ 'BCol'
+ 'FontObj'
+ 'HTML'
+ 'Event'
+ 'MethodList'
+ 'ChildList'
+ 'EventList'
+ 'PropList'
+)
+)

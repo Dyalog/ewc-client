@@ -1,0 +1,24 @@
+ DemoTicTacToe connected;F;n;y;x
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ F←'F1'
+ F eWC'Form' 'Tic-Tac-Toe'(50 50)(400 300)('Coord' 'Pixel')
+
+ (F,'.MODEPC')eWC'Button' 'Play vs Computer'(12 10)(23 170)('Style' 'Check')('Event' 'Select' 'CBTicTacToe')
+
+⍝ 3x3 board of clickable Labels named F1.C1 .. F1.C9 (row-major)
+ :For n :In ⍳9
+     y←55+78×⌊(n-1)÷3
+     x←15+78×3|n-1
+     (F,'.C',⍕n)eWC'Label' ''(y x)(74 74)('Border' 1)('CSS' 'display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold')('Event' 'MouseDown' 'CBTicTacToe')
+ :EndFor
+
+ (F,'.STATUS')eWC'Label' 'X to move'(300 15)(25 260)
+ (F,'.RESET')eWC'Button' 'Reset'(335 15)(28 120)('Event' 'Select' 'CBTicTacToe')
+
+⍝ Game state kept as #.demo semiglobals (see CBTicTacToe)
+ TTT_BOARD←9⍴' '
+ TTT_TURN←'X'
+ TTT_OVER←0
+ TTT_MODE←0

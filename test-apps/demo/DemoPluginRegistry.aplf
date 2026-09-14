@@ -1,0 +1,57 @@
+ DemoPluginRegistry connected;plugin;cls;js;r
+⍝ The plugin mechanism end to end, with no external dependency: an EWC class
+⍝ registered at runtime, its React component injected as JavaScript the first
+⍝ time the class is used, and an event travelling from that component to APL.
+ EWC.CONNECTED←connected
+
+ CBPluginBox←{'F1.STATUS'eWS'Caption'('Select from ',(⊃⍵),' at ',⍕3↑3↓⎕TS)}
+
+ 'F1'eWC'Form' 'Plugin registry'(50 50)(220 460)('Coord' 'Pixel')
+ 'F1.L1'eWC'Label' 'The box below is drawn by injected JavaScript.'('Posn' 10 10)('Size' 20 440)
+ 'F1.STATUS'eWC'Label' 'no event yet'('Posn' 170 10)('Size' 20 440)
+
+ plugin←⎕NS''
+ plugin.Name←'DemoBox'
+ plugin.Folder←EWC.FOLDER
+
+ plugin.Classes←⎕NS''
+ 'PluginBox'plugin.Classes.⎕NS''
+ cls←plugin.Classes.PluginBox
+ cls.ClassName←'PluginBox'
+ cls.PropList←'Type' 'Posn' 'Size' 'Caption' 'Event' 'MethodList' 'ChildList' 'EventList' 'PropList'
+ cls.Defaults←('PluginBox')(10 10)(50 100)('')(⍬)(⍬)(⍬)(⍬)(cls.PropList)
+ cls.Supported←cls.PropList
+ cls.Dynamic←⍬
+ cls.methodlist←⍬
+ cls.SupportedEvents←,⊂'Select'
+
+⍝ The delay is deliberate: it proves the client waits for an asynchronous
+⍝ injection before handling the WC that follows.
+ js←'(async () => {'
+ js,←'  await new Promise(r => setTimeout(r, 250));'
+ js,←'  const R = window.EWC.React;'
+ js,←'  window.EWC.registerComponent("PluginBox", ({ data, ewc }) => {'
+ js,←'    const P = data.Properties || {};'
+ js,←'    const style = Object.assign({}, ewc.utils.setStyle(P), {'
+ js,←'      background: "#cfe8ff", border: "2px solid #0066cc", borderRadius: "6px",'
+ js,←'      display: "flex", alignItems: "center", justifyContent: "center",'
+ js,←'      cursor: "pointer", userSelect: "none" });'
+ js,←'    const fire = () => ewc.socket.send(JSON.stringify('
+ js,←'      { Event: { EventName: "Select", ID: data.ID } }));'
+ js,←'    return R.createElement("div", { id: data.ID, style, onClick: fire }, P.Caption || "");'
+ js,←'  });'
+ js,←'  return "PluginBox registered";'
+ js,←'})()'
+ plugin.Inject←js
+
+ EWC.RegisterPlugin plugin
+
+ 'F1.BOX'eWC'PluginBox'('Posn' 60 10)('Size' 55 440)('Caption' 'Click me - I am a plugin')('Event' 'Select' 'CBPluginBox')
+
+⍝ A second object of the same class must reuse the loaded plugin: the log
+⍝ should show one EvalJS, not two.
+ 'F1.BOX2'eWC'PluginBox'('Posn' 120 10)('Size' 40 440)('Caption' 'and so am I')('Event' 'Select' 'CBPluginBox')
+
+⍝ An injection that rejects must come back as ¯1, not hang until the timeout.
+ r←2 eNQ'F1' 'EvalJS' 'import("/no-such-plugin-bundle.js")'
+ 'F1.REJECT'eWC'Label'('Caption'('rejected import rc=',⍕⊃⊃,⊆r))('Posn' 195 10)('Size' 20 440)

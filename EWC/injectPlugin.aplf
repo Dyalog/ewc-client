@@ -1,0 +1,27 @@
+ caller injectPlugin(name objname);sns;plugin;js;r;top
+⍝ Send a plugin's JavaScript to this session's client, once per session.
+ sns←caller sessionNS objname
+ :If ⎕NULL≡sns ⋄ →0 ⋄ :EndIf ⍝ no client yet
+ :If 0=sns.⎕NC'PLUGINS_LOADED' ⋄ sns.PLUGINS_LOADED←⍬ ⋄ :EndIf
+
+⍝ Keyed by connection, not just name: outside Multi mode _EWC outlives any one
+⍝ browser, and a reload gives the client a fresh, empty registry. Entries for
+⍝ connections that have gone are dropped rather than accumulating.
+ sns.PLUGINS_LOADED←(sns.conn=⊃¨sns.PLUGINS_LOADED)/sns.PLUGINS_LOADED
+ :If (⊂sns.conn name)∊sns.PLUGINS_LOADED ⋄ →0 ⋄ :EndIf
+ :If 9≠PLUGINS.⎕NC name ⋄ →0 ⋄ :EndIf
+
+ plugin←PLUGINS⍎name
+ sns.PLUGINS_LOADED,←⊂sns.conn name ⍝ marked before injecting: a failure must not retry per object
+ :If ~(⌊plugin.⎕NC'Inject')∊2 3 ⋄ →0 ⋄ :EndIf
+
+ js←,⊆plugin.Inject ⍝ a niladic function, or the JavaScript itself
+ top←(¯1+objname⍳'.')↑objname
+ :Trap 6 85
+     r←PLUGIN_TIMEOUT dWX(top 'EvalJS'),js
+     :If ∨/¯1=⊃¨,⊆r
+         'E'Log'Plugin "',name,'" injection failed: ',⍕r
+     :EndIf
+ :Else
+     'E'Log'Plugin "',name,'" injection got no response from the client'
+ :EndTrap

@@ -1,0 +1,21 @@
+(
+ 'RibbonButtonGroup'
+ ''
+ ''
+ 0
+ 0 0
+ ''
+ 0
+ ⍬
+ (
+ 'Type'
+ 'Captions'
+ 'Icons'
+ 'Border'
+ 'Event'
+ 'ImageListObj'
+ 'ImageIndex'
+ 'Data'
+ 'PropList'
+ )
+)

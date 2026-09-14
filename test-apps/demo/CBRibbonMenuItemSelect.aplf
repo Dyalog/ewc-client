@@ -1,0 +1,4 @@
+ CBRibbonMenuItemSelect args;cap
+
+ cap←(⊃args) eWG 'Caption'
+ 'F1.Selected' eWS 'Caption' ('You selected "',cap,'"')

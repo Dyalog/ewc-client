@@ -1,0 +1,12 @@
+ r←normaliseEvents events;e;int;m
+ r←⊃,/normaliseEvent¨events
+
+ e←⌽⊃¨r ⍝ Extract individual events (in reverse order)
+ :If ∨/int←⍸(10|⎕DR¨e)∊1 3      ⍝ Numeric codes
+    m←int[⍸e[int]∊EVENTNUMS]    ⍝ Recognised numeric events
+    e[m]←eventNames[EVENTNUMS⍳e[m]]
+ :EndIf
+ e←⎕c (2×(2↑¨e)∊⊂'on')↓¨e ⍝ Drop leading 'on'
+ r←(⌽(⍳≢e)=e⍳e)/r         ⍝ Pick last
+
+ r←((¯1+≢events)⍴⊂⍬),⊂r   ⍝ Everything merged into last element (in case there were several Event property values)

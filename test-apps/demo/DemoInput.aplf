@@ -1,0 +1,31 @@
+ DemoInput connected;tests;test;i;posn;e;types;s;spacing
+ ⎕PW←1000
+
+ 'F1'eWC'Form' 'Input Checks '(50 50)(800 800)('Coord' 'Pixel')
+
+ tests←'Text' 'Numeric' 'Date 1' 'Date 2' 'Password 1' 'Password 2' 'Combo' 'Checkbox' 'Radio 1' 'Radio 2'
+ types←6 1 3/'Edit' 'Combo' 'Button'
+ spacing←30
+
+ :For i :In ⍳≢tests
+     ('F1.L',⍕i)eWC'Label'((i⊃tests),':')((10+spacing×i-1)10)
+     ('F1.B',⍕i)eWC'Button' 'Set Value' ((10+spacing×i-1)315)('Event' 'Select' 'CBInput' (tests types))
+ :EndFor
+
+ i←0
+ ⎕FX 'r←posn' 'r←''Posn'' ((10+spacing×i)100) ⋄ i←i+1'
+ e←('Event' ('Change' 'KeyPress' 'Select') 'CBInput' (tests types))('Event' 1001 'CBInput' (tests types))('Size' (23 200))
+ ('F1.C',⍕i)eWC'Edit' '' posn, e
+ ('F1.C',⍕i)eWC'Edit' '3.14' posn ('FieldType' 'Numeric'), e
+ ('F1.C',⍕i)eWC'Edit' '20-01-2025' posn ('FieldType' 'Date'), e
+ ('F1.C',⍕i)eWC'Edit' posn ('FieldType' 'Date'), e
+ ('F1.C',⍕i)eWC'Edit' 'secret' posn ('Password' '*'), e
+ ('F1.C',⍕i)eWC'Edit' '' posn ('Password' '*'), e
+ ('F1.C',⍕i)eWC'Combo' ('One' 'Two' 'Three') 'One' posn, e
+ ('F1.C',⍕i)eWC'Button' posn ('Style' 'Check'), e
+ ('F1.C',⍕i)eWC'Button' posn ('Style' 'Radio'), e
+ ('F1.C',⍕i)eWC'Button' posn ('Style' 'Radio'), e
+
+ 'F1.GRID'eWC'Grid'('ColTitles'('Value/State' 'Text' 'Last'))('Posn'((20+spacing×≢tests)10))('Size'(400 360))('TitleWidth' 100)('CellWidths'(100 100 50))('RowTitles' tests)
+ F1.GRID.Size←400 600
+ (tests types) CBInput ⍬

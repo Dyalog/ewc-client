@@ -1,0 +1,12 @@
+(
+ 'Select'
+ 'KeyPress'
+ 'MouseDown'
+ 'MouseUp'
+ 'MouseEnter'
+ 'MouseMove'
+ 'MouseLeave'
+ 'Change'
+ 'ColorChange'
+ 'GotFocus'
+)

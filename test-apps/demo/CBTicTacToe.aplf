@@ -1,0 +1,72 @@
+ CBTicTacToe args;id;leaf;n;m;msg;winner;status;compMove
+⍝ Shared callback for the Tic-Tac-Toe demo. Handles board cell clicks
+⍝ (MouseDown on F1.C1..C9), the Reset button (Select) and the "Play vs
+⍝ Computer" checkbox (Select), dispatched on the object's leaf name.
+⍝ State lives in #.demo semiglobals: TTT_BOARD (9 chars), TTT_TURN ('X'/'O'),
+⍝ TTT_OVER (0/1), TTT_MODE (0=two-player, 1=vs computer).
+
+ winner←{                                ⍝ 'X' | 'O' | '' — the mark holding a full line
+     b←⍵
+     lines←(1 2 3)(4 5 6)(7 8 9)(1 4 7)(2 5 8)(3 6 9)(1 5 9)(3 5 7)
+     hit←{(1=≢∪b[⍵])∧' '≠⊃b[⍵]}¨lines
+     0=+/hit:''
+     ⊃b[⊃hit/lines]
+ }
+
+ status←{                                ⍝ '' while the game is live, else the message
+     w←winner ⍵
+     0<≢w:w,' wins!'
+     ~' '∊⍵:'Draw!'
+     ''
+ }
+
+ compMove←{                              ⍝ index for O: win, else block X, else centre/corner/side
+     b←⍵
+     empties←(b=' ')/⍳9
+     ∨/o←{r←b ⋄ r[⍵]←'O' ⋄ 'O'≡winner r}¨empties:⊃empties/⍨o
+     ∨/x←{r←b ⋄ r[⍵]←'X' ⋄ 'X'≡winner r}¨empties:⊃empties/⍨x
+     pref←5 1 3 7 9 2 4 6 8
+     ⊃pref/⍨pref∊empties
+ }
+
+ id←⊃args
+ leaf←{(1-(⌽⍵)⍳'.')↑⍵}id
+ :If leaf≡'RESET' ⋄ →RESET ⋄ :EndIf
+ :If leaf≡'MODEPC' ⋄ TTT_MODE←id eWG'State' ⋄ →RESET ⋄ :EndIf
+
+⍝ Otherwise a board cell (C1..C9) was clicked
+ :If TTT_OVER ⋄ →0 ⋄ :EndIf
+ n←⍎1↓leaf
+ :If ' '≠n⊃TTT_BOARD ⋄ →0 ⋄ :EndIf
+ TTT_BOARD[n]←TTT_TURN
+ ('F1.C',⍕n)eWS'Caption'(,TTT_TURN)
+ ('F1.C',⍕n)eWS'FCol'((0 0 200)(200 0 0)⊃⍨1+'O'=TTT_TURN)
+
+ :If 0<≢msg←status TTT_BOARD
+     'F1.STATUS'eWS'Caption'msg ⋄ TTT_OVER←1 ⋄ →0
+ :EndIf
+
+ :If TTT_MODE                            ⍝ vs computer: human is always X
+     m←compMove TTT_BOARD
+     TTT_BOARD[m]←'O'
+     ('F1.C',⍕m)eWS'Caption' 'O'
+     ('F1.C',⍕m)eWS'FCol'(200 0 0)
+     :If 0<≢msg←status TTT_BOARD
+         'F1.STATUS'eWS'Caption'msg ⋄ TTT_OVER←1 ⋄ →0
+     :EndIf
+     'F1.STATUS'eWS'Caption' 'X to move'
+ :Else                                   ⍝ two-player hot-seat: alternate turns
+     TTT_TURN←⊃'XO'~TTT_TURN
+     'F1.STATUS'eWS'Caption'(TTT_TURN,' to move')
+ :EndIf
+ →0
+
+RESET:
+ TTT_BOARD←9⍴' '
+ TTT_TURN←'X'
+ TTT_OVER←0
+ :For n :In ⍳9
+     ('F1.C',⍕n)eWS'Caption' ''
+     ('F1.C',⍕n)eWS'FCol'(0 0 0)
+ :EndFor
+ 'F1.STATUS'eWS'Caption' 'X to move'

@@ -1,0 +1,21 @@
+(
+ 'RibbonMenuItem'
+ ''
+ ''
+ ''
+ 0 0
+ ''
+ 0
+ ⍬
+ (
+ 'Type'
+ 'Caption'
+ 'LargeImage'
+ 'SmallImage'
+ 'Event'
+ 'ImageListObj'
+ 'ImageIndex'
+ 'Data'
+ 'PropList'
+ )
+)

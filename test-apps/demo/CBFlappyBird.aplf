@@ -1,0 +1,92 @@
+ CBFlappyBird args;id;leaf;init;pipeGeom;collide;pg;passed;i
+⍝ Shared callback for DemoFlappyBird, dispatched on the source's leaf name:
+⍝   TICK  - Timer tick: gravity, pipe scroll/recycle, score, collision
+⍝   PF    - playfield MouseDown (tap): start / flap / restart
+⍝   FLAP  - Flap button Select (also Enter via Default 1): same as tap
+⍝   RESET - Reset button Select: back to the deterministic idle state
+⍝ State lives in #.demo semiglobals FB_* (created in DemoFlappyBird); all
+⍝ mutations happen in this tradfn body (dfn-local assignments don't persist).
+
+ init←{                                    ⍝ deterministic (PX GY SCORED VY BY SCORE)
+     (260 420 580 740)(150 100 200 120)(FB_NPIPES⍴0)0 FB_BY0 0
+ }
+
+ pipeGeom←{                                ⍝ (PX GY) → (Points Size) for the pipes Rect
+     px gy←⍵
+     yv←(0×px),gy+FB_GAP                   ⍝ top pipes at y=0, bottom pipes below the gap
+     xv←px,px
+     hv←gy,FB_GROUNDTOP-gy+FB_GAP
+     (yv xv)(hv((≢yv)⍴FB_PW))
+ }
+
+ collide←{                                 ⍝ (BY PX GY) → 1 if the bird hits any pipe
+     by px gy←⍵
+     hx0←FB_BX+4 ⋄ hx1←(FB_BX+FB_BW)-4     ⍝ hitbox inset 4px for fairness
+     hy0←by+4 ⋄ hy1←(by+FB_BH)-4
+     xov←(hx1≥px)∧hx0≤px+FB_PW
+     ∨/xov∧(hy0<gy)∨hy1>gy+FB_GAP
+ }
+
+ id←⊃args
+ leaf←{(1-(⌽⍵)⍳'.')↑⍵}id
+
+ :Trap 0
+     :Select leaf
+
+     :Case 'RESET'
+         (FB_PX FB_GY FB_SCORED FB_VY FB_BY FB_SCORE)←init ⍬
+         FB_STATE←'idle'
+         'F1.TICK'eWS'Active' 0
+         pg←pipeGeom FB_PX FB_GY
+         'F1.PF.PIPES'eWS('Points'(⊃pg))('Size'(2⊃pg))
+         'F1.PF.BIRD'eWS'Posn'(FB_BY FB_BX)
+         'F1.SCORE'eWS'Caption' 'Score: 0'
+         'F1.STATUS'eWS'Caption' 'Click to start'
+
+     :Case 'TICK'
+         :If FB_STATE≢'play' ⋄ →0 ⋄ :EndIf ⍝ drop late ticks after game over
+         FB_VY←FB_MAXV⌊FB_VY+FB_GRAV       ⍝ gravity, capped fall speed
+         FB_BY←0⌈FB_BY+FB_VY               ⍝ integrate; ceiling clamps, doesn't kill
+         FB_PX←FB_PX-FB_SPEED
+         :For i :In ⍸0>FB_PX+FB_PW         ⍝ recycle pipes fully off the left edge
+             FB_PX[i]←FB_SPACING+⌈/FB_PX
+             FB_GY[i]←39+?191              ⍝ random gap top 40..230 (recycle only)
+             FB_SCORED[i]←0
+         :EndFor
+         passed←(FB_BX>FB_PX+FB_PW)∧~FB_SCORED
+         :If ∨/passed
+             FB_SCORED←FB_SCORED∨passed
+             FB_SCORE←FB_SCORE++/passed
+             'F1.SCORE'eWS'Caption'('Score: ',⍕FB_SCORE)
+         :EndIf
+         pg←pipeGeom FB_PX FB_GY
+         'F1.PF.BIRD'eWS'Posn'(FB_BY FB_BX)
+         'F1.PF.PIPES'eWS('Points'(⊃pg))('Size'(2⊃pg))
+         :If (FB_GROUNDTOP≤FB_BY+FB_BH)∨collide FB_BY FB_PX FB_GY
+             FB_STATE←'over'
+             'F1.TICK'eWS'Active' 0
+             'F1.STATUS'eWS'Caption'('Game Over — Score: ',⍕FB_SCORE)
+         :EndIf
+
+     :Else                                 ⍝ PF tap or FLAP button/Enter
+         :Select FB_STATE
+         :Case 'play'
+             FB_VY←FB_FLAPV
+         :Case 'idle'
+             FB_VY←FB_FLAPV ⋄ FB_STATE←'play'
+             'F1.STATUS'eWS'Caption' 'Flap!'
+             'F1.TICK'eWS'Active' 1
+         :Case 'over'                      ⍝ click after game over restarts immediately
+             (FB_PX FB_GY FB_SCORED FB_VY FB_BY FB_SCORE)←init ⍬
+             FB_VY←FB_FLAPV ⋄ FB_STATE←'play'
+             pg←pipeGeom FB_PX FB_GY
+             'F1.PF.PIPES'eWS('Points'(⊃pg))('Size'(2⊃pg))
+             'F1.PF.BIRD'eWS'Posn'(FB_BY FB_BX)
+             'F1.SCORE'eWS'Caption' 'Score: 0'
+             'F1.STATUS'eWS'Caption' 'Flap!'
+             'F1.TICK'eWS'Active' 1
+         :EndSelect
+     :EndSelect
+ :Else
+     ⎕←'CBFlappyBird: ',(⊃⎕DM),' (likely a late Timer tick after a demo switch)'
+ :EndTrap

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getAttachStyle } from '../../../../src/utils/getAttachStyle';
+import { getAttachStyle } from '../../../../client/src/utils/getAttachStyle';
 
 test.describe('getAttachStyle (unit)', () => {
   test('List "Top Left Top Right": fixed height, stretches horizontally', () => {

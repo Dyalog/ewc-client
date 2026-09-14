@@ -1,0 +1,13 @@
+ r←closeList arg;c
+⍝ Names of the clones whose onClose has fired, oldest first. Held because the
+⍝ writer is the Listen thread and the readers are session threads.
+
+ :Hold 'MULTITESTLOG'
+     c←#.multitestlog.closed
+ :EndHold
+
+ :If 0=≢c
+     r←'(none)'
+ :Else
+     r←1↓∊' ',¨c
+ :EndIf

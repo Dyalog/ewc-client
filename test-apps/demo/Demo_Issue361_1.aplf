@@ -1,0 +1,8 @@
+ Demo_Issue361_1 connected;tb;sf;rb;captions;icons;sel;bcol;fcol;titlebcol;bordercol;activebcol;passivebcol;imagefiles
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ 'F'eWC'Form' 'Issue #361-1'(50 50)(300 420)('Coord' 'Pixel')
+ 'F.G'eWC'Grid'('Values' (10 10⍴⍳100))('Posn' 5 5)('Size' 200 200)
+ ⎕DL 5
+ 'F.G'eWS('Size' 50 50)

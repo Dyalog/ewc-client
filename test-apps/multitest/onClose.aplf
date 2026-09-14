@@ -1,0 +1,10 @@
+ onClose arg
+⍝ Records the end of a session so a surviving one can see it happened.
+⍝ Total, because EWC calls this untrapped on the graceful-close path, and
+⍝ held, because it runs on the Listen thread while sessions read the log.
+
+ :Trap 0
+     :Hold 'MULTITESTLOG'
+         #.multitestlog.closed,←⊂⍕⎕THIS
+     :EndHold
+ :EndTrap

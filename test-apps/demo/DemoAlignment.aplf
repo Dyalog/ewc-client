@@ -1,0 +1,56 @@
+ DemoAlignment connected
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+⍝ Alignment Demo - verifies radio buttons and checkboxes align vertically
+⍝ with their caption text, both outside and inside a SubForm.
+
+ 'F1'eWC'Form' 'Radio/Checkbox Alignment'(50 50)(540 620)('Coord' 'Pixel')
+
+⍝ ─── Outside SubForm ─────────────────────────────────────────────────
+
+ 'F1.OUT'eWC'Group' 'Outside SubForm'('Posn'(20 10))('Size'(220 590))
+
+⍝ Radio buttons, default (right-aligned text)
+ 'F1.OUT.RLBL'eWC'Label' 'Radios:'(15 10)(20 80)
+ 'F1.OUT.R1'eWC'Button' 'Option A'(40 10)(23 150)('Style' 'Radio')('State' 1)
+ 'F1.OUT.R2'eWC'Button' 'Option B'(65 10)(23 150)('Style' 'Radio')('State' 0)
+ 'F1.OUT.R3'eWC'Button' 'Option C'(90 10)(23 150)('Style' 'Radio')('State' 0)
+
+⍝ Radio buttons, Align=Left (text on left of radio)
+ 'F1.OUT.RLLBL'eWC'Label' 'Radios (Align Left):'(15 200)(20 150)
+ 'F1.OUT.RL1'eWC'Button' 'Option A'(40 200)(23 150)('Style' 'Radio')('State' 1)('Align' 'Left')
+ 'F1.OUT.RL2'eWC'Button' 'Option B'(65 200)(23 150)('Style' 'Radio')('State' 0)('Align' 'Left')
+ 'F1.OUT.RL3'eWC'Button' 'Option C'(90 200)(23 150)('Style' 'Radio')('State' 0)('Align' 'Left')
+
+⍝ Checkboxes, default + Align=Left
+ 'F1.OUT.CLBL'eWC'Label' 'Checkboxes:'(120 10)(20 100)
+ 'F1.OUT.C1'eWC'Button' 'Enable Feature X'(145 10)(23 180)('Style' 'Check')('State' 1)
+ 'F1.OUT.C2'eWC'Button' 'Enable Feature Y'(170 10)(23 180)('Style' 'Check')('State' 0)
+ 'F1.OUT.CL1'eWC'Button' 'Feature Z (Align Left)'(145 200)(23 200)('Style' 'Check')('State' 1)('Align' 'Left')
+ 'F1.OUT.CL2'eWC'Button' 'Feature W (Align Left)'(170 200)(23 200)('Style' 'Check')('State' 0)('Align' 'Left')
+
+⍝ ─── Inside SubForm ──────────────────────────────────────────────────
+
+ 'F1.SF'eWC'SubForm'('Posn'(260 10))('Size'(250 590))
+
+⍝ Group needs ~20px of headroom inside the SubForm so its caption
+⍝ (positioned at `bottom: 14` to sit on the top border) isn't clipped
+⍝ by the SubForm's overflow: clip.
+ 'F1.SF.IN'eWC'Group' 'Inside SubForm'('Posn'(20 0))('Size'(220 590))
+
+ 'F1.SF.IN.RLBL'eWC'Label' 'Radios:'(15 10)(20 80)
+ 'F1.SF.IN.R1'eWC'Button' 'Option A'(40 10)(23 150)('Style' 'Radio')('State' 1)
+ 'F1.SF.IN.R2'eWC'Button' 'Option B'(65 10)(23 150)('Style' 'Radio')('State' 0)
+ 'F1.SF.IN.R3'eWC'Button' 'Option C'(90 10)(23 150)('Style' 'Radio')('State' 0)
+
+ 'F1.SF.IN.RLLBL'eWC'Label' 'Radios (Align Left):'(15 200)(20 150)
+ 'F1.SF.IN.RL1'eWC'Button' 'Option A'(40 200)(23 150)('Style' 'Radio')('State' 1)('Align' 'Left')
+ 'F1.SF.IN.RL2'eWC'Button' 'Option B'(65 200)(23 150)('Style' 'Radio')('State' 0)('Align' 'Left')
+ 'F1.SF.IN.RL3'eWC'Button' 'Option C'(90 200)(23 150)('Style' 'Radio')('State' 0)('Align' 'Left')
+
+ 'F1.SF.IN.CLBL'eWC'Label' 'Checkboxes:'(120 10)(20 100)
+ 'F1.SF.IN.C1'eWC'Button' 'Enable Feature X'(145 10)(23 180)('Style' 'Check')('State' 1)
+ 'F1.SF.IN.C2'eWC'Button' 'Enable Feature Y'(170 10)(23 180)('Style' 'Check')('State' 0)
+ 'F1.SF.IN.CL1'eWC'Button' 'Feature Z (Align Left)'(145 200)(23 200)('Style' 'Check')('State' 1)('Align' 'Left')
+ 'F1.SF.IN.CL2'eWC'Button' 'Feature W (Align Left)'(170 200)(23 200)('Style' 'Check')('State' 0)('Align' 'Left')

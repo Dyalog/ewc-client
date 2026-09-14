@@ -1,0 +1,13 @@
+ (type class objref)←getObj Name
+
+ :Trap 0
+     objref←caller⍎Name
+     type←objref.Type
+     :If ⎕NULL≡class←findClass type
+         Warning'Unsupported class: ',type
+         ⎕←Props
+         →0
+     :EndIf
+ :Else
+     (type class objref)←'' ⎕NULL ⎕NULL
+ :EndTrap

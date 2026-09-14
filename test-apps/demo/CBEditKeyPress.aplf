@@ -1,0 +1,54 @@
+ r←CBEditKeyPress args;id;event;key;txt;sel;msg;log
+⍝ Dispatcher for DemoEditKeyPress.
+⍝ The result is the KeyPress verdict: 0 vetoes the keystroke, anything else lets
+⍝ it through (EWC/processEvent.aplf[109]). r is set on every path because the
+⍝ function is declared with a result.
+
+ r←1
+ id←⊃args
+ event←2⊃args
+
+ :Select event
+ :Case 'KeyPress'
+     key←3⊃args
+     ⍝ Text and SelText as seen from *inside* the callback: ⎕WC has not applied
+     ⍝ the keystroke yet, so these describe the field before the key was pressed.
+     (txt sel)←id eWG'Text' 'SelText'
+     msg←'KeyPress ',(⍕key),' | WG Text="',(⍕txt),'" SelText=',⍕sel
+     :If 'F1.DIGITS'≡id
+     :AndIf 1=≢key           ⍝ never veto an input code - DB, LC, HT and friends
+     :AndIf ~key∊⎕D
+         r←0
+         msg←'VETO ',msg
+     :Else
+         msg←'ok   ',msg
+     :EndIf
+
+ :Case 'Select'
+     :Select id
+     :Case 'F1.SETSEL'
+         'F1.FREE'eWS'SelText'(3 5)
+         msg←'WS F1.FREE SelText (3 5)'
+     ⍝ Mode 2 - "perform default processing, do not invoke the callback" - which
+     ⍝ is what "apply this key" means, and it also sets NoCallback so the client
+     ⍝ does not echo the event back. Do not drop to Mode 0 here: the echo of a
+     ⍝ single printable character arrives as Info ["Z"] and rank-errors in
+     ⍝ EWC/processEvent.aplf[55], taking the interpreter down with it.
+     :Case 'F1.NQCHAR'
+         2 eNQ'F1.FREE' 'KeyPress' 'Z'
+         msg←'NQ(2) F1.FREE KeyPress Z'
+     :Case 'F1.NQBS'
+         2 eNQ'F1.FREE' 'KeyPress' 'DB'
+         msg←'NQ(2) F1.FREE KeyPress DB'
+     :Case 'F1.SHOW'
+         msg←'WG DIGITS Text="',(⍕'F1.DIGITS'eWG'Text'),'" FREE Text="',(⍕'F1.FREE'eWG'Text'),'" SelText=',⍕'F1.FREE'eWG'SelText'
+     :EndSelect
+
+ :Else
+     msg←id,' ',event,': ',⍕2↓args
+ :EndSelect
+
+⍝ Prepend to the log label, keeping the last dozen lines (CBGrid.aplf:54-55).
+ log←(⎕UCS 10)(≠⊆⊢)'F1.LOG'eWG'Caption'
+ log←(⊂msg),(11⌊≢log)↑log
+ 'F1.LOG'eWS'Caption'(1↓∊(⎕UCS 10),¨log)

@@ -1,0 +1,16 @@
+ r←cloneList arg;n;ix;pfx
+⍝ Space-separated names of the live per-session clones, sorted by their
+⍝ numeric suffix. EWC names each clone after this namespace, so the prefix
+⍝ tracks the directory this app is linked from.
+
+ pfx←'multitest_'
+ n←{⍵~' '}¨↓#.⎕NL 9
+ n←n/⍨{pfx≡(≢pfx)↑⍵}¨n
+
+ :If 0=≢n
+     r←'(none)'
+ :Else
+     ix←{⊃2⊃⎕VFI(≢pfx)↓⍵}¨n
+     n←n[⍋ix]
+     r←1↓∊' ',¨n
+ :EndIf

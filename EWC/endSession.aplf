@@ -1,0 +1,31 @@
+r←endSession args;⎕TRAP;rc;conn;event;m;id;i;code
+⎕TRAP←0 'S'
+(rc conn event)←3↑args
+m←(2⊃SESSIONS)≠⊃2⊃⎕VFI ¯8↑conn
+
+:If 1=≢id←(~m)/1⊃SESSIONS
+    :If MODE=2
+       'W' Log 'Closing session w/out Signal',⍕id
+    :EndIf
+    ⍝ Mirror closeConnection: invoke the user's onClose hook and tidy
+    ⍝ thread/namespace in Multi mode before dropping the session entry.
+    :For i :In ⍸~m
+        code←((2+i)⊃SESSIONS).code
+        :If 3=code.⎕NC 'onClose'
+            :Trap 0
+                code.onClose ⍬
+            :EndTrap
+        :EndIf
+        :If MODE=2
+        :AndIf 2=⎕NC 'code._EWC.TID'
+            'C' Log 'Killed thread ',⍕code._EWC.TID
+            ⎕TKILL code._EWC.TID
+            'C' Log 'Expunged ',⍕code
+            ⎕EX ⍕code
+        :EndIf
+    :EndFor
+    SESSIONS←(m∘/¨2↑SESSIONS),m/2↓SESSIONS
+:Else
+    'W' Log 'Session not found for closed connection ',conn
+:EndIf
+WSS.Conx←(~WSS.Conx[;1]∊⊂conn)⌿WSS.Conx

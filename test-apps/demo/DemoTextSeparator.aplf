@@ -1,0 +1,20 @@
+ DemoTextSeparator connected;sep;s;txt
+⍝ Regression demo for ewc-client #440 — multi-line Text colour.
+⍝
+⍝ Mirrors the customer object FsCShSpec.∆3P1.Z1070: the caption
+⍝ 'Issued Shares∧(in 1000s):' is split into two lines on the ⎕UCS 8743 (∧)
+⍝ separator, with FCol ¯18 (the GrayText system colour). Both lines must
+⍝ render in GrayText (109 109 109); before the fix the second line fell back
+⍝ to black, because ¯18 resolves client-side to a length-1 colour list
+⍝ [[109,109,109]] and FCol[1] was undefined for the two-line text.
+ EWC.CONNECTED←connected
+ ⎕PW←1000
+
+ 'F1'eWC'Form' 'Text Separator'(50 50)(160 360)('Coord' 'Pixel')
+
+ sep←⎕UCS 8743                  ⍝ ∧ line separator
+ s←'Issued Shares',sep,'(in 1000s):'
+ txt←↑(sep≠s)⊆s                 ⍝ 2-row matrix: 'Issued Shares' / '(in 1000s):'
+
+ ⍝ ¯18 = GrayText system colour index, exactly as the customer app sends it.
+ 'F1.SEP'eWC'Text' txt(20 20)('FCol' ¯18)
