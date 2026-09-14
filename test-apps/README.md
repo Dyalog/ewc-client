@@ -5,7 +5,7 @@ suites drive.
 
 | Directory | What it holds |
 |---|---|
-| `test-apps/demo/` | The sample gallery — a human picks a demo from a menu, and `e2e/demo/` drives the same demos |
+| `test-apps/demo/` | The sample gallery - a human picks a demo from a menu, and `e2e/demo/` drives the same demos |
 | `test-apps/multitest/` | A Multi-mode app, exercised only by `e2e/multi/` |
 | `tests/` | In-process APL unit tests (`assert.aplf`, `test_*.aplf`), at the repo root |
 

@@ -21,7 +21,7 @@ For example:
 
 `EWC.Init` will also create `eWC`, `eWS` and so on, in the
 namespace from which Init was called. These are EWC's workalikes for the system
-functions `⎕WC`, `⎕WS`, etc. — they reimplement the same interface rather than
+functions `⎕WC`, `⎕WS`, etc. - they reimplement the same interface rather than
 wrapping it, and are intended to be used in their place.
 
 If you would like to use a different prefix letter for these functions, you can 

@@ -6,7 +6,7 @@ EWC is developed as an open-source GitHub repository.
 
 Download the **`ewc-vX.Y.Z.zip`** asset from the
 [latest release](https://github.com/dyalog/ewc/releases) and unpack it. It contains the
-APL server and a matching prebuilt JavaScript client, so nothing else is needed — no
+APL server and a matching prebuilt JavaScript client, so nothing else is needed - no
 Node.js and no build step.
 
 !!! warning "Use the named asset"
@@ -26,7 +26,7 @@ yarn build
 ```
 
 That produces `client/dist`, which the server locates automatically. All JavaScript
-commands are a yarn workspace rooted at the repository root, so they run from there —
+commands are a yarn workspace rooted at the repository root, so they run from there -
 there is no need to change into `client/`. See
 [CONTRIBUTING.md](https://github.com/dyalog/ewc/blob/main/CONTRIBUTING.md) for the full
 development workflow.
@@ -42,7 +42,7 @@ demo.Run 'Desktop'
 ```
 
 !!! note "Why two links, not `]link.create # /path/to/ewc`"
-    Linking the repository root would also walk `client/` — including
+    Linking the repository root would also walk `client/` - including
     `node_modules` once you have run `yarn install`. Link maps directory names to
     APL names, and npm package names collide when it does (`acorn-jsx` with
     `acorn`, `eslint-scope` with `eslint`), which aborts the whole link. Naming the
@@ -61,7 +61,7 @@ Note that, if you use `]link.import` instead of `]link.create`, or you do not ha
 EWC.FOLDER←'/tmp/ewc'
 ```
 
-`EWC.FOLDER` must be the **repository root**, not the `EWC` subdirectory — EWC looks
+`EWC.FOLDER` must be the **repository root**, not the `EWC` subdirectory - EWC looks
 for the JavaScript client at `<EWC.FOLDER>/client/dist/`.
 
 ## The Demo Application
