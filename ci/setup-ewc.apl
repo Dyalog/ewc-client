@@ -12,6 +12,6 @@
 ⍝                EWC.Init resolves FOLDER,'client/dist/' directly.
 
 ]link.create /work/ewc/EWC
-]link.create /work/ewc/demo
+]link.create /work/ewc/test-apps/demo
 EWC.FOLDER←'/work/ewc'
 1 demo.Run 'Browser'

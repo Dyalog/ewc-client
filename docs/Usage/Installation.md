@@ -37,7 +37,7 @@ The simplest way to verify installation is to run the demo application:
 
 ```
 ]link.create #.EWC /path/to/ewc/EWC
-]link.create #.demo /path/to/ewc/demo
+]link.create #.demo /path/to/ewc/test-apps/demo
 demo.Run 'Desktop'
 ```
 

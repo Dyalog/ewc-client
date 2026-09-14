@@ -24,7 +24,7 @@ EWC is **one repository, two halves**:
 
 | Path | Language | Responsibility |
 |---|---|---|
-| `EWC/`, `demo/`, `docs/` | Dyalog APL | The server. Implements `eWC eWS eWG eWN eNQ eEX eDQ` — EWC's workalikes for the `⎕WC` family — owns each class's property/event contract, serves the frontend, ships the demos and the User Guide. |
+| `EWC/`, `test-apps/`, `docs/` | Dyalog APL | The server. Implements `eWC eWS eWG eWN eNQ eEX eDQ` — EWC's workalikes for the `⎕WC` family — owns each class's property/event contract, serves the frontend, ships the demos and the User Guide. |
 | `client/` | JavaScript / React | The frontend. Renders the GUI objects the server describes, and reports user events back. |
 | `e2e/` | TypeScript / Playwright | End-to-end tests, driving the demos through the real client. |
 
@@ -45,7 +45,7 @@ automatically, so a local build is picked up with no configuration.
 
 ### Where does your change belong?
 
-- **APL side** (`EWC/`, `demo/`): property and event semantics, what a class supports,
+- **APL side** (`EWC/`, `test-apps/demo/`): property and event semantics, what a class supports,
   server-side messages, demos, the User Guide.
 - **Client side** (`client/`): rendering, DOM/CSS, React state, keyboard/mouse behaviour
   in the browser.
@@ -69,7 +69,7 @@ automatically, so a local build is picked up with no configuration.
 
    ```apl
    ]link.create #.EWC /tmp/ewc/EWC
-   ]link.create #.demo /tmp/ewc/demo
+   ]link.create #.demo /tmp/ewc/test-apps/demo
    demo.Run 'Desktop'    ⍝ or 'Browser', then open http://localhost:22322
    ```
 
@@ -164,7 +164,7 @@ So a **runtime-settable, live-readable** property needs three edits: `Supported.
 
 Demos are the primary way we exercise and showcase features, and the e2e suite drives them.
 
-- Add `demo/DemoXxx.aplf` and register the name in `demo/DEMOS.apla`.
+- Add `test-apps/demo/DemoXxx.aplf` and register the name in `test-apps/demo/DEMOS.apla`.
 - **Keep a new demo to about two files** — the `DemoXxx.aplf` itself plus at most one
   callback dispatcher (`CBXxx.aplf`). Prefer one dispatcher over many tiny callbacks.
 - Demos are baked in at server start, so restart the server after editing one.
@@ -179,7 +179,7 @@ tests.test_proxySpace
 ```
 
 End-to-end Playwright specs live in `e2e/demo/tests/` and drive the real demos in
-`demo/`. `e2e/demo/README.md` is the detailed guide; the short version, all run from the
+`test-apps/demo/`. `e2e/demo/README.md` is the detailed guide; the short version, all run from the
 repository root:
 
 ```bash

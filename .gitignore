@@ -61,4 +61,4 @@ aplcore
 .linkconfig
 # mkdocs output
 /site/
-/demo/images/ribbonimages/*
+/test-apps/demo/images/ribbonimages/*
